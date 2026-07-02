@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRC - Kingdom Rush Clone</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 960px;
+            height: 700px;
+            box-shadow: 0 0 30px rgba(0, 150, 255, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        canvas { display: block; }
+
+        /* Loading Screen */
+        #loading {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .loading-spinner p {
+            font-size: 18px;
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Game UI Overlay */
+        #game-ui-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .ui-panel {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            min-width: 200px;
+        }
+
+        .ui-panel h3 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #f39c12;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <!-- Loading Screen -->
+    <div id="loading">
+        <div class="loading-spinner">
+            <h1>⚔️ KRC</h1>
+            <p>Loading your tower defense adventure...</p>
+        </div>
+    </div>
+
+    <!-- Game UI Overlay -->
+    <div id="game-ui-overlay" style="display:none;">
+        <div class="ui-panel">
+            <h3>📊 Stats</h3>
+            <div class="stat-row"><span>Gems:</span><span id="gems-display" style="color: #2ecc71; font-weight:bold;">0</span></div>
+            <div class="stat-row"><span>Lives:</span><span id="lives-display" style="color: #e74c3c; font-weight:bold;">20</span></div>
+            <div class="stat-row"><span>Wave:</span><span id="wave-display">1</span></div>
+            <div class="stat-row"><span>Enemies:</span><span id="enemies-display" style="color: #3498db;">0/5</span></div>
+        </div>
+
+        <div class="ui-panel">
+            <h3>🏰 Towers</h3>
+            <div class="stat-row"><span>Goblin:</span><span id="goblin-count">0</span></div>
+            <div class="stat-row"><span>Orc:</span><span id="orc-count">0</span></div>
+            <div class="stat-row"><span>Knight:</span><span id="knight-count">0</span></div>
+        </div>
+
+        <div class="ui-panel" style="width: 120px; text-align: center;">
+            <h3>🎯 Controls</h3>
+            <p style="font-size:12px; color:#ccc;">Click tower to upgrade<br>Gems on map = collectible</p>
+        </div>
+    </div>
+
+    <!-- Load Phaser 3 from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    
+    <!-- Game Logic -->
+    <script>
+class KRCGame extends Phaser.Scene {
+    constructor() {
+        super('KRCScene');
+    }
+
+    init(config) {
+        this.gameState = {
+            gems: 150,
+            lives: 20,
+            wave: 1,
+            totalEnemies: 5,
+            enemiesSpawned: 0,
+            towersPlaced: [],
+            selectedTower: null,
+            gameOver: false,
+            victory: false
+        };
+
+        this.waveConfigs = [
+            // Wave 1 - Tutorial (Goblins only)
+            { type: 'goblin', count: 5 },
+            // Wave 2 - Add Orcs
+            { type: 'orc', count: 4 },
+            // Wave 3 - Mix of enemies
+            { type: 'goblin', count: 3, mixed: true }
+        ];
+
+        this.currentWaveIndex = 0;
+        this.enemiesInCurrentWave = [];
+        this.spawnTimer = 0;
+    }
+
+    create() {
+        // Create game background
+        this.add.rectangle(480, 350, 960, 700, 0x1a252f).setDepth(-1);
+
+        // Draw path (winding route)
+        const pathPoints = [
+            { x: 150, y: 650 },
+            { x: 300, y: 600 },
+            { x: 450, y: 680 },
+            { x: 600, y: 550 },
+            { x: 750, y: 620 },
+            { x: 900, y: 450 }
+        ];
+
+        this.pathGraphics = this.add.graphics();
+        pathPoints.forEach((point, i) => {
+            if (i === 0) return;
+            const prev = pathPoints[i - 1];
+            
+            // Draw path segments
+            const dist = Math.sqrt(Math.pow(point.x - prev.x, 2) + Math.pow(point.y - prev.y, 2));
+            this.pathGraphics.lineStyle(30, 0x7f8c8d, 0.6);
+            this.pathGraphics.moveTo(prev.x, prev.y);
+            this.pathGraphics.lineTo(point.x, point.y);
+
+            // Draw waypoints (small circles)
+            const midpoint = { x: (prev.x + point.x) / 2, y: (prev.y + point.y) / 2 };
+            this.add.circle(midpoint.x, midpoint.y, 8, 0xf39c12, 1).setDepth(5);
+        });
+
+        // Create placement grid overlay for towers
+        const gridSize = 40;
+        const offsetX = 60;
+        const offsetY = 60;
+        this.gridGraphics = this.add.graphics();
+        
+        for (let row = 0; row < 12; row++) {
+            for (let col = 0; col < 24; col++) {
+                const x = offsetX + col * gridSize;
+                const y = offsetY + row * gridSize;
+
+                // Check if position is on path or out of bounds
+                const onPath = this.isOnPath(x, y);
+                
+                if (!onPath) {
+                    // Draw valid placement zone (darker area)
+                    this.gridGraphics.fillStyle(0x1e3a5f, 0.3);
+                    this.gridGraphics.fillRect(x - 20, y - 20, 40, 40);
+
+                    // Highlight selected tower type
+                    if (this.gameState.selectedTower) {
+                        const towerCost = this.getTowerCost(this.gameState.selectedTower);
+                        
+                        if (this.gameState.gems >= towerCost && !this.isTowerPlaced(x, y)) {
+                            this.gridGraphics.fillStyle(0x2ecc71, 0.4);
+                        } else if (!this.gameState.selectedTower) {
+                            this.gridGraphics.fillStyle(0xf39c12, 0.2); // Default placeholder
+                        }
+                    }
+
+                    this.gridGraphics.fillRect(x - 20, y - 20, 40, 40);
+                }
+            }
+        }
+
+        // Tower types config
+        this.towerTypes = [
+            { 
+                id: 'archer', 
+                name: 'Archer',
+                icon: '🏹',
+                cost: 50,
+                damage: 15,
+                range: 80,
+                fireRate: 800,
+                color: 0x2ecc71,
+                attackType: 'single'
+            },
+            { 
+                id: 'bombardier', 
+                name: 'Bombardier',
+                icon: '💣',
+                cost: 150,
+                damage: 60,
+                range: 120,
+                fireRate: 3000,
+                color: 0xe74c3c,
+                attackType: 'aoe'
+            },
+            { 
+                id: 'lightning', 
+                name: 'Lightning',
+                icon: '⚡',
+                cost: 200,
+                damage: 30,
+                range: 60,
+                fireRate: 500,
+                color: 0xf1c40f,
+                attackType: 'chain'
+            },
+            { 
+                id: 'ice', 
+                name: 'Ice Tower',
+                icon: '❄️',
+                cost: 120,
+                damage: 5,
+                range: 90,
+                fireRate: 600,
+                color: 0x3498db,
+                special: 'slow' // Slows enemies on hit
+            },
+            { 
+                id: 'magic', 
+                name: 'Magic Tower',
+                icon: '🔮',
+                cost: 250,
+                damage: 40,
+                range: 130,
+                fireRate: 1200,
+                color: 0x9b59b6,
+                attackType: 'aoe'
+            }
+        ];
+
+        this.towerCooldowns = {};
+        
+        // Initialize UI overlays
+        this.createUIOverlays();
+
+        // Start first wave
+        this.startWave(1);
+
+        // Main game loop
+        this.time.addEvent({ interval: 30, callback: this.updateLoop, delay: 30, repeat: true });
+    }
+
+    isOnPath(x, y) {
+        const pathSegments = [
+            [{ x: 290, y: 650 }, { x: 450, y: 680 }], // Bottom section
+            [{ x: 450, y: 680 }, { x: 300, y: 600 }],
+            [{ x: 300, y: 600 }, { x: 600, y: 550 }], // Middle horizontal
+            [{ x: 600, y: 550 }, { x: 750, y: 620 }],
+            [{ x: 750, y: 620 }, { x: 900, y: 450 }]   // Top section
+        ];
+
+        const gridSize = 40;
+        
+        for (const segment of pathSegments) {
+            const [p1, p2] = segment;
+            
+            // Check if point is near this line segment (within tolerance)
+            const distToLine = Math.abs((p2.y - p1.y) * x - (p2.x - p1.x) * y + p2.x * p1.y - p2.y * p1.x) /
+                                Math.sqrt(Math.pow(p2.y - p1.y, 2) + Math.pow(p2.x - p1.x, 2));
+            
+            if (distToLine < 30 && x >= Math.min(p1.x, p2.x) + gridSize/2 && x <= Math.max(p1.x, p2.x) - gridSize/2) {
+                return true;
+            }
+        }
+
+        // Check bounds
+        const onBottom = y > 600;
+        const onLeft = x < 120;
+        const onRight = x > 940;
+        const onTop = y < 380;
+
+        return (onBottom && !onLeft && !onRight) || 
+               (!onLeft && !onRight && !onBottom && y >= 620 && y <= 680);
+    }
+
+    isTowerPlaced(x, y) {
+        return this.gameState.towersPlaced.some(tower => 
+            Math.abs(tower.x - x) < 30 && Math.abs(tower.y - y) < 30
+        );
+    }
+
+    getTowerCost(type) {
+        const tower = this.towerTypes.find(t => t.id === type);
+        return tower ? tower.cost : 50; // Default to archer cost if not found
+    }
+
+    createUIOverlays() {
+        // Tower selection panel at bottom
+        const panelX = 20;
+        const panelY = this.game.config.height - 80;
+        const panelW = 820;
+        const panelH = 60;
+
+        // Background
+        this.add.rectangle(panelX, panelY, panelW, panelH, 0x1a252f).setDepth(10);
+
+        // Tower buttons
+        let buttonX = panelX + 20;
+        
+        for (const tower of this.towerTypes) {
+            const btnW = 80;
+            const btnH = 40;
+            
+            const costText = this.gameState.gems >= this.getTowerCost(tower.id) ? '✓' : '';
+
+            // Button background
+            let btnBgColor = 0x2c3e50;
+            if (this.gameState.selectedTower === tower.id && this.gameState.gems >= this.getTowerCost(tower.id)) {
+                btnBgColor = 0x2ecc71;
+            } else if (!this.gameState.selectedTower) {
+                btnBgColor = 0x34495e;
+            }
+
+            this.add.rectangle(buttonX, panelY + 10, btnW, btnH, btnBgColor).setDepth(11);
+
+            // Tower icon and name
+            const textConfig = { font: '22px Arial', fill: '#ffffff' };
+            this.add.text(buttonX + 8, panelY + 14, `${tower.icon}${costText}`, textConfig)
+                .setOrigin(0.5)
+                .setDepth(12);
+
+            // Arrow to next button
+            const nextBtn = btnW + 30;
+            this.add.text(buttonX + btnW / 2 - 5, panelY + 14, '→', { font: '16px Arial', fill: '#ffffff' })
+                .setOrigin(0.5)
+                .setDepth(12);
+
+            buttonX += btnW + 30;
+        }
+
+        // Tower info tooltip area (right side of panel)
+        const infoText = this.add.text(panelX + panelW - 80, panelY + 10, 'Click tower to see details', { font: '14px Arial', fill: '#cccccc' })
+            .setOrigin(0.5)
+            .setDepth(12);
+
+        // Gems counter at top-right
+        this.add.text(panelX + panelW / 2 - 60, panelY, `💎 ${this.gameState.gems}`, { font: '24px Arial', fill: '#2ecc71' })
+            .setOrigin(0.5)
+            .setDepth(13);
+
+        // Game info at top-left
+        const gameInfoX = 20;
+        const waveText = this.add.text(gameInfoX, panelY + 20, `Wave ${this.gameState.wave} - ${this.getWaveConfig().type || ''}`, { font: '16px Arial', fill: '#f39c12' })
+            .setOrigin(0.5)
+            .setDepth(13);
+    }
+
+    getWaveConfig() {
+        if (this.currentWaveIndex < this.waveConfigs.length) {
+            return this.waveConfigs[this.currentWaveIndex];
+        }
+        return null;
+    }
+
+    updateLoop() {
+        const wave = this.getWaveConfig();
+        if (!wave) return;
+
+        // Spawn enemies based on wave config
+        const spawnRate = 1000 / (Math.max(5, this.gameState.wave * 2)); // Faster spawns in later waves
+        
+        if (this.enemiesSpawned < wave.count && Math.random() * 1000 < spawnRate) {
+            this.spawnEnemy(wave.type);
+        }
+
+        // Update enemies
+        this.updateEnemies();
+
+        // Check victory/defeat conditions
+        if (this.gameState.enemiesSpawned >= wave.count && this.enemiesInCurrentWave.length === 0) {
+            // Wave complete - advance to next wave or win game
+            if (this.currentWaveIndex < this.waveConfigs.length - 1) {
+                this.currentWaveIndex++;
+                this.startWave(this.currentWaveIndex + 2);
+            } else if (!this.gameState.victory && !this.gameState.gameOver) {
+                // Show victory screen
+                const overlay = this.add.rectangle(480, 350, 960, 700, 0x1a252f, 0.9);
+                const title = this.add.text(480, 250, '🎉 Victory!', { font: 'bold 60px Arial', fill: '#2ecc71' }).setOrigin(0.5).setDepth(2001);
+                const subtext = this.add.text(480, 380, 'All enemies defeated!', { font: '30px Arial', fill: '#ffffff' }).setOrigin(0.5).setDepth(2002);
+                this.time.delayedCall(2000, () => {
+                    this.gameState.victory = true;
+                    this.gameOver();
+                });
+            }
+        }
+
+        // Check if enemies reached end of path (game over)
+        if (!this.gameState.victory && !this.gameState.gameOver) {
+            const endPoints = [900, 450]; // Last point on our path
+            
+            for (const enemy of this.enemiesInCurrentWave) {
+                const distToEnd = Math.sqrt(Math.pow(endPoints[0] - enemy.x, 2) + Math.pow(endPoints[1] - enemy.y, 2));
+                
+                if (distToEnd < 30) {
+                    this.gameState.lives--;
+                    this.updateUI();
+
+                    // Show "lost a life" effect
+                    const hit = this.add.text(480, 350, '💀', { font: '60px Arial' }).setOrigin(0.5);
+                    this.tweens.delayedCall(500, () => hit.destroy());
+
+                    if (this.gameState.lives <= 0) {
+                        this.gameState.gameOver = true;
+                        this.updateUI();
+                        
+                        // Game over screen
+                        const overlay = this.add.rectangle(480, 350, 960, 700, 0x1a252f, 0.9);
+                        const title = this.add.text(480, 250, '💀 Game Over', { font: 'bold 60px Arial', fill: '#e74c3c' }).setOrigin(0.5).setDepth(2001);
+                        const subtext = this.add.text(480, 380, `You survived ${this.gameState.wave} waves`, { font: '30px Arial', fill: '#ffffff' }).setOrigin(0.5).setDepth(2002);
+
+                        // Restart button
+                        const restartBtn = this.add.text(480, 480, '🔄 Restart Game', { 
+                            font: 'bold 24px Arial', 
+                            fill: '#3498db',
+                            interactive: true,
+                            useHandCursor: true
+                        }).setOrigin(0.5).setDepth(2003);
+
+                        restartBtn.on('pointerdown', () => {
+                            this.scene.restart();
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    spawnEnemy(type) {
+        const enemies = {
+            goblin: { 
+                name: 'Goblin', icon: '👹', 
+                hp: 30, speed: 120, damage: 5, reward: 10, color: '#e74c3c' 
+            },
+            orc: { 
+                name: 'Orc', icon: '💪', 
+                hp: 80, speed: 90, damage: 10, reward: 20, color: '#f39c12' 
+            },
+            knight: { 
+                name: 'Knight', icon: '⚔️', 
+                hp: 150, speed: 60, damage: 15, reward: 35, color: '#9b59b6' 
+            }
+        };
+
+        const enemyConfig = enemies[type];
+        if (!enemyConfig) return;
+
+        // Spawn at start of path (first waypoint)
+        const spawnPoint = { x: 180, y: 640 };
+
+        this.enemiesInCurrentWave.push({
+            type: type,
+            name: enemyConfig.name,
+            hp: enemyConfig.hp * (1 + (this.gameState.wave - 1) * 0.1), // Scale HP with wave
+            maxHp: enemyConfig.hp * (1 + (this.gameState.wave - 1) * 0.1),
+            speed: enemyConfig.speed,
+            damage: enemyConfig.damage,
+            reward: enemyConfig.reward,
+            color: enemyConfig.color,
+            x: spawnPoint.x,
+            y: spawnPoint.y,
+            dead: false
+        });
+
+        this.gameState.enemiesSpawned++;
+    }
+
+    updateEnemies() {
+        for (let i = this.enemiesInCurrentWave.length - 1; i >= 0; i--) {
+            const enemy = this.enemiesInCurrentWave[i];
+            
+            if (enemy.dead) continue;
+
+            // Move toward end of path based on wave progress
+            const targetX = this.gameState.wave > 3 ? 750 : this.gameState.wave > 1 ? 600 : 450;
+            const targetY = 620 - (this.gameState.wave * 2);
+
+            // Calculate direction and distance to move
+            const dx = targetX - enemy.x;
+            const dy = targetY - enemy.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist > 5) {
+                // Move proportional to speed
+                const moveAmount = enemy.speed * this.time.delta / 1000;
+                if (dist < moveAmount) {
+                    // Reached target - snap to it
+                    enemy.x = targetX;
+                    enemy.y = targetY;
+                } else {
+                    enemy.x += (dx/dist) * moveAmount;
+                    enemy.y += (dy/dist) * moveAmount;
+                }
+            }
+
+            // Check collisions with towers
+            this.checkTowerCollisions(enemy);
+
+            // Update visual representation
+            const sprite = this.add.text(enemy.x, enemy.y, `${enemy.icon}`, { font: '30px Arial' });
+            
+            // Remove old sprite if exists (simple way to update)
+            const oldSprite = this.enemiesInCurrentWave[i].sprite;
+            if (oldSprite && oldSprite !== sprite) {
+                oldSprite.destroy();
+            }
+
+            // Update enemy's position reference
+            this.enemiesInCurrentWave[i].sprite = sprite;
+        }
+    }
+
+    checkTowerCollisions(enemy) {
+        for (const tower of this.gameState.towersPlaced) {
+            const dx = enemy.x - tower.x;
+            const dy = enemy.y - tower.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < tower.range + 15 && !enemy.dead) {
+                // Tower attacks enemy
+                const towerConfig = this.towerTypes.find(t => t.id === tower.type);
+                
+                // Calculate damage based on attack type
+                let damage = towerConfig.damage;
+                
+                switch(towerConfig.attackType) {
+                    case 'aoe':
+                        // AOE towers do less single-target damage but hit area
+                        damage = Math.floor(damage * 0.7);
+                        break;
+                    case 'chain':
+                        // Lightning towers chain to nearby enemies
+                        this.chainLightning(tower, enemy, towerConfig.damage);
+                        continue; // Skip normal damage for lightning
+                }
+
+                if (tower.cooldown > 0) {
+                    // Not ready to fire yet - add cooldown timer
+                    tower.cooldown--;
+                    continue;
+                }
+
+                tower.cooldown = towerConfig.fireRate / this.time.fps;
+
+                enemy.hp -= damage;
+                
+                if (enemy.hp <= 0) {
+                    // Enemy defeated!
+                    this.gameState.gems += Math.floor(enemy.reward);
+                    this.enemiesInCurrentWave.splice(i, 1);
+                    
+                    // Update UI
+                    this.updateUI();
+                    
+                    // Show reward effect
+                    const gem = this.add.text(480 + (Math.random() - 0.5) * 200, 350 + (Math.random() - 0.5) * 100, '💎', { font: '20px Arial' })
+                        .setOrigin(0.5);
+                    this.tweens.delayedCall(800, () => gem.destroy());
+                } else if (towerConfig.special === 'slow') {
+                    // Ice towers slow enemies visually
+                    enemy.y += 1; // Slow down movement
+                }
+
+                return; // Tower can only attack one enemy at a time
+            }
+        }
+    }
+
+    chainLightning(tower, primaryTarget, damage) {
+        // Find nearby enemies to chain lightning to
+        const nearbyEnemies = [];
+        
+        for (const enemy of this.enemiesInCurrentWave) {
+            if (enemy.dead) continue;
+            
+            const dx = tower.x - enemy.x;
+            const dy = tower.y - enemy.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < 120 && !primaryTarget.dead) {
+                nearbyEnemies.push(enemy);
+            }
+        }
+
+        // Apply damage to primary target
+        this.gameState.gems += Math.floor(primaryTarget.reward);
+        
+        for (const enemy of nearbyEnemies) {
+            if (Math.random() < 0.3 && !enemy.dead) { // 30% chance to chain
+                const dx = tower.x - enemy.x;
+                const dy = tower.y - enemy.y;
+                
+                this.add.line(tower.x, tower.y, enemy.x, enemy.y, 2, 0xf1c40f);
+                
+                if (primaryTarget.dead) continue;
+
+                primaryTarget.hp -= Math.floor(damage * 0.5); // 50% damage to chained targets
+                
+                if (primaryTarget.hp <= 0 && !primaryTarget.dead) {
+                    this.gameState.gems += Math.floor(primaryTarget.reward);
+                    this.enemiesInCurrentWave.splice(this.enemiesInCurrentWave.indexOf(primaryTarget), 1);
+                    this.updateUI();
+
+                    const gem = this.add.text(480 + (Math.random() - 0.5) * 200, 350 + (Math.random() - 0.5) * 100, '💎', { font: '20px Arial' })
+                        .setOrigin(0.5);
+                    this.tweens.delayedCall(800, () => gem.destroy());
+                }
+
+                // Remove line after animation
+                this.time.delayedCall(200, () => { /* line already destroyed */ });
+            }
+        }
+    }
+
+    startWave(waveNum) {
+        const wave = this.getWaveConfig();
+        if (!wave) return;
+
+        this.gameState.wave = waveNum;
+        this.enemiesInCurrentWave = [];
+        this.enemiesSpawned = 0;
+        
+        // Update UI
+        this.updateUI();
+    }
+
+    isTowerPlaced(x, y) {
+        return this.gameState.towersPlaced.some(tower => 
+            Math.abs(tower.x - x) < 25 && Math.abs(tower.y - y) < 25
+        );
+    }
+
+    getTowerCost(type) {
+        const tower = this.towerTypes.find(t => t.id === type);
+        return tower ? tower.cost : 50; // Default to archer cost if not found
+    }
+
+    updateUI() {
+        document.getElementById('gems-display').textContent = `${this.gameState.gems}`;
+        document.getElementById('lives-display').textContent = `${this.gameState.lives}`;
+        document.getElementById('wave-display').textContent = `Wave ${this.gameState.wave}`;
+        
+        // Update tower counts (simplified - just show total enemies)
+        document.getElementById('enemies-display').textContent = 'Enemies';
+    }
+
+    gameOver() {
+        setTimeout(() => {
+            const overlay = this.add.rectangle(480, 350, 960, 700, 0x1a252f, 0.9);
+            const title = this.add.text(480, 250, '💀 Game Over', { font: 'bold 60px Arial', fill: '#e74c3c' }).setOrigin(0.5).setDepth(2001);
+            const subtext = this.add.text(480, 380, `You survived ${this.gameState.wave} waves`, { font: '30px Arial', fill: '#ffffff' }).setOrigin(0.5).setDepth(2002);
+
+            // Restart button
+            const restartBtn = this.add.text(480, 480, '🔄 Restart Game', { 
+                font: 'bold 24px Arial', 
+                fill: '#3498db',
+                interactive: true,
+                useHandCursor: true
+            }).setOrigin(0.5).setDepth(2003);
+
+            restartBtn.on('pointerdown', () => {
+                this.scene.restart();
+            });
+
+            // Victory button if applicable
+            const victoryBtn = this.add.text(480, 550, '🏆 Play Again', { 
+                font: 'bold 22px Arial', 
+                fill: '#f39c12',
+                interactive: true,
+                useHandCursor: true
+            }).setOrigin(0.5).setDepth(2004);
+
+            victoryBtn.on('pointerdown', () => {
+                this.scene.restart();
+            });
+        }, 1000);
+    }
+}
+
+// Start the game!
+Phaser.create({
+    parent: 'game-container',
+    scene: KRCGame,
+    width: 960,
+    height: 700,
+    backgroundColor: '#1a252f'
+});
+</script>
+</body>
+</html>
