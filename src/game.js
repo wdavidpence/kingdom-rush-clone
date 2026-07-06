@@ -169,6 +169,10 @@
         frost: { name: "Frost", ready: 0, cooldown: 22 },
         rally: { name: "Rally", ready: 0, cooldown: 28 },
       };
+      if (this.qaMode) {
+        const startWave = Number(new URLSearchParams(window.location.search).get("startWave"));
+        if (Number.isInteger(startWave) && startWave >= 1 && startWave <= WAVES.length) this.waveIndex = startWave - 1;
+      }
 
       this.makeTextures();
       this.drawMap();
@@ -177,7 +181,17 @@
       this.createShop();
       this.showStartOverlay();
       this.input.on("pointerdown", this.handlePointer, this);
-      if (this.qaMode) document.body.dataset.krcQa = "1";
+      if (this.qaMode) {
+        document.body.dataset.krcQa = "1";
+        if (new URLSearchParams(window.location.search).has("emberTest")) {
+          this.spawnEnemy("ember");
+          const ember = this.enemies[this.enemies.length - 1];
+          const goldBefore = this.gold;
+          this.damageEnemy(ember, ember.maxHp + 999, { magic: true });
+          document.body.dataset.krcEmberTest =
+            this.enemies.length === 0 && this.gold === goldBefore + ENEMIES.ember.bounty ? "pass" : "fail";
+        }
+      }
     }
 
     update(_time, deltaMs) {
@@ -749,10 +763,13 @@
       enemy.hp -= damage;
       if (source.slow) enemy.slow = Math.max(enemy.slow, 1.2 + source.slow * 2);
       if (enemy.hp <= 0) {
+        const burn = enemy.base.burn;
+        const x = enemy.x;
+        const y = enemy.y;
         this.gold += enemy.base.bounty;
-        this.flashText(`+${enemy.base.bounty}`, enemy.x, enemy.y - 22, COLORS.gold);
-        if (enemy.base.burn) this.explode(enemy.x, enemy.y, 38, 24, true);
+        this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.removeEnemy(enemy, true);
+        if (burn) this.explode(x, y, 38, 24, true);
       }
     }
 
