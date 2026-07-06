@@ -44,16 +44,69 @@
     { x: 328, y: 560 },
   ];
 
+  const MAPS = [
+    { name: "Forest Gate", grass: 0x273c1f, path: PATH, pads: BUILD_PADS },
+    {
+      name: "Stone Pass",
+      grass: 0x243235,
+      path: [
+        { x: -18, y: 150 },
+        { x: 122, y: 150 },
+        { x: 160, y: 258 },
+        { x: 68, y: 336 },
+        { x: 210, y: 396 },
+        { x: 334, y: 330 },
+        { x: 306, y: 502 },
+        { x: 426, y: 584 },
+      ],
+      pads: [
+        { x: 74, y: 238 },
+        { x: 212, y: 172 },
+        { x: 322, y: 218 },
+        { x: 84, y: 424 },
+        { x: 206, y: 304 },
+        { x: 332, y: 404 },
+        { x: 176, y: 512 },
+        { x: 318, y: 574 },
+      ],
+    },
+    {
+      name: "Ember Marsh",
+      grass: 0x2b3024,
+      path: [
+        { x: -18, y: 104 },
+        { x: 140, y: 144 },
+        { x: 310, y: 116 },
+        { x: 334, y: 246 },
+        { x: 168, y: 288 },
+        { x: 88, y: 420 },
+        { x: 248, y: 470 },
+        { x: 378, y: 570 },
+        { x: 438, y: 616 },
+      ],
+      pads: [
+        { x: 74, y: 188 },
+        { x: 220, y: 202 },
+        { x: 344, y: 170 },
+        { x: 266, y: 330 },
+        { x: 74, y: 322 },
+        { x: 142, y: 518 },
+        { x: 298, y: 426 },
+        { x: 326, y: 560 },
+      ],
+    },
+  ];
+
   const TOWERS = {
     archer: {
       id: "archer",
       name: "Rangers",
       glyph: "A",
       cost: 70,
-      upgrades: [55, 100],
-      damage: [18, 27, 39],
-      rate: [0.62, 0.53, 0.46],
-      range: [106, 120, 132],
+      upgrades: [55, 100, 240, 460],
+      damage: [18, 27, 39, 58, 84],
+      rate: [0.62, 0.53, 0.46, 0.4, 0.35],
+      range: [106, 120, 132, 144, 156],
       color: 0x78d66b,
       desc: "Fast arrows. Good vs flyers.",
     },
@@ -62,13 +115,13 @@
       name: "Runes",
       glyph: "M",
       cost: 95,
-      upgrades: [75, 130],
-      damage: [34, 49, 68],
-      rate: [1.05, 0.93, 0.84],
-      range: [104, 116, 128],
+      upgrades: [75, 130, 300, 560],
+      damage: [34, 49, 68, 98, 138],
+      rate: [1.05, 0.93, 0.84, 0.75, 0.68],
+      range: [104, 116, 128, 140, 152],
       color: 0x7d75ff,
       magic: true,
-      slow: [0.12, 0.18, 0.25],
+      slow: [0.12, 0.18, 0.25, 0.32, 0.4],
       desc: "Ignores armor and slows.",
     },
     artillery: {
@@ -76,12 +129,12 @@
       name: "Mortar",
       glyph: "B",
       cost: 145,
-      upgrades: [95, 170],
-      damage: [55, 76, 104],
-      rate: [1.75, 1.55, 1.35],
-      range: [128, 145, 160],
+      upgrades: [95, 170, 380, 700],
+      damage: [55, 76, 104, 150, 212],
+      rate: [1.75, 1.55, 1.35, 1.2, 1.06],
+      range: [128, 145, 160, 176, 192],
       color: 0xe29b4a,
-      splash: [42, 52, 64],
+      splash: [42, 52, 64, 76, 90],
       desc: "Slow splash damage.",
     },
     barracks: {
@@ -89,12 +142,12 @@
       name: "Guard",
       glyph: "G",
       cost: 120,
-      upgrades: [80, 150],
-      damage: [10, 15, 22],
-      rate: [0.7, 0.62, 0.55],
-      range: [70, 82, 92],
+      upgrades: [80, 150, 340, 620],
+      damage: [10, 15, 22, 32, 46],
+      rate: [0.7, 0.62, 0.55, 0.49, 0.44],
+      range: [70, 82, 92, 104, 116],
       color: 0xd8c56a,
-      soldierHp: [90, 130, 180],
+      soldierHp: [90, 130, 180, 245, 330],
       desc: "Blocks the road.",
     },
   };
@@ -127,6 +180,10 @@
       super("game");
     }
 
+    init(data = {}) {
+      this.startData = data;
+    }
+
     preload() {
       const audioPath = "assets/kenney/audio/";
       const audioFiles = {
@@ -146,8 +203,17 @@
 
     create() {
       this.qaMode = QA_MODE;
-      this.gold = 260;
-      this.lives = 18;
+      const requestedMap = QA_MODE ? Number(new URLSearchParams(window.location.search).get("map")) - 1 : NaN;
+      this.mapIndex = Phaser.Math.Clamp(
+        Number.isInteger(requestedMap) ? requestedMap : this.startData?.mapIndex || 0,
+        0,
+        MAPS.length - 1
+      );
+      this.map = MAPS[this.mapIndex];
+      this.path = this.map.path;
+      this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
+      this.gold = this.startData?.gold ?? 260;
+      this.lives = this.startData?.lives ?? 18;
       this.waveIndex = 0;
       this.waveActive = false;
       this.waveTotal = 0;
@@ -177,6 +243,7 @@
       this.makeTextures();
       this.drawMap();
       this.createPads();
+      this.createHero();
       this.createHud();
       this.createShop();
       this.showStartOverlay();
@@ -202,6 +269,7 @@
       this.updateWave(dt);
       this.updateEnemies(dt);
       this.updateSoldiers(dt);
+      this.updateHero(dt);
       this.updateTowers(dt);
       this.updateProjectiles(dt);
       this.updateEffects(dt);
@@ -460,6 +528,30 @@
         ellipse(ctx, 19, 12, 1.5, 1.8, "#15120c");
         ellipse(ctx, 25, 12, 1.5, 1.8, "#15120c");
       });
+      make("hero_captain", 54, 58, (ctx) => {
+        ellipse(ctx, 27, 51, 20, 6, "rgba(0,0,0,.35)");
+        rounded(ctx, 17, 24, 22, 24, 6, gradient(ctx, 17, 24, 39, 49, [[0, "#3f6fb4"], [0.55, "#274b7d"], [1, "#172d4d"]]), "#101b2f", 2);
+        ellipse(ctx, 27, 15, 10, 10, gradient(ctx, 17, 5, 37, 25, [[0, "#ffe1a8"], [1, "#b47a45"]]), "#4a2d1c", 1.8);
+        rounded(ctx, 16, 5, 22, 8, 3, "#d8b85d", "#4a351a", 1.5);
+        poly(ctx, [[27, 0], [20, 8], [34, 8]], "#f0d47a", "#4a351a", 1.2);
+        ellipse(ctx, 23, 14, 1.4, 1.8, "#10100b");
+        ellipse(ctx, 31, 14, 1.4, 1.8, "#10100b");
+        rounded(ctx, 32, 22, 14, 20, 5, gradient(ctx, 32, 22, 46, 42, [[0, "#f4e6a8"], [1, "#8d6f31"]]), "#3e2d18", 1.8);
+        ctx.strokeStyle = "#e9d790";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(14, 27);
+        ctx.lineTo(7, 42);
+        ctx.moveTo(38, 26);
+        ctx.lineTo(49, 12);
+        ctx.stroke();
+        ctx.strokeStyle = "#f7f0c4";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(49, 12);
+        ctx.lineTo(51, 3);
+        ctx.stroke();
+      });
       make("tree_pine", 40, 56, (ctx) => {
         ellipse(ctx, 20, 49, 14, 4, "rgba(0,0,0,.22)");
         rounded(ctx, 17, 34, 6, 15, 2, "#5a3d24");
@@ -481,7 +573,7 @@
     }
 
     drawMap() {
-      this.add.rectangle(W / 2, H / 2, W, H, COLORS.grass).setDepth(-20);
+      this.add.rectangle(W / 2, H / 2, W, H, this.map.grass).setDepth(-20);
       for (let i = 0; i < 80; i += 1) {
         const x = (i * 73) % W;
         const y = 76 + ((i * 47) % 545);
@@ -505,7 +597,7 @@
       for (let i = 0; i < 26; i += 1) {
         const x = 24 + ((i * 91) % 372);
         const y = 88 + ((i * 137) % 520);
-        const nearRoad = PATH.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
+        const nearRoad = this.path.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
         if (nearRoad) continue;
         this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15);
       }
@@ -521,17 +613,44 @@
 
     strokePath(graphics) {
       graphics.beginPath();
-      graphics.moveTo(PATH[0].x, PATH[0].y);
-      for (let i = 1; i < PATH.length; i += 1) graphics.lineTo(PATH[i].x, PATH[i].y);
+      graphics.moveTo(this.path[0].x, this.path[0].y);
+      for (let i = 1; i < this.path.length; i += 1) graphics.lineTo(this.path[i].x, this.path[i].y);
       graphics.strokePath();
     }
 
     createPads() {
-      for (const pad of BUILD_PADS) {
+      for (const pad of this.buildPads) {
         pad.tower = null;
         pad.base = this.add.circle(pad.x, pad.y, 25, 0x1a2215, 0.95).setStrokeStyle(3, 0xb19b58, 0.9);
         pad.icon = this.add.text(pad.x, pad.y - 1, "+", { font: "bold 26px Arial", color: "#e8dca8" }).setOrigin(0.5);
       }
+    }
+
+    createHero() {
+      const post = this.nearestPathPoint(this.path[Math.min(2, this.path.length - 1)].x, this.path[Math.min(2, this.path.length - 1)].y);
+      this.heroSelected = false;
+      this.hero = {
+        x: post.x,
+        y: post.y,
+        targetX: post.x,
+        targetY: post.y,
+        hp: 260,
+        maxHp: 260,
+        level: 1,
+        xp: 0,
+        attackCooldown: 0,
+        respawn: 0,
+        dead: false,
+        isHero: true,
+      };
+      this.hero.ring = this.add.circle(post.x, post.y, 34, 0xf5d76e, 0.12).setStrokeStyle(2, 0xf5d76e, 0.6).setDepth(37).setVisible(false);
+      this.hero.sprite = this.add.image(post.x, post.y - 8, "hero_captain").setScale(0.78).setDepth(46);
+      this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
+      this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
+      this.hero.levelText = this.add
+        .text(post.x, post.y + 18, "H1", { font: "bold 9px Arial", color: "#fff2ba" })
+        .setOrigin(0.5)
+        .setDepth(49);
     }
 
     createHud() {
@@ -539,14 +658,15 @@
       this.add.rectangle(W / 2, TOP_H, W, 2, 0x596f38).setDepth(91);
       this.goldText = this.add.text(12, 10, "", { font: "bold 18px Arial", color: COLORS.gold }).setDepth(100);
       this.livesText = this.add.text(138, 10, "", { font: "bold 18px Arial", color: "#ff8a73" }).setDepth(100);
-      this.waveText = this.add.text(252, 10, "", { font: "bold 18px Arial", color: COLORS.ink }).setDepth(100);
-      this.waveBarBg = this.add.rectangle(252, 35, 108, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
-      this.waveBar = this.add.rectangle(252, 35, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
+      this.waveText = this.add.text(236, 8, "", { font: "bold 16px Arial", color: COLORS.ink }).setDepth(100);
+      this.mapText = this.add.text(236, 27, "", { font: "bold 10px Arial", color: "#cfc4a2" }).setDepth(100);
+      this.waveBarBg = this.add.rectangle(236, 42, 86, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
+      this.waveBar = this.add.rectangle(236, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
         .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 250 } })
         .setOrigin(0, 0.5)
         .setDepth(100);
-      this.callButton = this.makeButton(334, 39, 72, 30, "CALL", 0x7a4f25, () => this.callWave());
+      this.callButton = this.makeButton(378, 39, 64, 30, "CALL", 0x7a4f25, () => this.callWave());
     }
 
     createShop() {
@@ -585,17 +705,52 @@
     }
 
     makeButton(x, y, w, h, label, color, cb) {
-      const bg = this.add.rectangle(x, y, w, h, color, 0.95).setStrokeStyle(2, 0x0e120c, 0.9).setDepth(100);
+      const shadow = this.add.rectangle(x, y + 4, w, h, 0x050704, 0.55).setStrokeStyle(1, 0x000000, 0.5).setDepth(99);
+      const bg = this.add.rectangle(x, y, w, h, color, 0.98).setStrokeStyle(2, 0xf2df92, 0.45).setDepth(100);
+      const shine = this.add.rectangle(x, y - h * 0.28, w - 8, Math.max(4, h * 0.24), 0xffffff, 0.16).setDepth(100.5);
+      const lip = this.add.rectangle(x, y + h * 0.35, w - 8, Math.max(3, h * 0.16), 0x000000, 0.18).setDepth(100.5);
       const text = this.add
-        .text(x, y, label, { font: "bold 13px Arial", color: "#fff4d8", align: "center" })
+        .text(x, y - 1, label, { font: "bold 13px Arial", color: "#fff4d8", align: "center" })
         .setOrigin(0.5)
         .setDepth(101);
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => {
         this.audio.resume();
+        bg.y = y + 2;
+        shine.y = y - h * 0.28 + 2;
+        lip.y = y + h * 0.35 + 2;
+        text.y = y + 1;
         cb();
       });
-      return { bg, text, x, y, w, h, label, color, setLabel: (value) => text.setText(value) };
+      bg.on("pointerup", () => {
+        bg.y = y;
+        shine.y = y - h * 0.28;
+        lip.y = y + h * 0.35;
+        text.y = y - 1;
+      });
+      bg.on("pointerout", () => {
+        bg.y = y;
+        shine.y = y - h * 0.28;
+        lip.y = y + h * 0.35;
+        text.y = y - 1;
+      });
+      return {
+        bg,
+        text,
+        shadow,
+        shine,
+        lip,
+        x,
+        y,
+        w,
+        h,
+        label,
+        color,
+        setLabel: (value) => text.setText(value),
+        setAlpha: (value) => {
+          for (const obj of [shadow, bg, shine, lip, text]) obj.setAlpha(value);
+        },
+      };
     }
 
     showStartOverlay() {
@@ -606,7 +761,7 @@
       this.overlay.add(this.add.text(W / 2, 172, "KRC", { font: "bold 64px Arial", color: COLORS.gold }).setOrigin(0.5));
       this.overlay.add(
         this.add
-          .text(W / 2, 236, "Hold the forest gate through ten waves.", {
+          .text(W / 2, 236, `${this.map.name}: hold ten waves.`, {
             font: "18px Arial",
             color: COLORS.ink,
             align: "center",
@@ -616,7 +771,7 @@
       );
       this.overlay.add(
         this.add
-          .text(W / 2, 314, "Build on round pads. Upgrade smart. Use spells when the gate is about to break.", {
+          .text(W / 2, 314, "Build on round pads. Tap the Captain, then tap the road to move him into trouble.", {
             font: "14px Arial",
             color: "#cfc4a2",
             align: "center",
@@ -624,8 +779,11 @@
           })
           .setOrigin(0.5)
       );
+      const startShadow = this.add.rectangle(W / 2, 436, 188, 56, 0x050704, 0.62).setStrokeStyle(1, 0x000000, 0.6);
       const start = this.add.rectangle(W / 2, 430, 188, 56, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
-      const startText = this.add.text(W / 2, 430, "TAP TO START", { font: "bold 19px Arial", color: "#fff7dc" }).setOrigin(0.5);
+      const startShine = this.add.rectangle(W / 2, 416, 174, 12, 0xffffff, 0.17);
+      const startLip = this.add.rectangle(W / 2, 448, 174, 9, 0x000000, 0.2);
+      const startText = this.add.text(W / 2, 428, "TAP TO START", { font: "bold 19px Arial", color: "#fff7dc" }).setOrigin(0.5);
       start.setInteractive({ useHandCursor: true });
       start.on("pointerdown", () => {
         this.audio.resume();
@@ -633,18 +791,26 @@
         this.audio.startMusic();
         this.overlayActive = false;
         this.overlay.destroy();
-        this.say("Build two towers, then tap CALL.");
+        this.say("Build two towers. Tap Captain to move him.");
       });
-      this.overlay.add([start, startText]);
+      this.overlay.add([startShadow, start, startShine, startLip, startText]);
     }
 
     handlePointer(pointer, targets) {
       if (this.overlayActive || this.gameEnded) return;
       if (targets.length && !this.selectedBuild) return;
       if (pointer.y < TOP_H || pointer.y > SHOP_Y) return;
+      if (this.hero && !this.hero.dead && Phaser.Math.Distance.Between(pointer.x, pointer.y, this.hero.x, this.hero.y) < 30) {
+        this.selectHero();
+        return;
+      }
+      if (this.heroSelected) {
+        this.moveHeroTo(pointer.x, pointer.y);
+        return;
+      }
       let closest = null;
       let best = 999;
-      for (const pad of BUILD_PADS) {
+      for (const pad of this.buildPads) {
         const d = Phaser.Math.Distance.Between(pointer.x, pointer.y, pad.x, pad.y);
         if (d < best) {
           best = d;
@@ -686,14 +852,16 @@
     clearSelection() {
       this.selectedPad = null;
       this.selectedBuild = null;
+      this.heroSelected = false;
       this.refreshSelection();
     }
 
     refreshSelection() {
-      for (const pad of BUILD_PADS) {
+      for (const pad of this.buildPads) {
         const active = pad === this.selectedPad;
         pad.base.setStrokeStyle(active ? 4 : 3, active ? 0xf5d76e : 0xb19b58, 1);
       }
+      if (this.hero?.ring) this.hero.ring.setVisible(!!this.heroSelected);
       for (const b of this.shopButtons) {
         b.bg.setStrokeStyle(this.selectedBuild === b.type ? 4 : 2, this.selectedBuild === b.type ? 0xffffff : 0x0e120c);
       }
@@ -738,7 +906,7 @@
         return;
       }
       const cfg = TOWERS[tower.type];
-      if (tower.level >= 2) {
+      if (tower.level >= cfg.upgrades.length) {
         this.say("Tower is fully upgraded.");
         return;
       }
@@ -749,8 +917,8 @@
       }
       this.gold -= cost;
       tower.level += 1;
-      tower.sprite.setScale(0.72 + tower.level * 0.06);
-      tower.label.setText("I".repeat(tower.level + 1));
+      tower.sprite.setScale(0.72 + tower.level * 0.045);
+      tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
       this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
@@ -783,7 +951,7 @@
         return;
       }
       const cfg = TOWERS[tower.type];
-      this.upgradeButton.setLabel(tower.level >= 2 ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
+      this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
       tower.rangeRing.setVisible(true);
       for (const t of this.towers) if (t !== tower) t.rangeRing.setVisible(false);
     }
@@ -824,9 +992,18 @@
         this.waveActive = false;
         this.waveIndex += 1;
         if (this.waveIndex >= WAVES.length) {
-          this.endGame(true);
+          if (this.mapIndex < MAPS.length - 1) {
+            this.audio.play("ready", 0.45);
+            this.scene.restart({
+              mapIndex: this.mapIndex + 1,
+              gold: Math.min(this.gold + 180, 650),
+              lives: Math.min(18, this.lives + 4),
+            });
+          } else {
+            this.endGame(true);
+          }
         } else {
-          this.gold += 35 + this.waveIndex * 8;
+          this.gold += 22 + this.waveIndex * 5;
           this.say(`Wave cleared. Prepare for ${WAVES[this.waveIndex].label}.`);
         }
       }
@@ -835,7 +1012,7 @@
     spawnEnemy(type) {
       const base = ENEMIES[type];
       const scale = 1 + this.waveIndex * 0.08;
-      const start = PATH[0];
+      const start = this.path[0];
       const enemy = {
         type,
         base,
@@ -870,7 +1047,7 @@
           this.moveEnemy(enemy, dt);
         }
         this.updateEnemyVisual(enemy);
-        if (enemy.seg >= PATH.length - 1) this.leakEnemy(enemy);
+        if (enemy.seg >= this.path.length - 1) this.leakEnemy(enemy);
       }
     }
 
@@ -878,8 +1055,8 @@
       let speed = enemy.speed * (enemy.slow > 0 ? 0.58 : 1);
       if (enemy.hp < enemy.maxHp * 0.3 && enemy.type === "brute") speed *= 1.18;
       let remaining = speed * dt;
-      while (remaining > 0 && enemy.seg < PATH.length - 1) {
-        const target = PATH[enemy.seg + 1];
+      while (remaining > 0 && enemy.seg < this.path.length - 1) {
+        const target = this.path[enemy.seg + 1];
         const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y);
         if (dist <= remaining) {
           enemy.x = target.x;
@@ -899,8 +1076,8 @@
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
       enemy.sprite.y += Math.sin(this.time.now * 0.008 + enemy.wobble) * (enemy.base.flying ? 4 : 1.2);
-      if (enemy.seg < PATH.length - 1) {
-        const next = PATH[enemy.seg + 1];
+      if (enemy.seg < this.path.length - 1) {
+        const next = this.path[enemy.seg + 1];
         enemy.sprite.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
       }
       enemy.barBg.setPosition(enemy.x, enemy.y - enemy.base.size - 8);
@@ -928,6 +1105,7 @@
         const x = enemy.x;
         const y = enemy.y;
         this.gold += enemy.base.bounty;
+        if (source.hero) this.addHeroXp(enemy.base.bounty);
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.removeEnemy(enemy, true);
         if (burn) this.explode(x, y, 38, 24, true);
@@ -1044,7 +1222,7 @@
       tower.cooldown -= dt;
       const alive = tower.soldiers.filter((s) => !s.dead);
       tower.soldiers = alive;
-      const wanted = tower.level >= 2 ? 2 : 1;
+      const wanted = tower.level >= 4 ? 3 : tower.level >= 2 ? 2 : 1;
       if (alive.length < wanted && tower.cooldown <= 0) {
         tower.cooldown = tower.level >= 1 ? 6.0 : 7.5;
         this.spawnSoldier(tower);
@@ -1069,6 +1247,92 @@
         soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.08 : 0;
         soldier.bar.width = Math.max(1, 20 * (soldier.hp / soldier.maxHp));
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
+      }
+    }
+
+    selectHero() {
+      this.selectedPad = null;
+      this.selectedBuild = null;
+      this.heroSelected = true;
+      this.refreshSelection();
+      this.say(`Captain L${this.hero.level}: tap the road to reposition.`);
+    }
+
+    moveHeroTo(x, y) {
+      const point = this.nearestPathPoint(x, y);
+      this.hero.targetX = point.x;
+      this.hero.targetY = point.y;
+      this.heroSelected = false;
+      this.refreshSelection();
+      this.say("Captain moving.");
+    }
+
+    updateHero(dt) {
+      const hero = this.hero;
+      if (!hero) return;
+      if (hero.dead) {
+        hero.respawn -= dt;
+        if (hero.respawn <= 0) this.respawnHero();
+        return;
+      }
+      const target = this.findEnemyNear(hero.x, hero.y, 42, false);
+      if (!target) this.moveSoldierToward(hero, hero.targetX, hero.targetY, 4, dt);
+      else if (Phaser.Math.Distance.Between(hero.x, hero.y, target.x, target.y) > 28) {
+        this.moveSoldierToward(hero, target.x, target.y, 28, dt);
+      }
+      hero.attackCooldown -= dt;
+      const attackTarget = this.findEnemyNear(hero.x, hero.y, 34, false);
+      if (attackTarget && hero.attackCooldown <= 0) {
+        hero.attackCooldown = Math.max(0.34, 0.58 - hero.level * 0.04);
+        this.damageEnemy(attackTarget, 18 + hero.level * 7, { hero: true });
+        this.audio.play("impact", 0.14, 1.1);
+      }
+      hero.hp = Math.min(hero.maxHp, hero.hp + (4 + hero.level) * dt);
+      hero.sprite.setPosition(hero.x, hero.y - 8);
+      hero.sprite.rotation = attackTarget ? Math.sin(this.time.now * 0.025) * 0.1 : 0;
+      hero.ring.setPosition(hero.x, hero.y);
+      hero.barBg.setPosition(hero.x, hero.y - 31);
+      hero.bar.setPosition(hero.x - 15, hero.y - 31);
+      hero.bar.width = Math.max(1, 30 * (hero.hp / hero.maxHp));
+      hero.levelText.setPosition(hero.x, hero.y + 18).setText(`H${hero.level}`);
+    }
+
+    respawnHero() {
+      const point = this.nearestPathPoint(this.path[1].x, this.path[1].y);
+      Object.assign(this.hero, {
+        x: point.x,
+        y: point.y,
+        targetX: point.x,
+        targetY: point.y,
+        hp: this.hero.maxHp,
+        dead: false,
+      });
+      for (const obj of [this.hero.sprite, this.hero.barBg, this.hero.bar, this.hero.levelText]) obj.setVisible(true);
+      this.say("Captain has returned.");
+    }
+
+    killHero() {
+      const hero = this.hero;
+      hero.dead = true;
+      hero.respawn = 9;
+      hero.hp = 0;
+      this.heroSelected = false;
+      hero.ring.setVisible(false);
+      for (const obj of [hero.sprite, hero.barBg, hero.bar, hero.levelText]) obj.setVisible(false);
+      this.say("Captain is recovering.");
+    }
+
+    addHeroXp(amount) {
+      const hero = this.hero;
+      if (!hero || hero.dead) return;
+      hero.xp += amount;
+      const needed = hero.level * 35;
+      if (hero.level < 5 && hero.xp >= needed) {
+        hero.xp -= needed;
+        hero.level += 1;
+        hero.maxHp += 34;
+        hero.hp = hero.maxHp;
+        this.flashText(`HERO L${hero.level}`, hero.x, hero.y - 38, COLORS.gold);
       }
     }
 
@@ -1101,10 +1365,10 @@
     }
 
     nearestPathPoint(x, y) {
-      let best = PATH[1];
+      let best = this.path[1];
       let bestD = Infinity;
-      for (let i = 0; i < PATH.length - 1; i += 1) {
-        const p = closestPointOnSegment({ x, y }, PATH[i], PATH[i + 1]);
+      for (let i = 0; i < this.path.length - 1; i += 1) {
+        const p = closestPointOnSegment({ x, y }, this.path[i], this.path[i + 1]);
         const d = Phaser.Math.Distance.Between(x, y, p.x, p.y);
         if (d < bestD) {
           best = p;
@@ -1116,6 +1380,13 @@
 
     findBlockingSoldier(enemy) {
       if (enemy.base.flying) return null;
+      if (
+        this.hero &&
+        !this.hero.dead &&
+        Phaser.Math.Distance.Between(enemy.x, enemy.y, this.hero.x, this.hero.y) < enemy.base.size + 14
+      ) {
+        return this.hero;
+      }
       for (const s of this.soldiers) {
         if (!s.dead && Phaser.Math.Distance.Between(enemy.x, enemy.y, s.x, s.y) < enemy.base.size + 12) return s;
       }
@@ -1123,8 +1394,12 @@
     }
 
     enemyMelee(enemy, soldier, dt) {
-      soldier.hp -= (enemy.type === "boss" ? 34 : enemy.type === "titan" ? 18 : 8) * dt;
-      if (soldier.hp <= 0) this.killSoldier(soldier);
+      const damage = (enemy.type === "boss" ? 34 : enemy.type === "titan" ? 18 : 8) * dt;
+      soldier.hp -= soldier.isHero ? damage * 0.7 : damage;
+      if (soldier.hp <= 0) {
+        if (soldier.isHero) this.killHero();
+        else this.killSoldier(soldier);
+      }
     }
 
     killSoldier(soldier) {
@@ -1191,7 +1466,7 @@
       for (const b of this.spellButtons || []) {
         const s = this.spells[b.spell];
         b.setLabel(s.ready > 0 ? `${b.label}\n${Math.ceil(s.ready)}` : b.label);
-        b.bg.setAlpha(s.ready > 0 ? 0.55 : 1);
+        b.setAlpha(s.ready > 0 ? 0.55 : 1);
         const pct = s.ready > 0 ? 1 - s.ready / s.cooldown : 1;
         b.cooldownBar.width = Math.max(1, 78 * pct);
         b.cooldownBar.setFillStyle(s.ready > 0 ? 0x84a9c7 : 0xaee9ff, s.ready > 0 ? 0.65 : 0.95);
@@ -1239,15 +1514,16 @@
       this.goldText.setText(`Gold ${this.gold}`);
       this.livesText.setText(`Lives ${Math.max(0, this.lives)}`);
       this.waveText.setText(`Wave ${Math.min(this.waveIndex + 1, WAVES.length)}/${WAVES.length}`);
+      this.mapText.setText(`${this.map.name} ${this.mapIndex + 1}/${MAPS.length}`);
       const remaining = this.waveActive ? this.queue.length + this.enemies.length : 0;
       const progress = this.waveTotal > 0 ? 1 - remaining / this.waveTotal : this.waveIndex / WAVES.length;
-      this.waveBar.width = Math.max(1, 108 * Phaser.Math.Clamp(progress, 0, 1));
-      this.callButton.bg.setAlpha(this.waveActive || this.gameEnded ? 0.45 : 1);
+      this.waveBar.width = Math.max(1, 86 * Phaser.Math.Clamp(progress, 0, 1));
+      this.callButton.setAlpha(this.waveActive || this.gameEnded ? 0.45 : 1);
       this.callButton.setLabel(this.waveActive ? "LIVE" : "CALL");
       this.infoText.setText(this.infoLine());
       for (const b of this.shopButtons) {
         const cfg = TOWERS[b.type];
-        b.bg.setAlpha(this.gold >= cfg.cost || this.selectedBuild === b.type ? 1 : 0.48);
+        b.setAlpha(this.gold >= cfg.cost || this.selectedBuild === b.type ? 1 : 0.48);
       }
       if (this.qaMode) {
         document.body.dataset.krcWave = String(this.waveIndex);
@@ -1263,10 +1539,12 @@
       if (this.selectedPad?.tower) {
         const tower = this.selectedPad.tower;
         const cfg = TOWERS[tower.type];
-        return `${cfg.name} L${tower.level + 1}. ${tower.level < 2 ? `Upgrade ${cfg.upgrades[tower.level]}g.` : "Fully upgraded."}`;
+        return `${cfg.name} L${tower.level + 1}. ${
+          tower.level < cfg.upgrades.length ? `Upgrade ${cfg.upgrades[tower.level]}g.` : "Fully upgraded."
+        }`;
       }
       if (this.waveActive) return `${this.queue.length} enemies queued. Defend the gate.`;
-      return "Tap CALL for the next wave, or build and upgrade first.";
+      return "Tap CALL, build/upgrade, or tap Captain to move him.";
     }
 
     endGame(victory) {
@@ -1290,8 +1568,11 @@
         })
         .setOrigin(0.5)
         .setDepth(601);
-      const btn = this.add.rectangle(W / 2, 420, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601);
-      const txt = this.add.text(W / 2, 420, "PLAY AGAIN", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
+      const btnShadow = this.add.rectangle(W / 2, 426, 180, 54, 0x050704, 0.62).setDepth(601);
+      const btn = this.add.rectangle(W / 2, 420, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
+      const btnShine = this.add.rectangle(W / 2, 407, 166, 12, 0xffffff, 0.17).setDepth(601.4);
+      const btnLip = this.add.rectangle(W / 2, 438, 166, 9, 0x000000, 0.2).setDepth(601.4);
+      const txt = this.add.text(W / 2, 418, "PLAY AGAIN", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
         this.audio.stopAll();
@@ -1300,7 +1581,7 @@
       });
       this.audio.stopMusic();
       this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
-      return [shade, blocker, title, sub, btn, txt];
+      return [shade, blocker, title, sub, btnShadow, btn, btnShine, btnLip, txt];
     }
   }
 
