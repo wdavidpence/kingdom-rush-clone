@@ -5,6 +5,7 @@
   const SHOP_Y = 642;
   const SHOP_H = 118;
   const PATH_WIDTH = 46;
+  const QA_MODE = new URLSearchParams(window.location.search).has("qa");
 
   const COLORS = {
     grass: 0x273c1f,
@@ -144,10 +145,12 @@
     }
 
     create() {
+      this.qaMode = QA_MODE;
       this.gold = 260;
       this.lives = 18;
       this.waveIndex = 0;
       this.waveActive = false;
+      this.waveTotal = 0;
       this.queue = [];
       this.spawnTimer = 0;
       this.enemies = [];
@@ -174,6 +177,7 @@
       this.createShop();
       this.showStartOverlay();
       this.input.on("pointerdown", this.handlePointer, this);
+      if (this.qaMode) document.body.dataset.krcQa = "1";
     }
 
     update(_time, deltaMs) {
@@ -361,6 +365,8 @@
       this.goldText = this.add.text(12, 10, "", { font: "bold 18px Arial", color: COLORS.gold }).setDepth(100);
       this.livesText = this.add.text(138, 10, "", { font: "bold 18px Arial", color: "#ff8a73" }).setDepth(100);
       this.waveText = this.add.text(252, 10, "", { font: "bold 18px Arial", color: COLORS.ink }).setDepth(100);
+      this.waveBarBg = this.add.rectangle(252, 35, 108, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
+      this.waveBar = this.add.rectangle(252, 35, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
         .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 250 } })
         .setOrigin(0, 0.5)
@@ -391,6 +397,7 @@
       for (const [id, x, label] of spellDefs) {
         const btn = this.makeButton(x, SHOP_Y + 91, 86, 32, label, 0x334f6b, () => this.castSpell(id));
         btn.spell = id;
+        btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 105, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102);
         this.spellButtons.push(btn);
       }
       this.infoText = this.add
@@ -608,7 +615,7 @@
 
     callWave() {
       if (this.overlayActive || this.gameEnded) return;
-      if (this.waveIndex === 0 && this.towers.length < 2) {
+      if (!this.qaMode && this.waveIndex === 0 && this.towers.length < 2) {
         this.say("Build at least two towers before the first wave.");
         return;
       }
@@ -623,6 +630,7 @@
       for (const [type, count] of wave.packs) {
         for (let i = 0; i < count; i += 1) this.queue.push(type);
       }
+      this.waveTotal = this.queue.length;
       this.waveActive = true;
       this.spawnTimer = 0.1;
       this.audio.play("start", 0.35, 1.08);
@@ -662,6 +670,7 @@
         hp: Math.round(base.hp * scale),
         maxHp: Math.round(base.hp * scale),
         speed: base.speed * (1 + this.waveIndex * 0.015),
+        wobble: Math.random() * Math.PI * 2,
         slow: 0,
         blockedBy: null,
         dead: false,
@@ -714,6 +723,11 @@
       enemy.sprite.setPosition(enemy.x, enemy.y);
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
+      enemy.sprite.y += Math.sin(this.time.now * 0.008 + enemy.wobble) * (enemy.base.flying ? 4 : 1.2);
+      if (enemy.seg < PATH.length - 1) {
+        const next = PATH[enemy.seg + 1];
+        enemy.sprite.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
+      }
       enemy.barBg.setPosition(enemy.x, enemy.y - enemy.base.size - 8);
       enemy.bar.setPosition(enemy.x - 14, enemy.y - enemy.base.size - 8);
       enemy.bar.width = Math.max(1, 28 * (enemy.hp / enemy.maxHp));
@@ -862,17 +876,30 @@
         const target = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
         if (target) {
           soldier.target = target;
+          this.moveSoldierToward(soldier, target.x, target.y, 28, dt);
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
             this.damageEnemy(target, cfg.damage[tower.level], {});
             this.audio.play("impact", 0.12, 1.25);
           }
+        } else {
+          soldier.target = null;
+          this.moveSoldierToward(soldier, soldier.homeX, soldier.homeY, 6, dt);
         }
         soldier.hp = Math.min(soldier.maxHp, soldier.hp + 2 * dt);
         soldier.sprite.setPosition(soldier.x, soldier.y - 4);
+        soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.08 : 0;
         soldier.bar.width = Math.max(1, 20 * (soldier.hp / soldier.maxHp));
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
       }
+    }
+
+    moveSoldierToward(soldier, x, y, stopDistance, dt) {
+      const d = Phaser.Math.Distance.Between(soldier.x, soldier.y, x, y);
+      if (d <= stopDistance) return;
+      const step = Math.min(d - stopDistance, 52 * dt);
+      soldier.x += ((x - soldier.x) / d) * step;
+      soldier.y += ((y - soldier.y) / d) * step;
     }
 
     spawnSoldier(tower) {
@@ -881,6 +908,8 @@
       const soldier = {
         x: point.x,
         y: point.y,
+        homeX: point.x,
+        homeY: point.y,
         hp: maxHp,
         maxHp,
         tower,
@@ -955,12 +984,18 @@
         const target = this.enemies.reduce((best, e) => (!best || e.hp > best.hp ? e : best), null);
         if (!target) {
           this.say("No target for Meteor.");
+          this.audio.tone(150, 0.07, "sawtooth", 0.04);
           return;
         }
         this.explode(target.x, target.y, 72, 270, true);
         this.flashText("METEOR", target.x, target.y - 50, "#ffd37a");
       }
       if (id === "frost") {
+        if (!this.enemies.length) {
+          this.say("No enemies to freeze.");
+          this.audio.tone(150, 0.07, "sawtooth", 0.04);
+          return;
+        }
         for (const enemy of this.enemies) enemy.slow = Math.max(enemy.slow, 4.2);
         this.flashText("FROST", W / 2, 312, "#aee9ff");
         this.cameras.main.flash(140, 130, 210, 255, false);
@@ -979,6 +1014,9 @@
         const s = this.spells[b.spell];
         b.setLabel(s.ready > 0 ? `${b.label}\n${Math.ceil(s.ready)}` : b.label);
         b.bg.setAlpha(s.ready > 0 ? 0.55 : 1);
+        const pct = s.ready > 0 ? 1 - s.ready / s.cooldown : 1;
+        b.cooldownBar.width = Math.max(1, 78 * pct);
+        b.cooldownBar.setFillStyle(s.ready > 0 ? 0x84a9c7 : 0xaee9ff, s.ready > 0 ? 0.65 : 0.95);
       }
     }
 
@@ -1023,12 +1061,22 @@
       this.goldText.setText(`Gold ${this.gold}`);
       this.livesText.setText(`Lives ${Math.max(0, this.lives)}`);
       this.waveText.setText(`Wave ${Math.min(this.waveIndex + 1, WAVES.length)}/${WAVES.length}`);
+      const remaining = this.waveActive ? this.queue.length + this.enemies.length : 0;
+      const progress = this.waveTotal > 0 ? 1 - remaining / this.waveTotal : this.waveIndex / WAVES.length;
+      this.waveBar.width = Math.max(1, 108 * Phaser.Math.Clamp(progress, 0, 1));
       this.callButton.bg.setAlpha(this.waveActive || this.gameEnded ? 0.45 : 1);
       this.callButton.setLabel(this.waveActive ? "LIVE" : "CALL");
       this.infoText.setText(this.infoLine());
       for (const b of this.shopButtons) {
         const cfg = TOWERS[b.type];
         b.bg.setAlpha(this.gold >= cfg.cost || this.selectedBuild === b.type ? 1 : 0.48);
+      }
+      if (this.qaMode) {
+        document.body.dataset.krcWave = String(this.waveIndex);
+        document.body.dataset.krcEnemies = String(this.enemies.length);
+        document.body.dataset.krcQueue = String(this.queue.length);
+        document.body.dataset.krcTowers = String(this.towers.length);
+        document.body.dataset.krcLives = String(this.lives);
       }
     }
 
@@ -1068,9 +1116,11 @@
       const txt = this.add.text(W / 2, 420, "PLAY AGAIN", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
+        this.audio.stopAll();
         this.overlayActive = false;
         this.scene.restart();
       });
+      this.audio.stopMusic();
       this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
       return [shade, blocker, title, sub, btn, txt];
     }
@@ -1128,6 +1178,19 @@
       } catch (_e) {
         this.musicStarted = false;
       }
+    }
+
+    stopMusic() {
+      const music = this.samples.music;
+      if (music?.isPlaying) music.stop();
+      this.musicStarted = false;
+    }
+
+    stopAll() {
+      for (const sample of Object.values(this.samples)) {
+        if (sample?.isPlaying) sample.stop();
+      }
+      this.musicStarted = false;
     }
 
     tone(freq, duration = 0.08, type = "square", volume = 0.025, delay = 0) {
