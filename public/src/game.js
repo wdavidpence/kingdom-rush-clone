@@ -210,113 +210,274 @@
     }
 
     makeTextures() {
-      const g = this.add.graphics();
-
-      const tower = (key, body, roof, accent, mark) => {
-        g.clear();
-        g.fillStyle(0x000000, 0.28);
-        g.fillEllipse(28, 47, 46, 13);
-        g.fillStyle(0x6b5637, 1);
-        g.fillRoundedRect(13, 22, 30, 26, 4);
-        g.lineStyle(3, 0x2b2116, 0.8);
-        g.strokeRoundedRect(13, 22, 30, 26, 4);
-        g.fillStyle(body, 1);
-        g.fillRoundedRect(18, 27, 20, 16, 3);
-        g.fillStyle(roof, 1);
-        g.fillTriangle(8, 25, 28, 7, 48, 25);
-        g.lineStyle(3, accent, 1);
-        g.strokeTriangle(8, 25, 28, 7, 48, 25);
-        g.fillStyle(accent, 1);
-        if (mark === "arrow") {
-          g.fillRect(26, 9, 4, 27);
-          g.fillTriangle(28, 5, 19, 21, 37, 21);
-        } else if (mark === "rune") {
-          g.lineStyle(4, accent, 1);
-          g.strokeCircle(28, 25, 9);
-          g.lineBetween(22, 31, 34, 19);
-        } else if (mark === "bomb") {
-          g.fillCircle(28, 20, 9);
-          g.lineStyle(2, 0xffe4a2, 1);
-          g.lineBetween(32, 13, 38, 7);
-        } else {
-          g.fillRoundedRect(20, 17, 16, 20, 4);
-          g.lineStyle(2, 0x3c2d19, 1);
-          g.lineBetween(20, 24, 36, 24);
-        }
-        g.generateTexture(key, 56, 56);
+      const make = (key, w, h, draw) => {
+        if (this.textures.exists(key)) this.textures.remove(key);
+        const texture = this.textures.createCanvas(key, w, h);
+        const ctx = texture.getContext();
+        ctx.clearRect(0, 0, w, h);
+        draw(ctx, w, h);
+        texture.refresh();
       };
 
-      tower("tower_archer", 0x507a3b, 0x7fbf4f, 0xf3e9a9, "arrow");
-      tower("tower_mage", 0x4b4188, 0x8678ff, 0xd7c7ff, "rune");
-      tower("tower_artillery", 0x81562f, 0xd6903a, 0xffdda0, "bomb");
-      tower("tower_barracks", 0x78663a, 0xd6bf64, 0xfff0a8, "shield");
-
-      const enemy = (key, color, accent, kind) => {
-        g.clear();
-        g.fillStyle(0x000000, 0.26);
-        g.fillEllipse(25, 32, 36, 10);
-        if (kind === "flyer") {
-          g.fillStyle(0xcef7ff, 0.58);
-          g.fillEllipse(13, 21, 22, 12);
-          g.fillEllipse(37, 21, 22, 12);
+      const ellipse = (ctx, x, y, rx, ry, fill, stroke = null, line = 1) => {
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
         }
-        g.fillStyle(color, 1);
-        g.fillCircle(25, 23, kind === "boss" ? 18 : kind === "titan" ? 15 : 13);
-        g.lineStyle(3, accent, 0.9);
-        g.strokeCircle(25, 23, kind === "boss" ? 17 : kind === "titan" ? 14 : 12);
-        g.fillStyle(0x1b1a12, 1);
-        g.fillCircle(20, 20, 2);
-        g.fillCircle(30, 20, 2);
-        if (kind === "shield") {
-          g.fillStyle(0xd9e2e8, 0.95);
-          g.fillRoundedRect(14, 24, 22, 13, 4);
-        } else if (kind === "ember") {
-          g.fillStyle(0xffd166, 1);
-          g.fillTriangle(25, 5, 18, 18, 32, 18);
-        } else if (kind === "brute" || kind === "titan" || kind === "boss") {
-          g.fillStyle(accent, 1);
-          g.fillRect(15, 11, 20, 5);
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = line;
+          ctx.stroke();
         }
-        g.generateTexture(key, 50, 44);
+      };
+      const rounded = (ctx, x, y, w, h, r, fill, stroke = null, line = 1) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = line;
+          ctx.stroke();
+        }
+      };
+      const poly = (ctx, points, fill, stroke = null, line = 1) => {
+        ctx.beginPath();
+        ctx.moveTo(points[0][0], points[0][1]);
+        for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i][0], points[i][1]);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = line;
+          ctx.stroke();
+        }
+      };
+      const gradient = (ctx, x0, y0, x1, y1, stops) => {
+        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+        for (const [pos, color] of stops) grad.addColorStop(pos, color);
+        return grad;
       };
 
-      enemy("enemy_scout", 0xbfe769, 0x557a34, "scout");
-      enemy("enemy_brute", 0xe4a25d, 0x7b3f25, "brute");
-      enemy("enemy_shield", 0xb7bfca, 0x5d6b79, "shield");
-      enemy("enemy_ember", 0xe86240, 0xffba5e, "ember");
-      enemy("enemy_flyer", 0x73d9ff, 0x2e78a5, "flyer");
-      enemy("enemy_titan", 0x8e8379, 0x4a4038, "titan");
-      enemy("enemy_boss", 0xcd65e6, 0x652c7a, "boss");
+      const tower = (key, cfg) =>
+        make(key, 72, 72, (ctx) => {
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ellipse(ctx, 36, 58, 27, 8, "rgba(0,0,0,.34)");
+          rounded(ctx, 18, 31, 36, 26, 6, gradient(ctx, 18, 31, 54, 58, [[0, cfg.wallHi], [0.55, cfg.wall], [1, cfg.wallLo]]), "#2b2418", 2.2);
+          for (let x = 23; x <= 45; x += 10) {
+            ctx.strokeStyle = "rgba(255,238,190,.23)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, 34);
+            ctx.lineTo(x - 3, 53);
+            ctx.stroke();
+          }
+          poly(ctx, [[11, 32], [36, 9], [61, 32]], gradient(ctx, 11, 9, 61, 35, [[0, cfg.roofHi], [0.55, cfg.roof], [1, cfg.roofLo]]), "#21170f", 2.5);
+          ctx.strokeStyle = cfg.trim;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(16, 31);
+          ctx.lineTo(36, 13);
+          ctx.lineTo(56, 31);
+          ctx.stroke();
+          rounded(ctx, 29, 41, 14, 17, 4, "#1d160f", "rgba(255,238,180,.24)", 1);
+          ctx.fillStyle = "rgba(255,255,255,.2)";
+          ctx.fillRect(23, 35, 19, 3);
+          if (cfg.mark === "archer") {
+            ctx.strokeStyle = "#f4e6ad";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(36, 25, 10, -1.35, 1.35);
+            ctx.stroke();
+            ctx.strokeStyle = "#5a351e";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(36, 14);
+            ctx.lineTo(36, 36);
+            ctx.stroke();
+            poly(ctx, [[43, 23], [58, 19], [48, 29]], "#d7b35f", "#5a351e", 1);
+          } else if (cfg.mark === "mage") {
+            ellipse(ctx, 36, 26, 12, 12, "rgba(118,105,255,.35)", "#e2d6ff", 3);
+            ctx.strokeStyle = "#f2eaff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(27, 33);
+            ctx.lineTo(36, 16);
+            ctx.lineTo(45, 33);
+            ctx.moveTo(29, 27);
+            ctx.lineTo(43, 27);
+            ctx.stroke();
+          } else if (cfg.mark === "artillery") {
+            rounded(ctx, 28, 16, 17, 18, 5, "#3a2b20", "#f5c877", 2);
+            ctx.strokeStyle = "#1a120d";
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(42, 20);
+            ctx.lineTo(58, 13);
+            ctx.stroke();
+            ellipse(ctx, 59, 13, 4, 4, "#ffcf72", "#51311e", 1.5);
+          } else {
+            rounded(ctx, 26, 18, 20, 20, 6, gradient(ctx, 26, 18, 46, 38, [[0, "#fff0a8"], [1, "#9d7d37"]]), "#3c2d19", 2);
+            ctx.strokeStyle = "#5a421e";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(36, 20);
+            ctx.lineTo(36, 37);
+            ctx.moveTo(28, 28);
+            ctx.lineTo(44, 28);
+            ctx.stroke();
+          }
+        });
 
-      g.clear();
-      g.fillStyle(0xf8e8a0, 1);
-      g.fillTriangle(2, 8, 24, 2, 11, 15);
-      g.fillStyle(0x6f4a27, 1);
-      g.fillRect(6, 7, 18, 3);
-      g.generateTexture("projectile_arrow", 28, 18);
-      g.clear();
-      g.fillStyle(0x9c8cff, 1);
-      g.fillCircle(9, 9, 8);
-      g.lineStyle(2, 0xe3d8ff, 1);
-      g.strokeCircle(9, 9, 6);
-      g.generateTexture("projectile_magic", 18, 18);
-      g.clear();
-      g.fillStyle(0x2b241b, 1);
-      g.fillCircle(10, 10, 8);
-      g.fillStyle(0xffb45a, 1);
-      g.fillCircle(15, 5, 3);
-      g.generateTexture("projectile_bomb", 22, 22);
-      g.clear();
-      g.fillStyle(0x000000, 0.25);
-      g.fillEllipse(16, 29, 24, 8);
-      g.fillStyle(0xf0df8a, 1);
-      g.fillCircle(16, 14, 8);
-      g.fillStyle(0x6d5830, 1);
-      g.fillRoundedRect(8, 20, 16, 12, 3);
-      g.lineStyle(2, 0x332918, 1);
-      g.strokeRoundedRect(8, 20, 16, 12, 3);
-      g.generateTexture("soldier_guard", 32, 36);
-      g.destroy();
+      tower("tower_archer", { wallHi: "#7fa257", wall: "#567c3f", wallLo: "#314b2c", roofHi: "#a5d065", roof: "#6fa546", roofLo: "#3e6f32", trim: "#f5e7a6", mark: "archer" });
+      tower("tower_mage", { wallHi: "#8375d8", wall: "#524994", wallLo: "#2e2c63", roofHi: "#b6a9ff", roof: "#7867db", roofLo: "#463b90", trim: "#eadfff", mark: "mage" });
+      tower("tower_artillery", { wallHi: "#a87943", wall: "#78512f", wallLo: "#46311f", roofHi: "#e7a950", roof: "#b87431", roofLo: "#6e421f", trim: "#ffdf9a", mark: "artillery" });
+      tower("tower_barracks", { wallHi: "#9d8746", wall: "#736138", wallLo: "#433722", roofHi: "#ead26a", roof: "#b99c43", roofLo: "#725b28", trim: "#fff0aa", mark: "barracks" });
+
+      const enemy = (key, cfg) =>
+        make(key, 72, 62, (ctx) => {
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ellipse(ctx, 36, 48, cfg.shadow || 22, 7, "rgba(0,0,0,.32)");
+          if (cfg.kind === "flyer") {
+            ellipse(ctx, 20, 25, 17, 8, "rgba(206,247,255,.48)", "#9beaff", 1.4);
+            ellipse(ctx, 52, 25, 17, 8, "rgba(206,247,255,.48)", "#9beaff", 1.4);
+          }
+          if (cfg.kind === "shield") rounded(ctx, 20, 31, 32, 19, 6, gradient(ctx, 20, 31, 52, 50, [[0, "#eef4f5"], [1, "#7a8794"]]), "#3a4450", 2);
+          const body = gradient(ctx, 18, 12, 54, 46, [[0, cfg.hi], [0.45, cfg.mid], [1, cfg.lo]]);
+          if (cfg.kind !== "flyer") {
+            poly(ctx, [[20, 37], [14, 43], [25, 42]], cfg.lo, cfg.outline, 1);
+            poly(ctx, [[52, 37], [58, 43], [47, 42]], cfg.lo, cfg.outline, 1);
+          }
+          ellipse(ctx, 36, 29, cfg.rx, cfg.ry, body, cfg.outline, 2.5);
+          if (cfg.kind === "scout") {
+            poly(ctx, [[23, 22], [14, 16], [19, 29]], cfg.mid, cfg.outline, 1.2);
+            poly(ctx, [[49, 22], [58, 16], [53, 29]], cfg.mid, cfg.outline, 1.2);
+          }
+          ellipse(ctx, 28, 25, 2.2, 2.6, "#f6f0c2");
+          ellipse(ctx, 44, 25, 2.2, 2.6, "#f6f0c2");
+          ellipse(ctx, 29, 25, 1.2, 1.5, "#11100b");
+          ellipse(ctx, 43, 25, 1.2, 1.5, "#11100b");
+          ctx.strokeStyle = "#17130e";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(24, 20);
+          ctx.lineTo(32, 23);
+          ctx.moveTo(48, 20);
+          ctx.lineTo(40, 23);
+          ctx.stroke();
+          ctx.strokeStyle = cfg.outline;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(30, 36);
+          ctx.lineTo(43, 34);
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(255,255,255,.22)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(30, 20, 7, Math.PI, Math.PI * 1.55);
+          ctx.stroke();
+          if (cfg.kind === "brute" || cfg.kind === "titan" || cfg.kind === "boss") {
+            rounded(ctx, 21, 11, 30, 8, 3, cfg.outline, "#24180f", 1.4);
+            ellipse(ctx, 22, 12, 5, 6, cfg.horn || "#e6d0aa", "#33261c", 1);
+            ellipse(ctx, 50, 12, 5, 6, cfg.horn || "#e6d0aa", "#33261c", 1);
+          }
+          if (cfg.kind === "ember") {
+            poly(ctx, [[36, 2], [26, 22], [35, 17], [31, 34], [47, 13], [39, 17]], "#ffd166", "#7d2d1c", 1.4);
+            ellipse(ctx, 36, 31, 9, 13, "rgba(255,213,89,.35)");
+          }
+          if (cfg.kind === "boss") {
+            ellipse(ctx, 36, 10, 10, 5, "#f1d2ff", "#5d2870", 1.5);
+            ctx.strokeStyle = "#f1d2ff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(26, 10);
+            ctx.lineTo(20, 2);
+            ctx.moveTo(46, 10);
+            ctx.lineTo(52, 2);
+            ctx.stroke();
+          }
+        });
+
+      enemy("enemy_scout", { kind: "scout", rx: 15, ry: 15, hi: "#d7f187", mid: "#9dce56", lo: "#537b34", outline: "#345122" });
+      enemy("enemy_brute", { kind: "brute", rx: 18, ry: 17, hi: "#f2bf78", mid: "#c5773d", lo: "#6b3f27", outline: "#5a321f" });
+      enemy("enemy_shield", { kind: "shield", rx: 17, ry: 16, hi: "#d9e1e8", mid: "#aab5bf", lo: "#66727f", outline: "#46515d" });
+      enemy("enemy_ember", { kind: "ember", rx: 16, ry: 17, hi: "#ffb066", mid: "#e45f3c", lo: "#7d2d1c", outline: "#662216" });
+      enemy("enemy_flyer", { kind: "flyer", rx: 14, ry: 14, hi: "#c8f6ff", mid: "#69cbe8", lo: "#2c7195", outline: "#245d78", shadow: 16 });
+      enemy("enemy_titan", { kind: "titan", rx: 21, ry: 20, hi: "#b4aaa1", mid: "#81776e", lo: "#49413b", outline: "#342c27", horn: "#d7c3a4", shadow: 27 });
+      enemy("enemy_boss", { kind: "boss", rx: 25, ry: 23, hi: "#f08cff", mid: "#a948c6", lo: "#55256b", outline: "#3b174c", horn: "#f1d2ff", shadow: 31 });
+
+      make("projectile_arrow", 34, 18, (ctx) => {
+        poly(ctx, [[2, 9], [24, 3], [16, 9], [24, 15]], "#f8e8a0", "#5a371e", 1.1);
+        ctx.strokeStyle = "#6f4a27";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(7, 9);
+        ctx.lineTo(31, 9);
+        ctx.stroke();
+      });
+      make("projectile_magic", 24, 24, (ctx) => {
+        ellipse(ctx, 12, 12, 10, 10, "rgba(156,140,255,.55)", "#eadfff", 2);
+        ellipse(ctx, 12, 12, 5, 5, "#f4eeff");
+      });
+      make("projectile_bomb", 28, 28, (ctx) => {
+        ellipse(ctx, 13, 15, 10, 10, gradient(ctx, 5, 5, 22, 24, [[0, "#5a4b3b"], [1, "#17110d"]]), "#0b0806", 1.5);
+        ellipse(ctx, 19, 7, 4, 4, "#ffbd58", "#69381d", 1);
+        ctx.strokeStyle = "#ffe0a6";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(20, 5);
+        ctx.lineTo(25, 1);
+        ctx.stroke();
+      });
+      make("soldier_guard", 44, 48, (ctx) => {
+        ellipse(ctx, 22, 42, 16, 5, "rgba(0,0,0,.3)");
+        ellipse(ctx, 22, 13, 8, 8, gradient(ctx, 14, 5, 30, 21, [[0, "#fff0a8"], [1, "#a9873f"]]), "#3e2d18", 1.8);
+        rounded(ctx, 12, 21, 20, 18, 5, gradient(ctx, 12, 21, 32, 39, [[0, "#8f7542"], [1, "#4f3b22"]]), "#2e2115", 1.8);
+        rounded(ctx, 25, 18, 13, 17, 4, gradient(ctx, 25, 18, 38, 35, [[0, "#fff2b0"], [1, "#8f7134"]]), "#3e2d18", 1.6);
+        ctx.strokeStyle = "#d9c57d";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(9, 24);
+        ctx.lineTo(4, 33);
+        ctx.moveTo(33, 25);
+        ctx.lineTo(40, 17);
+        ctx.stroke();
+        ellipse(ctx, 19, 12, 1.5, 1.8, "#15120c");
+        ellipse(ctx, 25, 12, 1.5, 1.8, "#15120c");
+      });
+      make("tree_pine", 40, 56, (ctx) => {
+        ellipse(ctx, 20, 49, 14, 4, "rgba(0,0,0,.22)");
+        rounded(ctx, 17, 34, 6, 15, 2, "#5a3d24");
+        poly(ctx, [[20, 4], [6, 28], [14, 25], [4, 40], [36, 40], [26, 25], [34, 28]], gradient(ctx, 8, 4, 32, 42, [[0, "#6f9b4c"], [1, "#244522"]]), "#162c16", 1.3);
+        ctx.strokeStyle = "rgba(219,240,169,.25)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(18, 13);
+        ctx.lineTo(13, 27);
+        ctx.moveTo(24, 24);
+        ctx.lineTo(30, 36);
+        ctx.stroke();
+      });
+      make("rock_moss", 28, 20, (ctx) => {
+        ellipse(ctx, 14, 14, 12, 5, "rgba(0,0,0,.22)");
+        rounded(ctx, 5, 4, 19, 11, 5, gradient(ctx, 4, 4, 24, 17, [[0, "#8d9184"], [1, "#464c42"]]), "#2f352d", 1.2);
+        ellipse(ctx, 10, 7, 5, 2, "rgba(166,205,108,.5)");
+      });
     }
 
     drawMap() {
@@ -346,13 +507,13 @@
         const y = 88 + ((i * 137) % 520);
         const nearRoad = PATH.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
         if (nearRoad) continue;
-        this.add.circle(x, y, 8 + (i % 3) * 3, 0x1b2d19, 0.7).setDepth(-16);
-        this.add.triangle(x, y - 8, 0, 18, 12, 0, 24, 18, i % 2 ? 0x496f37 : 0x567c3e, 0.92).setDepth(-15);
+        this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15);
       }
       for (let i = 0; i < 18; i += 1) {
         const x = 18 + ((i * 67) % 384);
         const y = 92 + ((i * 59) % 516);
-        this.add.circle(x, y, 2, i % 2 ? 0xeed27a : 0xbadf7b, 0.75).setDepth(-6);
+        if (i % 3 === 0) this.add.image(x, y, "rock_moss").setScale(0.72).setDepth(-6);
+        else this.add.circle(x, y, 2, i % 2 ? 0xeed27a : 0xbadf7b, 0.75).setDepth(-6);
       }
       this.add.rectangle(397, 596, 24, 58, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
       this.add.rectangle(397, 596, 12, 42, 0x15100c, 0.9).setDepth(-4);
@@ -558,7 +719,7 @@
         soldiers: [],
       };
       pad.tower = tower;
-      tower.sprite = this.add.image(pad.x, pad.y - 5, `tower_${type}`).setScale(0.9).setDepth(30);
+      tower.sprite = this.add.image(pad.x, pad.y - 5, `tower_${type}`).setScale(0.72).setDepth(30);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.add.circle(pad.x, pad.y, cfg.range[0], cfg.color, 0.08).setStrokeStyle(1, cfg.color, 0.22).setDepth(20).setVisible(false);
       this.towers.push(tower);
@@ -588,7 +749,7 @@
       }
       this.gold -= cost;
       tower.level += 1;
-      tower.sprite.setScale(0.9 + tower.level * 0.08);
+      tower.sprite.setScale(0.72 + tower.level * 0.06);
       tower.label.setText("I".repeat(tower.level + 1));
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
@@ -689,7 +850,7 @@
         blockedBy: null,
         dead: false,
       };
-      enemy.sprite = this.add.image(enemy.x, enemy.y, `enemy_${type}`).setScale(base.size / 18).setDepth(40);
+      enemy.sprite = this.add.image(enemy.x, enemy.y, `enemy_${type}`).setScale(base.size / 28).setDepth(40);
       enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
@@ -933,7 +1094,7 @@
         attackCooldown: 0.2,
         dead: false,
       };
-      soldier.sprite = this.add.image(soldier.x, soldier.y - 4, "soldier_guard").setDepth(44);
+      soldier.sprite = this.add.image(soldier.x, soldier.y - 4, "soldier_guard").setScale(0.78).setDepth(44);
       soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
       tower.soldiers.push(soldier);
       this.soldiers.push(soldier);
