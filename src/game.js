@@ -235,6 +235,11 @@
         frost: { name: "Frost", ready: 0, cooldown: 22 },
         rally: { name: "Rally", ready: 0, cooldown: 28 },
       };
+      this.heroAbilities = {
+        charge: { name: "Charge", ready: 0, cooldown: 16 },
+        banner: { name: "Banner", ready: 0, cooldown: 24 },
+        heal: { name: "Heal", ready: 0, cooldown: 28 },
+      };
       if (this.qaMode) {
         const startWave = Number(new URLSearchParams(window.location.search).get("startWave"));
         if (Number.isInteger(startWave) && startWave >= 1 && startWave <= WAVES.length) this.waveIndex = startWave - 1;
@@ -640,6 +645,7 @@
         xp: 0,
         attackCooldown: 0,
         respawn: 0,
+        commandTime: 0,
         dead: false,
         isHero: true,
       };
@@ -695,6 +701,18 @@
         btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 105, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102);
         this.spellButtons.push(btn);
       }
+      this.heroButtons = [];
+      const heroDefs = [
+        ["charge", 63, "CHG"],
+        ["banner", 166, "BAN"],
+        ["heal", 269, "HEAL"],
+      ];
+      for (const [id, x, label] of heroDefs) {
+        const btn = this.makeButton(x, SHOP_Y + 33, 92, 54, label, 0x4f6f9f, () => this.castHeroAbility(id));
+        btn.ability = id;
+        btn.cooldownBar = this.add.rectangle(x - 42, SHOP_Y + 55, 1, 4, 0xf5d76e, 0.95).setOrigin(0, 0.5).setDepth(102);
+        this.heroButtons.push(btn);
+      }
       this.infoText = this.add
         .text(12, SHOP_Y + 61, "Tap a tower type, then tap a build pad.", {
           font: "12px Arial",
@@ -702,6 +720,7 @@
           wordWrap: { width: 330 },
         })
         .setDepth(100);
+      this.setHeroPanel(false);
     }
 
     makeButton(x, y, w, h, label, color, cb) {
@@ -750,7 +769,20 @@
         setAlpha: (value) => {
           for (const obj of [shadow, bg, shine, lip, text]) obj.setAlpha(value);
         },
+        setVisible: (value) => {
+          for (const obj of [shadow, bg, shine, lip, text]) obj.setVisible(value);
+          if (value) bg.setInteractive({ useHandCursor: true });
+          else bg.disableInteractive();
+        },
       };
+    }
+
+    setHeroPanel(active) {
+      const normalButtons = [...(this.shopButtons || []), this.upgradeButton, this.sellButton, ...(this.spellButtons || [])].filter(Boolean);
+      for (const btn of normalButtons) btn.setVisible(!active);
+      for (const btn of this.heroButtons || []) btn.setVisible(active);
+      for (const btn of this.spellButtons || []) btn.cooldownBar.setVisible(!active);
+      for (const btn of this.heroButtons || []) btn.cooldownBar.setVisible(active);
     }
 
     showStartOverlay() {
@@ -798,12 +830,12 @@
 
     handlePointer(pointer, targets) {
       if (this.overlayActive || this.gameEnded) return;
-      if (targets.length && !this.selectedBuild) return;
-      if (pointer.y < TOP_H || pointer.y > SHOP_Y) return;
       if (this.hero && !this.hero.dead && Phaser.Math.Distance.Between(pointer.x, pointer.y, this.hero.x, this.hero.y) < 30) {
         this.selectHero();
         return;
       }
+      if (targets.length && !this.selectedBuild) return;
+      if (pointer.y < TOP_H || pointer.y > SHOP_Y) return;
       if (this.heroSelected) {
         this.moveHeroTo(pointer.x, pointer.y);
         return;
@@ -832,6 +864,8 @@
       if (this.overlayActive || this.gameEnded) return;
       this.selectedBuild = this.selectedBuild === id ? null : id;
       this.selectedPad = null;
+      this.heroSelected = false;
+      this.setHeroPanel(false);
       const cfg = TOWERS[id];
       this.say(this.selectedBuild ? `${cfg.name}: ${cfg.desc}` : "Build selection cleared.");
       this.refreshSelection();
@@ -840,6 +874,8 @@
     selectPad(pad) {
       this.selectedPad = pad;
       this.selectedBuild = null;
+      this.heroSelected = false;
+      this.setHeroPanel(false);
       this.refreshSelection();
       if (pad.tower) {
         const cfg = TOWERS[pad.tower.type];
@@ -853,6 +889,7 @@
       this.selectedPad = null;
       this.selectedBuild = null;
       this.heroSelected = false;
+      this.setHeroPanel(false);
       this.refreshSelection();
     }
 
@@ -894,6 +931,7 @@
       this.audio.play("ready", 0.28);
       this.selectedPad = pad;
       this.selectedBuild = null;
+      this.setHeroPanel(false);
       this.refreshSelection();
       this.say(`${cfg.name} built.`);
     }
@@ -1229,18 +1267,26 @@
       }
       for (const soldier of alive) {
         soldier.attackCooldown -= dt;
-        const target = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
-        if (target) {
-          soldier.target = target;
-          this.moveSoldierToward(soldier, target.x, target.y, 28, dt);
+        soldier.arrowCooldown = Math.max(0, (soldier.arrowCooldown || 0) - dt);
+        const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
+        if (meleeTarget) {
+          soldier.target = meleeTarget;
+          this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 28, dt);
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
-            this.damageEnemy(target, cfg.damage[tower.level], {});
+            this.damageEnemy(meleeTarget, cfg.damage[tower.level] * (this.bannerTime > 0 ? 1.18 : 1), {});
             this.audio.play("impact", 0.12, 1.25);
           }
         } else {
           soldier.target = null;
           this.moveSoldierToward(soldier, soldier.homeX, soldier.homeY, 6, dt);
+          if (tower.level >= 2 && soldier.arrowCooldown <= 0) {
+            const arrowTarget = this.findTarget(tower, cfg.range[tower.level], true);
+            if (arrowTarget) {
+              soldier.arrowCooldown = 1.15;
+              this.fireGuardArrow(soldier, arrowTarget, cfg.damage[tower.level] * (this.bannerTime > 0 ? 0.9 : 0.72));
+            }
+          }
         }
         soldier.hp = Math.min(soldier.maxHp, soldier.hp + 2 * dt);
         soldier.sprite.setPosition(soldier.x, soldier.y - 4);
@@ -1250,19 +1296,40 @@
       }
     }
 
+    fireGuardArrow(soldier, target, damage) {
+      const projectile = {
+        x: soldier.x,
+        y: soldier.y - 12,
+        target,
+        speed: 390,
+        damage,
+        magic: false,
+        slow: 0,
+        splash: 0,
+      };
+      projectile.sprite = this.add.image(projectile.x, projectile.y, "projectile_arrow").setDepth(60).setScale(0.72);
+      projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
+      this.projectiles.push(projectile);
+      this.audio.play("shoot", 0.09, 1.22);
+    }
+
     selectHero() {
       this.selectedPad = null;
       this.selectedBuild = null;
       this.heroSelected = true;
+      this.setHeroPanel(true);
       this.refreshSelection();
-      this.say(`Captain L${this.hero.level}: tap the road to reposition.`);
+      this.say(`Captain L${this.hero.level}: abilities ready below, or tap road to move.`);
     }
 
     moveHeroTo(x, y) {
       const point = this.nearestPathPoint(x, y);
       this.hero.targetX = point.x;
       this.hero.targetY = point.y;
+      this.hero.commandTime = 2.0;
+      this.hero.blockedBy = null;
       this.heroSelected = false;
+      this.setHeroPanel(false);
       this.refreshSelection();
       this.say("Captain moving.");
     }
@@ -1270,21 +1337,25 @@
     updateHero(dt) {
       const hero = this.hero;
       if (!hero) return;
+      for (const ability of Object.values(this.heroAbilities)) ability.ready = Math.max(0, ability.ready - dt);
+      this.bannerTime = Math.max(0, (this.bannerTime || 0) - dt);
       if (hero.dead) {
         hero.respawn -= dt;
         if (hero.respawn <= 0) this.respawnHero();
         return;
       }
-      const target = this.findEnemyNear(hero.x, hero.y, 42, false);
+      hero.commandTime = Math.max(0, hero.commandTime - dt);
+      const forcedMove = hero.commandTime > 0 && Phaser.Math.Distance.Between(hero.x, hero.y, hero.targetX, hero.targetY) > 8;
+      const target = forcedMove ? null : this.findEnemyNear(hero.x, hero.y, 42, false);
       if (!target) this.moveSoldierToward(hero, hero.targetX, hero.targetY, 4, dt);
       else if (Phaser.Math.Distance.Between(hero.x, hero.y, target.x, target.y) > 28) {
         this.moveSoldierToward(hero, target.x, target.y, 28, dt);
       }
-      hero.attackCooldown -= dt;
-      const attackTarget = this.findEnemyNear(hero.x, hero.y, 34, false);
+      hero.attackCooldown -= dt * (this.bannerTime > 0 ? 1.35 : 1);
+      const attackTarget = forcedMove ? null : this.findEnemyNear(hero.x, hero.y, 34, false);
       if (attackTarget && hero.attackCooldown <= 0) {
         hero.attackCooldown = Math.max(0.34, 0.58 - hero.level * 0.04);
-        this.damageEnemy(attackTarget, 18 + hero.level * 7, { hero: true });
+        this.damageEnemy(attackTarget, (18 + hero.level * 7) * (this.bannerTime > 0 ? 1.25 : 1), { hero: true });
         this.audio.play("impact", 0.14, 1.1);
       }
       hero.hp = Math.min(hero.maxHp, hero.hp + (4 + hero.level) * dt);
@@ -1295,6 +1366,38 @@
       hero.bar.setPosition(hero.x - 15, hero.y - 31);
       hero.bar.width = Math.max(1, 30 * (hero.hp / hero.maxHp));
       hero.levelText.setPosition(hero.x, hero.y + 18).setText(`H${hero.level}`);
+    }
+
+    castHeroAbility(id) {
+      if (this.overlayActive || this.gameEnded || !this.hero || this.hero.dead) return;
+      const ability = this.heroAbilities[id];
+      if (ability.ready > 0) {
+        this.say(`${ability.name} ready in ${Math.ceil(ability.ready)}s.`);
+        return;
+      }
+      const hero = this.hero;
+      if (id === "charge") {
+        const target = this.findEnemyNear(hero.x, hero.y, 92, false);
+        if (!target) {
+          this.say("No nearby ground target for Charge.");
+          return;
+        }
+        this.moveHeroTo(target.x, target.y);
+        hero.commandTime = 0.45;
+        this.damageEnemy(target, 85 + hero.level * 16, { hero: true, magic: true });
+        this.flashText("CHARGE", hero.x, hero.y - 42, COLORS.gold);
+      }
+      if (id === "banner") {
+        this.bannerTime = 8;
+        this.flashText("BANNER", hero.x, hero.y - 42, "#fff1a0");
+      }
+      if (id === "heal") {
+        hero.hp = Math.min(hero.maxHp, hero.hp + 110 + hero.level * 24);
+        for (const soldier of this.soldiers) soldier.hp = Math.min(soldier.maxHp, soldier.hp + 70);
+        this.flashText("HEAL", hero.x, hero.y - 42, "#9eff9c");
+      }
+      ability.ready = ability.cooldown;
+      this.audio.play(id === "charge" ? "impact" : "ready", 0.32, id === "charge" ? 0.85 : 1.05);
     }
 
     respawnHero() {
@@ -1471,6 +1574,14 @@
         b.cooldownBar.width = Math.max(1, 78 * pct);
         b.cooldownBar.setFillStyle(s.ready > 0 ? 0x84a9c7 : 0xaee9ff, s.ready > 0 ? 0.65 : 0.95);
       }
+      for (const b of this.heroButtons || []) {
+        const ability = this.heroAbilities[b.ability];
+        b.setLabel(ability.ready > 0 ? `${b.label}\n${Math.ceil(ability.ready)}` : b.label);
+        b.setAlpha(ability.ready > 0 ? 0.55 : 1);
+        const pct = ability.ready > 0 ? 1 - ability.ready / ability.cooldown : 1;
+        b.cooldownBar.width = Math.max(1, 84 * pct);
+        b.cooldownBar.setFillStyle(ability.ready > 0 ? 0xa98f44 : 0xf5d76e, ability.ready > 0 ? 0.65 : 0.95);
+      }
     }
 
     puff(x, y, color) {
@@ -1535,6 +1646,7 @@
     }
 
     infoLine() {
+      if (this.heroSelected) return "Captain: CHG hits a nearby enemy, BAN boosts melee, HEAL restores allies.";
       if (this.selectedBuild) return `${TOWERS[this.selectedBuild].name}: ${TOWERS[this.selectedBuild].desc}`;
       if (this.selectedPad?.tower) {
         const tower = this.selectedPad.tower;
