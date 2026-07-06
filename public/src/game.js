@@ -126,6 +126,23 @@
       super("game");
     }
 
+    preload() {
+      const audioPath = "assets/kenney/audio/";
+      const audioFiles = {
+        shoot: "kenney-shoot.ogg",
+        impact: "kenney-hit.ogg",
+        boom: "kenney-explosion.ogg",
+        start: "kenney-start.ogg",
+        ready: "kenney-ready.ogg",
+        fail: "kenney-gameover.ogg",
+        magic: "kenney-alien-shot.ogg",
+        music: "kenney-music.ogg",
+      };
+      for (const [key, file] of Object.entries(audioFiles)) {
+        this.load.audio(`sfx_${key}`, `${audioPath}${file}`);
+      }
+    }
+
     create() {
       this.gold = 260;
       this.lives = 18;
@@ -143,7 +160,7 @@
       this.messageTimer = 0;
       this.gameEnded = false;
       this.overlayActive = true;
-      this.audio = new SoundBox();
+      this.audio = new SoundBox(this);
       this.spells = {
         meteor: { name: "Meteor", ready: 0, cooldown: 24 },
         frost: { name: "Frost", ready: 0, cooldown: 22 },
@@ -176,20 +193,111 @@
 
     makeTextures() {
       const g = this.add.graphics();
-      g.fillStyle(0xffffff, 1);
-      g.fillCircle(18, 18, 16);
-      g.lineStyle(3, 0x000000, 0.2);
-      g.strokeCircle(18, 18, 15);
-      g.generateTexture("enemy_base", 36, 36);
+
+      const tower = (key, body, roof, accent, mark) => {
+        g.clear();
+        g.fillStyle(0x000000, 0.28);
+        g.fillEllipse(28, 47, 46, 13);
+        g.fillStyle(0x6b5637, 1);
+        g.fillRoundedRect(13, 22, 30, 26, 4);
+        g.lineStyle(3, 0x2b2116, 0.8);
+        g.strokeRoundedRect(13, 22, 30, 26, 4);
+        g.fillStyle(body, 1);
+        g.fillRoundedRect(18, 27, 20, 16, 3);
+        g.fillStyle(roof, 1);
+        g.fillTriangle(8, 25, 28, 7, 48, 25);
+        g.lineStyle(3, accent, 1);
+        g.strokeTriangle(8, 25, 28, 7, 48, 25);
+        g.fillStyle(accent, 1);
+        if (mark === "arrow") {
+          g.fillRect(26, 9, 4, 27);
+          g.fillTriangle(28, 5, 19, 21, 37, 21);
+        } else if (mark === "rune") {
+          g.lineStyle(4, accent, 1);
+          g.strokeCircle(28, 25, 9);
+          g.lineBetween(22, 31, 34, 19);
+        } else if (mark === "bomb") {
+          g.fillCircle(28, 20, 9);
+          g.lineStyle(2, 0xffe4a2, 1);
+          g.lineBetween(32, 13, 38, 7);
+        } else {
+          g.fillRoundedRect(20, 17, 16, 20, 4);
+          g.lineStyle(2, 0x3c2d19, 1);
+          g.lineBetween(20, 24, 36, 24);
+        }
+        g.generateTexture(key, 56, 56);
+      };
+
+      tower("tower_archer", 0x507a3b, 0x7fbf4f, 0xf3e9a9, "arrow");
+      tower("tower_mage", 0x4b4188, 0x8678ff, 0xd7c7ff, "rune");
+      tower("tower_artillery", 0x81562f, 0xd6903a, 0xffdda0, "bomb");
+      tower("tower_barracks", 0x78663a, 0xd6bf64, 0xfff0a8, "shield");
+
+      const enemy = (key, color, accent, kind) => {
+        g.clear();
+        g.fillStyle(0x000000, 0.26);
+        g.fillEllipse(25, 32, 36, 10);
+        if (kind === "flyer") {
+          g.fillStyle(0xcef7ff, 0.58);
+          g.fillEllipse(13, 21, 22, 12);
+          g.fillEllipse(37, 21, 22, 12);
+        }
+        g.fillStyle(color, 1);
+        g.fillCircle(25, 23, kind === "boss" ? 18 : kind === "titan" ? 15 : 13);
+        g.lineStyle(3, accent, 0.9);
+        g.strokeCircle(25, 23, kind === "boss" ? 17 : kind === "titan" ? 14 : 12);
+        g.fillStyle(0x1b1a12, 1);
+        g.fillCircle(20, 20, 2);
+        g.fillCircle(30, 20, 2);
+        if (kind === "shield") {
+          g.fillStyle(0xd9e2e8, 0.95);
+          g.fillRoundedRect(14, 24, 22, 13, 4);
+        } else if (kind === "ember") {
+          g.fillStyle(0xffd166, 1);
+          g.fillTriangle(25, 5, 18, 18, 32, 18);
+        } else if (kind === "brute" || kind === "titan" || kind === "boss") {
+          g.fillStyle(accent, 1);
+          g.fillRect(15, 11, 20, 5);
+        }
+        g.generateTexture(key, 50, 44);
+      };
+
+      enemy("enemy_scout", 0xbfe769, 0x557a34, "scout");
+      enemy("enemy_brute", 0xe4a25d, 0x7b3f25, "brute");
+      enemy("enemy_shield", 0xb7bfca, 0x5d6b79, "shield");
+      enemy("enemy_ember", 0xe86240, 0xffba5e, "ember");
+      enemy("enemy_flyer", 0x73d9ff, 0x2e78a5, "flyer");
+      enemy("enemy_titan", 0x8e8379, 0x4a4038, "titan");
+      enemy("enemy_boss", 0xcd65e6, 0x652c7a, "boss");
+
       g.clear();
-      g.fillStyle(0xffffff, 1);
-      g.fillRect(15, 2, 6, 30);
-      g.fillTriangle(18, 0, 4, 20, 32, 20);
-      g.generateTexture("tower_base", 36, 36);
+      g.fillStyle(0xf8e8a0, 1);
+      g.fillTriangle(2, 8, 24, 2, 11, 15);
+      g.fillStyle(0x6f4a27, 1);
+      g.fillRect(6, 7, 18, 3);
+      g.generateTexture("projectile_arrow", 28, 18);
       g.clear();
-      g.fillStyle(0xffffff, 1);
-      g.fillCircle(8, 8, 8);
-      g.generateTexture("orb", 16, 16);
+      g.fillStyle(0x9c8cff, 1);
+      g.fillCircle(9, 9, 8);
+      g.lineStyle(2, 0xe3d8ff, 1);
+      g.strokeCircle(9, 9, 6);
+      g.generateTexture("projectile_magic", 18, 18);
+      g.clear();
+      g.fillStyle(0x2b241b, 1);
+      g.fillCircle(10, 10, 8);
+      g.fillStyle(0xffb45a, 1);
+      g.fillCircle(15, 5, 3);
+      g.generateTexture("projectile_bomb", 22, 22);
+      g.clear();
+      g.fillStyle(0x000000, 0.25);
+      g.fillEllipse(16, 29, 24, 8);
+      g.fillStyle(0xf0df8a, 1);
+      g.fillCircle(16, 14, 8);
+      g.fillStyle(0x6d5830, 1);
+      g.fillRoundedRect(8, 20, 16, 12, 3);
+      g.lineStyle(2, 0x332918, 1);
+      g.strokeRoundedRect(8, 20, 16, 12, 3);
+      g.generateTexture("soldier_guard", 32, 36);
       g.destroy();
     }
 
@@ -214,6 +322,22 @@
 
       this.add.text(12, 83, "IN", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
       this.add.text(367, 585, "GATE", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
+
+      for (let i = 0; i < 26; i += 1) {
+        const x = 24 + ((i * 91) % 372);
+        const y = 88 + ((i * 137) % 520);
+        const nearRoad = PATH.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
+        if (nearRoad) continue;
+        this.add.circle(x, y, 8 + (i % 3) * 3, 0x1b2d19, 0.7).setDepth(-16);
+        this.add.triangle(x, y - 8, 0, 18, 12, 0, 24, 18, i % 2 ? 0x496f37 : 0x567c3e, 0.92).setDepth(-15);
+      }
+      for (let i = 0; i < 18; i += 1) {
+        const x = 18 + ((i * 67) % 384);
+        const y = 92 + ((i * 59) % 516);
+        this.add.circle(x, y, 2, i % 2 ? 0xeed27a : 0xbadf7b, 0.75).setDepth(-6);
+      }
+      this.add.rectangle(397, 596, 24, 58, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
+      this.add.rectangle(397, 596, 12, 42, 0x15100c, 0.9).setDepth(-4);
     }
 
     strokePath(graphics) {
@@ -323,6 +447,8 @@
       start.setInteractive({ useHandCursor: true });
       start.on("pointerdown", () => {
         this.audio.resume();
+        this.audio.play("start", 0.45);
+        this.audio.startMusic();
         this.overlayActive = false;
         this.overlay.destroy();
         this.say("Build two towers, then tap CALL.");
@@ -411,11 +537,11 @@
         soldiers: [],
       };
       pad.tower = tower;
-      tower.sprite = this.add.image(pad.x, pad.y - 4, "tower_base").setTint(cfg.color).setScale(1.08).setDepth(30);
-      tower.label = this.add.text(pad.x, pad.y + 1, cfg.glyph, { font: "bold 16px Arial", color: "#15180e" }).setOrigin(0.5).setDepth(31);
+      tower.sprite = this.add.image(pad.x, pad.y - 5, `tower_${type}`).setScale(0.9).setDepth(30);
+      tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.add.circle(pad.x, pad.y, cfg.range[0], cfg.color, 0.08).setStrokeStyle(1, cfg.color, 0.22).setDepth(20).setVisible(false);
       this.towers.push(tower);
-      this.audio.tone(440, 0.06, "triangle", 0.04);
+      this.audio.play("ready", 0.28);
       this.selectedPad = pad;
       this.selectedBuild = null;
       this.refreshSelection();
@@ -441,9 +567,10 @@
       }
       this.gold -= cost;
       tower.level += 1;
-      tower.sprite.setScale(1.08 + tower.level * 0.16);
+      tower.sprite.setScale(0.9 + tower.level * 0.08);
+      tower.label.setText("I".repeat(tower.level + 1));
       tower.rangeRing.setRadius(cfg.range[tower.level]);
-      this.audio.tone(620, 0.09, "triangle", 0.05);
+      this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
       this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       this.updateUpgradeLabel();
     }
@@ -498,8 +625,7 @@
       }
       this.waveActive = true;
       this.spawnTimer = 0.1;
-      this.audio.tone(260, 0.06, "square", 0.035);
-      this.audio.tone(390, 0.08, "square", 0.03, 0.07);
+      this.audio.play("start", 0.35, 1.08);
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
     }
 
@@ -540,8 +666,8 @@
         blockedBy: null,
         dead: false,
       };
-      enemy.sprite = this.add.image(enemy.x, enemy.y, "enemy_base").setTint(base.color).setScale(base.size / 18).setDepth(40);
-      enemy.nameText = this.add.text(enemy.x, enemy.y + 1, base.flying ? "F" : "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
+      enemy.sprite = this.add.image(enemy.x, enemy.y, `enemy_${type}`).setScale(base.size / 18).setDepth(40);
+      enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
       this.enemies.push(enemy);
@@ -595,7 +721,7 @@
 
     leakEnemy(enemy) {
       this.lives -= enemy.base.leak;
-      this.audio.tone(90, 0.12, "sawtooth", 0.05);
+      this.audio.play("impact", 0.45, 0.82);
       this.removeEnemy(enemy, false);
       this.flashText("-" + enemy.base.leak, 360, 88, "#ff8069");
       if (this.lives <= 0) this.endGame(false);
@@ -621,7 +747,7 @@
       for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar]) obj.destroy();
       this.enemies = this.enemies.filter((e) => e !== enemy);
       if (killed) {
-        this.audio.tone(180 + Math.random() * 60, 0.05, "triangle", 0.025);
+        this.audio.play("impact", 0.2, 0.95 + Math.random() * 0.16);
         this.puff(enemy.x, enemy.y, enemy.base.color);
       }
     }
@@ -675,10 +801,13 @@
         slow: cfg.slow?.[level] || 0,
         splash: cfg.splash?.[level] || 0,
       };
-      projectile.sprite = this.add.image(projectile.x, projectile.y, "orb").setTint(color).setDepth(60);
-      projectile.sprite.setScale(tower.type === "artillery" ? 1.25 : 0.8);
+      const key =
+        tower.type === "archer" ? "projectile_arrow" : tower.type === "artillery" ? "projectile_bomb" : "projectile_magic";
+      projectile.sprite = this.add.image(projectile.x, projectile.y, key).setDepth(60);
+      projectile.sprite.setScale(tower.type === "artillery" ? 1.1 : 0.9);
+      projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
       this.projectiles.push(projectile);
-      this.audio.tone(tower.type === "artillery" ? 150 : tower.type === "mage" ? 520 : 680, 0.035, "square", 0.012);
+      this.audio.play(tower.type === "mage" ? "magic" : "shoot", tower.type === "artillery" ? 0.2 : 0.13, tower.type === "archer" ? 1.35 : 0.95);
     }
 
     updateProjectiles(dt) {
@@ -697,6 +826,7 @@
           p.x += ((p.target.x - p.x) / d) * step;
           p.y += ((p.target.y - p.y) / d) * step;
           p.sprite.setPosition(p.x, p.y);
+          p.sprite.rotation = Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
         }
       }
     }
@@ -714,7 +844,7 @@
           this.damageEnemy(enemy, damage, { magic: fire });
         }
       }
-      this.audio.tone(120, 0.07, "sawtooth", 0.035);
+      this.audio.play("boom", 0.28, fire ? 0.92 : 1.08);
     }
 
     updateBarracks(tower, dt) {
@@ -735,11 +865,11 @@
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
             this.damageEnemy(target, cfg.damage[tower.level], {});
-            this.audio.tone(260, 0.025, "square", 0.012);
+            this.audio.play("impact", 0.12, 1.25);
           }
         }
         soldier.hp = Math.min(soldier.maxHp, soldier.hp + 2 * dt);
-        soldier.sprite.setPosition(soldier.x, soldier.y);
+        soldier.sprite.setPosition(soldier.x, soldier.y - 4);
         soldier.bar.width = Math.max(1, 20 * (soldier.hp / soldier.maxHp));
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
       }
@@ -757,7 +887,7 @@
         attackCooldown: 0.2,
         dead: false,
       };
-      soldier.sprite = this.add.circle(soldier.x, soldier.y, 10, 0xf0df8a, 1).setStrokeStyle(2, 0x4a3b22).setDepth(44);
+      soldier.sprite = this.add.image(soldier.x, soldier.y - 4, "soldier_guard").setDepth(44);
       soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
       tower.soldiers.push(soldier);
       this.soldiers.push(soldier);
@@ -840,7 +970,7 @@
         this.flashText("RALLY", W / 2, 312, "#fff1a0");
       }
       spell.ready = spell.cooldown;
-      this.audio.tone(id === "frost" ? 520 : id === "rally" ? 360 : 140, 0.16, "triangle", 0.05);
+      this.audio.play(id === "meteor" ? "boom" : "magic", id === "meteor" ? 0.4 : 0.28, id === "frost" ? 0.78 : 1.1);
     }
 
     updateSpells(dt) {
@@ -941,23 +1071,63 @@
         this.overlayActive = false;
         this.scene.restart();
       });
-      this.audio.tone(victory ? 520 : 110, 0.2, victory ? "triangle" : "sawtooth", 0.05);
+      this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
       return [shade, blocker, title, sub, btn, txt];
     }
   }
 
   class SoundBox {
-    constructor() {
+    constructor(scene) {
+      this.scene = scene;
       this.ctx = null;
       this.musicClock = 0;
       this.musicStep = 0;
+      this.musicStarted = false;
+      this.samples = {};
+      const keys = ["shoot", "impact", "boom", "start", "ready", "fail", "magic", "music"];
+      for (const key of keys) {
+        if (scene.cache.audio.exists(`sfx_${key}`)) {
+          this.samples[key] = scene.sound.add(`sfx_${key}`, {
+            volume: key === "music" ? 0.11 : 0.32,
+            loop: key === "music",
+          });
+        }
+      }
     }
 
     resume() {
       const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (this.scene?.sound?.locked) this.scene.sound.unlock();
+      if (this.scene?.sound?.context?.state === "suspended") {
+        this.scene.sound.context.resume().catch(() => {});
+      }
       if (!Ctx) return;
       if (!this.ctx) this.ctx = new Ctx();
       if (this.ctx.state === "suspended") this.ctx.resume().catch(() => {});
+    }
+
+    play(name, volume = 0.25, rate = 1) {
+      const sample = this.samples[name];
+      if (!sample) {
+        this.tone(name === "boom" ? 120 : name === "magic" ? 520 : 320, 0.08, name === "boom" ? "sawtooth" : "triangle", volume * 0.12);
+        return;
+      }
+      try {
+        sample.play({ volume, rate });
+      } catch (_e) {
+        this.tone(name === "boom" ? 120 : 320, 0.08, "triangle", volume * 0.12);
+      }
+    }
+
+    startMusic() {
+      const music = this.samples.music;
+      if (!music || this.musicStarted) return;
+      this.musicStarted = true;
+      try {
+        music.play({ volume: 0.09, loop: true });
+      } catch (_e) {
+        this.musicStarted = false;
+      }
     }
 
     tone(freq, duration = 0.08, type = "square", volume = 0.025, delay = 0) {
@@ -976,6 +1146,11 @@
     }
 
     music(dt, urgent) {
+      if (this.musicStarted) {
+        const music = this.samples.music;
+        if (music?.isPlaying) music.setRate(urgent ? 1.06 : 0.94);
+        return;
+      }
       if (!this.ctx) return;
       this.musicClock -= dt;
       if (this.musicClock > 0) return;
