@@ -835,6 +835,19 @@
       if (type === "barracks") {
         tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
         tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
+        tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(0);
+        tower.cooldown = 0.35;
+        tower.readyBadge = this.add
+          .text(pad.x, pad.y + 28, "READY", {
+            font: "bold 10px Arial",
+            color: "#d8f7a8",
+            backgroundColor: "#1a2412",
+            padding: { x: 4, y: 2 },
+          })
+          .setOrigin(0.5)
+          .setDepth(32);
+        tower.readyMeter = this.add.rectangle(pad.x - 18, pad.y + 40, 36, 4, 0x3d4a2c).setOrigin(0, 0.5).setDepth(32);
+        tower.readyFill = this.add.rectangle(pad.x - 18, pad.y + 40, 36, 4, 0x8fd45a).setOrigin(0, 0.5).setDepth(33);
       }
       this.towers.push(tower);
       this.audio.play("ready", 0.28);
@@ -884,6 +897,9 @@
       tower.rangeRing.destroy();
       tower.rallyRing?.destroy();
       tower.rallyFlag?.destroy();
+      tower.readyBadge?.destroy();
+      tower.readyMeter?.destroy();
+      tower.readyFill?.destroy();
       this.entityRegistry.transition(tower, "removed");
       for (const s of tower.soldiers) this.killSoldier(s);
       this.towers = this.towers.filter((t) => t !== tower);
@@ -1219,15 +1235,23 @@
 
     updateBarracks(tower, dt) {
       const cfg = TOWERS.barracks;
+      const readiness = window.KRCBarracksReadiness;
       tower.cooldown -= dt;
       const alive = tower.soldiers.filter((s) => !s.dead);
       tower.soldiers = alive;
-      const wanted = tower.level >= 4 ? 3 : tower.level >= 2 ? 2 : 1;
+      const wanted = readiness.wantedCount(tower.level);
       if (alive.length < wanted && tower.cooldown <= 0) {
-        tower.cooldown = tower.level >= 1 ? 6.0 : 7.5;
+        tower.trainMax = readiness.respawnCooldown(tower.level);
+        tower.cooldown = tower.trainMax;
         this.spawnSoldier(tower);
+        this.flashText("DEPLOY", tower.x, tower.y - 36, "#d8f7a8");
+        this.audio.play("ready", 0.18, 1.12);
       }
-      for (const soldier of alive) {
+      const roster = tower.soldiers.filter((s) => !s.dead);
+      tower.soldiers = roster;
+      this.refreshBarracksReadiness(tower, roster.length, wanted);
+
+      for (const soldier of roster) {
         soldier.homeX = tower.rallyX;
         soldier.homeY = tower.rallyY;
         soldier.attackCooldown -= dt;
@@ -1235,11 +1259,19 @@
         const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
         if (meleeTarget) {
           soldier.target = meleeTarget;
-          this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 28, dt);
+          meleeTarget.blockedBy = soldier;
+          this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 22, dt);
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
-            this.damageEnemy(meleeTarget, cfg.damage[tower.level] * (this.bannerTime > 0 ? 1.18 : 1), {});
-            this.audio.play("impact", 0.12, 1.25);
+            soldier.strikeCount = (soldier.strikeCount || 0) + 1;
+            const strike = readiness.meleeStrike({
+              attackerDamage: cfg.damage[tower.level],
+              bannerBonus: this.bannerTime > 0 ? 1.18 : 1,
+              isCritWindow: soldier.strikeCount % 4 === 0,
+            });
+            this.damageEnemy(meleeTarget, strike.damage, {});
+            this.meleeImpactFx(soldier, meleeTarget, strike.flash);
+            this.audio.play("impact", strike.flash === "crit" ? 0.2 : 0.12, strike.flash === "crit" ? 0.9 : 1.25);
           }
         } else {
           soldier.target = null;
@@ -1252,12 +1284,57 @@
             }
           }
         }
-        soldier.hp = Math.min(soldier.maxHp, soldier.hp + 2 * dt);
+        soldier.hp = readiness.idleRegen(soldier.hp, soldier.maxHp, dt, !!soldier.target);
         soldier.sprite.setPosition(soldier.x, soldier.y - 4);
-        soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.08 : 0;
+        soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.12 : 0;
         soldier.bar.width = Math.max(1, 20 * (soldier.hp / soldier.maxHp));
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
+        if (soldier.bar) soldier.bar.fillColor = soldier.target ? 0xf0c35a : 0x7ee06a;
       }
+    }
+
+    refreshBarracksReadiness(tower, aliveCount, wanted) {
+      if (!tower.readyBadge || !window.KRCBarracksReadiness) return;
+      const state = window.KRCBarracksReadiness.readinessState({
+        alive: aliveCount,
+        wanted,
+        cooldown: Math.max(0, tower.cooldown),
+        maxCooldown: tower.trainMax || window.KRCBarracksReadiness.respawnCooldown(tower.level),
+      });
+      tower.readyBadge.setText(state.label);
+      tower.readyBadge.setColor(
+        state.status === "ready" ? "#d8f7a8" : state.status === "training" ? "#ffe08a" : "#f0c3a0"
+      );
+      tower.readyFill.width = Math.max(2, 36 * state.progress);
+      tower.readyFill.fillColor = state.status === "ready" ? 0x8fd45a : state.status === "training" ? 0xe2b84a : 0xd4894a;
+      const show = state.status !== "ready" || this.selectedPad?.tower === tower;
+      tower.readyBadge.setVisible(show || state.status !== "ready");
+      tower.readyMeter.setVisible(state.status !== "ready");
+      tower.readyFill.setVisible(state.status !== "ready");
+    }
+
+    meleeImpactFx(soldier, enemy, flashKind) {
+      const midX = (soldier.x + enemy.x) * 0.5;
+      const midY = (soldier.y + enemy.y) * 0.5 - 8;
+      const color = flashKind === "crit" ? 0xfff1a0 : 0xffd0a0;
+      const spark = this.add.circle(midX, midY, flashKind === "crit" ? 10 : 6, color, 0.55).setDepth(70);
+      this.tweens.add({
+        targets: spark,
+        alpha: 0,
+        scale: flashKind === "crit" ? 2.1 : 1.6,
+        duration: flashKind === "crit" ? 180 : 120,
+        onComplete: () => spark.destroy(),
+      });
+      if (soldier.sprite) {
+        this.tweens.add({
+          targets: soldier.sprite,
+          x: soldier.x + (enemy.x - soldier.x) * 0.08,
+          y: soldier.y - 4 + (enemy.y - soldier.y) * 0.08,
+          yoyo: true,
+          duration: 70,
+        });
+      }
+      if (flashKind === "crit") this.flashText("CLASH", midX, midY - 16, "#fff1a0");
     }
 
     fireGuardArrow(soldier, target, damage) {
@@ -1485,6 +1562,17 @@
     killSoldier(soldier) {
       this.entityRegistry.transition(soldier, "dead");
       soldier.dead = true;
+      const tower = soldier.tower;
+      if (tower && window.KRCBarracksReadiness) {
+        const alive = tower.soldiers.filter((s) => s !== soldier && !s.dead).length;
+        const wanted = window.KRCBarracksReadiness.wantedCount(tower.level);
+        if (alive < wanted && tower.cooldown <= 0) {
+          tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(tower.level);
+          tower.cooldown = tower.trainMax;
+        }
+        this.flashText("FALLEN", soldier.x, soldier.y - 24, "#f0a0a0");
+        this.refreshBarracksReadiness(tower, alive, wanted);
+      }
       soldier.sprite.destroy();
       soldier.bar.destroy();
       this.soldiers = this.soldiers.filter((s) => s !== soldier);
