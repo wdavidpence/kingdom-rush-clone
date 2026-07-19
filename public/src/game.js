@@ -1043,6 +1043,19 @@
       enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
+      const traits = window.KRCEnemyTraits ? window.KRCEnemyTraits.traitsFor(base) : [];
+      enemy.traits = traits;
+      const badge = window.KRCEnemyTraits ? window.KRCEnemyTraits.badgeText(traits) : "";
+      enemy.traitText = this.add
+        .text(enemy.x, enemy.y - base.size - 16, badge, {
+          font: "bold 9px Arial",
+          color: traits[0]?.color || "#e8f0ff",
+          backgroundColor: "#141a14aa",
+          padding: { x: 3, y: 1 },
+        })
+        .setOrigin(0.5)
+        .setDepth(44)
+        .setVisible(!!badge);
       this.enemies.push(enemy);
       return enemy;
     }
@@ -1106,6 +1119,10 @@
       enemy.barBg.setPosition(enemy.x, enemy.y - enemy.base.size - 8);
       enemy.bar.setPosition(enemy.x - 14, enemy.y - enemy.base.size - 8);
       enemy.bar.width = Math.max(1, 28 * (enemy.hp / enemy.maxHp));
+      if (enemy.traitText) {
+        enemy.traitText.setPosition(enemy.x, enemy.y - enemy.base.size - 16);
+        enemy.traitText.setVisible(!!enemy.traitText.text);
+      }
     }
 
     leakEnemy(enemy) {
@@ -1144,7 +1161,7 @@
     removeEnemy(enemy, killed) {
       this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
-      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar]) obj.destroy();
+      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText]) obj?.destroy();
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
