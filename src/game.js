@@ -56,8 +56,8 @@
       this.campaign = window.KRCCampaign.load(MAPS.length);
       this.path = this.map.path;
       this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
-      this.gold = this.startData?.gold ?? 260;
-      this.lives = this.startData?.lives ?? 18;
+      this.gold = this.startData?.gold ?? 280;
+      this.lives = this.startData?.lives ?? 20;
       this.waveIndex = 0;
       this.waveActive = false;
       this.waveTotal = 0;
@@ -104,6 +104,25 @@
       this.input.on("pointerdown", this.handlePointer, this);
       this.input.keyboard?.on("keydown-P", () => this.togglePause());
       this.input.keyboard?.on("keydown-R", () => this.toggleReducedMotion());
+      this.input.keyboard?.on("keydown-M", () => this.toggleMute());
+      this.input.keyboard?.on("keydown-SPACE", (event) => {
+        event?.preventDefault?.();
+        this.callWave();
+      });
+      this.input.keyboard?.on("keydown-U", () => this.upgradeSelected());
+      this.input.keyboard?.on("keydown-S", () => this.sellSelected());
+      this.input.keyboard?.on("keydown-H", () => this.selectHero());
+      this.input.keyboard?.on("keydown-ESC", () => {
+        this.selectedPad = null;
+        this.selectedBuild = null;
+        this.heroSelected = false;
+        this.setHeroPanel(false);
+        this.refreshSelection();
+      });
+      this.input.keyboard?.on("keydown-ONE", () => this.chooseBuild("archer"));
+      this.input.keyboard?.on("keydown-TWO", () => this.chooseBuild("mage"));
+      this.input.keyboard?.on("keydown-THREE", () => this.chooseBuild("artillery"));
+      this.input.keyboard?.on("keydown-FOUR", () => this.chooseBuild("barracks"));
       if (this.qaMode) {
         document.body.dataset.krcQa = "1";
         if (new URLSearchParams(window.location.search).has("emberTest")) {
@@ -365,6 +384,7 @@
       enemy("enemy_ember", { kind: "ember", rx: 16, ry: 17, hi: "#ffb066", mid: "#e45f3c", lo: "#7d2d1c", outline: "#662216" });
       enemy("enemy_brood", { kind: "scout", rx: 14, ry: 14, hi: "#efa4c1", mid: "#bd6688", lo: "#65314b", outline: "#482033" });
       enemy("enemy_flyer", { kind: "flyer", rx: 14, ry: 14, hi: "#c8f6ff", mid: "#69cbe8", lo: "#2c7195", outline: "#245d78", shadow: 16 });
+      enemy("enemy_hexer", { kind: "brute", rx: 17, ry: 16, hi: "#d2c2ff", mid: "#8b6ce0", lo: "#46307a", outline: "#2f2058", horn: "#efe2ff", shadow: 20 });
       enemy("enemy_titan", { kind: "titan", rx: 21, ry: 20, hi: "#b4aaa1", mid: "#81776e", lo: "#49413b", outline: "#342c27", horn: "#d7c3a4", shadow: 27 });
       enemy("enemy_boss", { kind: "boss", rx: 25, ry: 23, hi: "#f08cff", mid: "#a948c6", lo: "#55256b", outline: "#3b174c", horn: "#f1d2ff", shadow: 31 });
 
@@ -452,22 +472,24 @@
     }
 
     drawMap() {
-      this.add.rectangle(W / 2, H / 2, W, H, this.map.grass).setDepth(-20);
-      for (let i = 0; i < 80; i += 1) {
+      const grass = this.map.grass;
+      const accent = this.mapIndex === 1 ? 0x2a3d42 : this.mapIndex === 2 ? 0x3a3420 : 0x314b27;
+      this.add.rectangle(W / 2, H / 2, W, H, grass).setDepth(-20);
+      for (let i = 0; i < 96; i += 1) {
         const x = (i * 73) % W;
         const y = 76 + ((i * 47) % 545);
-        const c = i % 2 ? 0x38542d : 0x20371b;
+        const c = i % 3 === 0 ? accent : i % 2 ? 0x38542d : 0x20371b;
         this.add.rectangle(x, y, 24 + (i % 4) * 9, 4, c, 0.28).setAngle((i * 19) % 180).setDepth(-19);
       }
 
       const edge = this.add.graphics().setDepth(-10);
-      edge.lineStyle(PATH_WIDTH + 14, COLORS.roadEdge, 1);
+      edge.lineStyle(PATH_WIDTH + 14, this.mapIndex === 1 ? 0x4a5560 : this.mapIndex === 2 ? 0x6a4e2e : COLORS.roadEdge, 1);
       this.strokePath(edge);
       const road = this.add.graphics().setDepth(-9);
-      road.lineStyle(PATH_WIDTH, COLORS.road, 1);
+      road.lineStyle(PATH_WIDTH, this.mapIndex === 1 ? 0x8a9098 : this.mapIndex === 2 ? 0xb07a42 : COLORS.road, 1);
       this.strokePath(road);
       const center = this.add.graphics().setDepth(-8);
-      center.lineStyle(2, 0xb9905d, 0.5);
+      center.lineStyle(2, this.mapIndex === 2 ? 0xe0a060 : 0xb9905d, 0.5);
       this.strokePath(center);
 
       this.add.text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
@@ -478,7 +500,7 @@
         const y = 88 + ((i * 137) % 520);
         const nearRoad = this.path.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
         if (nearRoad) continue;
-        this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15);
+        this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15).setTint(this.mapIndex === 2 ? 0xc9b48a : 0xffffff);
       }
       for (let i = 0; i < 18; i += 1) {
         const x = 18 + ((i * 67) % 384);
@@ -488,6 +510,11 @@
       }
       this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
       this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
+      // Storybook edge vignette
+      const vig = this.add.graphics().setDepth(-3);
+      vig.fillStyle(0x000000, 0.18);
+      vig.fillRect(0, 0, W, 18);
+      vig.fillRect(0, H - 18, W, 18);
     }
 
     strokePath(graphics) {
@@ -663,54 +690,83 @@
 
     showStartOverlay() {
       this.overlay = this.add.container(0, 0).setDepth(500);
-      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88));
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.9));
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive();
       this.overlay.add(blocker);
-      this.overlay.add(this.add.text(W / 2, 172, "KRC", { font: "bold 64px Arial", color: COLORS.gold }).setOrigin(0.5));
+      this.overlay.add(this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold }).setOrigin(0.5));
       this.overlay.add(
         this.add
-          .text(W / 2, 236, `${this.map.name}: hold ten waves.`, {
-            font: "18px Arial",
-            color: COLORS.ink,
-            align: "center",
-            wordWrap: { width: 310 },
-          })
-          .setOrigin(0.5)
-      );
-      this.overlay.add(
-        this.add
-          .text(W / 2, 314, "Build on round pads. Tap the Captain, then tap the road to move him into trouble.", {
+          .text(W / 2, 122, "Choose a map. Stars unlock from lives remaining.", {
             font: "14px Arial",
             color: "#cfc4a2",
             align: "center",
-            wordWrap: { width: 320 },
+            wordWrap: { width: 340 },
           })
           .setOrigin(0.5)
       );
-      const startShadow = this.add.rectangle(W / 2, 436, 188, 56, 0x050704, 0.62).setStrokeStyle(1, 0x000000, 0.6);
-      const start = this.add.rectangle(W / 2, 430, 188, 56, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
-      const startShine = this.add.rectangle(W / 2, 416, 174, 12, 0xffffff, 0.17);
-      const startLip = this.add.rectangle(W / 2, 448, 174, 9, 0x000000, 0.2);
-      const startText = this.add.text(W / 2, 428, "TAP TO START", { font: "bold 19px Arial", color: "#fff7dc" }).setOrigin(0.5);
-      const motion = this.add.rectangle(W / 2, 498, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+
+      MAPS.forEach((map, index) => {
+        const unlocked = !!this.campaign.unlocked[index];
+        const result = this.campaign.results[String(index)] || { stars: 0, bestGold: 0 };
+        const y = 178 + index * 92;
+        const card = this.add.rectangle(W / 2, y, 320, 78, unlocked ? 0x243528 : 0x1a1f1a, 1).setStrokeStyle(2, unlocked ? 0xe6d282 : 0x445044);
+        const title = this.add
+          .text(W / 2 - 140, y - 18, `${index + 1}. ${map.name}`, {
+            font: "bold 18px Arial",
+            color: unlocked ? "#fff2ba" : "#7a8478",
+          })
+          .setOrigin(0, 0.5);
+        const starText = "★".repeat(result.stars || 0) + "☆".repeat(Math.max(0, 3 - (result.stars || 0)));
+        const meta = this.add
+          .text(W / 2 - 140, y + 12, unlocked ? `${starText}  best gold ${result.bestGold || 0}` : "LOCKED — clear previous map", {
+            font: "13px Arial",
+            color: unlocked ? "#d7e7c8" : "#6f776d",
+          })
+          .setOrigin(0, 0.5);
+        this.overlay.add([card, title, meta]);
+        if (unlocked) {
+          card.setInteractive({ useHandCursor: true });
+          card.on("pointerdown", () => this.beginMap(index));
+          title.setInteractive({ useHandCursor: true });
+          title.on("pointerdown", () => this.beginMap(index));
+        }
+      });
+
+      const motion = this.add.rectangle(W / 2, 480, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
       const motionText = this.add
-        .text(W / 2, 498, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
+        .text(W / 2, 480, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
         .setOrigin(0.5);
       motion.setInteractive({ useHandCursor: true });
       motion.on("pointerdown", () => {
         const reduced = this.toggleReducedMotion();
         motionText.setText(reduced ? "MOTION: REDUCED" : "MOTION: FULL");
       });
-      start.setInteractive({ useHandCursor: true });
-      start.on("pointerdown", () => {
-        this.audio.resume();
-        this.audio.play("start", 0.45);
-        this.audio.startMusic();
+      this.overlay.add([motion, motionText]);
+      this.overlay.add(
+        this.add
+          .text(W / 2, 520, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
+            font: "12px Arial",
+            color: "#a9b59d",
+            align: "center",
+            wordWrap: { width: 330 },
+          })
+          .setOrigin(0.5)
+      );
+    }
+
+    beginMap(mapIndex) {
+      this.audio.resume();
+      this.audio.play("start", 0.45);
+      this.audio.startMusic();
+      if (mapIndex !== this.mapIndex) {
         this.overlayActive = false;
-        this.overlay.destroy();
-        this.say("Build two towers. Tap Captain to move him.");
-      });
-      this.overlay.add([startShadow, start, startShine, startLip, startText, motion, motionText]);
+        this.overlay?.destroy();
+        this.scene.restart({ mapIndex, gold: 280, lives: 20 });
+        return;
+      }
+      this.overlayActive = false;
+      this.overlay.destroy();
+      this.say(`${this.map.name}: build two towers, then CALL. Tap pads for range preview.`);
     }
 
     handlePointer(pointer, targets) {
@@ -819,6 +875,7 @@
         x: pad.x,
         y: pad.y,
         cooldown: 0.2,
+        abilityCooldown: 0,
         pad,
         soldiers: [],
       });
@@ -835,6 +892,19 @@
       if (type === "barracks") {
         tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
         tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
+        tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(0);
+        tower.cooldown = 0.35;
+        tower.readyBadge = this.add
+          .text(pad.x, pad.y + 28, "READY", {
+            font: "bold 10px Arial",
+            color: "#d8f7a8",
+            backgroundColor: "#1a2412",
+            padding: { x: 4, y: 2 },
+          })
+          .setOrigin(0.5)
+          .setDepth(32);
+        tower.readyMeter = this.add.rectangle(pad.x - 18, pad.y + 40, 36, 4, 0x3d4a2c).setOrigin(0, 0.5).setDepth(32);
+        tower.readyFill = this.add.rectangle(pad.x - 18, pad.y + 40, 36, 4, 0x8fd45a).setOrigin(0, 0.5).setDepth(33);
       }
       this.towers.push(tower);
       this.audio.play("ready", 0.28);
@@ -867,8 +937,16 @@
       tower.sprite.setScale(0.72 + tower.level * 0.045);
       tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
       tower.rangeRing.setRadius(cfg.range[tower.level]);
+      const unlocked = window.KRCTowerAbilities?.isUnlocked(tower.type, tower.level);
+      const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+      if (unlocked && ability && tower.level === ability.minLevel) {
+        tower.abilityCooldown = 0;
+        this.flashText(ability.name.toUpperCase(), tower.x, tower.y - 42, "#fff2ba");
+        this.say(`${cfg.name} unlocked ${ability.name}: ${ability.description}`);
+      } else {
+        this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
+      }
       this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
-      this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       this.updateUpgradeLabel();
     }
 
@@ -878,18 +956,23 @@
       if (!tower) return;
       const cfg = TOWERS[tower.type];
       const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
-      this.gold += Math.floor(spent * 0.55);
+      const refund = Math.floor(spent * 0.55);
+      this.gold += refund;
       tower.sprite.destroy();
       tower.label.destroy();
       tower.rangeRing.destroy();
       tower.rallyRing?.destroy();
       tower.rallyFlag?.destroy();
+      tower.readyBadge?.destroy();
+      tower.readyMeter?.destroy();
+      tower.readyFill?.destroy();
       this.entityRegistry.transition(tower, "removed");
       for (const s of tower.soldiers) this.killSoldier(s);
       this.towers = this.towers.filter((t) => t !== tower);
       this.selectedPad.tower = null;
       this.selectedPad.icon.setText("+");
-      this.say("Tower sold.");
+      this.flashText(`+${refund}`, tower.x, tower.y - 28, COLORS.gold);
+      this.say(`Sold for ${refund} gold (55% refund).`);
       this.refreshSelection();
     }
 
@@ -897,11 +980,22 @@
       const tower = this.selectedPad?.tower;
       if (!tower) {
         this.upgradeButton.setLabel("UP\n-");
+        this.sellButton.setLabel("SELL");
         for (const t of this.towers) t.rangeRing.setVisible(false);
         return;
       }
       const cfg = TOWERS[tower.type];
-      this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
+      const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+      const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
+      if (tower.level >= cfg.upgrades.length && unlocked) {
+        const cd = Math.ceil(Math.max(0, tower.abilityCooldown || 0));
+        this.upgradeButton.setLabel(cd > 0 ? `${ability.name.slice(0, 3).toUpperCase()}\n${cd}s` : `${ability.name.slice(0, 3).toUpperCase()}\nRDY`);
+      } else {
+        this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
+      }
+      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      const refund = Math.floor(spent * 0.55);
+      this.sellButton.setLabel(`SELL\n${refund}g`);
       tower.rangeRing.setVisible(true);
       for (const t of this.towers) if (t !== tower) t.rangeRing.setVisible(false);
     }
@@ -918,7 +1012,13 @@
       }
       if (this.waveIndex >= WAVES.length) return;
       const wave = WAVES[this.waveIndex];
-      this.gold += wave.gold;
+      let bonus = wave.gold;
+      if (!this.waveActive && this.enemies.length === 0 && this.waveIndex < WAVES.length) {
+        const earlyBonus = 8 + this.waveIndex * 2;
+        bonus += earlyBonus;
+        this.flashText(`+${earlyBonus} EARLY`, W / 2, 120, "#fff2ba");
+      }
+      this.gold += bonus;
       this.queue = [];
       for (const [type, count] of wave.packs) {
         for (let i = 0; i < count; i += 1) this.queue.push(type);
@@ -972,13 +1072,11 @@
         this.waveActive = false;
         this.waveIndex += 1;
         if (this.waveIndex >= WAVES.length) {
+          const stars = this.computeStars();
+          window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
           if (this.mapIndex < MAPS.length - 1) {
             this.audio.play("ready", 0.45);
-            this.scene.restart({
-              mapIndex: this.mapIndex + 1,
-              gold: Math.min(this.gold + 180, 650),
-              lives: Math.min(18, this.lives + 4),
-            });
+            this.showMapClearOverlay(stars);
           } else {
             this.endGame(true);
           }
@@ -1011,6 +1109,19 @@
       enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
+      const traits = window.KRCEnemyTraits ? window.KRCEnemyTraits.traitsFor(base) : [];
+      enemy.traits = traits;
+      const badge = window.KRCEnemyTraits ? window.KRCEnemyTraits.badgeText(traits) : "";
+      enemy.traitText = this.add
+        .text(enemy.x, enemy.y - base.size - 16, badge, {
+          font: "bold 9px Arial",
+          color: traits[0]?.color || "#e8f0ff",
+          backgroundColor: "#141a14aa",
+          padding: { x: 3, y: 1 },
+        })
+        .setOrigin(0.5)
+        .setDepth(44)
+        .setVisible(!!badge);
       this.enemies.push(enemy);
       return enemy;
     }
@@ -1029,6 +1140,7 @@
       for (const enemy of [...this.enemies]) {
         if (enemy.dead) continue;
         enemy.slow = Math.max(0, enemy.slow - dt);
+        if (enemy.type === "boss" && enemy.base.phases) this.updateBossPhases(enemy, dt);
         if (!enemy.blockedBy || enemy.blockedBy.dead) {
           enemy.blockedBy = this.findBlockingSoldier(enemy);
         }
@@ -1039,6 +1151,59 @@
         }
         this.updateEnemyVisual(enemy);
         if (enemy.seg >= this.path.length - 1) this.leakEnemy(enemy);
+      }
+      this.applySupportAuras();
+    }
+
+    applySupportAuras() {
+      for (const tower of this.towers) tower.hexed = false;
+      for (const enemy of this.enemies) {
+        if (enemy.dead || !enemy.base.aura) continue;
+        const radius = enemy.base.aura.radius || 100;
+        for (const tower of this.towers) {
+          if (Phaser.Math.Distance.Between(enemy.x, enemy.y, tower.x, tower.y) <= radius) {
+            tower.hexed = true;
+            tower.hexPenalty = enemy.base.aura.fireRatePenalty || 0.3;
+          }
+        }
+        if (!enemy.auraRing) {
+          enemy.auraRing = this.add.circle(enemy.x, enemy.y, radius, 0x9b7cff, 0.05).setStrokeStyle(1, 0xb9a0ff, 0.35).setDepth(21);
+        } else {
+          enemy.auraRing.setPosition(enemy.x, enemy.y);
+          enemy.auraRing.setVisible(true);
+        }
+      }
+    }
+
+    updateBossPhases(enemy, dt) {
+      const ratio = enemy.hp / enemy.maxHp;
+      const nextPhase = ratio > 0.66 ? 1 : ratio > 0.33 ? 2 : 3;
+      if (!enemy.phase) enemy.phase = 1;
+      enemy.phaseTimer = Math.max(0, (enemy.phaseTimer || 0) - dt);
+      if (nextPhase !== enemy.phase) {
+        enemy.phase = nextPhase;
+        enemy.phaseTimer = 2.4;
+        if (nextPhase === 2) {
+          enemy.armorBuff = 4;
+          enemy.speed *= 1.12;
+          this.flashText("WARDEN SHIELD", enemy.x, enemy.y - 48, "#d7c3ff");
+          this.say("Warden raises a shield — pierce with Runes or focus fire.");
+          const ring = this.add.circle(enemy.x, enemy.y, 40, 0xc9a6ff, 0.18).setStrokeStyle(3, 0xf0d8ff, 0.9).setDepth(70);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 1.8, duration: 500, onComplete: () => ring.destroy() });
+        } else if (nextPhase === 3) {
+          enemy.armorBuff = 0;
+          enemy.speed *= 1.15;
+          this.flashText("WARDEN RAGE", enemy.x, enemy.y - 48, "#ff9ad8");
+          this.say("Warden enrages — stall with Guards and burst during the open window.");
+          for (let i = 0; i < 3; i += 1) this.spawnEnemyFrom("scout", enemy);
+          const ring = this.add.circle(enemy.x, enemy.y, 48, 0xff6ab8, 0.2).setStrokeStyle(3, 0xffd0ea, 0.95).setDepth(70);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 2.0, duration: 550, onComplete: () => ring.destroy() });
+        }
+      }
+      if (enemy.phase === 2 && enemy.phaseTimer > 0) {
+        enemy.sprite.setTint(0xd8c2ff);
+      } else if (enemy.sprite) {
+        enemy.sprite.clearTint();
       }
     }
 
@@ -1066,14 +1231,27 @@
       enemy.sprite.setPosition(enemy.x, enemy.y);
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
-      enemy.sprite.y += Math.sin(this.time.now * 0.008 + enemy.wobble) * (enemy.base.flying ? 4 : 1.2);
-      if (enemy.seg < this.path.length - 1) {
+      const bob = Math.sin(this.time.now * 0.008 + enemy.wobble);
+      enemy.sprite.y += bob * (enemy.base.flying ? 4 : enemy.blockedBy ? 0.6 : 1.2);
+      if (enemy.blockedBy) {
+        enemy.sprite.rotation = Math.sin(this.time.now * 0.03 + enemy.wobble) * 0.18;
+        enemy.sprite.setScale((enemy.base.size / 28) * (1 + Math.sin(this.time.now * 0.04) * 0.04));
+      } else if (enemy.seg < this.path.length - 1) {
         const next = this.path[enemy.seg + 1];
         enemy.sprite.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
+        enemy.sprite.setScale(enemy.base.size / 28);
       }
+      if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
+      else if (!enemy.base.phases) enemy.sprite.clearTint();
       enemy.barBg.setPosition(enemy.x, enemy.y - enemy.base.size - 8);
       enemy.bar.setPosition(enemy.x - 14, enemy.y - enemy.base.size - 8);
       enemy.bar.width = Math.max(1, 28 * (enemy.hp / enemy.maxHp));
+      // Colorblind-safe HP: shape via width already; add pattern via bar color bands
+      enemy.bar.fillColor = enemy.hp < enemy.maxHp * 0.35 ? 0xff6b5a : enemy.hp < enemy.maxHp * 0.7 ? 0xf0c35a : 0x68d764;
+      if (enemy.traitText) {
+        enemy.traitText.setPosition(enemy.x, enemy.y - enemy.base.size - 16);
+        enemy.traitText.setVisible(!!enemy.traitText.text);
+      }
     }
 
     leakEnemy(enemy) {
@@ -1087,8 +1265,10 @@
     damageEnemy(enemy, amount, source = {}) {
       if (enemy.dead) return;
       let damage = amount;
-      if (!source.magic) damage = Math.max(1, amount - enemy.base.armor * 3);
+      const armor = (enemy.base.armor || 0) + (enemy.armorBuff || 0);
+      if (!source.magic) damage = Math.max(1, amount - armor * 3);
       if (enemy.type === "titan" || enemy.type === "boss") damage *= 0.86;
+      if (enemy.type === "boss" && enemy.phase === 2 && enemy.phaseTimer > 0 && !source.magic) damage *= 0.55;
       enemy.hp -= damage;
       if (source.slow) enemy.slow = Math.max(enemy.slow, 1.2 + source.slow * 2);
       if (enemy.hp <= 0) {
@@ -1112,7 +1292,7 @@
     removeEnemy(enemy, killed) {
       this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
-      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar]) obj.destroy();
+      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.auraRing]) obj?.destroy();
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
@@ -1124,18 +1304,98 @@
     updateTowers(dt) {
       for (const tower of this.towers) {
         const cfg = TOWERS[tower.type];
+        if (window.KRCTowerAbilities) {
+          tower.abilityCooldown = window.KRCTowerAbilities.tickCooldown(tower.abilityCooldown, dt);
+        }
         if (tower.type === "barracks") {
           this.updateBarracks(tower, dt);
           continue;
         }
-        tower.cooldown -= dt * (this.rallyTime > 0 ? 1.28 : 1);
+        tower.cooldown -= dt * (this.rallyTime > 0 ? 1.28 : 1) * (tower.hexed ? Math.max(0.45, 1 - (tower.hexPenalty || 0.3)) : 1);
+        if (tower.hexed && tower.sprite && Math.floor(this.time.now / 180) % 2 === 0) {
+          tower.sprite.setTint(0xb49cff);
+        } else if (tower.sprite) {
+          tower.sprite.clearTint();
+        }
         if (tower.cooldown > 0) continue;
-        const target = this.findTarget(tower, cfg.range[tower.level], tower.type === "archer");
+        const target = this.findTarget(tower, cfg.range[tower.level], tower.type !== "artillery");
         if (!target) continue;
         tower.cooldown = cfg.rate[tower.level];
         this.fireTower(tower, target);
+        this.tryTowerAbility(tower, target);
       }
       this.rallyTime = Math.max(0, (this.rallyTime || 0) - dt);
+      if (this.selectedPad?.tower) this.updateUpgradeLabel();
+    }
+
+    tryTowerAbility(tower, target) {
+      const api = window.KRCTowerAbilities;
+      if (!api || !api.canTrigger(tower)) return;
+      const ability = api.getAbility(tower.type);
+      if (!ability || !target || target.dead) return;
+      const cfg = TOWERS[tower.type];
+      if (ability.id === "volley") {
+        const extras = this.enemies
+          .filter((e) => !e.dead && e !== target && Phaser.Math.Distance.Between(tower.x, tower.y, e.x, e.y) <= cfg.range[tower.level])
+          .slice(0, 2);
+        for (const extra of extras) this.fireTower(tower, extra);
+        if (extras.length) {
+          this.flashText("VOLLEY", tower.x, tower.y - 40, "#b7f08a");
+          Object.assign(tower, api.afterTrigger(tower));
+          this.audio.play("shoot", 0.18, 1.5);
+        }
+        return;
+      }
+      if (ability.id === "nova") {
+        this.explode(target.x, target.y, 54, cfg.damage[tower.level] * 0.55, true);
+        for (const enemy of this.enemies) {
+          if (!enemy.dead && Phaser.Math.Distance.Between(target.x, target.y, enemy.x, enemy.y) <= 54) {
+            enemy.slow = Math.max(enemy.slow || 0, 2.4);
+          }
+        }
+        this.flashText("NOVA", target.x, target.y - 36, "#c2b6ff");
+        Object.assign(tower, api.afterTrigger(tower));
+        this.audio.play("magic", 0.26, 0.85);
+        return;
+      }
+      if (ability.id === "barrage") {
+        const x = target.x;
+        const y = target.y;
+        this.time.delayedCall(220, () => {
+          if (this.gameEnded) return;
+          this.explode(x + 18, y - 10, (cfg.splash?.[tower.level] || 50) * 1.15, cfg.damage[tower.level] * 0.7, false);
+          this.flashText("BARRAGE", x, y - 42, "#f0c27a");
+        });
+        Object.assign(tower, api.afterTrigger(tower));
+        this.audio.play("boom", 0.22, 0.9);
+      }
+    }
+
+    chainMagic(x, y, damage, jumps) {
+      let remaining = jumps;
+      let fromX = x;
+      let fromY = y;
+      const hit = new Set();
+      while (remaining > 0) {
+        let best = null;
+        let bestD = Infinity;
+        for (const enemy of this.enemies) {
+          if (enemy.dead || hit.has(enemy.id)) continue;
+          const d = Phaser.Math.Distance.Between(fromX, fromY, enemy.x, enemy.y);
+          if (d < 90 && d < bestD) {
+            best = enemy;
+            bestD = d;
+          }
+        }
+        if (!best) break;
+        hit.add(best.id);
+        this.damageEnemy(best, damage * 0.55, { magic: true, slow: 0.12 });
+        const bolt = this.add.line(0, 0, fromX, fromY, best.x, best.y, 0xb7a6ff, 0.85).setLineWidth(2).setDepth(68);
+        this.tweens.add({ targets: bolt, alpha: 0, duration: 140, onComplete: () => bolt.destroy() });
+        fromX = best.x;
+        fromY = best.y;
+        remaining -= 1;
+      }
     }
 
     findTarget(tower, range, canHitFlying = true) {
@@ -1169,8 +1429,19 @@
       projectile.sprite = this.add.image(projectile.x, projectile.y, key).setDepth(60);
       projectile.sprite.setScale(tower.type === "artillery" ? 1.1 : 0.9);
       projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
+      projectile.trailColor = color;
       this.projectiles.push(projectile);
       this.audio.play(tower.type === "mage" ? "magic" : "shoot", tower.type === "artillery" ? 0.2 : 0.13, tower.type === "archer" ? 1.35 : 0.95);
+      if (tower.sprite && !this.settings.reducedMotion) {
+        const angle = Phaser.Math.Angle.Between(tower.x, tower.y, target.x, target.y);
+        this.tweens.add({
+          targets: tower.sprite,
+          x: tower.x - Math.cos(angle) * 4,
+          y: tower.y - 5 - Math.sin(angle) * 3,
+          yoyo: true,
+          duration: 70,
+        });
+      }
     }
 
     updateProjectiles(dt) {
@@ -1196,6 +1467,10 @@
           p.y += ((p.target.y - p.y) / d) * step;
           p.sprite.setPosition(p.x, p.y);
           p.sprite.rotation = Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
+          if (!this.settings.reducedMotion && Math.random() < 0.45) {
+            const dot = this.add.circle(p.x, p.y, 2.2, p.trailColor || 0xfff0c0, 0.55).setDepth(59);
+            this.tweens.add({ targets: dot, alpha: 0, scale: 0.2, duration: 160, onComplete: () => dot.destroy() });
+          }
         }
       }
     }
@@ -1215,19 +1490,31 @@
         }
       }
       this.audio.play("boom", 0.28, fire ? 0.92 : 1.08);
+      if (!this.settings.reducedMotion) {
+        this.cameras.main.shake(90, 0.004);
+      }
     }
 
     updateBarracks(tower, dt) {
       const cfg = TOWERS.barracks;
+      const readiness = window.KRCBarracksReadiness;
       tower.cooldown -= dt;
       const alive = tower.soldiers.filter((s) => !s.dead);
       tower.soldiers = alive;
-      const wanted = tower.level >= 4 ? 3 : tower.level >= 2 ? 2 : 1;
+      const wanted = readiness.wantedCount(tower.level);
       if (alive.length < wanted && tower.cooldown <= 0) {
-        tower.cooldown = tower.level >= 1 ? 6.0 : 7.5;
+        tower.trainMax = readiness.respawnCooldown(tower.level);
+        tower.cooldown = tower.trainMax;
         this.spawnSoldier(tower);
+        this.flashText("DEPLOY", tower.x, tower.y - 36, "#d8f7a8");
+        this.audio.play("ready", 0.18, 1.12);
       }
-      for (const soldier of alive) {
+      const roster = tower.soldiers.filter((s) => !s.dead);
+      tower.soldiers = roster;
+      this.refreshBarracksReadiness(tower, roster.length, wanted);
+      this.tryBarracksAbility(tower, roster);
+
+      for (const soldier of roster) {
         soldier.homeX = tower.rallyX;
         soldier.homeY = tower.rallyY;
         soldier.attackCooldown -= dt;
@@ -1235,11 +1522,19 @@
         const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
         if (meleeTarget) {
           soldier.target = meleeTarget;
-          this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 28, dt);
+          meleeTarget.blockedBy = soldier;
+          this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 22, dt);
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
-            this.damageEnemy(meleeTarget, cfg.damage[tower.level] * (this.bannerTime > 0 ? 1.18 : 1), {});
-            this.audio.play("impact", 0.12, 1.25);
+            soldier.strikeCount = (soldier.strikeCount || 0) + 1;
+            const strike = readiness.meleeStrike({
+              attackerDamage: cfg.damage[tower.level],
+              bannerBonus: this.bannerTime > 0 ? 1.18 : 1,
+              isCritWindow: soldier.strikeCount % 4 === 0,
+            });
+            this.damageEnemy(meleeTarget, strike.damage, {});
+            this.meleeImpactFx(soldier, meleeTarget, strike.flash);
+            this.audio.play("impact", strike.flash === "crit" ? 0.2 : 0.12, strike.flash === "crit" ? 0.9 : 1.25);
           }
         } else {
           soldier.target = null;
@@ -1252,12 +1547,76 @@
             }
           }
         }
-        soldier.hp = Math.min(soldier.maxHp, soldier.hp + 2 * dt);
+        soldier.hp = readiness.idleRegen(soldier.hp, soldier.maxHp, dt, !!soldier.target);
         soldier.sprite.setPosition(soldier.x, soldier.y - 4);
-        soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.08 : 0;
+        soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.12 : 0;
         soldier.bar.width = Math.max(1, 20 * (soldier.hp / soldier.maxHp));
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
+        if (soldier.bar) soldier.bar.fillColor = soldier.target ? 0xf0c35a : 0x7ee06a;
       }
+    }
+
+    tryBarracksAbility(tower, roster) {
+      const api = window.KRCTowerAbilities;
+      if (!api || !api.canTrigger(tower) || !roster.length) return;
+      const threatened = roster.some((s) => s.target);
+      if (!threatened && !this.enemies.some((e) => !e.dead && Phaser.Math.Distance.Between(tower.rallyX, tower.rallyY, e.x, e.y) < 90)) {
+        return;
+      }
+      for (const soldier of roster) {
+        soldier.hp = Math.min(soldier.maxHp, soldier.hp + soldier.maxHp * 0.35);
+        soldier.holdFast = 3.5;
+        if (soldier.sprite) {
+          this.tweens.add({ targets: soldier.sprite, scale: 0.9, yoyo: true, duration: 120 });
+        }
+      }
+      this.flashText("HOLD FAST", tower.rallyX, tower.rallyY - 36, "#ffe08a");
+      Object.assign(tower, api.afterTrigger(tower));
+      this.audio.play("ready", 0.22, 0.8);
+    }
+
+    refreshBarracksReadiness(tower, aliveCount, wanted) {
+      if (!tower.readyBadge || !window.KRCBarracksReadiness) return;
+      const state = window.KRCBarracksReadiness.readinessState({
+        alive: aliveCount,
+        wanted,
+        cooldown: Math.max(0, tower.cooldown),
+        maxCooldown: tower.trainMax || window.KRCBarracksReadiness.respawnCooldown(tower.level),
+      });
+      tower.readyBadge.setText(state.label);
+      tower.readyBadge.setColor(
+        state.status === "ready" ? "#d8f7a8" : state.status === "training" ? "#ffe08a" : "#f0c3a0"
+      );
+      tower.readyFill.width = Math.max(2, 36 * state.progress);
+      tower.readyFill.fillColor = state.status === "ready" ? 0x8fd45a : state.status === "training" ? 0xe2b84a : 0xd4894a;
+      const show = state.status !== "ready" || this.selectedPad?.tower === tower;
+      tower.readyBadge.setVisible(show || state.status !== "ready");
+      tower.readyMeter.setVisible(state.status !== "ready");
+      tower.readyFill.setVisible(state.status !== "ready");
+    }
+
+    meleeImpactFx(soldier, enemy, flashKind) {
+      const midX = (soldier.x + enemy.x) * 0.5;
+      const midY = (soldier.y + enemy.y) * 0.5 - 8;
+      const color = flashKind === "crit" ? 0xfff1a0 : 0xffd0a0;
+      const spark = this.add.circle(midX, midY, flashKind === "crit" ? 10 : 6, color, 0.55).setDepth(70);
+      this.tweens.add({
+        targets: spark,
+        alpha: 0,
+        scale: flashKind === "crit" ? 2.1 : 1.6,
+        duration: flashKind === "crit" ? 180 : 120,
+        onComplete: () => spark.destroy(),
+      });
+      if (soldier.sprite) {
+        this.tweens.add({
+          targets: soldier.sprite,
+          x: soldier.x + (enemy.x - soldier.x) * 0.08,
+          y: soldier.y - 4 + (enemy.y - soldier.y) * 0.08,
+          yoyo: true,
+          duration: 70,
+        });
+      }
+      if (flashKind === "crit") this.flashText("CLASH", midX, midY - 16, "#fff1a0");
     }
 
     fireGuardArrow(soldier, target, damage) {
@@ -1475,7 +1834,9 @@
 
     enemyMelee(enemy, soldier, dt) {
       const damage = (enemy.type === "boss" ? 34 : enemy.type === "titan" ? 18 : 8) * dt;
-      soldier.hp -= soldier.isHero ? damage * 0.7 : damage;
+      const mitigated = soldier.holdFast && soldier.holdFast > 0 ? damage * 0.55 : damage;
+      if (soldier.holdFast) soldier.holdFast = Math.max(0, soldier.holdFast - dt);
+      soldier.hp -= soldier.isHero ? mitigated * 0.7 : mitigated;
       if (soldier.hp <= 0) {
         if (soldier.isHero) this.killHero();
         else this.killSoldier(soldier);
@@ -1485,6 +1846,17 @@
     killSoldier(soldier) {
       this.entityRegistry.transition(soldier, "dead");
       soldier.dead = true;
+      const tower = soldier.tower;
+      if (tower && window.KRCBarracksReadiness) {
+        const alive = tower.soldiers.filter((s) => s !== soldier && !s.dead).length;
+        const wanted = window.KRCBarracksReadiness.wantedCount(tower.level);
+        if (alive < wanted && tower.cooldown <= 0) {
+          tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(tower.level);
+          tower.cooldown = tower.trainMax;
+        }
+        this.flashText("FALLEN", soldier.x, soldier.y - 24, "#f0a0a0");
+        this.refreshBarracksReadiness(tower, alive, wanted);
+      }
       soldier.sprite.destroy();
       soldier.bar.destroy();
       this.soldiers = this.soldiers.filter((s) => s !== soldier);
@@ -1630,61 +2002,130 @@
     }
 
     infoLine() {
-      if (this.heroSelected) return "Captain: CHG hits a nearby enemy, BAN boosts melee, HEAL restores allies.";
+      if (this.heroSelected) {
+        const hero = this.hero;
+        if (!hero || hero.dead) return "Captain is recovering — wait for respawn.";
+        return `Captain L${hero.level} HP ${Math.ceil(hero.hp)}/${hero.maxHp}. Tap road to move. CHG/BAN/HEAL below.`;
+      }
       if (this.selectedBuild) {
         const cfg = TOWERS[this.selectedBuild];
-        return `${cfg.name}: ${cfg.role}. ${cfg.targetRule}. ${cfg.counterplay}`;
+        const dmg = cfg.damage[0];
+        const range = cfg.range[0];
+        const afford = this.gold >= cfg.cost ? "affordable" : `need ${cfg.cost - this.gold}g more`;
+        return `${cfg.name} ${cfg.cost}g (${afford}) · dmg ${dmg} · rng ${range} · ${cfg.shopLabel}: ${cfg.role}`;
       }
       if (this.selectedPad?.tower) {
         const tower = this.selectedPad.tower;
         const cfg = TOWERS[tower.type];
-        return `${cfg.name} L${tower.level + 1}. ${
-          tower.level < cfg.upgrades.length ? `Upgrade ${cfg.upgrades[tower.level]}g.` : "Fully upgraded."
-        }`;
+        const dmg = cfg.damage[tower.level];
+        const rate = cfg.rate[tower.level];
+        const range = cfg.range[tower.level];
+        const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+        const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
+        const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+        const refund = Math.floor(spent * 0.55);
+        const up = tower.level < cfg.upgrades.length ? `Up ${cfg.upgrades[tower.level]}g` : "MAX";
+        const ab = unlocked ? ` · ${ability.name} ${Math.ceil(tower.abilityCooldown || 0) > 0 ? Math.ceil(tower.abilityCooldown) + "s" : "ready"}` : "";
+        return `${cfg.name} L${tower.level + 1}: dmg ${dmg} / ${rate.toFixed(2)}s / rng ${range}. ${up}. Sell ${refund}g.${ab}`;
       }
-      if (this.waveActive) return `${this.queue.length} enemies queued. Defend the gate.`;
-      return "Tap CALL, build/upgrade, or tap Captain to move him.";
+      if (this.waveActive) return `${this.queue.length} queued, ${this.enemies.length} alive. Defend the gate.`;
+      if (this.waveIndex === 0 && this.towers.length < 2) return "Tutorial: build two towers on the round pads, then CALL the first wave.";
+      return "Tap CALL for early-wave gold, upgrade towers, or command Captain.";
     }
 
     endGame(victory) {
       if (this.gameEnded) return;
       this.gameEnded = true;
+      const stars = victory ? this.computeStars() : 0;
       if (victory) {
-        const stars = this.lives >= 14 ? 3 : this.lives >= 7 ? 2 : 1;
         window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
       }
       this.overlayActive = true;
       const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88).setDepth(600);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setDepth(600.5).setInteractive();
       const title = this.add
-        .text(W / 2, 258, victory ? "VICTORY" : "GATE LOST", {
+        .text(W / 2, 230, victory ? "VICTORY" : "GATE LOST", {
           font: "bold 44px Arial",
           color: victory ? COLORS.gold : "#ff7f69",
         })
         .setOrigin(0.5)
         .setDepth(601);
+      const starLine = victory ? `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars` : `Reached wave ${this.waveIndex + 1}`;
       const sub = this.add
-        .text(W / 2, 326, victory ? "The forest road holds." : `You reached wave ${this.waveIndex + 1}.`, {
+        .text(W / 2, 292, victory ? `Campaign complete. ${starLine}` : starLine, {
           font: "18px Arial",
           color: COLORS.ink,
           align: "center",
         })
         .setOrigin(0.5)
         .setDepth(601);
-      const btnShadow = this.add.rectangle(W / 2, 426, 180, 54, 0x050704, 0.62).setDepth(601);
-      const btn = this.add.rectangle(W / 2, 420, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
-      const btnShine = this.add.rectangle(W / 2, 407, 166, 12, 0xffffff, 0.17).setDepth(601.4);
-      const btnLip = this.add.rectangle(W / 2, 438, 166, 9, 0x000000, 0.2).setDepth(601.4);
-      const txt = this.add.text(W / 2, 418, "PLAY AGAIN", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
+      const btnShadow = this.add.rectangle(W / 2, 406, 180, 54, 0x050704, 0.62).setDepth(601);
+      const btn = this.add.rectangle(W / 2, 400, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
+      const btnShine = this.add.rectangle(W / 2, 387, 166, 12, 0xffffff, 0.17).setDepth(601.4);
+      const btnLip = this.add.rectangle(W / 2, 418, 166, 9, 0x000000, 0.2).setDepth(601.4);
+      const txt = this.add.text(W / 2, 398, "MAP SELECT", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
         this.audio.stopAll();
         this.overlayActive = false;
-        this.scene.restart();
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
       });
       this.audio.stopMusic();
       this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
       return [shade, blocker, title, sub, btnShadow, btn, btnShine, btnLip, txt];
+    }
+
+    computeStars() {
+      if (this.lives >= 16) return 3;
+      if (this.lives >= 10) return 2;
+      return 1;
+    }
+
+    showMapClearOverlay(stars) {
+      this.overlayActive = true;
+      this.overlay = this.add.container(0, 0).setDepth(580);
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.86));
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive());
+      this.overlay.add(this.add.text(W / 2, 220, `${this.map.name} CLEARED`, { font: "bold 28px Arial", color: COLORS.gold }).setOrigin(0.5));
+      this.overlay.add(
+        this.add
+          .text(W / 2, 270, `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars`, {
+            font: "22px Arial",
+            color: "#fff2ba",
+          })
+          .setOrigin(0.5)
+      );
+      this.overlay.add(
+        this.add
+          .text(W / 2, 318, "Next map unlocked. Carry some gold and lives forward.", {
+            font: "14px Arial",
+            color: "#cfc4a2",
+            align: "center",
+            wordWrap: { width: 320 },
+          })
+          .setOrigin(0.5)
+      );
+      const next = this.add.rectangle(W / 2, 400, 200, 52, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
+      const nextText = this.add.text(W / 2, 398, "NEXT MAP", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5);
+      next.setInteractive({ useHandCursor: true });
+      next.on("pointerdown", () => {
+        this.overlayActive = false;
+        this.overlay.destroy();
+        this.scene.restart({
+          mapIndex: this.mapIndex + 1,
+          gold: Math.min(this.gold + 180, 650),
+          lives: Math.min(20, this.lives + 4),
+        });
+      });
+      const menu = this.add.rectangle(W / 2, 468, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+      const menuText = this.add.text(W / 2, 466, "MAP SELECT", { font: "bold 14px Arial", color: "#e8f5ff" }).setOrigin(0.5);
+      menu.setInteractive({ useHandCursor: true });
+      menu.on("pointerdown", () => {
+        this.overlayActive = false;
+        this.overlay.destroy();
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
+      });
+      this.overlay.add([next, nextText, menu, menuText]);
     }
   }
 
@@ -1782,7 +2223,12 @@
     music(dt, urgent) {
       if (this.musicStarted) {
         const music = this.samples.music;
-        if (music?.isPlaying) music.setRate(urgent ? 1.06 : 0.94);
+        if (music?.isPlaying) {
+          const targetRate = urgent ? 1.12 : 0.96;
+          const targetVol = urgent ? 0.14 : 0.09;
+          music.setRate(Phaser.Math.Linear(music.rate || 1, targetRate, Math.min(1, dt * 2.5)));
+          music.setVolume(Phaser.Math.Linear(music.volume || 0.09, targetVol, Math.min(1, dt * 2.2)));
+        }
         return;
       }
       if (!this.ctx) return;
@@ -1790,10 +2236,11 @@
       if (this.musicClock > 0) return;
       const base = urgent ? 0.72 : 1.6;
       this.musicClock = base;
-      const notes = urgent ? [146, 174, 196, 174] : [130, 164, 196, 164];
+      const notes = urgent ? [146, 174, 196, 220, 174] : [130, 164, 196, 164];
       const note = notes[this.musicStep % notes.length];
       this.musicStep += 1;
-      this.tone(note, urgent ? 0.055 : 0.09, "triangle", urgent ? 0.012 : 0.007);
+      this.tone(note, urgent ? 0.055 : 0.09, "triangle", urgent ? 0.014 : 0.007);
+      if (urgent) this.tone(note * 1.5, 0.03, "sine", 0.004, 0.02);
     }
   }
 

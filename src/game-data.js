@@ -27,26 +27,27 @@
 
   const enemies = {
     scout: { name: "Scout", hp: 54, speed: 50, armor: 0, bounty: 7, leak: 1, color: 0xbfe769, size: 15 },
-    brute: { name: "Brute", hp: 142, speed: 42, armor: 3, bounty: 13, leak: 1, color: 0xe4a25d, size: 18 },
-    shield: { name: "Shield", hp: 230, speed: 34, armor: 6, bounty: 19, leak: 2, color: 0xb7bfca, size: 20 },
+    brute: { name: "Brute", hp: 148, speed: 42, armor: 3, bounty: 13, leak: 1, color: 0xe4a25d, size: 18 },
+    shield: { name: "Shield", hp: 240, speed: 34, armor: 6, bounty: 19, leak: 2, color: 0xb7bfca, size: 20 },
     ember: { name: "Ember", hp: 118, speed: 50, armor: 1, bounty: 15, leak: 1, color: 0xe86240, size: 17, burn: true },
     brood: { name: "Broodling", hp: 76, speed: 56, armor: 0, bounty: 10, leak: 1, color: 0xc66f8f, size: 16, split: ["scout", 2] },
     flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },
-    titan: { name: "Titan", hp: 520, speed: 26, armor: 8, bounty: 45, leak: 4, color: 0x8e8379, size: 24 },
-    boss: { name: "Warden", hp: 1120, speed: 22, armor: 7, bounty: 120, leak: 8, color: 0xcd65e6, size: 30 },
+    hexer: { name: "Hexer", hp: 160, speed: 38, armor: 2, bounty: 22, leak: 2, color: 0x9b7cff, size: 18, aura: { radius: 110, fireRatePenalty: 0.35 }, support: true },
+    titan: { name: "Titan", hp: 540, speed: 26, armor: 8, bounty: 48, leak: 4, color: 0x8e8379, size: 24 },
+    boss: { name: "Warden", hp: 1180, speed: 22, armor: 7, bounty: 130, leak: 8, color: 0xcd65e6, size: 30, phases: true },
   };
 
   const waves = [
-    { label: "Scouts", gold: 18, spawn: 0.82, packs: [["scout", 12]] },
-    { label: "Raiders", gold: 20, spawn: 0.64, packs: [["scout", 16], ["brute", 5]] },
-    { label: "Armor", gold: 24, spawn: 0.7, packs: [["brute", 10], ["shield", 3], ["scout", 8]] },
-    { label: "Fireline", gold: 28, spawn: 0.62, packs: [["ember", 8], ["brood", 6], ["shield", 4]] },
-    { label: "Skybreak", gold: 30, spawn: 0.68, packs: [["flyer", 8], ["brute", 10], ["brood", 6], ["shield", 5]] },
-    { label: "Crush", gold: 36, spawn: 0.62, packs: [["shield", 10], ["ember", 8], ["brute", 8]] },
-    { label: "Storm", gold: 38, spawn: 0.56, packs: [["flyer", 10], ["scout", 18], ["brute", 8]] },
-    { label: "Titanfall", gold: 44, spawn: 0.68, packs: [["titan", 3], ["shield", 8], ["ember", 8]] },
-    { label: "Last Gate", gold: 50, spawn: 0.52, packs: [["scout", 16], ["flyer", 8], ["brute", 10], ["titan", 2]] },
-    { label: "Warden", gold: 0, spawn: 0.62, packs: [["boss", 1], ["titan", 4], ["flyer", 8], ["shield", 8]] },
+    { label: "Scouts", gold: 22, spawn: 0.82, packs: [["scout", 12]] },
+    { label: "Raiders", gold: 24, spawn: 0.64, packs: [["scout", 16], ["brute", 5]] },
+    { label: "Armor", gold: 28, spawn: 0.7, packs: [["brute", 10], ["shield", 3], ["scout", 8]] },
+    { label: "Fireline", gold: 30, spawn: 0.62, packs: [["ember", 8], ["brood", 6], ["shield", 4]] },
+    { label: "Skybreak", gold: 34, spawn: 0.68, packs: [["flyer", 8], ["brute", 10], ["brood", 6], ["shield", 5]] },
+    { label: "Hexfield", gold: 38, spawn: 0.6, packs: [["hexer", 4], ["shield", 8], ["ember", 6], ["brute", 6]] },
+    { label: "Storm", gold: 40, spawn: 0.56, packs: [["flyer", 10], ["scout", 18], ["hexer", 3], ["brute", 8]] },
+    { label: "Titanfall", gold: 46, spawn: 0.68, packs: [["titan", 3], ["shield", 8], ["ember", 8], ["hexer", 2]] },
+    { label: "Last Gate", gold: 52, spawn: 0.52, packs: [["scout", 16], ["flyer", 8], ["brute", 10], ["titan", 2], ["hexer", 3]] },
+    { label: "Warden", gold: 0, spawn: 0.62, packs: [["boss", 1], ["titan", 4], ["flyer", 8], ["shield", 8], ["hexer", 2]] },
   ];
 
   window.KRCGameData = Object.freeze({ maps, towers, enemies, waves });
