@@ -819,6 +819,7 @@
         x: pad.x,
         y: pad.y,
         cooldown: 0.2,
+        abilityCooldown: 0,
         pad,
         soldiers: [],
       });
@@ -880,8 +881,16 @@
       tower.sprite.setScale(0.72 + tower.level * 0.045);
       tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
       tower.rangeRing.setRadius(cfg.range[tower.level]);
+      const unlocked = window.KRCTowerAbilities?.isUnlocked(tower.type, tower.level);
+      const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+      if (unlocked && ability && tower.level === ability.minLevel) {
+        tower.abilityCooldown = 0;
+        this.flashText(ability.name.toUpperCase(), tower.x, tower.y - 42, "#fff2ba");
+        this.say(`${cfg.name} unlocked ${ability.name}: ${ability.description}`);
+      } else {
+        this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
+      }
       this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
-      this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       this.updateUpgradeLabel();
     }
 
@@ -917,7 +926,14 @@
         return;
       }
       const cfg = TOWERS[tower.type];
-      this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
+      const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+      const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
+      if (tower.level >= cfg.upgrades.length && unlocked) {
+        const cd = Math.ceil(Math.max(0, tower.abilityCooldown || 0));
+        this.upgradeButton.setLabel(cd > 0 ? `${ability.name.slice(0, 3).toUpperCase()}\n${cd}s` : `${ability.name.slice(0, 3).toUpperCase()}\nRDY`);
+      } else {
+        this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
+      }
       tower.rangeRing.setVisible(true);
       for (const t of this.towers) if (t !== tower) t.rangeRing.setVisible(false);
     }
@@ -1140,18 +1156,93 @@
     updateTowers(dt) {
       for (const tower of this.towers) {
         const cfg = TOWERS[tower.type];
+        if (window.KRCTowerAbilities) {
+          tower.abilityCooldown = window.KRCTowerAbilities.tickCooldown(tower.abilityCooldown, dt);
+        }
         if (tower.type === "barracks") {
           this.updateBarracks(tower, dt);
           continue;
         }
         tower.cooldown -= dt * (this.rallyTime > 0 ? 1.28 : 1);
         if (tower.cooldown > 0) continue;
-        const target = this.findTarget(tower, cfg.range[tower.level], tower.type === "archer");
+        const target = this.findTarget(tower, cfg.range[tower.level], tower.type !== "artillery");
         if (!target) continue;
         tower.cooldown = cfg.rate[tower.level];
         this.fireTower(tower, target);
+        this.tryTowerAbility(tower, target);
       }
       this.rallyTime = Math.max(0, (this.rallyTime || 0) - dt);
+      if (this.selectedPad?.tower) this.updateUpgradeLabel();
+    }
+
+    tryTowerAbility(tower, target) {
+      const api = window.KRCTowerAbilities;
+      if (!api || !api.canTrigger(tower)) return;
+      const ability = api.getAbility(tower.type);
+      if (!ability || !target || target.dead) return;
+      const cfg = TOWERS[tower.type];
+      if (ability.id === "volley") {
+        const extras = this.enemies
+          .filter((e) => !e.dead && e !== target && Phaser.Math.Distance.Between(tower.x, tower.y, e.x, e.y) <= cfg.range[tower.level])
+          .slice(0, 2);
+        for (const extra of extras) this.fireTower(tower, extra);
+        if (extras.length) {
+          this.flashText("VOLLEY", tower.x, tower.y - 40, "#b7f08a");
+          Object.assign(tower, api.afterTrigger(tower));
+          this.audio.play("shoot", 0.18, 1.5);
+        }
+        return;
+      }
+      if (ability.id === "nova") {
+        this.explode(target.x, target.y, 54, cfg.damage[tower.level] * 0.55, true);
+        for (const enemy of this.enemies) {
+          if (!enemy.dead && Phaser.Math.Distance.Between(target.x, target.y, enemy.x, enemy.y) <= 54) {
+            enemy.slow = Math.max(enemy.slow || 0, 2.4);
+          }
+        }
+        this.flashText("NOVA", target.x, target.y - 36, "#c2b6ff");
+        Object.assign(tower, api.afterTrigger(tower));
+        this.audio.play("magic", 0.26, 0.85);
+        return;
+      }
+      if (ability.id === "barrage") {
+        const x = target.x;
+        const y = target.y;
+        this.time.delayedCall(220, () => {
+          if (this.gameEnded) return;
+          this.explode(x + 18, y - 10, (cfg.splash?.[tower.level] || 50) * 1.15, cfg.damage[tower.level] * 0.7, false);
+          this.flashText("BARRAGE", x, y - 42, "#f0c27a");
+        });
+        Object.assign(tower, api.afterTrigger(tower));
+        this.audio.play("boom", 0.22, 0.9);
+      }
+    }
+
+    chainMagic(x, y, damage, jumps) {
+      let remaining = jumps;
+      let fromX = x;
+      let fromY = y;
+      const hit = new Set();
+      while (remaining > 0) {
+        let best = null;
+        let bestD = Infinity;
+        for (const enemy of this.enemies) {
+          if (enemy.dead || hit.has(enemy.id)) continue;
+          const d = Phaser.Math.Distance.Between(fromX, fromY, enemy.x, enemy.y);
+          if (d < 90 && d < bestD) {
+            best = enemy;
+            bestD = d;
+          }
+        }
+        if (!best) break;
+        hit.add(best.id);
+        this.damageEnemy(best, damage * 0.55, { magic: true, slow: 0.12 });
+        const bolt = this.add.line(0, 0, fromX, fromY, best.x, best.y, 0xb7a6ff, 0.85).setLineWidth(2).setDepth(68);
+        this.tweens.add({ targets: bolt, alpha: 0, duration: 140, onComplete: () => bolt.destroy() });
+        fromX = best.x;
+        fromY = best.y;
+        remaining -= 1;
+      }
     }
 
     findTarget(tower, range, canHitFlying = true) {
@@ -1250,6 +1341,7 @@
       const roster = tower.soldiers.filter((s) => !s.dead);
       tower.soldiers = roster;
       this.refreshBarracksReadiness(tower, roster.length, wanted);
+      this.tryBarracksAbility(tower, roster);
 
       for (const soldier of roster) {
         soldier.homeX = tower.rallyX;
@@ -1291,6 +1383,25 @@
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
         if (soldier.bar) soldier.bar.fillColor = soldier.target ? 0xf0c35a : 0x7ee06a;
       }
+    }
+
+    tryBarracksAbility(tower, roster) {
+      const api = window.KRCTowerAbilities;
+      if (!api || !api.canTrigger(tower) || !roster.length) return;
+      const threatened = roster.some((s) => s.target);
+      if (!threatened && !this.enemies.some((e) => !e.dead && Phaser.Math.Distance.Between(tower.rallyX, tower.rallyY, e.x, e.y) < 90)) {
+        return;
+      }
+      for (const soldier of roster) {
+        soldier.hp = Math.min(soldier.maxHp, soldier.hp + soldier.maxHp * 0.35);
+        soldier.holdFast = 3.5;
+        if (soldier.sprite) {
+          this.tweens.add({ targets: soldier.sprite, scale: 0.9, yoyo: true, duration: 120 });
+        }
+      }
+      this.flashText("HOLD FAST", tower.rallyX, tower.rallyY - 36, "#ffe08a");
+      Object.assign(tower, api.afterTrigger(tower));
+      this.audio.play("ready", 0.22, 0.8);
     }
 
     refreshBarracksReadiness(tower, aliveCount, wanted) {
@@ -1552,7 +1663,9 @@
 
     enemyMelee(enemy, soldier, dt) {
       const damage = (enemy.type === "boss" ? 34 : enemy.type === "titan" ? 18 : 8) * dt;
-      soldier.hp -= soldier.isHero ? damage * 0.7 : damage;
+      const mitigated = soldier.holdFast && soldier.holdFast > 0 ? damage * 0.55 : damage;
+      if (soldier.holdFast) soldier.holdFast = Math.max(0, soldier.holdFast - dt);
+      soldier.hp -= soldier.isHero ? mitigated * 0.7 : mitigated;
       if (soldier.hp <= 0) {
         if (soldier.isHero) this.killHero();
         else this.killSoldier(soldier);

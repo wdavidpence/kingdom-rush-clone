@@ -41,7 +41,7 @@
 - [x] 22. Improve target selection so towers prioritize the most progressed eligible enemy reliably.
 - [x] 23. Upgrade guard deployment into a visible rally-point and blocking system.
 - [x] 24. Add clear troop respawn/readiness feedback and richer melee encounters.
-- [ ] 25. Add unique high-tier tower abilities with cooldown/level gating.
+- [x] 25. Add unique high-tier tower abilities with cooldown/level gating.
 - [ ] 26. Add enemy traits with readable iconography: armor, flying, swarm, and elite.
 - [x] 27. Add a swarm/split archetype and verify safe death-chain handling.
 - [ ] 28. Add a support/control archetype that changes placement decisions without invalidating towers.
@@ -93,3 +93,4 @@
 - 2026-07-19 — Step 22 complete: replaced screen-coordinate target scoring with a pure, path-distance-aware targeting helper that consistently selects the furthest eligible living enemy and respects anti-air rules.
 - 2026-07-19 — Step 23 complete: Guards now spawn and return to visible road rally markers; selecting a Guard enables an explicit tap-road command, and units redirect safely when the marker changes.
 - 2026-07-19 — Step 24 complete: barracks show READY/TRN readiness badges and training meters; fallen troops flash FALLEN and begin training; melee adds clash sparks, periodic CLASH crits, combat HP-bar tint, and faster idle regen.
+- 2026-07-19 — Step 25 complete: level-gated tower abilities (Volley, Rune Nova, Barrage, Hold Fast) with cooldowns; restored missing mage chain lightning; mage/artillery/archer AA rules corrected so artillery remains ground-only.

@@ -10,26 +10,20 @@
 - Repository: `/mnt/c/Users/wdavi/Projects/kingdom-rush-clone`
 - Upstream: `https://github.com/wdavidpence/kingdom-rush-clone.git`
 - Live Pages: `https://wdavidpence.github.io/kingdom-rush-clone/`
-- Baseline includes modular data/targeting/rally/campaign helpers plus barracks readiness (step 24).
-- Persistent memory: Hermes built-in memory is active (`hermes memory status` → Built-in always active).
-- Working tree policy: commit reviewable units; do not bundle unrelated WIP. Preserve original IP boundaries.
+- Steps 01–25, 27 complete. Modular helpers include data, targeting, rally, barracks readiness, tower abilities.
+- Persistent memory: Hermes built-in memory active.
 
 ## Working constraints
-- Preserve an **original** title, world, art, audio, map shapes, text, and code. Use Kingdom Rush only as a genre/mechanics/presentation reference; do not import, recreate, or claim its proprietary assets.
-- Always read `public/index.html` before writing it (sibling-agent overwrite pitfall).
-- Prioritize static, dependency-free browser delivery; Phaser is loaded through jsDelivr.
-- Use `python3 -m http.server <port> --bind 127.0.0.1` via tracked background process for browser testing.
-- Existing QA hook: `?qa=1&emberTest=1` writes pass/fail to `document.body.dataset.krcEmberTest`.
-- Contract tests: `for t in tests/*.test.mjs; do node \"$t\"; done`
-- Barracks readiness helper: `public/src/barracks-readiness.js` → `window.KRCBarracksReadiness` (loaded before `game.js`).
+- Original IP only — Kingdom Rush is genre reference, not asset source.
+- Always read `public/index.html` before writing it.
+- Static Phaser CDN delivery; contract tests via `for t in tests/*.test.mjs; do node \"$t\"; done`.
+- Load order: settings → layout → entity-state → scene-cleanup → campaign-state → game-data → targeting → rally-point → barracks-readiness → tower-abilities → game.js
 
 ## Next milestone
-Earliest unchecked item is **25: Add unique high-tier tower abilities with cooldown/level gating**.
-Then 26, 28–30, then campaign/UX (31–40), AV polish (41–48), release (49–50).
+Earliest unchecked: **26. Add enemy traits with readable iconography: armor, flying, swarm, and elite.**
+Then 28–30 (support archetype, boss phases, economy), 31–40 campaign/UX, 41–48 AV polish, 49–50 release.
 
-## Verification evidence (step 24)
-- `node tests/barracks-readiness.test.mjs` PASS
-- Full Node contract suite PASS
-- `node --check` on all `public/src/*.js` PASS
+## Latest verification
+- Full contract suite PASS (including tower-abilities + barracks-readiness)
+- `node --check` all public/src/*.js PASS
 - `git diff --check` clean
-- Static server delivered `index.html`, `barracks-readiness.js`, `game.js` HTTP 200
