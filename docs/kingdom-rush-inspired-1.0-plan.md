@@ -25,21 +25,21 @@
 - [x] 10. Establish a versioned 1.0 acceptance checklist and release notes.
 
 ### B. Architecture and game-data refactor
-- [ ] 11. Split static gameplay data (maps, towers, enemies, waves) from scene behavior.
-- [ ] 12. Add stable entity IDs and explicit state fields for robust targeting and cleanup.
-- [ ] 13. Replace magic layout numbers with named UI/map constants where practical.
+- [x] 11. Split static gameplay data (maps, towers, enemies, waves) from scene behavior.
+- [x] 12. Add stable entity IDs and explicit state fields for robust targeting and cleanup.
+- [x] 13. Replace magic layout numbers with named UI/map constants where practical.
 - [x] 14. Add reusable helpers for particles, floating combat text, and audio calls.
-- [ ] 15. Add safe scene cleanup/reset paths to prevent stale sounds or entities.
+- [x] 15. Add safe scene cleanup/reset paths to prevent stale sounds or entities.
 - [x] 16. Add a lightweight save/preferences layer for audio and accessibility settings.
-- [ ] 17. Add a campaign-state model for map unlocks, stars, and best results.
+- [x] 17. Add a campaign-state model for map unlocks, stars, and best results.
 - [x] 18. Add deterministic QA/query parameters for map, wave, and combat testing.
 - [x] 19. Add runtime invariant checks in QA mode for gold/lives/entity counts.
 - [x] 20. Validate JavaScript syntax and static asset links after each refactor milestone.
 
 ### C. Core Kingdom-Rush-style tactical loop (original implementation)
-- [ ] 21. Make each tower family’s role, target rules, and counterplay immediately legible.
-- [ ] 22. Improve target selection so towers prioritize the most progressed eligible enemy reliably.
-- [ ] 23. Upgrade guard deployment into a visible rally-point and blocking system.
+- [x] 21. Make each tower family’s role, target rules, and counterplay immediately legible.
+- [x] 22. Improve target selection so towers prioritize the most progressed eligible enemy reliably.
+- [x] 23. Upgrade guard deployment into a visible rally-point and blocking system.
 - [ ] 24. Add clear troop respawn/readiness feedback and richer melee encounters.
 - [ ] 25. Add unique high-tier tower abilities with cooldown/level gating.
 - [ ] 26. Add enemy traits with readable iconography: armor, flying, swarm, and elite.
@@ -84,3 +84,11 @@
 ## Change log
 
 - 2026-07-18 — Steps 01–05 complete. Repository baseline is commit `7e95612`; implementation work begins with foundation/refactor and replayability polish.
+- 2026-07-19 — Step 11 complete: extracted map, tower, enemy, and wave definitions to `public/src/game-data.js`; added a Node contract test and verified script syntax plus static server delivery.
+- 2026-07-19 — Step 12 complete: added stable per-scene entity IDs and lifecycle states for heroes, towers, enemies, soldiers, and projectiles, with a dependency-free contract test.
+- 2026-07-19 — Step 13 complete: extracted screen, shop, path, and gate layout constants to `public/src/layout.js`; verified its contract and all JavaScript syntax.
+- 2026-07-19 — Step 15 complete: registered shutdown cleanup to stop sounds, detach input, and clear transient effects/entities before scene restarts.
+- 2026-07-19 — Step 17 complete: added local campaign state for unlocks, best stars, and best gold; final-map wins persist results.
+- 2026-07-19 — Step 21 complete: defined concise original tower roles, targeting rules, and counterplay in static data; added AIR/ARM/AOE/HOLD shop cues and detailed selection guidance.
+- 2026-07-19 — Step 22 complete: replaced screen-coordinate target scoring with a pure, path-distance-aware targeting helper that consistently selects the furthest eligible living enemy and respects anti-air rules.
+- 2026-07-19 — Step 23 complete: Guards now spawn and return to visible road rally markers; selecting a Guard enables an explicit tap-road command, and units redirect safely when the marker changes.

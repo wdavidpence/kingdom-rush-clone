@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import vm from "node:vm";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const source = fs.readFileSync(path.join(root, "public/src/campaign-state.js"), "utf8");
+const context = { window: {} };
+vm.runInNewContext(source, context, { filename: "campaign-state.js" });
+const state = context.window.KRCCampaign.create(3);
+assert.deepEqual([...state.unlocked], [true, false, false]);
+context.window.KRCCampaign.recordWin(state, 0, 3, 420);
+assert.deepEqual([...state.unlocked], [true, true, false]);
+assert.equal(state.results[0].stars, 3);
+assert.equal(state.results[0].bestGold, 420);
+context.window.KRCCampaign.recordWin(state, 0, 1, 120);
+assert.equal(state.results[0].stars, 3);
+assert.equal(state.results[0].bestGold, 420);
+console.log("campaign-state contract: PASS");

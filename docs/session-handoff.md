@@ -20,9 +20,12 @@
 - Prioritize static, dependency-free browser delivery; Phaser is loaded through jsDelivr.
 - Use `python3 -m http.server <port> --bind 127.0.0.1` via tracked background process for browser testing.
 - Existing QA hook: `?qa=1&emberTest=1` writes pass/fail to `document.body.dataset.krcEmberTest`.
+- Static campaign data lives in `public/src/game-data.js`, exposed as `window.KRCGameData` and loaded before `game.js`; its contract test is `node tests/game-data.test.mjs`.
+- Stable entity identities and lifecycle transitions are supplied by `public/src/entity-state.js`, loaded before `game.js`; its contract test is `node tests/entity-state.test.mjs`.
+- The current worktree includes a pre-existing, uncommitted mage chain-hit change in `public/src/game.js`; preserve it unless its owner directs otherwise.
 
 ## Next milestone
-Complete plan steps 06–10: add IP/licensing/docs guardrails, a repeatable launch/smoke command, a regression checklist, attribution inventory, and release acceptance checklist. Then begin the data/behavior split in steps 11–20 without breaking the current game.
+Continue plan steps 24–26, 28–30. The earliest unchecked item is **24: add clear troop respawn/readiness feedback and richer melee encounters**. Guard rally snapping is isolated in `public/src/rally-point.js`, loaded before `game.js`; run `node tests/rally-point.test.mjs`. Preserve the existing uncommitted mage chain-hit change while working in `game.js`.
 
 ## Verification evidence so far
 - Repository cloned successfully and baseline was clean.
