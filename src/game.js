@@ -1,10 +1,5 @@
 (() => {
-  const W = 420;
-  const H = 760;
-  const TOP_H = 62;
-  const SHOP_Y = 642;
-  const SHOP_H = 118;
-  const PATH_WIDTH = 46;
+  const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
 
   const COLORS = {
@@ -21,159 +16,7 @@
     blue: "#65b7ff",
   };
 
-  const PATH = [
-    { x: -18, y: 126 },
-    { x: 80, y: 126 },
-    { x: 104, y: 222 },
-    { x: 250, y: 222 },
-    { x: 292, y: 326 },
-    { x: 132, y: 372 },
-    { x: 106, y: 488 },
-    { x: 276, y: 520 },
-    { x: 434, y: 596 },
-  ];
-
-  const BUILD_PADS = [
-    { x: 68, y: 214 },
-    { x: 180, y: 152 },
-    { x: 326, y: 176 },
-    { x: 202, y: 310 },
-    { x: 326, y: 394 },
-    { x: 74, y: 438 },
-    { x: 194, y: 488 },
-    { x: 328, y: 560 },
-  ];
-
-  const MAPS = [
-    { name: "Forest Gate", grass: 0x273c1f, path: PATH, pads: BUILD_PADS },
-    {
-      name: "Stone Pass",
-      grass: 0x243235,
-      path: [
-        { x: -18, y: 150 },
-        { x: 122, y: 150 },
-        { x: 160, y: 258 },
-        { x: 68, y: 336 },
-        { x: 210, y: 396 },
-        { x: 334, y: 330 },
-        { x: 306, y: 502 },
-        { x: 426, y: 584 },
-      ],
-      pads: [
-        { x: 74, y: 238 },
-        { x: 212, y: 172 },
-        { x: 322, y: 218 },
-        { x: 84, y: 424 },
-        { x: 206, y: 304 },
-        { x: 332, y: 404 },
-        { x: 176, y: 512 },
-        { x: 318, y: 574 },
-      ],
-    },
-    {
-      name: "Ember Marsh",
-      grass: 0x2b3024,
-      path: [
-        { x: -18, y: 104 },
-        { x: 140, y: 144 },
-        { x: 310, y: 116 },
-        { x: 334, y: 246 },
-        { x: 168, y: 288 },
-        { x: 88, y: 420 },
-        { x: 248, y: 470 },
-        { x: 378, y: 570 },
-        { x: 438, y: 616 },
-      ],
-      pads: [
-        { x: 74, y: 188 },
-        { x: 220, y: 202 },
-        { x: 344, y: 170 },
-        { x: 266, y: 330 },
-        { x: 74, y: 322 },
-        { x: 142, y: 518 },
-        { x: 298, y: 426 },
-        { x: 326, y: 560 },
-      ],
-    },
-  ];
-
-  const TOWERS = {
-    archer: {
-      id: "archer",
-      name: "Rangers",
-      glyph: "A",
-      cost: 70,
-      upgrades: [55, 100, 240, 460],
-      damage: [18, 27, 39, 58, 84],
-      rate: [0.62, 0.53, 0.46, 0.4, 0.35],
-      range: [106, 120, 132, 144, 156],
-      color: 0x78d66b,
-      desc: "Fast arrows. Good vs flyers.",
-    },
-    mage: {
-      id: "mage",
-      name: "Runes",
-      glyph: "M",
-      cost: 95,
-      upgrades: [75, 130, 300, 560],
-      damage: [34, 49, 68, 98, 138],
-      rate: [1.05, 0.93, 0.84, 0.75, 0.68],
-      range: [104, 116, 128, 140, 152],
-      color: 0x7d75ff,
-      magic: true,
-      slow: [0.12, 0.18, 0.25, 0.32, 0.4],
-      desc: "Ignores armor and slows.",
-    },
-    artillery: {
-      id: "artillery",
-      name: "Mortar",
-      glyph: "B",
-      cost: 145,
-      upgrades: [95, 170, 380, 700],
-      damage: [55, 76, 104, 150, 212],
-      rate: [1.75, 1.55, 1.35, 1.2, 1.06],
-      range: [128, 145, 160, 176, 192],
-      color: 0xe29b4a,
-      splash: [42, 52, 64, 76, 90],
-      desc: "Slow splash damage.",
-    },
-    barracks: {
-      id: "barracks",
-      name: "Guard",
-      glyph: "G",
-      cost: 120,
-      upgrades: [80, 150, 340, 620],
-      damage: [10, 15, 22, 32, 46],
-      rate: [0.7, 0.62, 0.55, 0.49, 0.44],
-      range: [70, 82, 92, 104, 116],
-      color: 0xd8c56a,
-      soldierHp: [90, 130, 180, 245, 330],
-      desc: "Blocks the road.",
-    },
-  };
-
-  const ENEMIES = {
-    scout: { name: "Scout", hp: 54, speed: 50, armor: 0, bounty: 7, leak: 1, color: 0xbfe769, size: 15 },
-    brute: { name: "Brute", hp: 142, speed: 42, armor: 3, bounty: 13, leak: 1, color: 0xe4a25d, size: 18 },
-    shield: { name: "Shield", hp: 230, speed: 34, armor: 6, bounty: 19, leak: 2, color: 0xb7bfca, size: 20 },
-    ember: { name: "Ember", hp: 118, speed: 50, armor: 1, bounty: 15, leak: 1, color: 0xe86240, size: 17, burn: true },
-    flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },
-    titan: { name: "Titan", hp: 520, speed: 26, armor: 8, bounty: 45, leak: 4, color: 0x8e8379, size: 24 },
-    boss: { name: "Warden", hp: 1120, speed: 22, armor: 7, bounty: 120, leak: 8, color: 0xcd65e6, size: 30 },
-  };
-
-  const WAVES = [
-    { label: "Scouts", gold: 18, spawn: 0.82, packs: [["scout", 12]] },
-    { label: "Raiders", gold: 20, spawn: 0.64, packs: [["scout", 16], ["brute", 5]] },
-    { label: "Armor", gold: 24, spawn: 0.7, packs: [["brute", 10], ["shield", 3], ["scout", 8]] },
-    { label: "Fireline", gold: 28, spawn: 0.62, packs: [["ember", 8], ["scout", 12], ["shield", 4]] },
-    { label: "Skybreak", gold: 30, spawn: 0.68, packs: [["flyer", 8], ["brute", 10], ["shield", 5]] },
-    { label: "Crush", gold: 36, spawn: 0.62, packs: [["shield", 10], ["ember", 8], ["brute", 8]] },
-    { label: "Storm", gold: 38, spawn: 0.56, packs: [["flyer", 10], ["scout", 18], ["brute", 8]] },
-    { label: "Titanfall", gold: 44, spawn: 0.68, packs: [["titan", 3], ["shield", 8], ["ember", 8]] },
-    { label: "Last Gate", gold: 50, spawn: 0.52, packs: [["scout", 16], ["flyer", 8], ["brute", 10], ["titan", 2]] },
-    { label: "Warden", gold: 0, spawn: 0.62, packs: [["boss", 1], ["titan", 4], ["flyer", 8], ["shield", 8]] },
-  ];
+  const { maps: MAPS, towers: TOWERS, enemies: ENEMIES, waves: WAVES } = window.KRCGameData;
 
   class GameScene extends Phaser.Scene {
     constructor() {
@@ -210,6 +53,7 @@
         MAPS.length - 1
       );
       this.map = MAPS[this.mapIndex];
+      this.campaign = window.KRCCampaign.load(MAPS.length);
       this.path = this.map.path;
       this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
       this.gold = this.startData?.gold ?? 260;
@@ -224,12 +68,17 @@
       this.soldiers = [];
       this.projectiles = [];
       this.effects = [];
+      this.entityRegistry = window.KRCEntityState.createRegistry();
       this.selectedPad = null;
       this.selectedBuild = null;
       this.messageTimer = 0;
       this.gameEnded = false;
+      this.paused = false;
       this.overlayActive = true;
       this.audio = new SoundBox(this);
+      this.events.once("shutdown", this.cleanupScene, this);
+      this.settings = window.KRCSettings?.load?.() || { muted: false, reducedMotion: false };
+      this.audio.setMuted(this.settings.muted);
       this.spells = {
         meteor: { name: "Meteor", ready: 0, cooldown: 24 },
         frost: { name: "Frost", ready: 0, cooldown: 22 },
@@ -253,6 +102,8 @@
       this.createShop();
       this.showStartOverlay();
       this.input.on("pointerdown", this.handlePointer, this);
+      this.input.keyboard?.on("keydown-P", () => this.togglePause());
+      this.input.keyboard?.on("keydown-R", () => this.toggleReducedMotion());
       if (this.qaMode) {
         document.body.dataset.krcQa = "1";
         if (new URLSearchParams(window.location.search).has("emberTest")) {
@@ -263,11 +114,33 @@
           document.body.dataset.krcEmberTest =
             this.enemies.length === 0 && this.gold === goldBefore + ENEMIES.ember.bounty ? "pass" : "fail";
         }
+        if (new URLSearchParams(window.location.search).has("broodTest")) {
+          this.spawnEnemy("brood");
+          const brood = this.enemies[this.enemies.length - 1];
+          const goldBefore = this.gold;
+          this.damageEnemy(brood, brood.maxHp + 999, { magic: true });
+          document.body.dataset.krcBroodTest =
+            this.enemies.length === 2 && this.enemies.every((enemy) => enemy.type === "scout") && this.gold === goldBefore + ENEMIES.brood.bounty
+              ? "pass"
+              : "fail";
+        }
       }
     }
 
+    cleanupScene() {
+      this.input.off("pointerdown", this.handlePointer, this);
+      this.audio?.stopAll?.();
+      window.KRCSceneCleanup.destroyAll((this.effects || []).map((effect) => effect.obj));
+      this.effects = [];
+      this.projectiles = [];
+      this.enemies = [];
+      this.soldiers = [];
+      this.towers = [];
+      this.queue = [];
+    }
+
     update(_time, deltaMs) {
-      if (this.gameEnded) return;
+      if (this.gameEnded || this.paused) return;
       const dt = Math.min(0.05, deltaMs / 1000);
       this.updateMessages(dt);
       this.updateSpells(dt);
@@ -490,6 +363,7 @@
       enemy("enemy_brute", { kind: "brute", rx: 18, ry: 17, hi: "#f2bf78", mid: "#c5773d", lo: "#6b3f27", outline: "#5a321f" });
       enemy("enemy_shield", { kind: "shield", rx: 17, ry: 16, hi: "#d9e1e8", mid: "#aab5bf", lo: "#66727f", outline: "#46515d" });
       enemy("enemy_ember", { kind: "ember", rx: 16, ry: 17, hi: "#ffb066", mid: "#e45f3c", lo: "#7d2d1c", outline: "#662216" });
+      enemy("enemy_brood", { kind: "scout", rx: 14, ry: 14, hi: "#efa4c1", mid: "#bd6688", lo: "#65314b", outline: "#482033" });
       enemy("enemy_flyer", { kind: "flyer", rx: 14, ry: 14, hi: "#c8f6ff", mid: "#69cbe8", lo: "#2c7195", outline: "#245d78", shadow: 16 });
       enemy("enemy_titan", { kind: "titan", rx: 21, ry: 20, hi: "#b4aaa1", mid: "#81776e", lo: "#49413b", outline: "#342c27", horn: "#d7c3a4", shadow: 27 });
       enemy("enemy_boss", { kind: "boss", rx: 25, ry: 23, hi: "#f08cff", mid: "#a948c6", lo: "#55256b", outline: "#3b174c", horn: "#f1d2ff", shadow: 31 });
@@ -596,8 +470,8 @@
       center.lineStyle(2, 0xb9905d, 0.5);
       this.strokePath(center);
 
-      this.add.text(12, 83, "IN", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
-      this.add.text(367, 585, "GATE", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
+      this.add.text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
+      this.add.text(MAP_LAYOUT.gateX - 30, MAP_LAYOUT.gateY - 11, "GATE", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
 
       for (let i = 0; i < 26; i += 1) {
         const x = 24 + ((i * 91) % 372);
@@ -612,8 +486,8 @@
         if (i % 3 === 0) this.add.image(x, y, "rock_moss").setScale(0.72).setDepth(-6);
         else this.add.circle(x, y, 2, i % 2 ? 0xeed27a : 0xbadf7b, 0.75).setDepth(-6);
       }
-      this.add.rectangle(397, 596, 24, 58, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
-      this.add.rectangle(397, 596, 12, 42, 0x15100c, 0.9).setDepth(-4);
+      this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
+      this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
     }
 
     strokePath(graphics) {
@@ -634,7 +508,7 @@
     createHero() {
       const post = this.nearestPathPoint(this.path[Math.min(2, this.path.length - 1)].x, this.path[Math.min(2, this.path.length - 1)].y);
       this.heroSelected = false;
-      this.hero = {
+      this.hero = this.entityRegistry.create("hero", {
         x: post.x,
         y: post.y,
         targetX: post.x,
@@ -648,7 +522,7 @@
         commandTime: 0,
         dead: false,
         isHero: true,
-      };
+      });
       this.hero.ring = this.add.circle(post.x, post.y, 34, 0xf5d76e, 0.12).setStrokeStyle(2, 0xf5d76e, 0.6).setDepth(37).setVisible(false);
       this.hero.sprite = this.add.image(post.x, post.y - 8, "hero_captain").setScale(0.78).setDepth(46);
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
@@ -669,10 +543,12 @@
       this.waveBarBg = this.add.rectangle(236, 42, 86, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
       this.waveBar = this.add.rectangle(236, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
-        .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 250 } })
+        .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 232 } })
         .setOrigin(0, 0.5)
         .setDepth(100);
-      this.callButton = this.makeButton(378, 39, 64, 30, "CALL", 0x7a4f25, () => this.callWave());
+      this.muteButton = this.makeButton(211, 18, 34, 20, this.settings.muted ? "×" : "♪", 0x3d4f5a, () => this.toggleMuted());
+      this.pauseButton = this.makeButton(337, 39, 36, 30, "II", 0x3d4f5a, () => this.togglePause());
+      this.callButton = this.makeButton(385, 39, 60, 30, "CALL", 0x7a4f25, () => this.callWave());
     }
 
     createShop() {
@@ -683,7 +559,7 @@
       for (let i = 0; i < types.length; i += 1) {
         const t = types[i];
         const x = 48 + i * 81;
-        const b = this.makeButton(x, SHOP_Y + 33, 72, 54, `${t.glyph}\n${t.cost}`, t.color, () => this.chooseBuild(t.id));
+        const b = this.makeButton(x, SHOP_Y + 33, 72, 54, `${t.glyph}\n${t.cost}g\n${t.shopLabel}`, t.color, () => this.chooseBuild(t.id));
         b.type = t.id;
         this.shopButtons.push(b);
       }
@@ -816,6 +692,15 @@
       const startShine = this.add.rectangle(W / 2, 416, 174, 12, 0xffffff, 0.17);
       const startLip = this.add.rectangle(W / 2, 448, 174, 9, 0x000000, 0.2);
       const startText = this.add.text(W / 2, 428, "TAP TO START", { font: "bold 19px Arial", color: "#fff7dc" }).setOrigin(0.5);
+      const motion = this.add.rectangle(W / 2, 498, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+      const motionText = this.add
+        .text(W / 2, 498, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
+        .setOrigin(0.5);
+      motion.setInteractive({ useHandCursor: true });
+      motion.on("pointerdown", () => {
+        const reduced = this.toggleReducedMotion();
+        motionText.setText(reduced ? "MOTION: REDUCED" : "MOTION: FULL");
+      });
       start.setInteractive({ useHandCursor: true });
       start.on("pointerdown", () => {
         this.audio.resume();
@@ -825,7 +710,7 @@
         this.overlay.destroy();
         this.say("Build two towers. Tap Captain to move him.");
       });
-      this.overlay.add([startShadow, start, startShine, startLip, startText]);
+      this.overlay.add([startShadow, start, startShine, startLip, startText, motion, motionText]);
     }
 
     handlePointer(pointer, targets) {
@@ -849,6 +734,16 @@
           closest = pad;
         }
       }
+      const selectedTower = this.selectedPad?.tower;
+      if (selectedTower?.type === "barracks" && (!closest || best > 34)) {
+        const rally = window.KRCRallyPoint.place(this.path, pointer.x, pointer.y);
+        if (rally && Phaser.Math.Distance.Between(pointer.x, pointer.y, rally.x, rally.y) <= 54) {
+          this.setRallyPoint(selectedTower, rally);
+          return;
+        }
+        this.say("Tap the road to set this Guard rally point.");
+        return;
+      }
       if (!closest || best > 34) {
         this.clearSelection();
         return;
@@ -867,7 +762,7 @@
       this.heroSelected = false;
       this.setHeroPanel(false);
       const cfg = TOWERS[id];
-      this.say(this.selectedBuild ? `${cfg.name}: ${cfg.desc}` : "Build selection cleared.");
+      this.say(this.selectedBuild ? `${cfg.name} — ${cfg.role}. ${cfg.targetRule}. ${cfg.counterplay}` : "Build selection cleared.");
       this.refreshSelection();
     }
 
@@ -879,7 +774,11 @@
       this.refreshSelection();
       if (pad.tower) {
         const cfg = TOWERS[pad.tower.type];
-        this.say(`${cfg.name} level ${pad.tower.level + 1}. Upgrade or sell.`);
+        this.say(
+          pad.tower.type === "barracks"
+            ? `${cfg.name} level ${pad.tower.level + 1}. Tap the road to move its rally point.`
+            : `${cfg.name} level ${pad.tower.level + 1}. Upgrade or sell.`
+        );
       } else {
         this.say("Empty build pad. Choose a tower below.");
       }
@@ -914,7 +813,7 @@
       }
       this.gold -= cfg.cost;
       pad.icon.setText("");
-      const tower = {
+      const tower = this.entityRegistry.create("tower", {
         type,
         level: 0,
         x: pad.x,
@@ -922,11 +821,21 @@
         cooldown: 0.2,
         pad,
         soldiers: [],
-      };
+      });
+      if (type === "barracks") {
+        const rally = window.KRCRallyPoint.place(this.path, pad.x, pad.y);
+        tower.rallyX = rally.x;
+        tower.rallyY = rally.y;
+        tower.rallySegment = rally.segment;
+      }
       pad.tower = tower;
       tower.sprite = this.add.image(pad.x, pad.y - 5, `tower_${type}`).setScale(0.72).setDepth(30);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.add.circle(pad.x, pad.y, cfg.range[0], cfg.color, 0.08).setStrokeStyle(1, cfg.color, 0.22).setDepth(20).setVisible(false);
+      if (type === "barracks") {
+        tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
+        tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
+      }
       this.towers.push(tower);
       this.audio.play("ready", 0.28);
       this.selectedPad = pad;
@@ -973,6 +882,9 @@
       tower.sprite.destroy();
       tower.label.destroy();
       tower.rangeRing.destroy();
+      tower.rallyRing?.destroy();
+      tower.rallyFlag?.destroy();
+      this.entityRegistry.transition(tower, "removed");
       for (const s of tower.soldiers) this.killSoldier(s);
       this.towers = this.towers.filter((t) => t !== tower);
       this.selectedPad.tower = null;
@@ -1018,6 +930,36 @@
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
     }
 
+    toggleMuted() {
+      this.settings.muted = !this.settings.muted;
+      this.settings = window.KRCSettings?.save?.({ muted: this.settings.muted }) || this.settings;
+      this.audio.setMuted(this.settings.muted);
+      if (!this.settings.muted) this.audio.startMusic();
+      this.muteButton.setLabel(this.settings.muted ? "×" : "♪");
+      this.say(this.settings.muted ? "Sound muted." : "Sound restored.");
+    }
+
+    toggleReducedMotion() {
+      this.settings.reducedMotion = !this.settings.reducedMotion;
+      this.settings = window.KRCSettings?.save?.({ reducedMotion: this.settings.reducedMotion }) || this.settings;
+      this.say(this.settings.reducedMotion ? "Reduced motion enabled." : "Full motion enabled.");
+      return this.settings.reducedMotion;
+    }
+
+    togglePause() {
+      if (this.overlayActive || this.gameEnded) return;
+      this.paused = !this.paused;
+      if (this.paused) {
+        this.sound.pauseAll();
+        this.pauseButton.setLabel("▶");
+        this.say("Paused. Tap ▶ or press P to continue.");
+      } else {
+        this.sound.resumeAll();
+        this.pauseButton.setLabel("II");
+        this.say("Battle resumed.");
+      }
+    }
+
     updateWave(dt) {
       if (!this.waveActive) return;
       this.spawnTimer -= dt;
@@ -1051,7 +993,7 @@
       const base = ENEMIES[type];
       const scale = 1 + this.waveIndex * 0.08;
       const start = this.path[0];
-      const enemy = {
+      const enemy = this.entityRegistry.create("enemy", {
         type,
         base,
         x: start.x,
@@ -1064,12 +1006,23 @@
         slow: 0,
         blockedBy: null,
         dead: false,
-      };
+      });
       enemy.sprite = this.add.image(enemy.x, enemy.y, `enemy_${type}`).setScale(base.size / 28).setDepth(40);
       enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
       this.enemies.push(enemy);
+      return enemy;
+    }
+
+    spawnEnemyFrom(type, parent) {
+      const child = this.spawnEnemy(type);
+      child.x = parent.x;
+      child.y = parent.y;
+      child.seg = parent.seg;
+      child.slow = 0;
+      this.updateEnemyVisual(child);
+      return child;
     }
 
     updateEnemies(dt) {
@@ -1140,20 +1093,28 @@
       if (source.slow) enemy.slow = Math.max(enemy.slow, 1.2 + source.slow * 2);
       if (enemy.hp <= 0) {
         const burn = enemy.base.burn;
+        const split = enemy.base.split;
         const x = enemy.x;
         const y = enemy.y;
         this.gold += enemy.base.bounty;
         if (source.hero) this.addHeroXp(enemy.base.bounty);
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.removeEnemy(enemy, true);
+        if (split) {
+          const [childType, count] = split;
+          for (let i = 0; i < count; i += 1) this.spawnEnemyFrom(childType, enemy);
+          this.flashText("BROOD SPLIT", x, y - 38, "#f2bbd0");
+        }
         if (burn) this.explode(x, y, 38, 24, true);
       }
     }
 
     removeEnemy(enemy, killed) {
+      this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
       for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar]) obj.destroy();
       this.enemies = this.enemies.filter((e) => e !== enemy);
+      this.entityRegistry.transition(enemy, "removed");
       if (killed) {
         this.audio.play("impact", 0.2, 0.95 + Math.random() * 0.16);
         this.puff(enemy.x, enemy.y, enemy.base.color);
@@ -1178,27 +1139,20 @@
     }
 
     findTarget(tower, range, canHitFlying = true) {
-      let best = null;
-      let bestProgress = -1;
-      for (const enemy of this.enemies) {
-        if (enemy.base.flying && !canHitFlying && tower.type === "artillery") continue;
-        const d = Phaser.Math.Distance.Between(tower.x, tower.y, enemy.x, enemy.y);
-        if (d <= range) {
-          const progress = enemy.seg * 1000 + enemy.x + enemy.y;
-          if (progress > bestProgress) {
-            best = enemy;
-            bestProgress = progress;
-          }
-        }
-      }
-      return best;
+      return window.KRCTargeting.findBestTarget({
+        path: this.path,
+        tower,
+        range,
+        enemies: this.enemies,
+        canHitFlying,
+      });
     }
 
     fireTower(tower, target) {
       const cfg = TOWERS[tower.type];
       const level = tower.level;
       const color = cfg.color;
-      const projectile = {
+      const projectile = this.entityRegistry.create("projectile", {
         x: tower.x,
         y: tower.y - 10,
         target,
@@ -1208,7 +1162,8 @@
         magic: !!cfg.magic,
         slow: cfg.slow?.[level] || 0,
         splash: cfg.splash?.[level] || 0,
-      };
+        chain: tower.type === "mage" && level >= 3 ? 2 : 0,
+      });
       const key =
         tower.type === "archer" ? "projectile_arrow" : tower.type === "artillery" ? "projectile_bomb" : "projectile_magic";
       projectile.sprite = this.add.image(projectile.x, projectile.y, key).setDepth(60);
@@ -1227,8 +1182,14 @@
         const d = Phaser.Math.Distance.Between(p.x, p.y, p.target.x, p.target.y);
         const step = p.speed * dt;
         if (d <= step || d < 8) {
-          if (p.splash) this.explode(p.target.x, p.target.y, p.splash, p.damage, false);
-          else this.damageEnemy(p.target, p.damage, { magic: p.magic, slow: p.slow });
+          if (p.splash) {
+            this.explode(p.target.x, p.target.y, p.splash, p.damage, false);
+          } else {
+            const hitX = p.target.x;
+            const hitY = p.target.y;
+            this.damageEnemy(p.target, p.damage, { magic: p.magic, slow: p.slow });
+            if (p.chain) this.chainMagic(hitX, hitY, p.damage, p.chain);
+          }
           this.removeProjectile(p);
         } else {
           p.x += ((p.target.x - p.x) / d) * step;
@@ -1240,6 +1201,7 @@
     }
 
     removeProjectile(p) {
+      this.entityRegistry.transition(p, "removed");
       p.sprite.destroy();
       this.projectiles = this.projectiles.filter((x) => x !== p);
     }
@@ -1266,6 +1228,8 @@
         this.spawnSoldier(tower);
       }
       for (const soldier of alive) {
+        soldier.homeX = tower.rallyX;
+        soldier.homeY = tower.rallyY;
         soldier.attackCooldown -= dt;
         soldier.arrowCooldown = Math.max(0, (soldier.arrowCooldown || 0) - dt);
         const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
@@ -1297,7 +1261,7 @@
     }
 
     fireGuardArrow(soldier, target, damage) {
-      const projectile = {
+      const projectile = this.entityRegistry.create("projectile", {
         x: soldier.x,
         y: soldier.y - 12,
         target,
@@ -1306,7 +1270,7 @@
         magic: false,
         slow: 0,
         splash: 0,
-      };
+      });
       projectile.sprite = this.add.image(projectile.x, projectile.y, "projectile_arrow").setDepth(60).setScale(0.72);
       projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
       this.projectiles.push(projectile);
@@ -1332,6 +1296,17 @@
       this.setHeroPanel(false);
       this.refreshSelection();
       this.say("Captain moving.");
+    }
+
+    setRallyPoint(tower, rally) {
+      tower.rallyX = rally.x;
+      tower.rallyY = rally.y;
+      tower.rallySegment = rally.segment;
+      tower.rallyRing.setPosition(rally.x, rally.y);
+      tower.rallyFlag.setPosition(rally.x, rally.y - 20);
+      this.audio.play("ready", 0.22, 1.16);
+      this.flashText("RALLY", rally.x, rally.y - 34, "#fff1a0");
+      this.say("Guard rally point set. Troops are moving to hold the road.");
     }
 
     updateHero(dt) {
@@ -1409,6 +1384,7 @@
         targetY: point.y,
         hp: this.hero.maxHp,
         dead: false,
+        state: "active",
       });
       for (const obj of [this.hero.sprite, this.hero.barBg, this.hero.bar, this.hero.levelText]) obj.setVisible(true);
       this.say("Captain has returned.");
@@ -1417,6 +1393,7 @@
     killHero() {
       const hero = this.hero;
       hero.dead = true;
+      this.entityRegistry.transition(hero, "dead");
       hero.respawn = 9;
       hero.hp = 0;
       this.heroSelected = false;
@@ -1448,9 +1425,9 @@
     }
 
     spawnSoldier(tower) {
-      const point = this.nearestPathPoint(tower.x, tower.y);
+      const point = { x: tower.rallyX, y: tower.rallyY };
       const maxHp = TOWERS.barracks.soldierHp[tower.level];
-      const soldier = {
+      const soldier = this.entityRegistry.create("soldier", {
         x: point.x,
         y: point.y,
         homeX: point.x,
@@ -1460,7 +1437,7 @@
         tower,
         attackCooldown: 0.2,
         dead: false,
-      };
+      });
       soldier.sprite = this.add.image(soldier.x, soldier.y - 4, "soldier_guard").setScale(0.78).setDepth(44);
       soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
       tower.soldiers.push(soldier);
@@ -1506,11 +1483,13 @@
     }
 
     killSoldier(soldier) {
+      this.entityRegistry.transition(soldier, "dead");
       soldier.dead = true;
       soldier.sprite.destroy();
       soldier.bar.destroy();
       this.soldiers = this.soldiers.filter((s) => s !== soldier);
       soldier.tower.soldiers = soldier.tower.soldiers.filter((s) => s !== soldier);
+      this.entityRegistry.transition(soldier, "removed");
     }
 
     updateSoldiers() {}
@@ -1585,7 +1564,8 @@
     }
 
     puff(x, y, color) {
-      for (let i = 0; i < 8; i += 1) {
+      const count = this.settings?.reducedMotion ? 2 : 8;
+      for (let i = 0; i < count; i += 1) {
         const p = this.add.circle(x, y, 2 + Math.random() * 3, color, 0.8).setDepth(80);
         this.effects.push({ obj: p, life: 0.36, vx: (Math.random() - 0.5) * 90, vy: (Math.random() - 0.5) * 90 });
       }
@@ -1606,6 +1586,10 @@
 
     flashText(text, x, y, color) {
       const t = this.add.text(x, y, text, { font: "bold 15px Arial", color }).setOrigin(0.5).setDepth(200);
+      if (this.settings?.reducedMotion) {
+        this.time.delayedCall(520, () => t.destroy());
+        return;
+      }
       this.tweens.add({ targets: t, y: y - 26, alpha: 0, duration: 760, ease: "Quad.easeOut", onComplete: () => t.destroy() });
     }
 
@@ -1647,7 +1631,10 @@
 
     infoLine() {
       if (this.heroSelected) return "Captain: CHG hits a nearby enemy, BAN boosts melee, HEAL restores allies.";
-      if (this.selectedBuild) return `${TOWERS[this.selectedBuild].name}: ${TOWERS[this.selectedBuild].desc}`;
+      if (this.selectedBuild) {
+        const cfg = TOWERS[this.selectedBuild];
+        return `${cfg.name}: ${cfg.role}. ${cfg.targetRule}. ${cfg.counterplay}`;
+      }
       if (this.selectedPad?.tower) {
         const tower = this.selectedPad.tower;
         const cfg = TOWERS[tower.type];
@@ -1662,6 +1649,10 @@
     endGame(victory) {
       if (this.gameEnded) return;
       this.gameEnded = true;
+      if (victory) {
+        const stars = this.lives >= 14 ? 3 : this.lives >= 7 ? 2 : 1;
+        window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
+      }
       this.overlayActive = true;
       const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88).setDepth(600);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setDepth(600.5).setInteractive();
@@ -1704,6 +1695,7 @@
       this.musicClock = 0;
       this.musicStep = 0;
       this.musicStarted = false;
+      this.muted = false;
       this.samples = {};
       const keys = ["shoot", "impact", "boom", "start", "ready", "fail", "magic", "music"];
       for (const key of keys) {
@@ -1714,6 +1706,12 @@
           });
         }
       }
+    }
+
+    setMuted(value) {
+      this.muted = !!value;
+      this.scene.sound.mute = this.muted;
+      if (this.muted) this.stopMusic();
     }
 
     resume() {
@@ -1728,6 +1726,7 @@
     }
 
     play(name, volume = 0.25, rate = 1) {
+      if (this.muted) return;
       const sample = this.samples[name];
       if (!sample) {
         this.tone(name === "boom" ? 120 : name === "magic" ? 520 : 320, 0.08, name === "boom" ? "sawtooth" : "triangle", volume * 0.12);
@@ -1741,6 +1740,7 @@
     }
 
     startMusic() {
+      if (this.muted) return;
       const music = this.samples.music;
       if (!music || this.musicStarted) return;
       this.musicStarted = true;
