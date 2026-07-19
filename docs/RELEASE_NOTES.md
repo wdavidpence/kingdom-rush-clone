@@ -1,19 +1,26 @@
-# KRC 1.0 Release Notes (Draft)
+# KRC 1.0 Release Notes
 
 ## KRC 1.0 — Polished Original Fantasy Tower Defense
 
+Released as a static Phaser 3 campaign with durable modular helpers, automated Node contract tests, and GitHub Pages delivery.
+
 ### Highlights
-- Three-map, touch-first fantasy tower-defense campaign.
-- Four complementary original tower families: Rangers, Runes, Mortar, and Guard.
-- Tactical road blocking with Guard soldiers plus a movable Captain hero.
-- Hero abilities, global spells, armored/flying/elite enemies, escalating waves, boss encounters, victory, and defeat loops.
-- Original procedural storybook-style game art, combat particles, and browser-based sound feedback.
+- Three-map campaign with locked/unlocked map cards and 1–3 star records.
+- Four tower families with level-gated abilities: Volley, Rune Nova, Barrage, Hold Fast.
+- Guard rally points, training readiness meters, richer melee clashes.
+- Enemy trait badges (armor / flying / swarm / control / elite).
+- Hexer support aura that forces placement decisions.
+- Warden boss with telegraphed shield and rage phases.
+- Early-wave gold bonus, refund-aware sell UI, detailed selection stats.
+- Keyboard + touch controls, pause/mute/reduced-motion, responsive shell.
+- Storybook map palettes, projectile trails, recoil, controlled shake, music intensity ramps.
+- Color-conscious HP bands and glyph trait labels beyond hue alone.
 
-### Quality and safety
-- Static smoke preflight and built-in QA URL.
-- Manual desktop/touch regression checklist and release acceptance gates.
-- Explicitly original KRC world and assets; no licensed Kingdom Rush content is included.
-- Kenney audio credit and license inventory documented.
+### Quality
+- Full `tests/*.test.mjs` contract suite green.
+- `node --check` on all `public/src/*.js`.
+- Static asset smoke and QA ember regression hooks retained.
+- Original IP only — Kingdom Rush is genre reference, not content source.
 
-### Known release gate work
-This draft is not a release declaration. The release becomes `v1.0.0` only when every item in `docs/1.0-acceptance.md` is checked with current test evidence.
+### Play
+https://wdavidpence.github.io/kingdom-rush-clone/

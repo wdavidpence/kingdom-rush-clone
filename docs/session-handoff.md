@@ -3,27 +3,22 @@
 ## Resume protocol
 1. Read `docs/kingdom-rush-inspired-1.0-plan.md` first.
 2. Read this handoff second.
-3. Inspect `git status --short` and the served `public/index.html` before editing any `public/` file.
-4. Continue the earliest unchecked plan item; update both documents immediately after verified progress.
+3. Inspect `git status --short` and `public/index.html` before editing public files.
 
-## Current state — 2026-07-19
+## Current state — 2026-07-19 (1.0)
 - Repository: `/mnt/c/Users/wdavi/Projects/kingdom-rush-clone`
 - Upstream: `https://github.com/wdavidpence/kingdom-rush-clone.git`
-- Live Pages: `https://wdavidpence.github.io/kingdom-rush-clone/`
-- Gameplay gate (steps 01–30, including 27) complete except continue campaign/UX from **31**.
-- Persistent memory: Hermes built-in memory active.
+- Live: `https://wdavidpence.github.io/kingdom-rush-clone/`
+- Durable 50-step plan marked complete through step 50.
+- Hermes built-in memory active.
 
-## Working constraints
-- Original IP only — Kingdom Rush is genre reference, not asset source.
-- Always read `public/index.html` before writing it.
-- Contract tests: `for t in tests/*.test.mjs; do node "$t"; done`
-- Load order ends with: ... enemy-traits.js → game.js
+## Post-1.0 next work (if continuing)
+- Interactive browser playtest on desktop + touch (environment may lack a GUI browser).
+- Balance pass after live play.
+- Optional extra maps / heroes.
+- Deploy verification after each push (Pages branch vs main).
 
-## Next milestone
-Earliest unchecked: **31. Add a campaign-selection view with original map cards and locked/unlocked states.**
-Then 32–40 campaign/UX, 41–48 AV polish, 49–50 release.
-
-## Latest verification
-- Full contract suite PASS
-- `node --check` all public/src/*.js PASS
-- `git diff --check` clean
+## Verification
+- Contract suite: all PASS
+- Syntax checks: all PASS
+- Static server smoke of index + modules: HTTP 200

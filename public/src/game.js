@@ -104,6 +104,25 @@
       this.input.on("pointerdown", this.handlePointer, this);
       this.input.keyboard?.on("keydown-P", () => this.togglePause());
       this.input.keyboard?.on("keydown-R", () => this.toggleReducedMotion());
+      this.input.keyboard?.on("keydown-M", () => this.toggleMute());
+      this.input.keyboard?.on("keydown-SPACE", (event) => {
+        event?.preventDefault?.();
+        this.callWave();
+      });
+      this.input.keyboard?.on("keydown-U", () => this.upgradeSelected());
+      this.input.keyboard?.on("keydown-S", () => this.sellSelected());
+      this.input.keyboard?.on("keydown-H", () => this.selectHero());
+      this.input.keyboard?.on("keydown-ESC", () => {
+        this.selectedPad = null;
+        this.selectedBuild = null;
+        this.heroSelected = false;
+        this.setHeroPanel(false);
+        this.refreshSelection();
+      });
+      this.input.keyboard?.on("keydown-ONE", () => this.chooseBuild("archer"));
+      this.input.keyboard?.on("keydown-TWO", () => this.chooseBuild("mage"));
+      this.input.keyboard?.on("keydown-THREE", () => this.chooseBuild("artillery"));
+      this.input.keyboard?.on("keydown-FOUR", () => this.chooseBuild("barracks"));
       if (this.qaMode) {
         document.body.dataset.krcQa = "1";
         if (new URLSearchParams(window.location.search).has("emberTest")) {
@@ -453,22 +472,24 @@
     }
 
     drawMap() {
-      this.add.rectangle(W / 2, H / 2, W, H, this.map.grass).setDepth(-20);
-      for (let i = 0; i < 80; i += 1) {
+      const grass = this.map.grass;
+      const accent = this.mapIndex === 1 ? 0x2a3d42 : this.mapIndex === 2 ? 0x3a3420 : 0x314b27;
+      this.add.rectangle(W / 2, H / 2, W, H, grass).setDepth(-20);
+      for (let i = 0; i < 96; i += 1) {
         const x = (i * 73) % W;
         const y = 76 + ((i * 47) % 545);
-        const c = i % 2 ? 0x38542d : 0x20371b;
+        const c = i % 3 === 0 ? accent : i % 2 ? 0x38542d : 0x20371b;
         this.add.rectangle(x, y, 24 + (i % 4) * 9, 4, c, 0.28).setAngle((i * 19) % 180).setDepth(-19);
       }
 
       const edge = this.add.graphics().setDepth(-10);
-      edge.lineStyle(PATH_WIDTH + 14, COLORS.roadEdge, 1);
+      edge.lineStyle(PATH_WIDTH + 14, this.mapIndex === 1 ? 0x4a5560 : this.mapIndex === 2 ? 0x6a4e2e : COLORS.roadEdge, 1);
       this.strokePath(edge);
       const road = this.add.graphics().setDepth(-9);
-      road.lineStyle(PATH_WIDTH, COLORS.road, 1);
+      road.lineStyle(PATH_WIDTH, this.mapIndex === 1 ? 0x8a9098 : this.mapIndex === 2 ? 0xb07a42 : COLORS.road, 1);
       this.strokePath(road);
       const center = this.add.graphics().setDepth(-8);
-      center.lineStyle(2, 0xb9905d, 0.5);
+      center.lineStyle(2, this.mapIndex === 2 ? 0xe0a060 : 0xb9905d, 0.5);
       this.strokePath(center);
 
       this.add.text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
@@ -479,7 +500,7 @@
         const y = 88 + ((i * 137) % 520);
         const nearRoad = this.path.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
         if (nearRoad) continue;
-        this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15);
+        this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15).setTint(this.mapIndex === 2 ? 0xc9b48a : 0xffffff);
       }
       for (let i = 0; i < 18; i += 1) {
         const x = 18 + ((i * 67) % 384);
@@ -489,6 +510,11 @@
       }
       this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
       this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
+      // Storybook edge vignette
+      const vig = this.add.graphics().setDepth(-3);
+      vig.fillStyle(0x000000, 0.18);
+      vig.fillRect(0, 0, W, 18);
+      vig.fillRect(0, H - 18, W, 18);
     }
 
     strokePath(graphics) {
@@ -664,54 +690,83 @@
 
     showStartOverlay() {
       this.overlay = this.add.container(0, 0).setDepth(500);
-      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88));
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.9));
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive();
       this.overlay.add(blocker);
-      this.overlay.add(this.add.text(W / 2, 172, "KRC", { font: "bold 64px Arial", color: COLORS.gold }).setOrigin(0.5));
+      this.overlay.add(this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold }).setOrigin(0.5));
       this.overlay.add(
         this.add
-          .text(W / 2, 236, `${this.map.name}: hold ten waves.`, {
-            font: "18px Arial",
-            color: COLORS.ink,
-            align: "center",
-            wordWrap: { width: 310 },
-          })
-          .setOrigin(0.5)
-      );
-      this.overlay.add(
-        this.add
-          .text(W / 2, 314, "Build on round pads. Tap the Captain, then tap the road to move him into trouble.", {
+          .text(W / 2, 122, "Choose a map. Stars unlock from lives remaining.", {
             font: "14px Arial",
             color: "#cfc4a2",
             align: "center",
-            wordWrap: { width: 320 },
+            wordWrap: { width: 340 },
           })
           .setOrigin(0.5)
       );
-      const startShadow = this.add.rectangle(W / 2, 436, 188, 56, 0x050704, 0.62).setStrokeStyle(1, 0x000000, 0.6);
-      const start = this.add.rectangle(W / 2, 430, 188, 56, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
-      const startShine = this.add.rectangle(W / 2, 416, 174, 12, 0xffffff, 0.17);
-      const startLip = this.add.rectangle(W / 2, 448, 174, 9, 0x000000, 0.2);
-      const startText = this.add.text(W / 2, 428, "TAP TO START", { font: "bold 19px Arial", color: "#fff7dc" }).setOrigin(0.5);
-      const motion = this.add.rectangle(W / 2, 498, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+
+      MAPS.forEach((map, index) => {
+        const unlocked = !!this.campaign.unlocked[index];
+        const result = this.campaign.results[String(index)] || { stars: 0, bestGold: 0 };
+        const y = 178 + index * 92;
+        const card = this.add.rectangle(W / 2, y, 320, 78, unlocked ? 0x243528 : 0x1a1f1a, 1).setStrokeStyle(2, unlocked ? 0xe6d282 : 0x445044);
+        const title = this.add
+          .text(W / 2 - 140, y - 18, `${index + 1}. ${map.name}`, {
+            font: "bold 18px Arial",
+            color: unlocked ? "#fff2ba" : "#7a8478",
+          })
+          .setOrigin(0, 0.5);
+        const starText = "★".repeat(result.stars || 0) + "☆".repeat(Math.max(0, 3 - (result.stars || 0)));
+        const meta = this.add
+          .text(W / 2 - 140, y + 12, unlocked ? `${starText}  best gold ${result.bestGold || 0}` : "LOCKED — clear previous map", {
+            font: "13px Arial",
+            color: unlocked ? "#d7e7c8" : "#6f776d",
+          })
+          .setOrigin(0, 0.5);
+        this.overlay.add([card, title, meta]);
+        if (unlocked) {
+          card.setInteractive({ useHandCursor: true });
+          card.on("pointerdown", () => this.beginMap(index));
+          title.setInteractive({ useHandCursor: true });
+          title.on("pointerdown", () => this.beginMap(index));
+        }
+      });
+
+      const motion = this.add.rectangle(W / 2, 480, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
       const motionText = this.add
-        .text(W / 2, 498, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
+        .text(W / 2, 480, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
         .setOrigin(0.5);
       motion.setInteractive({ useHandCursor: true });
       motion.on("pointerdown", () => {
         const reduced = this.toggleReducedMotion();
         motionText.setText(reduced ? "MOTION: REDUCED" : "MOTION: FULL");
       });
-      start.setInteractive({ useHandCursor: true });
-      start.on("pointerdown", () => {
-        this.audio.resume();
-        this.audio.play("start", 0.45);
-        this.audio.startMusic();
+      this.overlay.add([motion, motionText]);
+      this.overlay.add(
+        this.add
+          .text(W / 2, 520, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
+            font: "12px Arial",
+            color: "#a9b59d",
+            align: "center",
+            wordWrap: { width: 330 },
+          })
+          .setOrigin(0.5)
+      );
+    }
+
+    beginMap(mapIndex) {
+      this.audio.resume();
+      this.audio.play("start", 0.45);
+      this.audio.startMusic();
+      if (mapIndex !== this.mapIndex) {
         this.overlayActive = false;
-        this.overlay.destroy();
-        this.say("Build two towers. Tap Captain to move him.");
-      });
-      this.overlay.add([startShadow, start, startShine, startLip, startText, motion, motionText]);
+        this.overlay?.destroy();
+        this.scene.restart({ mapIndex, gold: 280, lives: 20 });
+        return;
+      }
+      this.overlayActive = false;
+      this.overlay.destroy();
+      this.say(`${this.map.name}: build two towers, then CALL. Tap pads for range preview.`);
     }
 
     handlePointer(pointer, targets) {
@@ -901,7 +956,8 @@
       if (!tower) return;
       const cfg = TOWERS[tower.type];
       const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
-      this.gold += Math.floor(spent * 0.55);
+      const refund = Math.floor(spent * 0.55);
+      this.gold += refund;
       tower.sprite.destroy();
       tower.label.destroy();
       tower.rangeRing.destroy();
@@ -915,7 +971,8 @@
       this.towers = this.towers.filter((t) => t !== tower);
       this.selectedPad.tower = null;
       this.selectedPad.icon.setText("+");
-      this.say("Tower sold.");
+      this.flashText(`+${refund}`, tower.x, tower.y - 28, COLORS.gold);
+      this.say(`Sold for ${refund} gold (55% refund).`);
       this.refreshSelection();
     }
 
@@ -923,6 +980,7 @@
       const tower = this.selectedPad?.tower;
       if (!tower) {
         this.upgradeButton.setLabel("UP\n-");
+        this.sellButton.setLabel("SELL");
         for (const t of this.towers) t.rangeRing.setVisible(false);
         return;
       }
@@ -935,6 +993,9 @@
       } else {
         this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
       }
+      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      const refund = Math.floor(spent * 0.55);
+      this.sellButton.setLabel(`SELL\n${refund}g`);
       tower.rangeRing.setVisible(true);
       for (const t of this.towers) if (t !== tower) t.rangeRing.setVisible(false);
     }
@@ -951,7 +1012,13 @@
       }
       if (this.waveIndex >= WAVES.length) return;
       const wave = WAVES[this.waveIndex];
-      this.gold += wave.gold;
+      let bonus = wave.gold;
+      if (!this.waveActive && this.enemies.length === 0 && this.waveIndex < WAVES.length) {
+        const earlyBonus = 8 + this.waveIndex * 2;
+        bonus += earlyBonus;
+        this.flashText(`+${earlyBonus} EARLY`, W / 2, 120, "#fff2ba");
+      }
+      this.gold += bonus;
       this.queue = [];
       for (const [type, count] of wave.packs) {
         for (let i = 0; i < count; i += 1) this.queue.push(type);
@@ -1005,13 +1072,11 @@
         this.waveActive = false;
         this.waveIndex += 1;
         if (this.waveIndex >= WAVES.length) {
+          const stars = this.computeStars();
+          window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
           if (this.mapIndex < MAPS.length - 1) {
             this.audio.play("ready", 0.45);
-            this.scene.restart({
-              mapIndex: this.mapIndex + 1,
-              gold: Math.min(this.gold + 180, 650),
-              lives: Math.min(18, this.lives + 4),
-            });
+            this.showMapClearOverlay(stars);
           } else {
             this.endGame(true);
           }
@@ -1166,14 +1231,23 @@
       enemy.sprite.setPosition(enemy.x, enemy.y);
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
-      enemy.sprite.y += Math.sin(this.time.now * 0.008 + enemy.wobble) * (enemy.base.flying ? 4 : 1.2);
-      if (enemy.seg < this.path.length - 1) {
+      const bob = Math.sin(this.time.now * 0.008 + enemy.wobble);
+      enemy.sprite.y += bob * (enemy.base.flying ? 4 : enemy.blockedBy ? 0.6 : 1.2);
+      if (enemy.blockedBy) {
+        enemy.sprite.rotation = Math.sin(this.time.now * 0.03 + enemy.wobble) * 0.18;
+        enemy.sprite.setScale((enemy.base.size / 28) * (1 + Math.sin(this.time.now * 0.04) * 0.04));
+      } else if (enemy.seg < this.path.length - 1) {
         const next = this.path[enemy.seg + 1];
         enemy.sprite.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
+        enemy.sprite.setScale(enemy.base.size / 28);
       }
+      if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
+      else if (!enemy.base.phases) enemy.sprite.clearTint();
       enemy.barBg.setPosition(enemy.x, enemy.y - enemy.base.size - 8);
       enemy.bar.setPosition(enemy.x - 14, enemy.y - enemy.base.size - 8);
       enemy.bar.width = Math.max(1, 28 * (enemy.hp / enemy.maxHp));
+      // Colorblind-safe HP: shape via width already; add pattern via bar color bands
+      enemy.bar.fillColor = enemy.hp < enemy.maxHp * 0.35 ? 0xff6b5a : enemy.hp < enemy.maxHp * 0.7 ? 0xf0c35a : 0x68d764;
       if (enemy.traitText) {
         enemy.traitText.setPosition(enemy.x, enemy.y - enemy.base.size - 16);
         enemy.traitText.setVisible(!!enemy.traitText.text);
@@ -1355,8 +1429,19 @@
       projectile.sprite = this.add.image(projectile.x, projectile.y, key).setDepth(60);
       projectile.sprite.setScale(tower.type === "artillery" ? 1.1 : 0.9);
       projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
+      projectile.trailColor = color;
       this.projectiles.push(projectile);
       this.audio.play(tower.type === "mage" ? "magic" : "shoot", tower.type === "artillery" ? 0.2 : 0.13, tower.type === "archer" ? 1.35 : 0.95);
+      if (tower.sprite && !this.settings.reducedMotion) {
+        const angle = Phaser.Math.Angle.Between(tower.x, tower.y, target.x, target.y);
+        this.tweens.add({
+          targets: tower.sprite,
+          x: tower.x - Math.cos(angle) * 4,
+          y: tower.y - 5 - Math.sin(angle) * 3,
+          yoyo: true,
+          duration: 70,
+        });
+      }
     }
 
     updateProjectiles(dt) {
@@ -1382,6 +1467,10 @@
           p.y += ((p.target.y - p.y) / d) * step;
           p.sprite.setPosition(p.x, p.y);
           p.sprite.rotation = Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
+          if (!this.settings.reducedMotion && Math.random() < 0.45) {
+            const dot = this.add.circle(p.x, p.y, 2.2, p.trailColor || 0xfff0c0, 0.55).setDepth(59);
+            this.tweens.add({ targets: dot, alpha: 0, scale: 0.2, duration: 160, onComplete: () => dot.destroy() });
+          }
         }
       }
     }
@@ -1401,6 +1490,9 @@
         }
       }
       this.audio.play("boom", 0.28, fire ? 0.92 : 1.08);
+      if (!this.settings.reducedMotion) {
+        this.cameras.main.shake(90, 0.004);
+      }
     }
 
     updateBarracks(tower, dt) {
@@ -1910,61 +2002,130 @@
     }
 
     infoLine() {
-      if (this.heroSelected) return "Captain: CHG hits a nearby enemy, BAN boosts melee, HEAL restores allies.";
+      if (this.heroSelected) {
+        const hero = this.hero;
+        if (!hero || hero.dead) return "Captain is recovering — wait for respawn.";
+        return `Captain L${hero.level} HP ${Math.ceil(hero.hp)}/${hero.maxHp}. Tap road to move. CHG/BAN/HEAL below.`;
+      }
       if (this.selectedBuild) {
         const cfg = TOWERS[this.selectedBuild];
-        return `${cfg.name}: ${cfg.role}. ${cfg.targetRule}. ${cfg.counterplay}`;
+        const dmg = cfg.damage[0];
+        const range = cfg.range[0];
+        const afford = this.gold >= cfg.cost ? "affordable" : `need ${cfg.cost - this.gold}g more`;
+        return `${cfg.name} ${cfg.cost}g (${afford}) · dmg ${dmg} · rng ${range} · ${cfg.shopLabel}: ${cfg.role}`;
       }
       if (this.selectedPad?.tower) {
         const tower = this.selectedPad.tower;
         const cfg = TOWERS[tower.type];
-        return `${cfg.name} L${tower.level + 1}. ${
-          tower.level < cfg.upgrades.length ? `Upgrade ${cfg.upgrades[tower.level]}g.` : "Fully upgraded."
-        }`;
+        const dmg = cfg.damage[tower.level];
+        const rate = cfg.rate[tower.level];
+        const range = cfg.range[tower.level];
+        const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+        const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
+        const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+        const refund = Math.floor(spent * 0.55);
+        const up = tower.level < cfg.upgrades.length ? `Up ${cfg.upgrades[tower.level]}g` : "MAX";
+        const ab = unlocked ? ` · ${ability.name} ${Math.ceil(tower.abilityCooldown || 0) > 0 ? Math.ceil(tower.abilityCooldown) + "s" : "ready"}` : "";
+        return `${cfg.name} L${tower.level + 1}: dmg ${dmg} / ${rate.toFixed(2)}s / rng ${range}. ${up}. Sell ${refund}g.${ab}`;
       }
-      if (this.waveActive) return `${this.queue.length} enemies queued. Defend the gate.`;
-      return "Tap CALL, build/upgrade, or tap Captain to move him.";
+      if (this.waveActive) return `${this.queue.length} queued, ${this.enemies.length} alive. Defend the gate.`;
+      if (this.waveIndex === 0 && this.towers.length < 2) return "Tutorial: build two towers on the round pads, then CALL the first wave.";
+      return "Tap CALL for early-wave gold, upgrade towers, or command Captain.";
     }
 
     endGame(victory) {
       if (this.gameEnded) return;
       this.gameEnded = true;
+      const stars = victory ? this.computeStars() : 0;
       if (victory) {
-        const stars = this.lives >= 14 ? 3 : this.lives >= 7 ? 2 : 1;
         window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
       }
       this.overlayActive = true;
       const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88).setDepth(600);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setDepth(600.5).setInteractive();
       const title = this.add
-        .text(W / 2, 258, victory ? "VICTORY" : "GATE LOST", {
+        .text(W / 2, 230, victory ? "VICTORY" : "GATE LOST", {
           font: "bold 44px Arial",
           color: victory ? COLORS.gold : "#ff7f69",
         })
         .setOrigin(0.5)
         .setDepth(601);
+      const starLine = victory ? `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars` : `Reached wave ${this.waveIndex + 1}`;
       const sub = this.add
-        .text(W / 2, 326, victory ? "The forest road holds." : `You reached wave ${this.waveIndex + 1}.`, {
+        .text(W / 2, 292, victory ? `Campaign complete. ${starLine}` : starLine, {
           font: "18px Arial",
           color: COLORS.ink,
           align: "center",
         })
         .setOrigin(0.5)
         .setDepth(601);
-      const btnShadow = this.add.rectangle(W / 2, 426, 180, 54, 0x050704, 0.62).setDepth(601);
-      const btn = this.add.rectangle(W / 2, 420, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
-      const btnShine = this.add.rectangle(W / 2, 407, 166, 12, 0xffffff, 0.17).setDepth(601.4);
-      const btnLip = this.add.rectangle(W / 2, 438, 166, 9, 0x000000, 0.2).setDepth(601.4);
-      const txt = this.add.text(W / 2, 418, "PLAY AGAIN", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
+      const btnShadow = this.add.rectangle(W / 2, 406, 180, 54, 0x050704, 0.62).setDepth(601);
+      const btn = this.add.rectangle(W / 2, 400, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
+      const btnShine = this.add.rectangle(W / 2, 387, 166, 12, 0xffffff, 0.17).setDepth(601.4);
+      const btnLip = this.add.rectangle(W / 2, 418, 166, 9, 0x000000, 0.2).setDepth(601.4);
+      const txt = this.add.text(W / 2, 398, "MAP SELECT", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
         this.audio.stopAll();
         this.overlayActive = false;
-        this.scene.restart();
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
       });
       this.audio.stopMusic();
       this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
       return [shade, blocker, title, sub, btnShadow, btn, btnShine, btnLip, txt];
+    }
+
+    computeStars() {
+      if (this.lives >= 16) return 3;
+      if (this.lives >= 10) return 2;
+      return 1;
+    }
+
+    showMapClearOverlay(stars) {
+      this.overlayActive = true;
+      this.overlay = this.add.container(0, 0).setDepth(580);
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.86));
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive());
+      this.overlay.add(this.add.text(W / 2, 220, `${this.map.name} CLEARED`, { font: "bold 28px Arial", color: COLORS.gold }).setOrigin(0.5));
+      this.overlay.add(
+        this.add
+          .text(W / 2, 270, `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars`, {
+            font: "22px Arial",
+            color: "#fff2ba",
+          })
+          .setOrigin(0.5)
+      );
+      this.overlay.add(
+        this.add
+          .text(W / 2, 318, "Next map unlocked. Carry some gold and lives forward.", {
+            font: "14px Arial",
+            color: "#cfc4a2",
+            align: "center",
+            wordWrap: { width: 320 },
+          })
+          .setOrigin(0.5)
+      );
+      const next = this.add.rectangle(W / 2, 400, 200, 52, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
+      const nextText = this.add.text(W / 2, 398, "NEXT MAP", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5);
+      next.setInteractive({ useHandCursor: true });
+      next.on("pointerdown", () => {
+        this.overlayActive = false;
+        this.overlay.destroy();
+        this.scene.restart({
+          mapIndex: this.mapIndex + 1,
+          gold: Math.min(this.gold + 180, 650),
+          lives: Math.min(20, this.lives + 4),
+        });
+      });
+      const menu = this.add.rectangle(W / 2, 468, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+      const menuText = this.add.text(W / 2, 466, "MAP SELECT", { font: "bold 14px Arial", color: "#e8f5ff" }).setOrigin(0.5);
+      menu.setInteractive({ useHandCursor: true });
+      menu.on("pointerdown", () => {
+        this.overlayActive = false;
+        this.overlay.destroy();
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
+      });
+      this.overlay.add([next, nextText, menu, menuText]);
     }
   }
 
@@ -2062,7 +2223,12 @@
     music(dt, urgent) {
       if (this.musicStarted) {
         const music = this.samples.music;
-        if (music?.isPlaying) music.setRate(urgent ? 1.06 : 0.94);
+        if (music?.isPlaying) {
+          const targetRate = urgent ? 1.12 : 0.96;
+          const targetVol = urgent ? 0.14 : 0.09;
+          music.setRate(Phaser.Math.Linear(music.rate || 1, targetRate, Math.min(1, dt * 2.5)));
+          music.setVolume(Phaser.Math.Linear(music.volume || 0.09, targetVol, Math.min(1, dt * 2.2)));
+        }
         return;
       }
       if (!this.ctx) return;
@@ -2070,10 +2236,11 @@
       if (this.musicClock > 0) return;
       const base = urgent ? 0.72 : 1.6;
       this.musicClock = base;
-      const notes = urgent ? [146, 174, 196, 174] : [130, 164, 196, 164];
+      const notes = urgent ? [146, 174, 196, 220, 174] : [130, 164, 196, 164];
       const note = notes[this.musicStep % notes.length];
       this.musicStep += 1;
-      this.tone(note, urgent ? 0.055 : 0.09, "triangle", urgent ? 0.012 : 0.007);
+      this.tone(note, urgent ? 0.055 : 0.09, "triangle", urgent ? 0.014 : 0.007);
+      if (urgent) this.tone(note * 1.5, 0.03, "sine", 0.004, 0.02);
     }
   }
 

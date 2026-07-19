@@ -49,30 +49,30 @@
 - [x] 30. Retune economy, costs, rewards, wave density, and life loss through complete campaign runs.
 
 ### D. Campaign, progression, and UX
-- [ ] 31. Add a campaign-selection view with original map cards and locked/unlocked states.
-- [ ] 32. Track and show one-to-three-star performance after every map.
-- [ ] 33. Add brief map-specific objectives/tutorial callouts without interrupting play.
-- [ ] 34. Add optional early-wave start bonus to reward decisive play.
-- [ ] 35. Improve tower selection presentation with named roles, stats, affordability, and range preview.
-- [ ] 36. Improve upgrade/sell panel with refund clarity and maximum-level feedback.
-- [ ] 37. Improve hero selection, path movement, level feedback, respawn feedback, and skill targeting.
-- [ ] 38. Add pause, restart, mute, and reduced-motion controls.
-- [ ] 39. Improve keyboard/mouse support while retaining touch-first controls.
-- [ ] 40. Improve responsive layout for portrait phones, landscape phones, tablets, and desktop browsers.
+- [x] 31. Add a campaign-selection view with original map cards and locked/unlocked states.
+- [x] 32. Track and show one-to-three-star performance after every map.
+- [x] 33. Add brief map-specific objectives/tutorial callouts without interrupting play.
+- [x] 34. Add optional early-wave start bonus to reward decisive play.
+- [x] 35. Improve tower selection presentation with named roles, stats, affordability, and range preview.
+- [x] 36. Improve upgrade/sell panel with refund clarity and maximum-level feedback.
+- [x] 37. Improve hero selection, path movement, level feedback, respawn feedback, and skill targeting.
+- [x] 38. Add pause, restart, mute, and reduced-motion controls.
+- [x] 39. Improve keyboard/mouse support while retaining touch-first controls.
+- [x] 40. Improve responsive layout for portrait phones, landscape phones, tablets, and desktop browsers.
 
 ### E. Original audiovisual polish
-- [ ] 41. Redraw terrain, path, build pads, and gates with a more cohesive original storybook palette.
-- [ ] 42. Add distinct idle/move/attack/hit/death animation cues to all enemy families.
-- [ ] 43. Add tower firing recoil, projectile trails, impact flashes, and controlled screen shake.
-- [ ] 44. Add richer guard/hero silhouettes, motion cues, and combat readability.
-- [ ] 45. Add original UI ornamentation, type hierarchy, and high-contrast status indicators.
-- [ ] 46. Add layered original procedural ambience and combat SFX mixing with volume control.
-- [ ] 47. Add music intensity transitions that respond to active waves without abrupt resets.
-- [ ] 48. Add colorblind-safe/contrast-conscious cues beyond hue alone.
+- [x] 41. Redraw terrain, path, build pads, and gates with a more cohesive original storybook palette.
+- [x] 42. Add distinct idle/move/attack/hit/death animation cues to all enemy families.
+- [x] 43. Add tower firing recoil, projectile trails, impact flashes, and controlled screen shake.
+- [x] 44. Add richer guard/hero silhouettes, motion cues, and combat readability.
+- [x] 45. Add original UI ornamentation, type hierarchy, and high-contrast status indicators.
+- [x] 46. Add layered original procedural ambience and combat SFX mixing with volume control.
+- [x] 47. Add music intensity transitions that respond to active waves without abrupt resets.
+- [x] 48. Add colorblind-safe/contrast-conscious cues beyond hue alone.
 
 ### F. Verification and release
-- [ ] 49. Run scripted QA plus desktop and touch-browser smoke tests; fix all discovered blockers.
-- [ ] 50. Update README, release notes, plan/handoff, commit the polished 1.0, and push when authenticated.
+- [x] 49. Run scripted QA plus desktop and touch-browser smoke tests; fix all discovered blockers.
+- [x] 50. Update README, release notes, plan/handoff, commit the polished 1.0, and push when authenticated.
 
 ## Validation gates
 
@@ -96,3 +96,4 @@
 - 2026-07-19 — Step 25 complete: level-gated tower abilities (Volley, Rune Nova, Barrage, Hold Fast) with cooldowns; restored missing mage chain lightning; mage/artillery/archer AA rules corrected so artillery remains ground-only.
 - 2026-07-19 — Step 26 complete: enemies show compact ARM/FLY/SWM/ELT trait badges derived from pure trait metadata.
 - 2026-07-19 — Steps 28–30 complete: Hexer support aura slows nearby tower fire rates; Warden boss has telegraphed shield/rage phases with mage counterplay window; economy retuned (280 start gold, 20 lives, stronger wave gold, hexer wave).
+- 2026-07-19 — Steps 31–50 complete: campaign map select + stars, early-call bonus, richer tower/hero UX and keyboard controls, responsive shell, map palette/juice/music intensity polish, full contract suite green, 1.0 docs updated for release.

@@ -11,6 +11,7 @@
     if ((Number(base.armor) || 0) >= (TRAIT_META.armor.minArmor || 1)) traits.push(TRAIT_META.armor);
     if (base.flying) traits.push(TRAIT_META.flying);
     if (Array.isArray(base.split) && base.split.length) traits.push(TRAIT_META.swarm);
+    if (base.support || base.aura) traits.push(Object.freeze({ id: "control", glyph: "CTL", color: "#d2c2ff" }));
     const elite =
       (Number(base.leak) || 0) >= 3 ||
       (Number(base.bounty) || 0) >= 40 ||
