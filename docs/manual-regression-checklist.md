@@ -34,6 +34,7 @@ Run this checklist from a static local server before every release candidate.
 
 ## QA URLs
 - [ ] Visit `?qa=1&emberTest=1`; confirm `document.body.dataset.krcEmberTest` is `pass`.
+- [ ] Visit `?qa=1&broodTest=1`; confirm `document.body.dataset.krcBroodTest` is `pass`.
 - [ ] Visit `?qa=1&map=2&startWave=8`; confirm map and wave selection are honored.
 
 ## Release rule

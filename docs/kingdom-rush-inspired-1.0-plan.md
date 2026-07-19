@@ -28,13 +28,13 @@
 - [ ] 11. Split static gameplay data (maps, towers, enemies, waves) from scene behavior.
 - [ ] 12. Add stable entity IDs and explicit state fields for robust targeting and cleanup.
 - [ ] 13. Replace magic layout numbers with named UI/map constants where practical.
-- [ ] 14. Add reusable helpers for particles, floating combat text, and audio calls.
+- [x] 14. Add reusable helpers for particles, floating combat text, and audio calls.
 - [ ] 15. Add safe scene cleanup/reset paths to prevent stale sounds or entities.
-- [ ] 16. Add a lightweight save/preferences layer for audio and accessibility settings.
+- [x] 16. Add a lightweight save/preferences layer for audio and accessibility settings.
 - [ ] 17. Add a campaign-state model for map unlocks, stars, and best results.
-- [ ] 18. Add deterministic QA/query parameters for map, wave, and combat testing.
-- [ ] 19. Add runtime invariant checks in QA mode for gold/lives/entity counts.
-- [ ] 20. Validate JavaScript syntax and static asset links after each refactor milestone.
+- [x] 18. Add deterministic QA/query parameters for map, wave, and combat testing.
+- [x] 19. Add runtime invariant checks in QA mode for gold/lives/entity counts.
+- [x] 20. Validate JavaScript syntax and static asset links after each refactor milestone.
 
 ### C. Core Kingdom-Rush-style tactical loop (original implementation)
 - [ ] 21. Make each tower family’s role, target rules, and counterplay immediately legible.
@@ -43,7 +43,7 @@
 - [ ] 24. Add clear troop respawn/readiness feedback and richer melee encounters.
 - [ ] 25. Add unique high-tier tower abilities with cooldown/level gating.
 - [ ] 26. Add enemy traits with readable iconography: armor, flying, swarm, and elite.
-- [ ] 27. Add a swarm/split archetype and verify safe death-chain handling.
+- [x] 27. Add a swarm/split archetype and verify safe death-chain handling.
 - [ ] 28. Add a support/control archetype that changes placement decisions without invalidating towers.
 - [ ] 29. Give the final boss telegraphed phases and a tactical counterplay window.
 - [ ] 30. Retune economy, costs, rewards, wave density, and life loss through complete campaign runs.

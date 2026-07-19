@@ -157,6 +157,7 @@
     brute: { name: "Brute", hp: 142, speed: 42, armor: 3, bounty: 13, leak: 1, color: 0xe4a25d, size: 18 },
     shield: { name: "Shield", hp: 230, speed: 34, armor: 6, bounty: 19, leak: 2, color: 0xb7bfca, size: 20 },
     ember: { name: "Ember", hp: 118, speed: 50, armor: 1, bounty: 15, leak: 1, color: 0xe86240, size: 17, burn: true },
+    brood: { name: "Broodling", hp: 76, speed: 56, armor: 0, bounty: 10, leak: 1, color: 0xc66f8f, size: 16, split: ["scout", 2] },
     flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },
     titan: { name: "Titan", hp: 520, speed: 26, armor: 8, bounty: 45, leak: 4, color: 0x8e8379, size: 24 },
     boss: { name: "Warden", hp: 1120, speed: 22, armor: 7, bounty: 120, leak: 8, color: 0xcd65e6, size: 30 },
@@ -166,8 +167,8 @@
     { label: "Scouts", gold: 18, spawn: 0.82, packs: [["scout", 12]] },
     { label: "Raiders", gold: 20, spawn: 0.64, packs: [["scout", 16], ["brute", 5]] },
     { label: "Armor", gold: 24, spawn: 0.7, packs: [["brute", 10], ["shield", 3], ["scout", 8]] },
-    { label: "Fireline", gold: 28, spawn: 0.62, packs: [["ember", 8], ["scout", 12], ["shield", 4]] },
-    { label: "Skybreak", gold: 30, spawn: 0.68, packs: [["flyer", 8], ["brute", 10], ["shield", 5]] },
+    { label: "Fireline", gold: 28, spawn: 0.62, packs: [["ember", 8], ["brood", 6], ["shield", 4]] },
+    { label: "Skybreak", gold: 30, spawn: 0.68, packs: [["flyer", 8], ["brute", 10], ["brood", 6], ["shield", 5]] },
     { label: "Crush", gold: 36, spawn: 0.62, packs: [["shield", 10], ["ember", 8], ["brute", 8]] },
     { label: "Storm", gold: 38, spawn: 0.56, packs: [["flyer", 10], ["scout", 18], ["brute", 8]] },
     { label: "Titanfall", gold: 44, spawn: 0.68, packs: [["titan", 3], ["shield", 8], ["ember", 8]] },
@@ -228,8 +229,11 @@
       this.selectedBuild = null;
       this.messageTimer = 0;
       this.gameEnded = false;
+      this.paused = false;
       this.overlayActive = true;
       this.audio = new SoundBox(this);
+      this.settings = window.KRCSettings?.load?.() || { muted: false, reducedMotion: false };
+      this.audio.setMuted(this.settings.muted);
       this.spells = {
         meteor: { name: "Meteor", ready: 0, cooldown: 24 },
         frost: { name: "Frost", ready: 0, cooldown: 22 },
@@ -253,6 +257,8 @@
       this.createShop();
       this.showStartOverlay();
       this.input.on("pointerdown", this.handlePointer, this);
+      this.input.keyboard?.on("keydown-P", () => this.togglePause());
+      this.input.keyboard?.on("keydown-R", () => this.toggleReducedMotion());
       if (this.qaMode) {
         document.body.dataset.krcQa = "1";
         if (new URLSearchParams(window.location.search).has("emberTest")) {
@@ -263,11 +269,21 @@
           document.body.dataset.krcEmberTest =
             this.enemies.length === 0 && this.gold === goldBefore + ENEMIES.ember.bounty ? "pass" : "fail";
         }
+        if (new URLSearchParams(window.location.search).has("broodTest")) {
+          this.spawnEnemy("brood");
+          const brood = this.enemies[this.enemies.length - 1];
+          const goldBefore = this.gold;
+          this.damageEnemy(brood, brood.maxHp + 999, { magic: true });
+          document.body.dataset.krcBroodTest =
+            this.enemies.length === 2 && this.enemies.every((enemy) => enemy.type === "scout") && this.gold === goldBefore + ENEMIES.brood.bounty
+              ? "pass"
+              : "fail";
+        }
       }
     }
 
     update(_time, deltaMs) {
-      if (this.gameEnded) return;
+      if (this.gameEnded || this.paused) return;
       const dt = Math.min(0.05, deltaMs / 1000);
       this.updateMessages(dt);
       this.updateSpells(dt);
@@ -490,6 +506,7 @@
       enemy("enemy_brute", { kind: "brute", rx: 18, ry: 17, hi: "#f2bf78", mid: "#c5773d", lo: "#6b3f27", outline: "#5a321f" });
       enemy("enemy_shield", { kind: "shield", rx: 17, ry: 16, hi: "#d9e1e8", mid: "#aab5bf", lo: "#66727f", outline: "#46515d" });
       enemy("enemy_ember", { kind: "ember", rx: 16, ry: 17, hi: "#ffb066", mid: "#e45f3c", lo: "#7d2d1c", outline: "#662216" });
+      enemy("enemy_brood", { kind: "scout", rx: 14, ry: 14, hi: "#efa4c1", mid: "#bd6688", lo: "#65314b", outline: "#482033" });
       enemy("enemy_flyer", { kind: "flyer", rx: 14, ry: 14, hi: "#c8f6ff", mid: "#69cbe8", lo: "#2c7195", outline: "#245d78", shadow: 16 });
       enemy("enemy_titan", { kind: "titan", rx: 21, ry: 20, hi: "#b4aaa1", mid: "#81776e", lo: "#49413b", outline: "#342c27", horn: "#d7c3a4", shadow: 27 });
       enemy("enemy_boss", { kind: "boss", rx: 25, ry: 23, hi: "#f08cff", mid: "#a948c6", lo: "#55256b", outline: "#3b174c", horn: "#f1d2ff", shadow: 31 });
@@ -669,10 +686,12 @@
       this.waveBarBg = this.add.rectangle(236, 42, 86, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
       this.waveBar = this.add.rectangle(236, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
-        .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 250 } })
+        .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 232 } })
         .setOrigin(0, 0.5)
         .setDepth(100);
-      this.callButton = this.makeButton(378, 39, 64, 30, "CALL", 0x7a4f25, () => this.callWave());
+      this.muteButton = this.makeButton(211, 18, 34, 20, this.settings.muted ? "×" : "♪", 0x3d4f5a, () => this.toggleMuted());
+      this.pauseButton = this.makeButton(337, 39, 36, 30, "II", 0x3d4f5a, () => this.togglePause());
+      this.callButton = this.makeButton(385, 39, 60, 30, "CALL", 0x7a4f25, () => this.callWave());
     }
 
     createShop() {
@@ -816,6 +835,15 @@
       const startShine = this.add.rectangle(W / 2, 416, 174, 12, 0xffffff, 0.17);
       const startLip = this.add.rectangle(W / 2, 448, 174, 9, 0x000000, 0.2);
       const startText = this.add.text(W / 2, 428, "TAP TO START", { font: "bold 19px Arial", color: "#fff7dc" }).setOrigin(0.5);
+      const motion = this.add.rectangle(W / 2, 498, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+      const motionText = this.add
+        .text(W / 2, 498, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
+        .setOrigin(0.5);
+      motion.setInteractive({ useHandCursor: true });
+      motion.on("pointerdown", () => {
+        const reduced = this.toggleReducedMotion();
+        motionText.setText(reduced ? "MOTION: REDUCED" : "MOTION: FULL");
+      });
       start.setInteractive({ useHandCursor: true });
       start.on("pointerdown", () => {
         this.audio.resume();
@@ -825,7 +853,7 @@
         this.overlay.destroy();
         this.say("Build two towers. Tap Captain to move him.");
       });
-      this.overlay.add([startShadow, start, startShine, startLip, startText]);
+      this.overlay.add([startShadow, start, startShine, startLip, startText, motion, motionText]);
     }
 
     handlePointer(pointer, targets) {
@@ -1018,6 +1046,36 @@
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
     }
 
+    toggleMuted() {
+      this.settings.muted = !this.settings.muted;
+      this.settings = window.KRCSettings?.save?.({ muted: this.settings.muted }) || this.settings;
+      this.audio.setMuted(this.settings.muted);
+      if (!this.settings.muted) this.audio.startMusic();
+      this.muteButton.setLabel(this.settings.muted ? "×" : "♪");
+      this.say(this.settings.muted ? "Sound muted." : "Sound restored.");
+    }
+
+    toggleReducedMotion() {
+      this.settings.reducedMotion = !this.settings.reducedMotion;
+      this.settings = window.KRCSettings?.save?.({ reducedMotion: this.settings.reducedMotion }) || this.settings;
+      this.say(this.settings.reducedMotion ? "Reduced motion enabled." : "Full motion enabled.");
+      return this.settings.reducedMotion;
+    }
+
+    togglePause() {
+      if (this.overlayActive || this.gameEnded) return;
+      this.paused = !this.paused;
+      if (this.paused) {
+        this.sound.pauseAll();
+        this.pauseButton.setLabel("▶");
+        this.say("Paused. Tap ▶ or press P to continue.");
+      } else {
+        this.sound.resumeAll();
+        this.pauseButton.setLabel("II");
+        this.say("Battle resumed.");
+      }
+    }
+
     updateWave(dt) {
       if (!this.waveActive) return;
       this.spawnTimer -= dt;
@@ -1070,6 +1128,17 @@
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
       this.enemies.push(enemy);
+      return enemy;
+    }
+
+    spawnEnemyFrom(type, parent) {
+      const child = this.spawnEnemy(type);
+      child.x = parent.x;
+      child.y = parent.y;
+      child.seg = parent.seg;
+      child.slow = 0;
+      this.updateEnemyVisual(child);
+      return child;
     }
 
     updateEnemies(dt) {
@@ -1140,12 +1209,18 @@
       if (source.slow) enemy.slow = Math.max(enemy.slow, 1.2 + source.slow * 2);
       if (enemy.hp <= 0) {
         const burn = enemy.base.burn;
+        const split = enemy.base.split;
         const x = enemy.x;
         const y = enemy.y;
         this.gold += enemy.base.bounty;
         if (source.hero) this.addHeroXp(enemy.base.bounty);
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.removeEnemy(enemy, true);
+        if (split) {
+          const [childType, count] = split;
+          for (let i = 0; i < count; i += 1) this.spawnEnemyFrom(childType, enemy);
+          this.flashText("BROOD SPLIT", x, y - 38, "#f2bbd0");
+        }
         if (burn) this.explode(x, y, 38, 24, true);
       }
     }
@@ -1585,7 +1660,8 @@
     }
 
     puff(x, y, color) {
-      for (let i = 0; i < 8; i += 1) {
+      const count = this.settings?.reducedMotion ? 2 : 8;
+      for (let i = 0; i < count; i += 1) {
         const p = this.add.circle(x, y, 2 + Math.random() * 3, color, 0.8).setDepth(80);
         this.effects.push({ obj: p, life: 0.36, vx: (Math.random() - 0.5) * 90, vy: (Math.random() - 0.5) * 90 });
       }
@@ -1606,6 +1682,10 @@
 
     flashText(text, x, y, color) {
       const t = this.add.text(x, y, text, { font: "bold 15px Arial", color }).setOrigin(0.5).setDepth(200);
+      if (this.settings?.reducedMotion) {
+        this.time.delayedCall(520, () => t.destroy());
+        return;
+      }
       this.tweens.add({ targets: t, y: y - 26, alpha: 0, duration: 760, ease: "Quad.easeOut", onComplete: () => t.destroy() });
     }
 
@@ -1704,6 +1784,7 @@
       this.musicClock = 0;
       this.musicStep = 0;
       this.musicStarted = false;
+      this.muted = false;
       this.samples = {};
       const keys = ["shoot", "impact", "boom", "start", "ready", "fail", "magic", "music"];
       for (const key of keys) {
@@ -1714,6 +1795,12 @@
           });
         }
       }
+    }
+
+    setMuted(value) {
+      this.muted = !!value;
+      this.scene.sound.mute = this.muted;
+      if (this.muted) this.stopMusic();
     }
 
     resume() {
@@ -1728,6 +1815,7 @@
     }
 
     play(name, volume = 0.25, rate = 1) {
+      if (this.muted) return;
       const sample = this.samples[name];
       if (!sample) {
         this.tone(name === "boom" ? 120 : name === "magic" ? 520 : 320, 0.08, name === "boom" ? "sawtooth" : "triangle", volume * 0.12);
@@ -1741,6 +1829,7 @@
     }
 
     startMusic() {
+      if (this.muted) return;
       const music = this.samples.music;
       if (!music || this.musicStarted) return;
       this.musicStarted = true;
