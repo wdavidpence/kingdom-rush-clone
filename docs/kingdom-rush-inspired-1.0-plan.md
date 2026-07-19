@@ -44,9 +44,9 @@
 - [x] 25. Add unique high-tier tower abilities with cooldown/level gating.
 - [x] 26. Add enemy traits with readable iconography: armor, flying, swarm, and elite.
 - [x] 27. Add a swarm/split archetype and verify safe death-chain handling.
-- [ ] 28. Add a support/control archetype that changes placement decisions without invalidating towers.
-- [ ] 29. Give the final boss telegraphed phases and a tactical counterplay window.
-- [ ] 30. Retune economy, costs, rewards, wave density, and life loss through complete campaign runs.
+- [x] 28. Add a support/control archetype that changes placement decisions without invalidating towers.
+- [x] 29. Give the final boss telegraphed phases and a tactical counterplay window.
+- [x] 30. Retune economy, costs, rewards, wave density, and life loss through complete campaign runs.
 
 ### D. Campaign, progression, and UX
 - [ ] 31. Add a campaign-selection view with original map cards and locked/unlocked states.
@@ -95,3 +95,4 @@
 - 2026-07-19 — Step 24 complete: barracks show READY/TRN readiness badges and training meters; fallen troops flash FALLEN and begin training; melee adds clash sparks, periodic CLASH crits, combat HP-bar tint, and faster idle regen.
 - 2026-07-19 — Step 25 complete: level-gated tower abilities (Volley, Rune Nova, Barrage, Hold Fast) with cooldowns; restored missing mage chain lightning; mage/artillery/archer AA rules corrected so artillery remains ground-only.
 - 2026-07-19 — Step 26 complete: enemies show compact ARM/FLY/SWM/ELT trait badges derived from pure trait metadata.
+- 2026-07-19 — Steps 28–30 complete: Hexer support aura slows nearby tower fire rates; Warden boss has telegraphed shield/rage phases with mage counterplay window; economy retuned (280 start gold, 20 lives, stronger wave gold, hexer wave).

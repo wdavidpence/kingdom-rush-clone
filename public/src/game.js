@@ -56,8 +56,8 @@
       this.campaign = window.KRCCampaign.load(MAPS.length);
       this.path = this.map.path;
       this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
-      this.gold = this.startData?.gold ?? 260;
-      this.lives = this.startData?.lives ?? 18;
+      this.gold = this.startData?.gold ?? 280;
+      this.lives = this.startData?.lives ?? 20;
       this.waveIndex = 0;
       this.waveActive = false;
       this.waveTotal = 0;
@@ -365,6 +365,7 @@
       enemy("enemy_ember", { kind: "ember", rx: 16, ry: 17, hi: "#ffb066", mid: "#e45f3c", lo: "#7d2d1c", outline: "#662216" });
       enemy("enemy_brood", { kind: "scout", rx: 14, ry: 14, hi: "#efa4c1", mid: "#bd6688", lo: "#65314b", outline: "#482033" });
       enemy("enemy_flyer", { kind: "flyer", rx: 14, ry: 14, hi: "#c8f6ff", mid: "#69cbe8", lo: "#2c7195", outline: "#245d78", shadow: 16 });
+      enemy("enemy_hexer", { kind: "brute", rx: 17, ry: 16, hi: "#d2c2ff", mid: "#8b6ce0", lo: "#46307a", outline: "#2f2058", horn: "#efe2ff", shadow: 20 });
       enemy("enemy_titan", { kind: "titan", rx: 21, ry: 20, hi: "#b4aaa1", mid: "#81776e", lo: "#49413b", outline: "#342c27", horn: "#d7c3a4", shadow: 27 });
       enemy("enemy_boss", { kind: "boss", rx: 25, ry: 23, hi: "#f08cff", mid: "#a948c6", lo: "#55256b", outline: "#3b174c", horn: "#f1d2ff", shadow: 31 });
 
@@ -1074,6 +1075,7 @@
       for (const enemy of [...this.enemies]) {
         if (enemy.dead) continue;
         enemy.slow = Math.max(0, enemy.slow - dt);
+        if (enemy.type === "boss" && enemy.base.phases) this.updateBossPhases(enemy, dt);
         if (!enemy.blockedBy || enemy.blockedBy.dead) {
           enemy.blockedBy = this.findBlockingSoldier(enemy);
         }
@@ -1084,6 +1086,59 @@
         }
         this.updateEnemyVisual(enemy);
         if (enemy.seg >= this.path.length - 1) this.leakEnemy(enemy);
+      }
+      this.applySupportAuras();
+    }
+
+    applySupportAuras() {
+      for (const tower of this.towers) tower.hexed = false;
+      for (const enemy of this.enemies) {
+        if (enemy.dead || !enemy.base.aura) continue;
+        const radius = enemy.base.aura.radius || 100;
+        for (const tower of this.towers) {
+          if (Phaser.Math.Distance.Between(enemy.x, enemy.y, tower.x, tower.y) <= radius) {
+            tower.hexed = true;
+            tower.hexPenalty = enemy.base.aura.fireRatePenalty || 0.3;
+          }
+        }
+        if (!enemy.auraRing) {
+          enemy.auraRing = this.add.circle(enemy.x, enemy.y, radius, 0x9b7cff, 0.05).setStrokeStyle(1, 0xb9a0ff, 0.35).setDepth(21);
+        } else {
+          enemy.auraRing.setPosition(enemy.x, enemy.y);
+          enemy.auraRing.setVisible(true);
+        }
+      }
+    }
+
+    updateBossPhases(enemy, dt) {
+      const ratio = enemy.hp / enemy.maxHp;
+      const nextPhase = ratio > 0.66 ? 1 : ratio > 0.33 ? 2 : 3;
+      if (!enemy.phase) enemy.phase = 1;
+      enemy.phaseTimer = Math.max(0, (enemy.phaseTimer || 0) - dt);
+      if (nextPhase !== enemy.phase) {
+        enemy.phase = nextPhase;
+        enemy.phaseTimer = 2.4;
+        if (nextPhase === 2) {
+          enemy.armorBuff = 4;
+          enemy.speed *= 1.12;
+          this.flashText("WARDEN SHIELD", enemy.x, enemy.y - 48, "#d7c3ff");
+          this.say("Warden raises a shield — pierce with Runes or focus fire.");
+          const ring = this.add.circle(enemy.x, enemy.y, 40, 0xc9a6ff, 0.18).setStrokeStyle(3, 0xf0d8ff, 0.9).setDepth(70);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 1.8, duration: 500, onComplete: () => ring.destroy() });
+        } else if (nextPhase === 3) {
+          enemy.armorBuff = 0;
+          enemy.speed *= 1.15;
+          this.flashText("WARDEN RAGE", enemy.x, enemy.y - 48, "#ff9ad8");
+          this.say("Warden enrages — stall with Guards and burst during the open window.");
+          for (let i = 0; i < 3; i += 1) this.spawnEnemyFrom("scout", enemy);
+          const ring = this.add.circle(enemy.x, enemy.y, 48, 0xff6ab8, 0.2).setStrokeStyle(3, 0xffd0ea, 0.95).setDepth(70);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 2.0, duration: 550, onComplete: () => ring.destroy() });
+        }
+      }
+      if (enemy.phase === 2 && enemy.phaseTimer > 0) {
+        enemy.sprite.setTint(0xd8c2ff);
+      } else if (enemy.sprite) {
+        enemy.sprite.clearTint();
       }
     }
 
@@ -1136,8 +1191,10 @@
     damageEnemy(enemy, amount, source = {}) {
       if (enemy.dead) return;
       let damage = amount;
-      if (!source.magic) damage = Math.max(1, amount - enemy.base.armor * 3);
+      const armor = (enemy.base.armor || 0) + (enemy.armorBuff || 0);
+      if (!source.magic) damage = Math.max(1, amount - armor * 3);
       if (enemy.type === "titan" || enemy.type === "boss") damage *= 0.86;
+      if (enemy.type === "boss" && enemy.phase === 2 && enemy.phaseTimer > 0 && !source.magic) damage *= 0.55;
       enemy.hp -= damage;
       if (source.slow) enemy.slow = Math.max(enemy.slow, 1.2 + source.slow * 2);
       if (enemy.hp <= 0) {
@@ -1161,7 +1218,7 @@
     removeEnemy(enemy, killed) {
       this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
-      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText]) obj?.destroy();
+      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.auraRing]) obj?.destroy();
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
@@ -1180,7 +1237,12 @@
           this.updateBarracks(tower, dt);
           continue;
         }
-        tower.cooldown -= dt * (this.rallyTime > 0 ? 1.28 : 1);
+        tower.cooldown -= dt * (this.rallyTime > 0 ? 1.28 : 1) * (tower.hexed ? Math.max(0.45, 1 - (tower.hexPenalty || 0.3)) : 1);
+        if (tower.hexed && tower.sprite && Math.floor(this.time.now / 180) % 2 === 0) {
+          tower.sprite.setTint(0xb49cff);
+        } else if (tower.sprite) {
+          tower.sprite.clearTint();
+        }
         if (tower.cooldown > 0) continue;
         const target = this.findTarget(tower, cfg.range[tower.level], tower.type !== "artillery");
         if (!target) continue;

@@ -10,20 +10,20 @@
 - Repository: `/mnt/c/Users/wdavi/Projects/kingdom-rush-clone`
 - Upstream: `https://github.com/wdavidpence/kingdom-rush-clone.git`
 - Live Pages: `https://wdavidpence.github.io/kingdom-rush-clone/`
-- Steps 01–25, 27 complete. Modular helpers include data, targeting, rally, barracks readiness, tower abilities.
+- Gameplay gate (steps 01–30, including 27) complete except continue campaign/UX from **31**.
 - Persistent memory: Hermes built-in memory active.
 
 ## Working constraints
 - Original IP only — Kingdom Rush is genre reference, not asset source.
 - Always read `public/index.html` before writing it.
-- Static Phaser CDN delivery; contract tests via `for t in tests/*.test.mjs; do node \"$t\"; done`.
-- Load order: settings → layout → entity-state → scene-cleanup → campaign-state → game-data → targeting → rally-point → barracks-readiness → tower-abilities → game.js
+- Contract tests: `for t in tests/*.test.mjs; do node "$t"; done`
+- Load order ends with: ... enemy-traits.js → game.js
 
 ## Next milestone
-Earliest unchecked: **26. Add enemy traits with readable iconography: armor, flying, swarm, and elite.**
-Then 28–30 (support archetype, boss phases, economy), 31–40 campaign/UX, 41–48 AV polish, 49–50 release.
+Earliest unchecked: **31. Add a campaign-selection view with original map cards and locked/unlocked states.**
+Then 32–40 campaign/UX, 41–48 AV polish, 49–50 release.
 
 ## Latest verification
-- Full contract suite PASS (including tower-abilities + barracks-readiness)
+- Full contract suite PASS
 - `node --check` all public/src/*.js PASS
 - `git diff --check` clean

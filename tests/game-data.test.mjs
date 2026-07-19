@@ -15,7 +15,11 @@ assert.ok(data, "game data should be exposed at window.KRCGameData");
 assert.equal(data.maps.length, 3, "campaign should retain all three maps");
 assert.equal(data.waves.length, 10, "wave schedule should retain ten waves");
 assert.deepEqual(Object.keys(data.towers).sort(), ["archer", "artillery", "barracks", "mage"]);
-assert.deepEqual(Object.keys(data.enemies).sort(), ["boss", "brood", "brute", "ember", "flyer", "scout", "shield", "titan"]);
+assert.deepEqual(Object.keys(data.enemies).sort(), ["boss", "brood", "brute", "ember", "flyer", "hexer", "scout", "shield", "titan"]);
+assert.ok(data.enemies.hexer.aura && data.enemies.hexer.support, "hexer must be a support/control archetype with an aura");
+assert.ok(data.enemies.boss.phases, "final boss must declare telegraphed phases");
+assert.ok(data.waves.some((w) => w.packs.some(([type]) => type === "hexer")), "campaign waves must include the hexer support archetype");
+assert.ok(data.waves[0].gold >= 20, "early-wave economy should fund opening builds");
 
 const expectedTowerRoles = {
   archer: { role: "Rapid anti-air focus", targetRule: "First enemy; can target flying enemies", counterplay: "Use against fast or flying enemies; weak into armor." },
