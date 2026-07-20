@@ -97,3 +97,4 @@
 - 2026-07-19 — Step 26 complete: enemies show compact ARM/FLY/SWM/ELT trait badges derived from pure trait metadata.
 - 2026-07-19 — Steps 28–30 complete: Hexer support aura slows nearby tower fire rates; Warden boss has telegraphed shield/rage phases with mage counterplay window; economy retuned (280 start gold, 20 lives, stronger wave gold, hexer wave).
 - 2026-07-19 — Steps 31–50 complete: campaign map select + stars, early-call bonus, richer tower/hero UX and keyboard controls, responsive shell, map palette/juice/music intensity polish, full contract suite green, 1.0 docs updated for release.
+- 2026-07-19 — Post-1.0 graphics upgrade: original painterly canvas atlas (`krc-art.js`), themed terrain/path/gate props, stone build pads, stronger character/tower silhouettes, HUD/CSS chrome polish.

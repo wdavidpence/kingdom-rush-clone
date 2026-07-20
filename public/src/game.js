@@ -175,6 +175,10 @@
     }
 
     makeTextures() {
+      if (window.KRCArt?.bake) {
+        window.KRCArt.bake(this);
+        return;
+      }
       const make = (key, w, h, draw) => {
         if (this.textures.exists(key)) this.textures.remove(key);
         const texture = this.textures.createCanvas(key, w, h);
@@ -183,338 +187,165 @@
         draw(ctx, w, h);
         texture.refresh();
       };
-
-      const ellipse = (ctx, x, y, rx, ry, fill, stroke = null, line = 1) => {
-        ctx.beginPath();
-        ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
-        if (fill) {
-          ctx.fillStyle = fill;
-          ctx.fill();
-        }
-        if (stroke) {
-          ctx.strokeStyle = stroke;
-          ctx.lineWidth = line;
-          ctx.stroke();
-        }
-      };
-      const rounded = (ctx, x, y, w, h, r, fill, stroke = null, line = 1) => {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.lineTo(x + w - r, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        ctx.lineTo(x + w, y + h - r);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        ctx.lineTo(x + r, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
-        if (fill) {
-          ctx.fillStyle = fill;
-          ctx.fill();
-        }
-        if (stroke) {
-          ctx.strokeStyle = stroke;
-          ctx.lineWidth = line;
-          ctx.stroke();
-        }
-      };
-      const poly = (ctx, points, fill, stroke = null, line = 1) => {
-        ctx.beginPath();
-        ctx.moveTo(points[0][0], points[0][1]);
-        for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i][0], points[i][1]);
-        ctx.closePath();
-        ctx.fillStyle = fill;
-        ctx.fill();
-        if (stroke) {
-          ctx.strokeStyle = stroke;
-          ctx.lineWidth = line;
-          ctx.stroke();
-        }
-      };
-      const gradient = (ctx, x0, y0, x1, y1, stops) => {
-        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
-        for (const [pos, color] of stops) grad.addColorStop(pos, color);
-        return grad;
-      };
-
-      const tower = (key, cfg) =>
-        make(key, 72, 72, (ctx) => {
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ellipse(ctx, 36, 58, 27, 8, "rgba(0,0,0,.34)");
-          rounded(ctx, 18, 31, 36, 26, 6, gradient(ctx, 18, 31, 54, 58, [[0, cfg.wallHi], [0.55, cfg.wall], [1, cfg.wallLo]]), "#2b2418", 2.2);
-          for (let x = 23; x <= 45; x += 10) {
-            ctx.strokeStyle = "rgba(255,238,190,.23)";
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x, 34);
-            ctx.lineTo(x - 3, 53);
-            ctx.stroke();
-          }
-          poly(ctx, [[11, 32], [36, 9], [61, 32]], gradient(ctx, 11, 9, 61, 35, [[0, cfg.roofHi], [0.55, cfg.roof], [1, cfg.roofLo]]), "#21170f", 2.5);
-          ctx.strokeStyle = cfg.trim;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(16, 31);
-          ctx.lineTo(36, 13);
-          ctx.lineTo(56, 31);
-          ctx.stroke();
-          rounded(ctx, 29, 41, 14, 17, 4, "#1d160f", "rgba(255,238,180,.24)", 1);
-          ctx.fillStyle = "rgba(255,255,255,.2)";
-          ctx.fillRect(23, 35, 19, 3);
-          if (cfg.mark === "archer") {
-            ctx.strokeStyle = "#f4e6ad";
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(36, 25, 10, -1.35, 1.35);
-            ctx.stroke();
-            ctx.strokeStyle = "#5a351e";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(36, 14);
-            ctx.lineTo(36, 36);
-            ctx.stroke();
-            poly(ctx, [[43, 23], [58, 19], [48, 29]], "#d7b35f", "#5a351e", 1);
-          } else if (cfg.mark === "mage") {
-            ellipse(ctx, 36, 26, 12, 12, "rgba(118,105,255,.35)", "#e2d6ff", 3);
-            ctx.strokeStyle = "#f2eaff";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(27, 33);
-            ctx.lineTo(36, 16);
-            ctx.lineTo(45, 33);
-            ctx.moveTo(29, 27);
-            ctx.lineTo(43, 27);
-            ctx.stroke();
-          } else if (cfg.mark === "artillery") {
-            rounded(ctx, 28, 16, 17, 18, 5, "#3a2b20", "#f5c877", 2);
-            ctx.strokeStyle = "#1a120d";
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.moveTo(42, 20);
-            ctx.lineTo(58, 13);
-            ctx.stroke();
-            ellipse(ctx, 59, 13, 4, 4, "#ffcf72", "#51311e", 1.5);
-          } else {
-            rounded(ctx, 26, 18, 20, 20, 6, gradient(ctx, 26, 18, 46, 38, [[0, "#fff0a8"], [1, "#9d7d37"]]), "#3c2d19", 2);
-            ctx.strokeStyle = "#5a421e";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(36, 20);
-            ctx.lineTo(36, 37);
-            ctx.moveTo(28, 28);
-            ctx.lineTo(44, 28);
-            ctx.stroke();
-          }
-        });
-
-      tower("tower_archer", { wallHi: "#7fa257", wall: "#567c3f", wallLo: "#314b2c", roofHi: "#a5d065", roof: "#6fa546", roofLo: "#3e6f32", trim: "#f5e7a6", mark: "archer" });
-      tower("tower_mage", { wallHi: "#8375d8", wall: "#524994", wallLo: "#2e2c63", roofHi: "#b6a9ff", roof: "#7867db", roofLo: "#463b90", trim: "#eadfff", mark: "mage" });
-      tower("tower_artillery", { wallHi: "#a87943", wall: "#78512f", wallLo: "#46311f", roofHi: "#e7a950", roof: "#b87431", roofLo: "#6e421f", trim: "#ffdf9a", mark: "artillery" });
-      tower("tower_barracks", { wallHi: "#9d8746", wall: "#736138", wallLo: "#433722", roofHi: "#ead26a", roof: "#b99c43", roofLo: "#725b28", trim: "#fff0aa", mark: "barracks" });
-
-      const enemy = (key, cfg) =>
-        make(key, 72, 62, (ctx) => {
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ellipse(ctx, 36, 48, cfg.shadow || 22, 7, "rgba(0,0,0,.32)");
-          if (cfg.kind === "flyer") {
-            ellipse(ctx, 20, 25, 17, 8, "rgba(206,247,255,.48)", "#9beaff", 1.4);
-            ellipse(ctx, 52, 25, 17, 8, "rgba(206,247,255,.48)", "#9beaff", 1.4);
-          }
-          if (cfg.kind === "shield") rounded(ctx, 20, 31, 32, 19, 6, gradient(ctx, 20, 31, 52, 50, [[0, "#eef4f5"], [1, "#7a8794"]]), "#3a4450", 2);
-          const body = gradient(ctx, 18, 12, 54, 46, [[0, cfg.hi], [0.45, cfg.mid], [1, cfg.lo]]);
-          if (cfg.kind !== "flyer") {
-            poly(ctx, [[20, 37], [14, 43], [25, 42]], cfg.lo, cfg.outline, 1);
-            poly(ctx, [[52, 37], [58, 43], [47, 42]], cfg.lo, cfg.outline, 1);
-          }
-          ellipse(ctx, 36, 29, cfg.rx, cfg.ry, body, cfg.outline, 2.5);
-          if (cfg.kind === "scout") {
-            poly(ctx, [[23, 22], [14, 16], [19, 29]], cfg.mid, cfg.outline, 1.2);
-            poly(ctx, [[49, 22], [58, 16], [53, 29]], cfg.mid, cfg.outline, 1.2);
-          }
-          ellipse(ctx, 28, 25, 2.2, 2.6, "#f6f0c2");
-          ellipse(ctx, 44, 25, 2.2, 2.6, "#f6f0c2");
-          ellipse(ctx, 29, 25, 1.2, 1.5, "#11100b");
-          ellipse(ctx, 43, 25, 1.2, 1.5, "#11100b");
-          ctx.strokeStyle = "#17130e";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(24, 20);
-          ctx.lineTo(32, 23);
-          ctx.moveTo(48, 20);
-          ctx.lineTo(40, 23);
-          ctx.stroke();
-          ctx.strokeStyle = cfg.outline;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(30, 36);
-          ctx.lineTo(43, 34);
-          ctx.stroke();
-          ctx.strokeStyle = "rgba(255,255,255,.22)";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(30, 20, 7, Math.PI, Math.PI * 1.55);
-          ctx.stroke();
-          if (cfg.kind === "brute" || cfg.kind === "titan" || cfg.kind === "boss") {
-            rounded(ctx, 21, 11, 30, 8, 3, cfg.outline, "#24180f", 1.4);
-            ellipse(ctx, 22, 12, 5, 6, cfg.horn || "#e6d0aa", "#33261c", 1);
-            ellipse(ctx, 50, 12, 5, 6, cfg.horn || "#e6d0aa", "#33261c", 1);
-          }
-          if (cfg.kind === "ember") {
-            poly(ctx, [[36, 2], [26, 22], [35, 17], [31, 34], [47, 13], [39, 17]], "#ffd166", "#7d2d1c", 1.4);
-            ellipse(ctx, 36, 31, 9, 13, "rgba(255,213,89,.35)");
-          }
-          if (cfg.kind === "boss") {
-            ellipse(ctx, 36, 10, 10, 5, "#f1d2ff", "#5d2870", 1.5);
-            ctx.strokeStyle = "#f1d2ff";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(26, 10);
-            ctx.lineTo(20, 2);
-            ctx.moveTo(46, 10);
-            ctx.lineTo(52, 2);
-            ctx.stroke();
-          }
-        });
-
-      enemy("enemy_scout", { kind: "scout", rx: 15, ry: 15, hi: "#d7f187", mid: "#9dce56", lo: "#537b34", outline: "#345122" });
-      enemy("enemy_brute", { kind: "brute", rx: 18, ry: 17, hi: "#f2bf78", mid: "#c5773d", lo: "#6b3f27", outline: "#5a321f" });
-      enemy("enemy_shield", { kind: "shield", rx: 17, ry: 16, hi: "#d9e1e8", mid: "#aab5bf", lo: "#66727f", outline: "#46515d" });
-      enemy("enemy_ember", { kind: "ember", rx: 16, ry: 17, hi: "#ffb066", mid: "#e45f3c", lo: "#7d2d1c", outline: "#662216" });
-      enemy("enemy_brood", { kind: "scout", rx: 14, ry: 14, hi: "#efa4c1", mid: "#bd6688", lo: "#65314b", outline: "#482033" });
-      enemy("enemy_flyer", { kind: "flyer", rx: 14, ry: 14, hi: "#c8f6ff", mid: "#69cbe8", lo: "#2c7195", outline: "#245d78", shadow: 16 });
-      enemy("enemy_hexer", { kind: "brute", rx: 17, ry: 16, hi: "#d2c2ff", mid: "#8b6ce0", lo: "#46307a", outline: "#2f2058", horn: "#efe2ff", shadow: 20 });
-      enemy("enemy_titan", { kind: "titan", rx: 21, ry: 20, hi: "#b4aaa1", mid: "#81776e", lo: "#49413b", outline: "#342c27", horn: "#d7c3a4", shadow: 27 });
-      enemy("enemy_boss", { kind: "boss", rx: 25, ry: 23, hi: "#f08cff", mid: "#a948c6", lo: "#55256b", outline: "#3b174c", horn: "#f1d2ff", shadow: 31 });
-
-      make("projectile_arrow", 34, 18, (ctx) => {
-        poly(ctx, [[2, 9], [24, 3], [16, 9], [24, 15]], "#f8e8a0", "#5a371e", 1.1);
-        ctx.strokeStyle = "#6f4a27";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(7, 9);
-        ctx.lineTo(31, 9);
-        ctx.stroke();
+      make("tower_archer", 32, 32, (ctx) => { ctx.fillStyle = "#6fa546"; ctx.fillRect(4, 4, 24, 24); });
+      make("tower_mage", 32, 32, (ctx) => { ctx.fillStyle = "#7867db"; ctx.fillRect(4, 4, 24, 24); });
+      make("tower_artillery", 32, 32, (ctx) => { ctx.fillStyle = "#b87431"; ctx.fillRect(4, 4, 24, 24); });
+      make("tower_barracks", 32, 32, (ctx) => { ctx.fillStyle = "#b99c43"; ctx.fillRect(4, 4, 24, 24); });
+      ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
+        make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
       });
-      make("projectile_magic", 24, 24, (ctx) => {
-        ellipse(ctx, 12, 12, 10, 10, "rgba(156,140,255,.55)", "#eadfff", 2);
-        ellipse(ctx, 12, 12, 5, 5, "#f4eeff");
-      });
-      make("projectile_bomb", 28, 28, (ctx) => {
-        ellipse(ctx, 13, 15, 10, 10, gradient(ctx, 5, 5, 22, 24, [[0, "#5a4b3b"], [1, "#17110d"]]), "#0b0806", 1.5);
-        ellipse(ctx, 19, 7, 4, 4, "#ffbd58", "#69381d", 1);
-        ctx.strokeStyle = "#ffe0a6";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(20, 5);
-        ctx.lineTo(25, 1);
-        ctx.stroke();
-      });
-      make("soldier_guard", 44, 48, (ctx) => {
-        ellipse(ctx, 22, 42, 16, 5, "rgba(0,0,0,.3)");
-        ellipse(ctx, 22, 13, 8, 8, gradient(ctx, 14, 5, 30, 21, [[0, "#fff0a8"], [1, "#a9873f"]]), "#3e2d18", 1.8);
-        rounded(ctx, 12, 21, 20, 18, 5, gradient(ctx, 12, 21, 32, 39, [[0, "#8f7542"], [1, "#4f3b22"]]), "#2e2115", 1.8);
-        rounded(ctx, 25, 18, 13, 17, 4, gradient(ctx, 25, 18, 38, 35, [[0, "#fff2b0"], [1, "#8f7134"]]), "#3e2d18", 1.6);
-        ctx.strokeStyle = "#d9c57d";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(9, 24);
-        ctx.lineTo(4, 33);
-        ctx.moveTo(33, 25);
-        ctx.lineTo(40, 17);
-        ctx.stroke();
-        ellipse(ctx, 19, 12, 1.5, 1.8, "#15120c");
-        ellipse(ctx, 25, 12, 1.5, 1.8, "#15120c");
-      });
-      make("hero_captain", 54, 58, (ctx) => {
-        ellipse(ctx, 27, 51, 20, 6, "rgba(0,0,0,.35)");
-        rounded(ctx, 17, 24, 22, 24, 6, gradient(ctx, 17, 24, 39, 49, [[0, "#3f6fb4"], [0.55, "#274b7d"], [1, "#172d4d"]]), "#101b2f", 2);
-        ellipse(ctx, 27, 15, 10, 10, gradient(ctx, 17, 5, 37, 25, [[0, "#ffe1a8"], [1, "#b47a45"]]), "#4a2d1c", 1.8);
-        rounded(ctx, 16, 5, 22, 8, 3, "#d8b85d", "#4a351a", 1.5);
-        poly(ctx, [[27, 0], [20, 8], [34, 8]], "#f0d47a", "#4a351a", 1.2);
-        ellipse(ctx, 23, 14, 1.4, 1.8, "#10100b");
-        ellipse(ctx, 31, 14, 1.4, 1.8, "#10100b");
-        rounded(ctx, 32, 22, 14, 20, 5, gradient(ctx, 32, 22, 46, 42, [[0, "#f4e6a8"], [1, "#8d6f31"]]), "#3e2d18", 1.8);
-        ctx.strokeStyle = "#e9d790";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(14, 27);
-        ctx.lineTo(7, 42);
-        ctx.moveTo(38, 26);
-        ctx.lineTo(49, 12);
-        ctx.stroke();
-        ctx.strokeStyle = "#f7f0c4";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(49, 12);
-        ctx.lineTo(51, 3);
-        ctx.stroke();
-      });
-      make("tree_pine", 40, 56, (ctx) => {
-        ellipse(ctx, 20, 49, 14, 4, "rgba(0,0,0,.22)");
-        rounded(ctx, 17, 34, 6, 15, 2, "#5a3d24");
-        poly(ctx, [[20, 4], [6, 28], [14, 25], [4, 40], [36, 40], [26, 25], [34, 28]], gradient(ctx, 8, 4, 32, 42, [[0, "#6f9b4c"], [1, "#244522"]]), "#162c16", 1.3);
-        ctx.strokeStyle = "rgba(219,240,169,.25)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(18, 13);
-        ctx.lineTo(13, 27);
-        ctx.moveTo(24, 24);
-        ctx.lineTo(30, 36);
-        ctx.stroke();
-      });
-      make("rock_moss", 28, 20, (ctx) => {
-        ellipse(ctx, 14, 14, 12, 5, "rgba(0,0,0,.22)");
-        rounded(ctx, 5, 4, 19, 11, 5, gradient(ctx, 4, 4, 24, 17, [[0, "#8d9184"], [1, "#464c42"]]), "#2f352d", 1.2);
-        ellipse(ctx, 10, 7, 5, 2, "rgba(166,205,108,.5)");
-      });
+      make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
+      make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
+      make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
+      make("soldier_guard", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
+      make("hero_captain", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
+      make("tree_pine", 24, 32, (ctx) => { ctx.fillStyle = "#3a6a30"; ctx.fillRect(4,0,16,32); });
+      make("rock_moss", 20, 14, (ctx) => { ctx.fillStyle = "#686c64"; ctx.fillRect(0,0,20,14); });
+      make("pad_empty", 48, 32, (ctx) => { ctx.fillStyle = "#4a3c2a"; ctx.beginPath(); ctx.ellipse(24,16,20,10,0,0,Math.PI*2); ctx.fill(); });
+      make("gate_arch", 64, 40, (ctx) => { ctx.fillStyle = "#5a4a38"; ctx.fillRect(0,0,64,40); });
+      make("bush_round", 24, 18, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,24,18); });
+      make("flower_patch", 20, 14, (ctx) => { ctx.fillStyle = "#f0d060"; ctx.fillRect(0,0,20,14); });
+      make("tree_oak", 32, 32, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,32,32); });
+      make("ruin_pillar", 20, 32, (ctx) => { ctx.fillStyle = "#8a8070"; ctx.fillRect(0,0,20,32); });
+      make("banner_flag", 20, 32, (ctx) => { ctx.fillStyle = "#e07050"; ctx.fillRect(0,0,20,32); });
+      make("cloud_soft", 48, 24, (ctx) => { ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fillRect(0,0,48,24); });
+      make("path_mark", 16, 10, (ctx) => { ctx.fillStyle = "rgba(180,150,100,.35)"; ctx.fillRect(0,0,16,10); });
+      make("icon_gold", 16, 16, (ctx) => { ctx.fillStyle = "#f5c85a"; ctx.fillRect(0,0,16,16); });
+      make("icon_heart", 16, 16, (ctx) => { ctx.fillStyle = "#e66550"; ctx.fillRect(0,0,16,16); });
     }
 
     drawMap() {
       const grass = this.map.grass;
-      const accent = this.mapIndex === 1 ? 0x2a3d42 : this.mapIndex === 2 ? 0x3a3420 : 0x314b27;
-      this.add.rectangle(W / 2, H / 2, W, H, grass).setDepth(-20);
-      for (let i = 0; i < 96; i += 1) {
+      const themes = [
+        { accent: 0x3a5a2e, accent2: 0x1e3018, road: 0x9a7a4a, roadEdge: 0x4a3420, pathMid: 0xc4a06a, tint: 0xffffff, skyTop: 0x6a9ac8, skyBot: 0xb8d8a0 },
+        { accent: 0x3a4a50, accent2: 0x1a282c, road: 0x8a9098, roadEdge: 0x3a4048, pathMid: 0xb0b8c0, tint: 0xc8d0d8, skyTop: 0x5a7088, skyBot: 0x90a8a0 },
+        { accent: 0x4a3a20, accent2: 0x2a2410, road: 0xb07a42, roadEdge: 0x5a3a18, pathMid: 0xe0a060, tint: 0xe8c898, skyTop: 0xc07040, skyBot: 0xa08040 },
+      ];
+      const theme = themes[this.mapIndex] || themes[0];
+
+      const sky = this.add.graphics().setDepth(-22);
+      sky.fillGradientStyle(theme.skyTop, theme.skyTop, theme.skyBot, theme.skyBot, 0.55, 0.55, 0.15, 0.15);
+      sky.fillRect(0, 0, W, 120);
+
+      this.add.rectangle(W / 2, H / 2, W, H, grass).setDepth(-21);
+
+      for (let i = 0; i < 48; i += 1) {
+        const x = (i * 89 + 17) % W;
+        const y = 70 + ((i * 53) % 560);
+        const c = i % 3 === 0 ? theme.accent : i % 2 ? theme.accent2 : grass;
+        this.add.ellipse(x, y, 38 + (i % 5) * 10, 16 + (i % 3) * 4, c, 0.22).setDepth(-20);
+      }
+
+      for (let i = 0; i < 120; i += 1) {
         const x = (i * 73) % W;
         const y = 76 + ((i * 47) % 545);
-        const c = i % 3 === 0 ? accent : i % 2 ? 0x38542d : 0x20371b;
-        this.add.rectangle(x, y, 24 + (i % 4) * 9, 4, c, 0.28).setAngle((i * 19) % 180).setDepth(-19);
+        const c = i % 3 === 0 ? theme.accent : i % 2 ? 0x38542d : 0x20371b;
+        this.add.rectangle(x, y, 18 + (i % 4) * 7, 3, c, 0.22).setAngle((i * 19) % 180).setDepth(-19);
+      }
+
+      if (this.textures.exists("cloud_soft")) {
+        for (let i = 0; i < 4; i += 1) {
+          const x = 40 + i * 100;
+          const y = 58 + (i % 2) * 14;
+          this.add.image(x, y, "cloud_soft").setScale(0.9 + (i % 3) * 0.15).setAlpha(0.55).setDepth(-18);
+        }
       }
 
       const edge = this.add.graphics().setDepth(-10);
-      edge.lineStyle(PATH_WIDTH + 14, this.mapIndex === 1 ? 0x4a5560 : this.mapIndex === 2 ? 0x6a4e2e : COLORS.roadEdge, 1);
+      edge.lineStyle(PATH_WIDTH + 18, theme.roadEdge, 1);
       this.strokePath(edge);
-      const road = this.add.graphics().setDepth(-9);
-      road.lineStyle(PATH_WIDTH, this.mapIndex === 1 ? 0x8a9098 : this.mapIndex === 2 ? 0xb07a42 : COLORS.road, 1);
+      const roadShadow = this.add.graphics().setDepth(-9);
+      roadShadow.lineStyle(PATH_WIDTH + 8, 0x1a120c, 0.35);
+      this.strokePath(roadShadow);
+      const road = this.add.graphics().setDepth(-8);
+      road.lineStyle(PATH_WIDTH, theme.road, 1);
       this.strokePath(road);
-      const center = this.add.graphics().setDepth(-8);
-      center.lineStyle(2, this.mapIndex === 2 ? 0xe0a060 : 0xb9905d, 0.5);
+      const center = this.add.graphics().setDepth(-7);
+      center.lineStyle(3, theme.pathMid, 0.45);
       this.strokePath(center);
 
-      this.add.text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
-      this.add.text(MAP_LAYOUT.gateX - 30, MAP_LAYOUT.gateY - 11, "GATE", { font: "bold 12px Arial", color: "#24170e" }).setDepth(-7);
+      if (this.textures.exists("path_mark")) {
+        for (let i = 0; i < this.path.length - 1; i += 1) {
+          const a = this.path[i];
+          const b = this.path[i + 1];
+          for (let s = 1; s <= 3; s += 1) {
+            const t = s / 4;
+            const x = a.x + (b.x - a.x) * t;
+            const y = a.y + (b.y - a.y) * t;
+            this.add
+              .image(x, y, "path_mark")
+              .setAlpha(0.5)
+              .setDepth(-6.5)
+              .setAngle(Phaser.Math.RadToDeg(Math.atan2(b.y - a.y, b.x - a.x)));
+          }
+        }
+      }
 
-      for (let i = 0; i < 26; i += 1) {
-        const x = 24 + ((i * 91) % 372);
-        const y = 88 + ((i * 137) % 520);
-        const nearRoad = this.path.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 46);
-        if (nearRoad) continue;
-        this.add.image(x, y - 10, "tree_pine").setScale(0.72 + (i % 3) * 0.08).setDepth(-15).setTint(this.mapIndex === 2 ? 0xc9b48a : 0xffffff);
+      this.add
+        .text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", {
+          font: "bold 11px Arial",
+          color: "#f8ecd0",
+          backgroundColor: "#00000066",
+          padding: { x: 4, y: 2 },
+        })
+        .setDepth(-6);
+
+      const placeAway = (n, minDist, fn) => {
+        let placed = 0;
+        for (let i = 0; i < n * 4 && placed < n; i += 1) {
+          const x = 20 + ((i * 97 + placed * 13) % 380);
+          const y = 88 + ((i * 131 + placed * 29) % 520);
+          const nearRoad = this.path.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < minDist);
+          const nearPad = this.buildPads.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 40);
+          if (nearRoad || nearPad) continue;
+          fn(x, y, placed);
+          placed += 1;
+        }
+      };
+
+      placeAway(14, 48, (x, y, i) => {
+        const key = i % 3 === 0 && this.textures.exists("tree_oak") ? "tree_oak" : "tree_pine";
+        this.add.image(x, y - 12, key).setScale(0.78 + (i % 4) * 0.08).setDepth(-15).setTint(theme.tint);
+      });
+      placeAway(10, 42, (x, y, i) => {
+        if (this.textures.exists("bush_round")) {
+          this.add.image(x, y, "bush_round").setScale(0.7 + (i % 3) * 0.1).setDepth(-14).setTint(theme.tint);
+        }
+      });
+      placeAway(12, 40, (x, y, i) => {
+        if (i % 2 === 0) this.add.image(x, y, "rock_moss").setScale(0.85).setDepth(-6).setTint(theme.tint);
+        else if (this.textures.exists("flower_patch")) this.add.image(x, y, "flower_patch").setScale(0.85).setDepth(-6);
+      });
+      placeAway(3, 55, (x, y) => {
+        if (this.textures.exists("ruin_pillar")) this.add.image(x, y - 8, "ruin_pillar").setScale(0.9).setDepth(-13).setTint(theme.tint);
+      });
+      placeAway(2, 50, (x, y) => {
+        if (this.textures.exists("banner_flag")) this.add.image(x, y - 10, "banner_flag").setScale(0.95).setDepth(-12);
+      });
+
+      if (this.textures.exists("gate_arch")) {
+        this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.05);
+      } else {
+        this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
+        this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
       }
-      for (let i = 0; i < 18; i += 1) {
-        const x = 18 + ((i * 67) % 384);
-        const y = 92 + ((i * 59) % 516);
-        if (i % 3 === 0) this.add.image(x, y, "rock_moss").setScale(0.72).setDepth(-6);
-        else this.add.circle(x, y, 2, i % 2 ? 0xeed27a : 0xbadf7b, 0.75).setDepth(-6);
-      }
-      this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
-      this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
-      // Storybook edge vignette
+      this.add
+        .text(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY + 22, "GATE", {
+          font: "bold 10px Arial",
+          color: "#f0e0b0",
+          backgroundColor: "#00000055",
+          padding: { x: 4, y: 1 },
+        })
+        .setOrigin(0.5)
+        .setDepth(-4);
+
       const vig = this.add.graphics().setDepth(-3);
-      vig.fillStyle(0x000000, 0.18);
-      vig.fillRect(0, 0, W, 18);
-      vig.fillRect(0, H - 18, W, 18);
+      vig.fillStyle(0x000000, 0.2);
+      vig.fillRect(0, 0, W, 16);
+      vig.fillRect(0, H - 16, W, 16);
+      vig.fillStyle(0x000000, 0.12);
+      vig.fillRect(0, 0, 10, H);
+      vig.fillRect(W - 10, 0, 10, H);
     }
 
     strokePath(graphics) {
@@ -527,8 +358,16 @@
     createPads() {
       for (const pad of this.buildPads) {
         pad.tower = null;
-        pad.base = this.add.circle(pad.x, pad.y, 25, 0x1a2215, 0.95).setStrokeStyle(3, 0xb19b58, 0.9);
-        pad.icon = this.add.text(pad.x, pad.y - 1, "+", { font: "bold 26px Arial", color: "#e8dca8" }).setOrigin(0.5);
+        if (this.textures.exists("pad_empty")) {
+          pad.base = this.add.image(pad.x, pad.y + 2, "pad_empty").setDepth(8).setScale(0.95);
+          pad.glow = this.add.circle(pad.x, pad.y, 22, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.35).setDepth(7);
+        } else {
+          pad.base = this.add.circle(pad.x, pad.y, 25, 0x1a2215, 0.95).setStrokeStyle(3, 0xb19b58, 0.9);
+        }
+        pad.icon = this.add
+          .text(pad.x, pad.y - 4, "+", { font: "bold 22px Arial", color: "#fff2ba", stroke: "#3a2810", strokeThickness: 3 })
+          .setOrigin(0.5)
+          .setDepth(9);
       }
     }
 
@@ -551,7 +390,7 @@
         isHero: true,
       });
       this.hero.ring = this.add.circle(post.x, post.y, 34, 0xf5d76e, 0.12).setStrokeStyle(2, 0xf5d76e, 0.6).setDepth(37).setVisible(false);
-      this.hero.sprite = this.add.image(post.x, post.y - 8, "hero_captain").setScale(0.78).setDepth(46);
+      this.hero.sprite = this.add.image(post.x, post.y - 10, "hero_captain").setScale(0.82).setDepth(46);
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
       this.hero.levelText = this.add
@@ -561,10 +400,14 @@
     }
 
     createHud() {
-      this.add.rectangle(W / 2, TOP_H / 2, W, TOP_H, 0x131b12, 0.96).setDepth(90);
-      this.add.rectangle(W / 2, TOP_H, W, 2, 0x596f38).setDepth(91);
-      this.goldText = this.add.text(12, 10, "", { font: "bold 18px Arial", color: COLORS.gold }).setDepth(100);
-      this.livesText = this.add.text(138, 10, "", { font: "bold 18px Arial", color: "#ff8a73" }).setDepth(100);
+      this.add.rectangle(W / 2, TOP_H / 2, W, TOP_H, 0x121a10, 0.94).setDepth(90);
+      this.add.rectangle(W / 2, TOP_H / 2 - 8, W - 16, TOP_H - 18, 0x1c2818, 0.35).setDepth(90.5);
+      this.add.rectangle(W / 2, TOP_H, W, 3, 0x8a9a48).setDepth(91);
+      this.add.rectangle(W / 2, TOP_H - 1, W, 1, 0xf0d878, 0.35).setDepth(91.5);
+      if (this.textures.exists("icon_gold")) this.add.image(18, 20, "icon_gold").setScale(0.9).setDepth(100);
+      if (this.textures.exists("icon_heart")) this.add.image(144, 20, "icon_heart").setScale(0.9).setDepth(100);
+      this.goldText = this.add.text(30, 10, "", { font: "bold 18px Arial", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
+      this.livesText = this.add.text(156, 10, "", { font: "bold 18px Arial", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
       this.waveText = this.add.text(236, 8, "", { font: "bold 16px Arial", color: COLORS.ink }).setDepth(100);
       this.mapText = this.add.text(236, 27, "", { font: "bold 10px Arial", color: "#cfc4a2" }).setDepth(100);
       this.waveBarBg = this.add.rectangle(236, 42, 86, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
@@ -580,7 +423,9 @@
 
     createShop() {
       this.add.rectangle(W / 2, SHOP_Y + SHOP_H / 2, W, SHOP_H, COLORS.panel, 0.98).setDepth(90);
-      this.add.rectangle(W / 2, SHOP_Y, W, 2, 0x596f38).setDepth(91);
+      this.add.rectangle(W / 2, SHOP_Y + SHOP_H / 2, W - 12, SHOP_H - 10, 0x24351c, 0.4).setDepth(90.5);
+      this.add.rectangle(W / 2, SHOP_Y, W, 3, 0x8a9a48).setDepth(91);
+      this.add.rectangle(W / 2, SHOP_Y + 1, W, 1, 0xf0d878, 0.35).setDepth(91.5);
       this.shopButtons = [];
       const types = Object.values(TOWERS);
       for (let i = 0; i < types.length; i += 1) {
@@ -693,7 +538,7 @@
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.9));
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive();
       this.overlay.add(blocker);
-      this.overlay.add(this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold }).setOrigin(0.5));
+      this.overlay.add(this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold, stroke: "#2a1a08", strokeThickness: 6 }).setOrigin(0.5));
       this.overlay.add(
         this.add
           .text(W / 2, 122, "Choose a map. Stars unlock from lives remaining.", {
@@ -851,7 +696,15 @@
     refreshSelection() {
       for (const pad of this.buildPads) {
         const active = pad === this.selectedPad;
-        pad.base.setStrokeStyle(active ? 4 : 3, active ? 0xf5d76e : 0xb19b58, 1);
+        if (pad.glow) {
+          pad.glow.setVisible(!pad.tower);
+          pad.glow.setStrokeStyle(active ? 3 : 2, active ? 0xfff0a0 : 0xf5d76e, active ? 0.85 : 0.35);
+          pad.glow.setFillStyle(0xf5d76e, active ? 0.18 : 0.08);
+          if (pad.base?.setTint) pad.base.setTint(active ? 0xfff2c0 : 0xffffff);
+        } else if (pad.base?.setStrokeStyle) {
+          pad.base.setStrokeStyle(active ? 4 : 3, active ? 0xf5d76e : 0xb19b58, 1);
+        }
+        if (pad.icon) pad.icon.setVisible(!pad.tower);
       }
       if (this.hero?.ring) this.hero.ring.setVisible(!!this.heroSelected);
       for (const b of this.shopButtons) {
@@ -869,6 +722,8 @@
       }
       this.gold -= cfg.cost;
       pad.icon.setText("");
+      pad.icon.setVisible(false);
+      if (pad.glow) pad.glow.setVisible(false);
       const tower = this.entityRegistry.create("tower", {
         type,
         level: 0,
@@ -886,7 +741,7 @@
         tower.rallySegment = rally.segment;
       }
       pad.tower = tower;
-      tower.sprite = this.add.image(pad.x, pad.y - 5, `tower_${type}`).setScale(0.72).setDepth(30);
+      tower.sprite = this.add.image(pad.x, pad.y - 8, `tower_${type}`).setScale(0.62).setDepth(30);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.add.circle(pad.x, pad.y, cfg.range[0], cfg.color, 0.08).setStrokeStyle(1, cfg.color, 0.22).setDepth(20).setVisible(false);
       if (type === "barracks") {
@@ -934,7 +789,7 @@
       }
       this.gold -= cost;
       tower.level += 1;
-      tower.sprite.setScale(0.72 + tower.level * 0.045);
+      tower.sprite.setScale(0.62 + tower.level * 0.04);
       tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       const unlocked = window.KRCTowerAbilities?.isUnlocked(tower.type, tower.level);
@@ -971,6 +826,8 @@
       this.towers = this.towers.filter((t) => t !== tower);
       this.selectedPad.tower = null;
       this.selectedPad.icon.setText("+");
+      this.selectedPad.icon.setVisible(true);
+      if (this.selectedPad.glow) this.selectedPad.glow.setVisible(true);
       this.flashText(`+${refund}`, tower.x, tower.y - 28, COLORS.gold);
       this.say(`Sold for ${refund} gold (55% refund).`);
       this.refreshSelection();
@@ -1105,7 +962,7 @@
         blockedBy: null,
         dead: false,
       });
-      enemy.sprite = this.add.image(enemy.x, enemy.y, `enemy_${type}`).setScale(base.size / 28).setDepth(40);
+      enemy.sprite = this.add.image(enemy.x, enemy.y - 4, `enemy_${type}`).setScale(base.size / 30).setDepth(40);
       enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
@@ -1235,11 +1092,11 @@
       enemy.sprite.y += bob * (enemy.base.flying ? 4 : enemy.blockedBy ? 0.6 : 1.2);
       if (enemy.blockedBy) {
         enemy.sprite.rotation = Math.sin(this.time.now * 0.03 + enemy.wobble) * 0.18;
-        enemy.sprite.setScale((enemy.base.size / 28) * (1 + Math.sin(this.time.now * 0.04) * 0.04));
+        enemy.sprite.setScale((enemy.base.size / 30) * (1 + Math.sin(this.time.now * 0.04) * 0.04));
       } else if (enemy.seg < this.path.length - 1) {
         const next = this.path[enemy.seg + 1];
         enemy.sprite.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
-        enemy.sprite.setScale(enemy.base.size / 28);
+        enemy.sprite.setScale(enemy.base.size / 30);
       }
       if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
       else if (!enemy.base.phases) enemy.sprite.clearTint();
@@ -1797,7 +1654,7 @@
         attackCooldown: 0.2,
         dead: false,
       });
-      soldier.sprite = this.add.image(soldier.x, soldier.y - 4, "soldier_guard").setScale(0.78).setDepth(44);
+      soldier.sprite = this.add.image(soldier.x, soldier.y - 6, "soldier_guard").setScale(0.82).setDepth(44);
       soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
       tower.soldiers.push(soldier);
       this.soldiers.push(soldier);

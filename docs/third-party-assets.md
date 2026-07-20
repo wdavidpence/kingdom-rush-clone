@@ -10,6 +10,7 @@
 
 ## Original KRC material
 - Terrain, towers, characters, enemy silhouettes, effects, UI, gameplay data, and application code are original repository material. They must remain distinct from any commercial tower-defense reference title.
+- Runtime art is canvas-baked in `public/src/krc-art.js` (procedural painterly silhouettes). Do not replace with ripped commercial sprites.
 
 ## Prohibited sources
 Do not add any extracted/recreated assets, music, dialogue, maps, UI artwork, fonts, or source code from Kingdom Rush or other commercial games. Genre inspiration is allowed; direct copying is not.
