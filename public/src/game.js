@@ -223,9 +223,14 @@
       ];
       const theme = themes[this.mapIndex] || themes[0];
 
+      // Parallax sky with gradient layers
       const sky = this.add.graphics().setDepth(-22);
       sky.fillGradientStyle(theme.skyTop, theme.skyTop, theme.skyBot, theme.skyBot, 0.55, 0.55, 0.15, 0.15);
       sky.fillRect(0, 0, W, 120);
+      // Sky glow layer
+      const skyGlow = this.add.graphics().setDepth(-21.5);
+      skyGlow.fillGradientStyle(0xffffff, 0xffffff, theme.skyTop, theme.skyTop, 0.5, 0.5, 0.8, 0.8);
+      skyGlow.fillRect(0, 0, W, 60);
 
       this.add.rectangle(W / 2, H / 2, W, H, grass).setDepth(-21);
 
@@ -241,6 +246,43 @@
         const y = 76 + ((i * 47) % 545);
         const c = i % 3 === 0 ? theme.accent : i % 2 ? 0x38542d : 0x20371b;
         this.add.rectangle(x, y, 18 + (i % 4) * 7, 3, c, 0.22).setAngle((i * 19) % 180).setDepth(-19);
+      }
+
+      // Atmospheric effects per map type
+      if (!this.settings?.reducedMotion) {
+        if (this.mapIndex === 0) {
+          // Forest Gate: firefly particles
+          for (let i = 0; i < 8; i += 1) {
+            const fx = (i * 97 + 30) % W;
+            const fy = 100 + ((i * 53) % 400);
+            const firefly = this.add.circle(fx, fy, 2, 0xffff80, 0.6).setDepth(-17);
+            this.tweens.add({
+              targets: firefly, x: fx + (Math.random() - 0.5) * 60, y: fy + (Math.random() - 0.5) * 40,
+              alpha: 0.2, duration: 1500 + Math.random() * 1000, yoyo: true, repeat: -1,
+            });
+          }
+        } else if (this.mapIndex === 1) {
+          // Stone Pass: mist layers
+          for (let i = 0; i < 3; i += 1) {
+            const mistX = (i * 160 + 40) % W;
+            const mistY = 200 + i * 120;
+            const mist = this.add.ellipse(mistX, mistY, 80 + i * 20, 16, theme.tint, 0.15).setDepth(-17);
+            this.tweens.add({
+              targets: mist, x: mistX + 40 - i * 20, duration: 3000 + i * 1000, yoyo: true, repeat: -1,
+            });
+          }
+        } else if (this.mapIndex === 2) {
+          // Ember Marsh: heat shimmer bubbles
+          for (let i = 0; i < 6; i += 1) {
+            const bx = (i * 73 + 20) % W;
+            const by = 150 + ((i * 47) % 350);
+            const bubble = this.add.circle(bx, by, 2 + (i % 3), 0xe0a060, 0.3).setDepth(-17);
+            this.tweens.add({
+              targets: bubble, y: by - 20 - Math.random() * 15, alpha: 0, duration: 2000 + Math.random() * 1500,
+              yoyo: false, repeat: -1, delay: i * 400,
+            });
+          }
+        }
       }
 
       if (this.textures.exists("cloud_soft")) {
@@ -535,10 +577,17 @@
 
     showStartOverlay() {
       this.overlay = this.add.container(0, 0).setDepth(500);
-      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.9));
+      // Darker overlay with vignette feel
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.93));
+      // Subtle gold border glow
+      const borderGlow = this.add.rectangle(W / 2, H / 2, W - 40, H - 80, 0xf5c85a, 0.04).setStrokeStyle(2, 0xf5c85a, 0.15).setDepth(499);
+      this.overlay.add(borderGlow);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive();
       this.overlay.add(blocker);
-      this.overlay.add(this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold, stroke: "#2a1a08", strokeThickness: 6 }).setOrigin(0.5));
+      // Title with shadow layer for depth
+      const titleShadow = this.add.text(W / 2 + 1, 87, "KRC CAMPAIGN", { font: "bold 34px Arial", color: "#2a1a08" }).setOrigin(0.5).setDepth(499);
+      const title = this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold, stroke: "#2a1a08", strokeThickness: 6 }).setOrigin(0.5).setDepth(501);
+      this.overlay.add(titleShadow);
       this.overlay.add(
         this.add
           .text(W / 2, 122, "Choose a map. Stars unlock from lives remaining.", {
@@ -1127,7 +1176,11 @@
       if (enemy.type === "titan" || enemy.type === "boss") damage *= 0.86;
       if (enemy.type === "boss" && enemy.phase === 2 && enemy.phaseTimer > 0 && !source.magic) damage *= 0.55;
       enemy.hp -= damage;
-      if (source.slow) enemy.slow = Math.max(enemy.slow, 1.2 + source.slow * 2);
+      // Hit sparks on damage (not for tiny amounts)
+      if (damage >= 5 && !enemy.dead) {
+        this.createHitSparks(enemy.x, enemy.y - 8, source.magic ? 0xc8b0ff : 0xfff0c0);
+        this.createDamageNumber(enemy.x, enemy.y - enemy.base.size, `-${damage}`, source.magic ? "#c8b0ff" : "#fff2ba");
+      }
       if (enemy.hp <= 0) {
         const burn = enemy.base.burn;
         const split = enemy.base.split;
@@ -1136,6 +1189,7 @@
         this.gold += enemy.base.bounty;
         if (source.hero) this.addHeroXp(enemy.base.bounty);
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
+        this.createDamageNumber(x, y - enemy.base.size - 10, `+${enemy.base.bounty}`, COLORS.gold);
         this.removeEnemy(enemy, true);
         if (split) {
           const [childType, count] = split;
@@ -1154,7 +1208,24 @@
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
         this.audio.play("impact", 0.2, 0.95 + Math.random() * 0.16);
+        const size = enemy.base.size;
+        // Multi-layer death explosion: core puff + ring burst + debris
         this.puff(enemy.x, enemy.y, enemy.base.color);
+        // Ring burst
+        const ring = this.add.circle(enemy.x, enemy.y, 4, enemy.base.color, 0.6).setStrokeStyle(2, "#fff8c0", 0.9).setDepth(75);
+        this.tweens.add({ targets: ring, alpha: 0, scale: size / 8 + 1.5, duration: 280, onComplete: () => ring.destroy() });
+        // Debris particles (larger for bigger enemies)
+        const debrisCount = Math.min(12, 4 + size / 3);
+        for (let i = 0; i < debrisCount; i += 1) {
+          const angle = (i / debrisCount) * Math.PI * 2 + Math.random() * 0.3;
+          const speed = 50 + Math.random() * 80;
+          const debris = this.add.circle(enemy.x, enemy.y, 1.5 + Math.random() * 2.5, enemy.base.color, 0.8).setDepth(76);
+          this.effects.push({ obj: debris, life: 0.3 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 30 });
+        }
+        // Screen shake on big enemies
+        if (size >= 20 && !this.settings?.reducedMotion) {
+          this.cameras.main.shake(120, 0.006);
+        }
       }
     }
 
@@ -1289,12 +1360,15 @@
       projectile.trailColor = color;
       this.projectiles.push(projectile);
       this.audio.play(tower.type === "mage" ? "magic" : "shoot", tower.type === "artillery" ? 0.2 : 0.13, tower.type === "archer" ? 1.35 : 0.95);
+      // Muzzle flash effect
+      const angle = Phaser.Math.Angle.Between(tower.x, tower.y - 10, target.x, target.y);
+      this.createMuzzleFlash(tower.x, tower.y - 10, angle);
       if (tower.sprite && !this.settings.reducedMotion) {
-        const angle = Phaser.Math.Angle.Between(tower.x, tower.y, target.x, target.y);
+        const recoilAngle = Phaser.Math.Angle.Between(tower.x, tower.y, target.x, target.y);
         this.tweens.add({
           targets: tower.sprite,
-          x: tower.x - Math.cos(angle) * 4,
-          y: tower.y - 5 - Math.sin(angle) * 3,
+          x: tower.x - Math.cos(recoilAngle) * 4,
+          y: tower.y - 5 - Math.sin(recoilAngle) * 3,
           yoyo: true,
           duration: 70,
         });
@@ -1573,6 +1647,16 @@
           this.say("No nearby ground target for Charge.");
           return;
         }
+        // Charge trail: speed lines from hero to target
+        if (!this.settings?.reducedMotion) {
+          for (let i = 0; i < 8; i += 1) {
+            const t = i / 8;
+            const trailX = hero.x + (target.x - hero.x) * t + (Math.random() - 0.5) * 12;
+            const trailY = hero.y + (target.y - hero.y) * t + (Math.random() - 0.5) * 12;
+            const trail = this.add.circle(trailX, trailY, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+            this.effects.push({ obj: trail, life: 0.3 + Math.random() * 0.2, vx: (target.x - hero.x) * 0.5 + (Math.random() - 0.5) * 30, vy: (target.y - hero.y) * 0.5 + (Math.random() - 0.5) * 30 });
+          }
+        }
         this.moveHeroTo(target.x, target.y);
         hero.commandTime = 0.45;
         this.damageEnemy(target, 85 + hero.level * 16, { hero: true, magic: true });
@@ -1580,11 +1664,34 @@
       }
       if (id === "banner") {
         this.bannerTime = 8;
+        // Banner wave: golden expanding ring from hero position
+        if (!this.settings?.reducedMotion) {
+          const wave = this.add.circle(hero.x, hero.y, 8, 0xf5d76e, 0.4).setStrokeStyle(3, 0xfff2ba, 0.9).setDepth(55);
+          this.tweens.add({ targets: wave, alpha: 0, scale: 8, duration: 700, onComplete: () => wave.destroy() });
+          // Golden sparkles spreading outward
+          for (let i = 0; i < 16; i += 1) {
+            const angle = (i / 16) * Math.PI * 2;
+            const speed = 50 + Math.random() * 40;
+            const sparkle = this.add.circle(hero.x, hero.y, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+            this.effects.push({ obj: sparkle, life: 0.5 + Math.random() * 0.3, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
+          }
+        }
         this.flashText("BANNER", hero.x, hero.y - 42, "#fff1a0");
       }
       if (id === "heal") {
         hero.hp = Math.min(hero.maxHp, hero.hp + 110 + hero.level * 24);
         for (const soldier of this.soldiers) soldier.hp = Math.min(soldier.maxHp, soldier.hp + 70);
+        // Heal particles: green crosses rising from hero and soldiers
+        if (!this.settings?.reducedMotion) {
+          const healTargets = [hero, ...this.soldiers];
+          for (const ht of healTargets) {
+            if (!ht || !ht.sprite?.visible) continue;
+            for (let i = 0; i < 4; i += 1) {
+              const hParticle = this.add.circle(ht.x + (Math.random() - 0.5) * 16, ht.y, 2 + Math.random(), 0x77d75d, 0.8).setDepth(72);
+              this.tweens.add({ targets: hParticle, alpha: 0, y: ht.y - 30 - Math.random() * 20, duration: 500 + Math.random() * 200, onComplete: () => hParticle.destroy() });
+            }
+          }
+        }
         this.flashText("HEAL", hero.x, hero.y - 42, "#9eff9c");
       }
       ability.ready = ability.cooldown;
@@ -1751,6 +1858,18 @@
           this.audio.tone(150, 0.07, "sawtooth", 0.04);
           return;
         }
+        // Meteor trail: falling fire particles from sky to target
+        if (!this.settings?.reducedMotion) {
+          for (let i = 0; i < 15; i += 1) {
+            const trailX = target.x + (Math.random() - 0.5) * 30;
+            const trailY = 60 + Math.random() * (target.y - 80);
+            const trail = this.add.circle(trailX, trailY, 2 + Math.random() * 4, 0xff623d, 0.7).setDepth(58);
+            this.effects.push({ obj: trail, life: 0.4 + Math.random() * 0.3, vx: (Math.random() - 0.5) * 20, vy: Math.random() * 30 });
+          }
+          // Impact flash ring
+          const flash = this.add.circle(target.x, target.y, 8, 0xfff8c0, 0.9).setDepth(56);
+          this.tweens.add({ targets: flash, alpha: 0, scale: 4, duration: 200, onComplete: () => flash.destroy() });
+        }
         this.explode(target.x, target.y, 72, 270, true);
         this.flashText("METEOR", target.x, target.y - 50, "#ffd37a");
       }
@@ -1760,12 +1879,36 @@
           this.audio.tone(150, 0.07, "sawtooth", 0.04);
           return;
         }
-        for (const enemy of this.enemies) enemy.slow = Math.max(enemy.slow, 4.2);
+        for (const enemy of this.enemies) {
+          enemy.slow = Math.max(enemy.slow, 4.2);
+          // Frost sparkle on each enemy
+          if (!this.settings?.reducedMotion) {
+            const frost = this.add.circle(enemy.x, enemy.y - 10, 3, 0xaee9ff, 0.8).setDepth(72);
+            this.tweens.add({ targets: frost, alpha: 0, y: enemy.y - 30, duration: 400, onComplete: () => frost.destroy() });
+          }
+        }
+        // Frost wave expanding from center
+        if (!this.settings?.reducedMotion) {
+          const wave = this.add.circle(W / 2, H / 2, 10, 0xaee9ff, 0.3).setStrokeStyle(3, 0xd0f0ff, 0.8).setDepth(55);
+          this.tweens.add({ targets: wave, alpha: 0, scale: 12, duration: 500, onComplete: () => wave.destroy() });
+        }
         this.flashText("FROST", W / 2, 312, "#aee9ff");
         this.cameras.main.flash(140, 130, 210, 255, false);
       }
       if (id === "rally") {
         this.rallyTime = 7;
+        // Golden aura pulse from center
+        if (!this.settings?.reducedMotion) {
+          const aura = this.add.circle(W / 2, H / 2, 10, 0xf5d76e, 0.4).setStrokeStyle(3, 0xfff2ba, 0.9).setDepth(55);
+          this.tweens.add({ targets: aura, alpha: 0, scale: 10, duration: 600, onComplete: () => aura.destroy() });
+          // Golden particles spreading outward
+          for (let i = 0; i < 20; i += 1) {
+            const angle = (i / 20) * Math.PI * 2;
+            const speed = 60 + Math.random() * 40;
+            const particle = this.add.circle(W / 2, H / 2, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+            this.effects.push({ obj: particle, life: 0.5 + Math.random() * 0.3, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
+          }
+        }
         this.flashText("RALLY", W / 2, 312, "#fff1a0");
       }
       spell.ready = spell.cooldown;
@@ -1792,6 +1935,69 @@
       }
     }
 
+    // —— Particle system helpers ——
+    createParticles(x, y, count, cfg) {
+      if (this.settings?.reducedMotion) return;
+      const p = this.add.particles(x, y, cfg.key || "projectile_arrow", {
+        speed: cfg.speed ?? 80,
+        angleRange: cfg.angleRange ?? 360,
+        scale: cfg.scale ?? { start: 1, end: 0 },
+        alpha: cfg.alpha ?? { start: 0.8, end: 0 },
+        lifespan: cfg.lifespan ?? 400,
+        gravityY: cfg.gravityY ?? 60,
+        quantity: count,
+        emitting: false,
+        blendMode: cfg.blendMode ?? "NORMAL",
+      });
+      p.setDepth(80);
+      this.effects.push({ obj: p, life: cfg.lifespan / 1000 + 0.2, vx: 0, vy: 0, isEmitter: true });
+      p.emitParticle(count);
+    }
+
+    createDamageNumber(x, y, text, color) {
+      const t = this.add.text(x + (Math.random() - 0.5) * 16, y - 12, text, {
+        font: "bold 14px Arial",
+        color: color || "#fff2ba",
+        stroke: "#0a0804",
+        strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(210);
+      if (this.settings?.reducedMotion) {
+        this.time.delayedCall(600, () => t.destroy());
+        return;
+      }
+      this.tweens.add({
+        targets: t,
+        y: y - 40 - Math.random() * 16,
+        alpha: 0,
+        scale: 0.7,
+        duration: 650 + Math.random() * 150,
+        ease: "Quad.easeOut",
+        onComplete: () => t.destroy(),
+      });
+    }
+
+    createHitSparks(x, y, color) {
+      if (this.settings?.reducedMotion) return;
+      for (let i = 0; i < 5; i += 1) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 40 + Math.random() * 60;
+        const spark = this.add.circle(x, y, 1.5 + Math.random() * 2, color || 0xfff0c0, 0.9).setDepth(85);
+        this.effects.push({
+          obj: spark, life: 0.2 + Math.random() * 0.15,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 20,
+        });
+      }
+    }
+
+    createMuzzleFlash(x, y, angle) {
+      if (this.settings?.reducedMotion) return;
+      const flash = this.add.circle(
+        x + Math.cos(angle) * 8, y - 10 + Math.sin(angle) * 6,
+        5, 0xfff8c0, 0.7
+      ).setDepth(62);
+      this.tweens.add({ targets: flash, alpha: 0, scale: 1.8, duration: 60, onComplete: () => flash.destroy() });
+    }
+
     puff(x, y, color) {
       const count = this.settings?.reducedMotion ? 2 : 8;
       for (let i = 0; i < count; i += 1) {
@@ -1802,13 +2008,15 @@
 
     updateEffects(dt) {
       for (const e of [...this.effects]) {
-        e.life -= dt;
-        e.obj.x += e.vx * dt;
-        e.obj.y += e.vy * dt;
-        e.obj.alpha = Math.max(0, e.life / 0.36);
-        if (e.life <= 0) {
-          e.obj.destroy();
-          this.effects = this.effects.filter((x) => x !== e);
+        if (e.isEmitter) {
+          e.life -= dt;
+          if (e.life <= 0) { e.obj.destroy(); this.effects = this.effects.filter((x) => x !== e); }
+        } else {
+          e.life -= dt;
+          e.obj.x += e.vx * dt;
+          e.obj.y += e.vy * dt;
+          e.obj.alpha = Math.max(0, e.life / 0.36);
+          if (e.life <= 0) { e.obj.destroy(); this.effects = this.effects.filter((x) => x !== e); }
         }
       }
     }
