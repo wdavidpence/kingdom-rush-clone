@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.45";
+  const KRC_VERSION = "1.0.46";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -79,7 +79,7 @@
       this.entityRegistry = window.KRCEntityState.createRegistry();
       this.selectedPad = null;
       this.selectedBuild = null;
-      this.rangerPathBtns = null;
+      this.familyPathBtns = null;
       this.messageTimer = 0;
       this.gameEnded = false;
       this.paused = false;
@@ -159,7 +159,7 @@
     }
 
     cleanupScene() {
-      this.clearRangerPathPick?.();
+      this.clearFamilyPathPick?.();
       this.hideTooltip();
       this.input.off("pointerdown", this.handlePointer, this);
       this.audio?.stopAll?.();
@@ -2612,7 +2612,7 @@ const bannerY = 98;
     }
 
     selectPad(pad) {
-      this.clearRangerPathPick();
+      this.clearFamilyPathPick();
       this.selectedPad = pad;
       this.selectedBuild = null;
       this.heroSelected = false;
@@ -2637,7 +2637,7 @@ const bannerY = 98;
     }
 
     clearSelection() {
-      this.clearRangerPathPick();
+      this.clearFamilyPathPick();
       this.selectedPad = null;
       this.selectedBuild = null;
       this.heroSelected = false;
@@ -2802,9 +2802,9 @@ const bannerY = 98;
       this.say(`${cfg.name} built.`);
     }
 
-    clearRangerPathPick() {
-      if (this.rangerPathBtns) {
-        for (const btn of this.rangerPathBtns) {
+    clearFamilyPathPick() {
+      if (this.familyPathBtns) {
+        for (const btn of this.familyPathBtns) {
           if (btn) {
             for (const obj of [
               btn.shadow,
@@ -2822,40 +2822,66 @@ const bannerY = 98;
             }
           }
         }
-        this.rangerPathBtns = null;
+        this.familyPathBtns = null;
       }
     }
 
-    showRangerPathPick(tower) {
-      this.clearRangerPathPick();
-      const bSkybit = this.makeButton(
+    familyPaths(type) {
+      const table = {
+        archer: [
+          { id: "skybit", label: "SKYBIT", tag: " SKY" },
+          { id: "pinshot", label: "PINSHOT", tag: " PIN" },
+        ],
+        mage: [
+          { id: "veil", label: "VEIL", tag: " VEL" },
+          { id: "shard", label: "SHARD", tag: " SHD" },
+        ],
+        artillery: [
+          { id: "crater", label: "CRATER", tag: " CRT" },
+          { id: "fuse", label: "FUSE", tag: " FUS" },
+        ],
+        barracks: [
+          { id: "spike", label: "SPIKE", tag: " SPK" },
+          { id: "bulwark", label: "BULWARK", tag: " BLK" },
+        ],
+      };
+      return table[type] || null;
+    }
+
+    showFamilyPathPick(tower) {
+      this.clearFamilyPathPick();
+      const paths = this.familyPaths(tower?.type);
+      if (!paths || paths.length < 2) return;
+      const b0 = this.makeButton(
         tower.x - 52,
         tower.y - 56,
         88,
         28,
-        "SKYBIT",
+        paths[0].label,
         0x2d5535,
-        () => this.confirmRangerPath(tower, "skybit")
+        () => this.confirmFamilyPath(tower, paths[0].id)
       );
-      const bPinshot = this.makeButton(
+      const b1 = this.makeButton(
         tower.x + 52,
         tower.y - 56,
         88,
         28,
-        "PINSHOT",
+        paths[1].label,
         0x5a3e28,
-        () => this.confirmRangerPath(tower, "pinshot")
+        () => this.confirmFamilyPath(tower, paths[1].id)
       );
-      this.rangerPathBtns = [bSkybit, bPinshot];
-      this.say("SKYBIT hits flyers harder. PINSHOT bites armor. Pick before the last upgrade.");
+      this.familyPathBtns = [b0, b1];
+      this.say("Last upgrade: pick a path before gold is spent.");
     }
 
-    confirmRangerPath(tower, path) {
+    confirmFamilyPath(tower, path) {
       if (this.overlayActive || this.gameEnded) return;
-      if (!this.selectedPad || this.selectedPad.tower !== tower || tower.level !== 3 || tower.type !== "archer") {
+      const paths = this.familyPaths(tower?.type);
+      const chosen = paths?.find((p) => p.id === path);
+      if (!this.selectedPad || this.selectedPad.tower !== tower || tower.level !== 3 || !chosen) {
         return;
       }
-      const cfg = TOWERS.archer;
+      const cfg = TOWERS[tower.type];
       const cost = cfg.upgrades[3];
       if (this.gold < cost) {
         this.say(`Need ${cost} gold to upgrade.`);
@@ -2865,11 +2891,10 @@ const bannerY = 98;
       this.gold -= cost;
       tower.level += 1;
       tower.path = path;
-      this.clearRangerPathPick();
+      this.clearFamilyPathPick();
       if (tower.sprite) tower.sprite.setScale(0.62 + tower.level * 0.04);
       tower.label.setText(
-        ["I", "II", "III", "IV", "V"][tower.level] +
-          (tower.path === "skybit" ? " SKY" : tower.path === "pinshot" ? " PIN" : "")
+        ["I", "II", "III", "IV", "V"][tower.level] + (chosen.tag || "")
       );
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       this.flashText(path.toUpperCase(), tower.x, tower.y - 42, "#fff2ba");
@@ -2892,8 +2917,8 @@ const bannerY = 98;
         this.audio.playLayered?.("uiError");
         return;
       }
-      if (tower.type === "archer" && tower.level === 3 && !tower.path) {
-        this.showRangerPathPick(tower);
+      if (tower.level === 3 && !tower.path && this.familyPaths(tower.type)) {
+        this.showFamilyPathPick(tower);
         return;
       }
       const cost = cfg.upgrades[tower.level];
@@ -2955,9 +2980,9 @@ const bannerY = 98;
         this.cameras.main.flash(40, 255, 250, 220, false);
       }
       tower.sprite.setScale(0.62 + tower.level * 0.04);
+      const pathTag = this.familyPaths(tower.type)?.find((p) => p.id === tower.path)?.tag || "";
       tower.label.setText(
-        ["I", "II", "III", "IV", "V"][tower.level] +
-          (tower.path === "skybit" ? " SKY" : tower.path === "pinshot" ? " PIN" : "")
+        ["I", "II", "III", "IV", "V"][tower.level] + pathTag
       );
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       const unlocked = window.KRCTowerAbilities?.isUnlocked(tower.type, tower.level);
@@ -2981,7 +3006,7 @@ const bannerY = 98;
 
     sellSelected() {
       if (this.overlayActive || this.gameEnded) return;
-      this.clearRangerPathPick();
+      this.clearFamilyPathPick();
       const tower = this.selectedPad?.tower;
       if (!tower) return;
       const cfg = TOWERS[tower.type];
@@ -4196,6 +4221,12 @@ const bannerY = 98;
       let damage = cfg.damage[level];
       if (tower.path === "skybit" && target.base?.flying) damage *= 1.28;
       if (tower.path === "pinshot" && (target.base?.armor || 0) >= 3) damage *= 1.22;
+      if (tower.path === "shard" && (target.base?.armor || 0) >= 3) damage *= 1.22;
+      if (tower.path === "fuse" && !target.base?.flying) damage *= 1.18;
+      let slow = cfg.slow?.[level] || 0;
+      if (tower.path === "veil") slow *= 1.4;
+      let splash = cfg.splash?.[level] || 0;
+      if (tower.path === "crater") splash *= 1.3;
       const projectile = this.entityRegistry.create("projectile", {
         x: tower.x,
         y: tower.y - 10,
@@ -4204,8 +4235,8 @@ const bannerY = 98;
         speed: tower.type === "artillery" ? 250 : 430,
         damage,
         magic: !!cfg.magic,
-        slow: cfg.slow?.[level] || 0,
-        splash: cfg.splash?.[level] || 0,
+        slow,
+        splash,
         chain: tower.type === "mage" && level >= 3 ? 2 : 0,
       });
       const key =
@@ -4549,8 +4580,10 @@ const bannerY = 98;
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
             soldier.strikeCount = (soldier.strikeCount || 0) + 1;
+            let attackerDamage = cfg.damage[tower.level];
+            if (tower.path === "spike") attackerDamage *= 1.25;
             const strike = readiness.meleeStrike({
-              attackerDamage: cfg.damage[tower.level],
+              attackerDamage,
               bannerBonus: this.bannerTime > 0 ? 1.18 : 1,
               isCritWindow: soldier.strikeCount % 4 === 0,
             });
@@ -4565,7 +4598,9 @@ const bannerY = 98;
             const arrowTarget = this.findTarget(tower, cfg.range[tower.level], true);
             if (arrowTarget) {
               soldier.arrowCooldown = 1.15;
-              this.fireGuardArrow(soldier, arrowTarget, cfg.damage[tower.level] * (this.bannerTime > 0 ? 0.9 : 0.72));
+              let arrowDamage = cfg.damage[tower.level] * (this.bannerTime > 0 ? 0.9 : 0.72);
+              if (tower.path === "spike") arrowDamage *= 1.25;
+              this.fireGuardArrow(soldier, arrowTarget, arrowDamage);
             }
           }
         }
@@ -4896,7 +4931,8 @@ const bannerY = 98;
 
     spawnSoldier(tower) {
       const point = { x: tower.rallyX, y: tower.rallyY };
-      const maxHp = TOWERS.barracks.soldierHp[tower.level];
+      let maxHp = TOWERS.barracks.soldierHp[tower.level];
+      if (tower.path === "bulwark") maxHp = Math.round(maxHp * 1.28);
       const soldier = this.entityRegistry.create("soldier", {
         x: point.x,
         y: point.y,
