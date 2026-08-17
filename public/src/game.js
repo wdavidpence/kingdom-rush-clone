@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.16";
+  const KRC_VERSION = "1.0.17";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1121,6 +1121,52 @@
               ease: "Sine.easeInOut",
             });
           }
+          // Forest Gate: distant birds looping
+          for (let b = 0; b < 3; b += 1) {
+            const startX = -30 - b * 70;
+            const startY = 45 + b * 28;
+            const bird = this.add.graphics().setDepth(-16);
+            bird.lineStyle(1.5, 0x243422, 0.75);
+            bird.beginPath();
+            bird.moveTo(-5, -2);
+            bird.lineTo(0, 2);
+            bird.lineTo(5, -2);
+            bird.strokePath();
+            bird.setPosition(startX, startY);
+            this.tweens.add({
+              targets: bird,
+              x: W + 50,
+              y: startY + (b % 2 === 0 ? 35 : -25),
+              duration: 9500 + b * 1800,
+              repeat: -1,
+              delay: b * 1600,
+            });
+            this.tweens.add({
+              targets: bird,
+              scaleY: 0.4,
+              duration: 240 + b * 40,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+          // Forest Gate: grass-blade sway
+          for (let i = 0; i < 16; i += 1) {
+            const gx = (i * 93 + 40) % W;
+            const gy = 85 + ((i * 61) % 470);
+            const grassBlade = this.add.rectangle(gx, gy, 3, 13 + (i % 3) * 4, 0x4a7c30, 0.45).setOrigin(0.5, 1).setDepth(-18);
+            const baseAngle = (i * 25) % 40 - 20;
+            grassBlade.setAngle(baseAngle);
+            this.tweens.add({
+              targets: grassBlade,
+              angle: baseAngle + 8,
+              duration: 1800 + (i % 4) * 400,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+              delay: i * 110,
+            });
+          }
         } else if (this.mapIndex === 1) {
           // Stone Pass: mist layers
           for (let i = 0; i < 3; i += 1) {
@@ -1144,6 +1190,47 @@
               x: dx + (i % 2 === 0 ? 6 : -6),
               alpha: { from: 0.6, to: 0.15 },
               duration: 2500 + i * 400,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+          // Stone Pass: 2 circling crows
+          for (let c = 0; c < 2; c += 1) {
+            const cx = 110 + c * 170;
+            const cy = 130 + c * 90;
+            const crow = this.add.graphics().setDepth(-16);
+            crow.lineStyle(1.5, 0x1f2421, 0.75);
+            crow.beginPath();
+            crow.moveTo(-4, -2);
+            crow.lineTo(0, 1.5);
+            crow.lineTo(4, -2);
+            crow.strokePath();
+            crow.setPosition(cx, cy);
+            const pathRadius = 35 + c * 15;
+            const baseAngle = c * Math.PI;
+            this.tweens.addCounter({
+              from: 0,
+              to: Math.PI * 2,
+              duration: 6500 + c * 2000,
+              repeat: -1,
+              onUpdate: (tween) => {
+                const val = tween.getValue();
+                crow.setPosition(cx + Math.cos(val + baseAngle) * pathRadius, cy + Math.sin(val + baseAngle) * (pathRadius * 0.5));
+              },
+            });
+          }
+          // Stone Pass: grit puffs
+          for (let g = 0; g < 3; g += 1) {
+            const gx = (g * 130 + 50) % W;
+            const gy = 150 + g * 110;
+            const grit = this.add.circle(gx, gy, 1.5, 0xadaaa0, 0.5).setDepth(-17);
+            this.tweens.add({
+              targets: grit,
+              x: gx + (g % 2 === 0 ? 20 : -20),
+              y: gy - 20,
+              alpha: { from: 0.55, to: 0.1 },
+              duration: 2700 + g * 450,
               yoyo: true,
               repeat: -1,
               ease: "Sine.easeInOut",
@@ -1182,6 +1269,24 @@
               yoyo: true,
               repeat: -1,
               ease: "Sine.easeInOut",
+            });
+          }
+          // Ember Marsh: ember motes rising
+          const emberColors = [0xff6600, 0xff9900, 0xff3300, 0xffcc00];
+          for (let e = 0; e < 8; e += 1) {
+            const ex = (e * 67 + 35) % W;
+            const ey = 180 + ((e * 59) % 360);
+            const ember = this.add.circle(ex, ey, 1.5 + (e % 2) * 0.5, emberColors[e % emberColors.length], 0.7).setDepth(-17);
+            this.tweens.add({
+              targets: ember,
+              y: ey - 40 - (e % 3) * 15,
+              x: ex + (e % 2 === 0 ? 15 : -15),
+              alpha: { from: 0.8, to: 0 },
+              scale: { from: 1, to: 0.4 },
+              duration: 2000 + e * 300,
+              repeat: -1,
+              delay: e * 250,
+              ease: "Quad.easeOut",
             });
           }
         }
@@ -1264,7 +1369,20 @@
         if (this.textures.exists("ruin_pillar")) this.add.image(x, y - 8, "ruin_pillar").setScale(0.9).setDepth(-13).setTint(theme.tint);
       });
       placeAway(2, 50, (x, y) => {
-        if (this.textures.exists("banner_flag")) this.add.image(x, y - 10, "banner_flag").setScale(0.95).setDepth(-12);
+        if (this.textures.exists("banner_flag")) {
+          const flag = this.add.image(x, y - 10, "banner_flag").setScale(0.95).setDepth(-12);
+          if (!this.settings?.reducedMotion) {
+            this.tweens.add({
+              targets: flag,
+              rotation: 0.05,
+              scaleX: 0.98,
+              duration: 1600 + Math.random() * 400,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+        }
       });
 
       if (this.textures.exists("gate_arch")) {
