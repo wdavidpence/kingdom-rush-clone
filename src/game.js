@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.13";
+  const KRC_VERSION = "1.0.14";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2235,7 +2235,7 @@
       }
       this.gold -= cost;
       tower.level += 1;
-      // Upgrade visual: scale bounce + level-specific ring pulse
+      // Upgrade visual: scale bounce + scaffold morph + stronger glow burst
       if (tower.sprite && !this.settings?.reducedMotion) {
         this.tweens.add({ targets: tower.sprite, scale: 0.78 + tower.level * 0.04, duration: 120, yoyo: true, repeat: 1 });
         const isMax = tower.level >= cfg.upgrades.length;
@@ -2251,16 +2251,39 @@
           ringColor = 0xc0c8d0; // Silver for L3
           strokeColor = 0xf0f4f8;
         }
-        const ring = this.add.circle(tower.x, tower.y - 8, 20, ringColor, 0.5).setStrokeStyle(3, strokeColor, 1).setDepth(35);
-        this.tweens.add({ targets: ring, alpha: 0, scale: 2.5, duration: 400, onComplete: () => ring.destroy() });
+        // Short scaffold (2-3 wood rects) that rises then destroys
+        const scaffoldPieces = [
+          this.add.rectangle(tower.x - 12, tower.y - 4, 4, 20, 0x654321, 0.95).setDepth(34),
+          this.add.rectangle(tower.x + 12, tower.y - 4, 4, 20, 0x654321, 0.95).setDepth(34),
+          this.add.rectangle(tower.x, tower.y - 12, 26, 4, 0x8b5a2b, 0.95).setDepth(35),
+        ];
+        scaffoldPieces.forEach((piece, idx) => {
+          this.tweens.add({
+            targets: piece,
+            y: piece.y - 14,
+            alpha: 0,
+            scaleX: 0.8,
+            scaleY: 0.8,
+            duration: 320 + idx * 40,
+            ease: "Quad.out",
+            onComplete: () => piece.destroy(),
+          });
+        });
+        // Stronger glow burst than the current ring
+        const coreGlow = this.add.circle(tower.x, tower.y - 8, 16, 0xffffff, 0.95).setDepth(36);
+        this.tweens.add({ targets: coreGlow, alpha: 0, scale: 2.2, duration: 300, ease: "Quad.out", onComplete: () => coreGlow.destroy() });
+        const burst = this.add.circle(tower.x, tower.y - 8, 24, ringColor, 0.85).setStrokeStyle(4, strokeColor, 1).setDepth(35);
+        this.tweens.add({ targets: burst, alpha: 0, scale: 3.2, duration: 450, ease: "Cubic.out", onComplete: () => burst.destroy() });
+        const auraRing = this.add.circle(tower.x, tower.y - 8, 30, ringColor, 0.45).setStrokeStyle(2, 0xffffff, 0.9).setDepth(35);
+        this.tweens.add({ targets: auraRing, alpha: 0, scale: 3.8, duration: 500, ease: "Quad.out", onComplete: () => auraRing.destroy() });
         // Sparkles around tower matching ring theme
-        for (let i = 0; i < 12; i += 1) {
-          const angle = (i / 12) * Math.PI * 2;
+        for (let i = 0; i < 16; i += 1) {
+          const angle = (i / 16) * Math.PI * 2;
           const speed = 40 + Math.random() * 30;
           const sparkle = this.add.circle(tower.x, tower.y - 8, 1.5 + Math.random(), ringColor, 0.9).setDepth(36);
           this.effects.push({ obj: sparkle, life: 0.4 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
         }
-        this.cameras.main.flash(50, 255, 250, 220, false);
+        this.cameras.main.flash(40, 255, 250, 220, false);
       }
       tower.sprite.setScale(0.62 + tower.level * 0.04);
       tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
