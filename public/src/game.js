@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.52";
+  const KRC_VERSION = "1.0.53";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1720,6 +1720,9 @@
       if (this.textures.exists("icon_heart")) this.add.image(110, 19, "icon_heart").setScale(0.8).setDepth(100);
       this.goldText = this.add.text(25, 10, "", { font: "bold 15px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
       this.livesText = this.add.text(121, 10, "", { font: "bold 15px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
+      if (this.spellRank() > 1 && !this.spellRankHud) {
+        this.spellRankHud = this.add.text(300, 42, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, { font: "bold 10px Cinzel", color: "#f5c85a" }).setDepth(100);
+      }
       if (this.ironMode && !this.ironHud) {
         this.ironHud = this.add.text(168, 26, "IRON", { font: "bold 10px Cinzel", color: "#c8d0d8" }).setDepth(100);
       }
@@ -2594,6 +2597,21 @@ const bannerY = 98;
           .setOrigin(0.5)
           .setDepth(504);
         this.overlay.add([aegisBg, aegisText]);
+      }
+
+      if (this.spellRank() > 1) {
+        const spellPlaqueBg = this.add
+          .rectangle(W / 2, 70, 90, 22, 0x24150a, 0.95)
+          .setStrokeStyle(1.5, 0xd8b548, 0.9)
+          .setDepth(503);
+        const spellPlaqueText = this.add
+          .text(W / 2, 70, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, {
+            font: "bold 11px Cinzel",
+            color: "#f5c85a",
+          })
+          .setOrigin(0.5)
+          .setDepth(504);
+        this.overlay.add([spellPlaqueBg, spellPlaqueText]);
       }
     }
 
@@ -5221,7 +5239,7 @@ const bannerY = 98;
             });
           }
         }
-        this.explode(target.x, target.y, 72, 270, true);
+        this.explode(target.x, target.y, 72, [270, 320, 370][this.spellRank() - 1], true);
         this.flashText("METEOR", target.x, target.y - 50, "#ffd37a");
       }
       if (id === "frost") {
@@ -5231,7 +5249,7 @@ const bannerY = 98;
           return;
         }
         for (const enemy of this.enemies) {
-          enemy.slow = Math.max(enemy.slow, 4.2);
+          enemy.slow = Math.max(enemy.slow, [4.2, 5.0, 5.8][this.spellRank() - 1]);
         }
         if (this.settings?.reducedMotion) {
           const flash = this.add.circle(W / 2, H / 2, 10, 0xaee9ff, 0.8).setDepth(56);
@@ -5312,7 +5330,7 @@ const bannerY = 98;
         this.cameras.main.flash(140, 130, 210, 255, false);
       }
       if (id === "rally") {
-        this.rallyTime = 7;
+        this.rallyTime = [7, 8.5, 10][this.spellRank() - 1];
         if (this.settings?.reducedMotion) {
           const flash = this.add.circle(W / 2, H / 2, 10, 0xf5d76e, 0.8).setDepth(56);
           this.tweens.add({ targets: flash, alpha: 0, scale: 5, duration: 200, onComplete: () => flash.destroy() });
@@ -5801,6 +5819,18 @@ const bannerY = 98;
     countPerfectStars() {
       const results = this.campaign?.results || {};
       return Object.values(results).filter((r) => (r?.stars || 0) >= 3).length;
+    }
+
+    totalCampaignStars() {
+      const results = this.campaign?.results || {};
+      return Object.values(results).reduce((sum, r) => sum + (r?.stars || 0), 0);
+    }
+
+    spellRank() {
+      const stars = this.totalCampaignStars();
+      if (stars >= 6) return 3;
+      if (stars >= 3) return 2;
+      return 1;
     }
 
     starBonusLives() {
