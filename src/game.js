@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.29";
+  const KRC_VERSION = "1.0.30";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1666,42 +1666,42 @@
       this.add.rectangle(W / 2, TOP_H, W, 4, 0x4a3726).setDepth(91);
       this.add.rectangle(W / 2, TOP_H - 1, W, 2, 0x8a6a42).setDepth(91.2);
       this.add.rectangle(W / 2, TOP_H - 2, W, 1, 0xf5c85a, 0.6).setDepth(91.5);
-      const nailX = [12, 110, 210, 310, 408];
+      const nailX = [12, 104, 208, 324, 408];
       nailX.forEach((nx) => {
         this.add.circle(nx, 6, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
         this.add.circle(nx, TOP_H - 8, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
       });
-      if (this.textures.exists("icon_gold")) this.add.image(18, 20, "icon_gold").setScale(0.9).setDepth(100);
-      if (this.textures.exists("icon_heart")) this.add.image(144, 20, "icon_heart").setScale(0.9).setDepth(100);
-      this.goldText = this.add.text(30, 10, "", { font: "bold 18px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
-      this.livesText = this.add.text(156, 10, "", { font: "bold 18px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
-      this.waveText = this.add.text(236, 8, "", { font: "bold 16px Cinzel", color: COLORS.ink }).setDepth(100);
-      this.mapText = this.add.text(236, 27, "", { font: "bold 10px Cinzel", color: "#cfc4a2" }).setDepth(100);
-      this.waveBarBg = this.add.rectangle(236, 42, 86, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
-      this.waveBar = this.add.rectangle(236, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
+      if (this.textures.exists("icon_gold")) this.add.image(14, 19, "icon_gold").setScale(0.8).setDepth(100);
+      if (this.textures.exists("icon_heart")) this.add.image(110, 19, "icon_heart").setScale(0.8).setDepth(100);
+      this.goldText = this.add.text(25, 10, "", { font: "bold 15px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
+      this.livesText = this.add.text(121, 10, "", { font: "bold 15px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
+      this.waveText = this.add.text(228, 8, "", { font: "bold 14px Cinzel", color: COLORS.ink }).setDepth(100);
+      this.mapText = this.add.text(228, 26, "", { font: "bold 10px Cinzel", color: "#cfc4a2" }).setDepth(100);
+      this.waveBarBg = this.add.rectangle(228, 42, 72, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
+      this.waveBar = this.add.rectangle(228, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
-        .text(12, 42, "", { font: "bold 12px 'Source Sans 3', Arial", color: "#f8f0d8", wordWrap: { width: 232 } })
+        .text(10, 42, "", { font: "bold 12px 'Source Sans 3', Arial", color: "#f8f0d8", wordWrap: { width: 210 } })
         .setOrigin(0, 0.5)
         .setDepth(100);
       this.muteButton = this.makeButton(
-        211,
+        208,
         18,
-        34,
+        30,
         20,
         "",
         0x3d4f5a,
         () => this.toggleMuted(),
         {
           icon: this.settings.muted ? "icon_sound_off" : "icon_sound_on",
-          iconScale: 0.38,
+          iconScale: 0.35,
           iconOffsetY: 0,
           tooltip: () => this.settings.muted ? "Unmute Audio (M)" : "Mute Audio (M)",
         }
       );
       this.pauseButton = this.makeButton(
-        337,
+        324,
         39,
-        36,
+        32,
         30,
         "II",
         0x3d4f5a,
@@ -1712,9 +1712,9 @@
         }
       );
       this.callButton = this.makeButton(
-        385,
+        375,
         39,
-        60,
+        58,
         30,
         "CALL",
         0x7a4f25,
@@ -1881,6 +1881,7 @@
       }).setOrigin(0.5).setDepth(101);
 
       const plateElements = [plateShadow, plateBg, plateInner, plateMat, plateImg, plateShine, plateLabel];
+      plateElements.forEach((el) => el.setVisible(false));
       plateElements.setVisible = (val) => {
         for (const el of plateElements) el.setVisible(val);
       };
@@ -2103,7 +2104,13 @@
       for (const btn of this.heroButtons || []) btn.setVisible(active);
       for (const btn of this.spellButtons || []) btn.cooldownBar?.setVisible(!active);
       for (const btn of this.heroButtons || []) btn.cooldownBar?.setVisible(active);
-      this.heroPortraitPlate?.setVisible(active);
+      if (this.heroPortraitPlate) {
+        if (typeof this.heroPortraitPlate.setVisible === "function") {
+          this.heroPortraitPlate.setVisible(active);
+        } else if (Array.isArray(this.heroPortraitPlate)) {
+          for (const el of this.heroPortraitPlate) el?.setVisible?.(active);
+        }
+      }
     }
 
     showStartOverlay() {
@@ -4994,7 +5001,7 @@
       this.mapText.setText(`${this.map.name} ${this.mapIndex + 1}/${MAPS.length}`);
       const remaining = this.waveActive ? this.queue.length + this.enemies.length : 0;
       const progress = this.waveTotal > 0 ? 1 - remaining / this.waveTotal : this.waveIndex / WAVES.length;
-      this.waveBar.width = Math.max(1, 86 * Phaser.Math.Clamp(progress, 0, 1));
+      this.waveBar.width = Math.max(1, 72 * Phaser.Math.Clamp(progress, 0, 1));
       this.callButton.setAlpha(this.waveActive || this.gameEnded ? 0.45 : 1);
       this.callButton.setLabel(this.waveActive ? "LIVE" : "CALL");
       this.infoText.setText(this.infoLine());
