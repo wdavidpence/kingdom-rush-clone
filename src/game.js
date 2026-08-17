@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.35";
+  const KRC_VERSION = "1.0.36";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2219,15 +2219,49 @@ const bannerY = 98;
       const boardW = 360;
       const boardH = 300;
 
+      // Wood/gold frame around the board
+      const frameW = boardW + 16;
+      const frameH = boardH + 16;
+      const frameShadow = this.add.rectangle(boardX + 3, boardY + 4, frameW, frameH, 0x000000, 0.55).setDepth(500.5);
+      const frameWoodOuter = this.add.rectangle(boardX, boardY, frameW, frameH, 0x24150a, 0.98)
+        .setStrokeStyle(2, 0x130a04)
+        .setDepth(500.7);
+      const frameWoodMid = this.add.rectangle(boardX, boardY, boardW + 10, boardH + 10, 0x482b15, 0.95)
+        .setStrokeStyle(1.5, 0x693e1d)
+        .setDepth(500.8);
+      const frameGoldOuter = this.add.rectangle(boardX, boardY, boardW + 12, boardH + 12, 0x000000, 0)
+        .setStrokeStyle(2, 0xd8b548, 0.85)
+        .setDepth(501.0);
+
+      this.overlay.add([frameShadow, frameWoodOuter, frameWoodMid, frameGoldOuter]);
+
       if (this.textures.exists("campaign_board_bg")) {
-        const boardBg = this.add.image(boardX, boardY, "campaign_board_bg").setDepth(501);
+        const boardBg = this.add.image(boardX, boardY, "campaign_board_bg").setDepth(501.2);
         this.overlay.add(boardBg);
       } else {
         const boardBg = this.add.rectangle(boardX, boardY, boardW, boardH, 0x1e281c, 0.98)
           .setStrokeStyle(2, 0xd4bc68)
-          .setDepth(501);
+          .setDepth(501.2);
         this.overlay.add(boardBg);
       }
+
+      // Inner gold rim/bevel around the board
+      const frameGoldInner = this.add.rectangle(boardX, boardY, boardW, boardH, 0x000000, 0)
+        .setStrokeStyle(2, 0xf5c85a, 0.75)
+        .setDepth(501.5);
+      this.overlay.add(frameGoldInner);
+
+      // Gold stud/corner rivets at 4 corners of the wooden frame
+      const frameCorners = [
+        [boardX - boardW / 2 - 4, boardY - boardH / 2 - 4],
+        [boardX + boardW / 2 + 4, boardY - boardH / 2 - 4],
+        [boardX - boardW / 2 - 4, boardY + boardH / 2 + 4],
+        [boardX + boardW / 2 + 4, boardY + boardH / 2 + 4],
+      ];
+      const frameStuds = frameCorners.map(([fx, fy]) =>
+        this.add.circle(fx, fy, 3.5, 0xffd866, 0.95).setStrokeStyle(1.5, 0x3e2608).setDepth(501.8)
+      );
+      this.overlay.add(frameStuds);
 
       const mapDescriptions = [
         "Forest Gate\nLush woodland path. Balanced lanes.\nDefend against agile scouts & brutes!",
@@ -2235,7 +2269,10 @@ const bannerY = 98;
         "Ember Marsh\nVolcanic swamp with lava fissures.\nBeware of exploding embers and bosses!",
       ];
 
-      // Node Positions on the painted map board
+      // Short name plaque titles under each node (Forest / Stone / Ember)
+      const shortNames = ["Forest", "Stone", "Ember"];
+
+      // Node Positions on the painted map board (HARD RULE: Forest Gate stays at { x: 100, y: 375 })
       const nodePositions = [
         { x: 100, y: 375 }, // Node 0: Forest Gate (bottom-left)
         { x: 210, y: 295 }, // Node 1: Stone Pass (center)
@@ -2246,14 +2283,34 @@ const bannerY = 98;
       const drawPathSegment = (from, to, isUnlocked) => {
         const steps = 10;
         const color = isUnlocked ? 0xf5c85a : 0x556054;
-        const alpha = isUnlocked ? 0.9 : 0.6;
+        const alpha = isUnlocked ? 0.95 : 0.6;
         for (let i = 1; i < steps; i += 1) {
           const t = i / steps;
           const px = Phaser.Math.Linear(from.x, to.x, t);
           const py = Phaser.Math.Linear(from.y, to.y, t);
-          const dot = this.add.circle(px, py, isUnlocked ? 3 : 2.5, color, alpha).setDepth(502);
-          if (isUnlocked) dot.setStrokeStyle(1, 0x221a0c, 0.8);
-          this.overlay.add(dot);
+
+          // Shadow under path dot
+          const shadowDot = this.add.circle(px + 1, py + 1, isUnlocked ? 3.5 : 2.8, 0x000000, 0.45).setDepth(501.9);
+          // Base path dot
+          const dot = this.add.circle(px, py, isUnlocked ? 3.2 : 2.5, color, alpha).setDepth(502);
+          if (isUnlocked) dot.setStrokeStyle(1, 0x3d2706, 0.85);
+          // Inner highlight dot
+          const coreDot = this.add.circle(px, py - 0.5, isUnlocked ? 1.5 : 1.0, isUnlocked ? 0xfffae0 : 0x8a9888, isUnlocked ? 0.9 : 0.5).setDepth(502.1);
+
+          this.overlay.add([shadowDot, dot, coreDot]);
+
+          if (isUnlocked && !this.settings?.reducedMotion) {
+            this.tweens.add({
+              targets: [dot, coreDot],
+              scaleX: 1.25,
+              scaleY: 1.25,
+              alpha: 1,
+              duration: 800 + i * 90,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
         }
       };
 
@@ -2303,28 +2360,29 @@ const bannerY = 98;
           .setOrigin(0.5)
           .setDepth(505);
 
-        // Map Name Plaque Label
-        const labelW = 114;
-        const labelH = 22;
-        const labelShadow = this.add.rectangle(nx + 1, ny + 37, labelW, labelH, 0x000000, 0.5).setDepth(503);
-        const labelBg = this.add.rectangle(nx, ny + 36, labelW, labelH, unlocked ? 0x1a2818 : 0x121612, 0.95)
+        // Short Map Name Plaque Label (Forest / Stone / Ember)
+        const labelW = 76;
+        const labelH = 20;
+        const labelShadow = this.add.rectangle(nx + 1, ny + 37, labelW, labelH, 0x000000, 0.55).setDepth(503);
+        const labelBg = this.add.rectangle(nx, ny + 36, labelW, labelH, unlocked ? 0x1d2b1a : 0x141814, 0.95)
           .setStrokeStyle(1.5, unlocked ? 0xd8b548 : 0x3e483e)
           .setDepth(504);
+        const labelShine = this.add.rectangle(nx, ny + 27, labelW - 6, 1, 0xfff8d0, unlocked ? 0.35 : 0.1).setDepth(504.5);
         const labelText = this.add
-          .text(nx, ny + 36, `${index + 1}. ${map.name}`, {
-            font: "bold 12px Cinzel",
+          .text(nx, ny + 36, shortNames[index], {
+            font: "bold 11px Cinzel",
             color: unlocked ? "#fff2ba" : "#7a8478",
           })
           .setOrigin(0.5)
           .setDepth(505);
 
         this.overlay.add(
-          [nodeShadow, nodeBg, iconImg, lockBg, lockText, starsText, labelShadow, labelBg, labelText].filter(Boolean)
+          [nodeShadow, nodeBg, iconImg, lockBg, lockText, starsText, labelShadow, labelBg, labelShine, labelText].filter(Boolean)
         );
 
         // Node Interactivity
         const interactiveTargets = [nodeBg, labelBg, labelText, iconImg].filter(Boolean);
-        const nodeGroup = [nodeBg, iconImg, labelBg, labelText, starsText].filter(Boolean);
+        const nodeGroup = [nodeBg, iconImg, labelBg, labelShine, labelText, starsText].filter(Boolean);
 
         if (unlocked) {
           interactiveTargets.forEach((target) => target.setInteractive({ useHandCursor: true }));
