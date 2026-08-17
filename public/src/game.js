@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.43";
+  const KRC_VERSION = "1.0.44";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -60,6 +60,10 @@
       this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
       this.gold = this.startData?.gold ?? 280;
       this.lives = this.startData?.lives ?? 20;
+      this.heroKind = this.startData?.heroKind === "sentinel" ? "sentinel" : "captain";
+      if (this.qaMode && new URLSearchParams(window.location.search).get("hero") === "sentinel") {
+        this.heroKind = "sentinel";
+      }
       this.waveIndex = 0;
       this.waveActive = false;
       this.waveTotal = 0;
@@ -1633,13 +1637,15 @@
     createHero() {
       const post = this.nearestPathPoint(this.path[Math.min(2, this.path.length - 1)].x, this.path[Math.min(2, this.path.length - 1)].y);
       this.heroSelected = false;
+      const isSentinel = this.heroKind === "sentinel";
+      const hp = isSentinel ? 380 : 260;
       this.hero = this.entityRegistry.create("hero", {
         x: post.x,
         y: post.y,
         targetX: post.x,
         targetY: post.y,
-        hp: 260,
-        maxHp: 260,
+        hp,
+        maxHp: hp,
         level: 1,
         xp: 0,
         attackCooldown: 0,
@@ -1648,18 +1654,41 @@
         dead: false,
         isHero: true,
       });
+      this.hero.kind = this.heroKind;
       const ringContainer = this.add.container(post.x, post.y).setDepth(37).setVisible(false);
       const innerDisc = this.add.circle(0, 0, 22, 0xf5d76e, 0.18);
       const outerRing = this.add.circle(0, 0, 34, 0xf5d76e, 0.08).setStrokeStyle(3.5, 0xf5d76e, 0.9);
       ringContainer.add([innerDisc, outerRing]);
       this.hero.ring = ringContainer;
       this.hero.sprite = this.add.image(post.x, post.y - 10, "hero_captain").setScale(0.82).setDepth(46);
+      if (isSentinel) this.hero.sprite.setTint(0xb8c4c8);
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
       this.hero.levelText = this.add
-        .text(post.x, post.y + 18, "H1", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" })
+        .text(post.x, post.y + 18, isSentinel ? "HLD" : "H1", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" })
         .setOrigin(0.5)
         .setDepth(49);
+    }
+
+    applyHeroKind() {
+      if (!this.hero) return;
+      this.hero.kind = this.heroKind;
+      const isSentinel = this.heroKind === "sentinel";
+      this.hero.maxHp = isSentinel ? 380 : 260;
+      this.hero.hp = Math.min(this.hero.hp, this.hero.maxHp);
+      if (isSentinel) {
+        this.hero.sprite?.setTint?.(0xb8c4c8);
+        this.hero.levelText?.setText?.("HLD");
+      } else {
+        this.hero.sprite?.clearTint?.();
+        this.hero.levelText?.setText?.(`H${this.hero.level}`);
+      }
+      if (this.heroPortraitLabel) {
+        this.heroPortraitLabel.setText(isSentinel ? "SENTINEL" : "CAPTAIN");
+      }
+      if (this.heroButtons?.[0]) {
+        this.heroButtons[0].setLabel(isSentinel ? "HOLD" : "CHG");
+      }
     }
 
     createHud() {
@@ -1843,7 +1872,7 @@
       }
       this.heroButtons = [];
       const heroDefs = [
-        ["charge", 63, "CHG", "icon_ability_charge", "Hero Charge (16s cooldown)\nCaptain dashes to target area with\na high-damage piercing strike."],
+        ["charge", 63, this.heroKind === "sentinel" ? "HOLD" : "CHG", "icon_ability_charge", "Hero Charge (16s cooldown)\nCaptain dashes to target area with\na high-damage piercing strike."],
         ["banner", 166, "BAN", "icon_ability_banner", "Hero Banner (24s cooldown)\nPlants an inspiring battle standard\nto buff nearby soldiers."],
         ["heal", 269, "HEAL", "icon_ability_heal", "Hero Heal (28s cooldown)\nRestores health to Captain\nand all nearby allied guards."],
       ];
@@ -1883,10 +1912,11 @@
       const plateMat = this.add.rectangle(plateX, plateY, plateW - 16, plateH - 16, 0x243242, 0.85).setDepth(100.4);
       const plateImg = this.add.image(plateX, plateY - 1, "hero_captain").setScale(1.0).setDepth(100.6);
       const plateShine = this.add.rectangle(plateX, plateY - plateH / 2 + 3, plateW - 10, 2, 0xfff8d0, 0.35).setDepth(100.8);
-      const plateLabel = this.add.text(plateX, plateY + 18, "CAPTAIN", {
+      const plateLabel = this.add.text(plateX, plateY + 18, this.heroKind === "sentinel" ? "SENTINEL" : "CAPTAIN", {
         font: "900 8px 'Cinzel', 'Source Sans 3', Arial",
         color: "#f5c85a",
       }).setOrigin(0.5).setDepth(101);
+      this.heroPortraitLabel = plateLabel;
 
       const plateElements = [plateShadow, plateBg, plateInner, plateMat, plateImg, plateShine, plateLabel];
       plateElements.forEach((el) => el.setVisible(false));
@@ -2186,6 +2216,42 @@ const bannerY = 98;
 
       this.overlay.add([bannerShadow, bannerBg, bannerInner, bannerShine, ...cornerDots, titleShadow, title, versionMark]);
 
+      let heroPickCaptain, heroPickSentinel;
+      const updateHeroPicks = () => {
+        const isCap = this.heroKind === "captain";
+        if (heroPickCaptain) {
+          heroPickCaptain.bg.setStrokeStyle(isCap ? 3 : 1.5, isCap ? 0xffd866 : 0x5a6a5a, isCap ? 1 : 0.6);
+          heroPickCaptain.text.setColor(isCap ? "#ffd866" : "#aaaaaa");
+        }
+        if (heroPickSentinel) {
+          heroPickSentinel.bg.setStrokeStyle(!isCap ? 3 : 1.5, !isCap ? 0xffd866 : 0x5a6a5a, !isCap ? 1 : 0.6);
+          heroPickSentinel.text.setColor(!isCap ? "#ffd866" : "#aaaaaa");
+        }
+      };
+      heroPickCaptain = this.makeButton(90, 70, 100, 26, "CAPTAIN", 0x243548, () => {
+        this.heroKind = "captain";
+        updateHeroPicks();
+        this.applyHeroKind();
+      }, {
+        font: "bold 11px Cinzel",
+        tooltip: () => "Hero: Captain\nDamage & dash-charge hunter.",
+      });
+      heroPickSentinel = this.makeButton(230, 70, 100, 26, "SENTINEL", 0x334440, () => {
+        this.heroKind = "sentinel";
+        updateHeroPicks();
+        this.applyHeroKind();
+      }, {
+        font: "bold 11px Cinzel",
+        tooltip: () => "Hero: Sentinel\nHigh HP hold & ground pull tank.",
+      });
+      heroPickCaptain.bg.on("pointerout", () => updateHeroPicks());
+      heroPickSentinel.bg.on("pointerout", () => updateHeroPicks());
+      updateHeroPicks();
+      this.overlay.add([
+        heroPickCaptain.shadow, heroPickCaptain.bg, heroPickCaptain.shine, heroPickCaptain.lip, heroPickCaptain.text,
+        heroPickSentinel.shadow, heroPickSentinel.bg, heroPickSentinel.shine, heroPickSentinel.lip, heroPickSentinel.text,
+      ].filter(Boolean));
+
       // Subtle floating golden sparkle particles around title
       if (!this.settings?.reducedMotion) {
         for (let i = 0; i < 14; i += 1) {
@@ -2475,7 +2541,7 @@ const bannerY = 98;
       if (mapIndex !== this.mapIndex) {
         this.overlayActive = false;
         this.overlay?.destroy();
-        this.scene.restart({ mapIndex, gold: 280, lives: 20 });
+        this.scene.restart({ mapIndex, gold: 280, lives: 20, heroKind: this.heroKind });
         return;
       }
       this.overlayActive = false;
@@ -4595,7 +4661,7 @@ const bannerY = 98;
       hero.barBg.setPosition(hero.x, hero.y - 31);
       hero.bar.setPosition(hero.x - 15, hero.y - 31);
       hero.bar.width = Math.max(1, 30 * (hero.hp / hero.maxHp));
-      hero.levelText.setPosition(hero.x, hero.y + 18).setText(`H${hero.level}`);
+      hero.levelText.setPosition(hero.x, hero.y + 18).setText(hero.kind === "sentinel" ? "HLD" : `H${hero.level}`);
       if (hero && !hero.dead) {
         // Golden aura around hero that pulses
         if (!this.heroAura || this.heroAura.destroyed) {
@@ -4620,25 +4686,30 @@ const bannerY = 98;
       }
       const hero = this.hero;
       if (id === "charge") {
-        const target = this.findEnemyNear(hero.x, hero.y, 92, false);
-        if (!target) {
-          this.say("No nearby ground target for Charge.");
-          return;
-        }
-        // Charge trail: speed lines from hero to target
-        if (!this.settings?.reducedMotion) {
-          for (let i = 0; i < 8; i += 1) {
-            const t = i / 8;
-            const trailX = hero.x + (target.x - hero.x) * t + (Math.random() - 0.5) * 12;
-            const trailY = hero.y + (target.y - hero.y) * t + (Math.random() - 0.5) * 12;
-            const trail = this.add.circle(trailX, trailY, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
-            this.effects.push({ obj: trail, life: 0.3 + Math.random() * 0.2, vx: (target.x - hero.x) * 0.5 + (Math.random() - 0.5) * 30, vy: (target.y - hero.y) * 0.5 + (Math.random() - 0.5) * 30 });
+        if (this.heroKind === "sentinel") {
+          hero.holdUntil = this.time.now + 3200;
+          this.flashText("HOLD", hero.x, hero.y - 42, COLORS.gold);
+        } else {
+          const target = this.findEnemyNear(hero.x, hero.y, 92, false);
+          if (!target) {
+            this.say("No nearby ground target for Charge.");
+            return;
           }
+          // Charge trail: speed lines from hero to target
+          if (!this.settings?.reducedMotion) {
+            for (let i = 0; i < 8; i += 1) {
+              const t = i / 8;
+              const trailX = hero.x + (target.x - hero.x) * t + (Math.random() - 0.5) * 12;
+              const trailY = hero.y + (target.y - hero.y) * t + (Math.random() - 0.5) * 12;
+              const trail = this.add.circle(trailX, trailY, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+              this.effects.push({ obj: trail, life: 0.3 + Math.random() * 0.2, vx: (target.x - hero.x) * 0.5 + (Math.random() - 0.5) * 30, vy: (target.y - hero.y) * 0.5 + (Math.random() - 0.5) * 30 });
+            }
+          }
+          this.moveHeroTo(target.x, target.y);
+          hero.commandTime = 0.45;
+          this.damageEnemy(target, 85 + hero.level * 16, { hero: true, magic: true });
+          this.flashText("CHARGE", hero.x, hero.y - 42, COLORS.gold);
         }
-        this.moveHeroTo(target.x, target.y);
-        hero.commandTime = 0.45;
-        this.damageEnemy(target, 85 + hero.level * 16, { hero: true, magic: true });
-        this.flashText("CHARGE", hero.x, hero.y - 42, COLORS.gold);
       }
       if (id === "banner") {
         this.bannerTime = 8;
@@ -4768,10 +4839,11 @@ const bannerY = 98;
 
     findBlockingSoldier(enemy) {
       if (enemy.base.flying) return null;
+      const heroRadius = this.hero && !this.hero.dead && this.hero.holdUntil > this.time.now ? enemy.base.size + 62 : enemy.base.size + 14;
       if (
         this.hero &&
         !this.hero.dead &&
-        Phaser.Math.Distance.Between(enemy.x, enemy.y, this.hero.x, this.hero.y) < enemy.base.size + 14
+        Phaser.Math.Distance.Between(enemy.x, enemy.y, this.hero.x, this.hero.y) < heroRadius
       ) {
         return this.hero;
       }
@@ -5464,7 +5536,7 @@ const bannerY = 98;
       btn.on("pointerdown", () => {
         this.audio.stopAll();
         this.overlayActive = false;
-        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20, heroKind: this.heroKind });
       });
       this.audio.stopMusic();
       if (victory) {
@@ -5559,6 +5631,7 @@ const bannerY = 98;
           mapIndex: this.mapIndex + 1,
           gold: Math.min(this.gold + 180, 650),
           lives: Math.min(20, this.lives + 4),
+          heroKind: this.heroKind,
         });
       });
       const menu = this.add.rectangle(W / 2, 468, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
@@ -5567,7 +5640,7 @@ const bannerY = 98;
       menu.on("pointerdown", () => {
         this.overlayActive = false;
         this.overlay.destroy();
-        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20, heroKind: this.heroKind });
       });
       this.overlay.add([next, nextText, menu, menuText]);
     }
