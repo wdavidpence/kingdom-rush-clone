@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.19";
+  const KRC_VERSION = "1.0.20";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2713,11 +2713,23 @@
         this.flashText(`+${earlyBonus} EARLY`, W / 2, 120, "#fff2ba");
       }
       this.gold += bonus;
-      // Wave start cinematic: expanding ring from gate position
+      // Wave start cinematic: expanding ring from gate position & horn cinematic
       if (!this.settings?.reducedMotion) {
         const gatePos = this.path[0];
         const waveRing = this.add.circle(gatePos.x, gatePos.y, 5, 0xff623d, 0.5).setStrokeStyle(3, 0xffd07a, 1).setDepth(50);
         this.tweens.add({ targets: waveRing, alpha: 0, scale: 15, duration: 600, onComplete: () => waveRing.destroy() });
+
+        // Second delayed expanding ring from gate (stagger ~180ms)
+        this.time.delayedCall(180, () => {
+          if (!this.scene?.systems) return;
+          const waveRing2 = this.add.circle(gatePos.x, gatePos.y, 5, 0xff8a3d, 0.4).setStrokeStyle(2, 0xffe08a, 0.9).setDepth(50);
+          this.tweens.add({ targets: waveRing2, alpha: 0, scale: 15, duration: 600, onComplete: () => waveRing2.destroy() });
+        });
+
+        // Tiny brass flash near CALL button (<=80ms)
+        const brassFlash = this.add.circle(W / 2, H - 60, 32, 0xd4a359, 0.6).setDepth(95);
+        this.tweens.add({ targets: brassFlash, alpha: 0, scale: 1.3, duration: 75, onComplete: () => brassFlash.destroy() });
+
         // Red warning particles from gate
         for (let i = 0; i < 12; i += 1) {
           const angle = (i / 12) * Math.PI * 2;
@@ -2734,6 +2746,16 @@
       this.waveActive = true;
       this.spawnTimer = 0.1;
       this.audio.play("start", 0.35, 1.08);
+
+      // Incoming-threat name chip for first queued enemy type
+      const firstEnemyType = this.queue[0];
+      const threatName = ENEMIES[firstEnemyType]?.name;
+      if (threatName) {
+        const gatePos = this.path[0];
+        const chipX = Math.max(60, gatePos.x + 60);
+        const chipY = Math.max(40, gatePos.y - 20);
+        this.flashText(`THREAT: ${threatName.toUpperCase()}`, chipX, chipY, "#ffc27d");
+      }
       // Wave label cinematic: large text that fades in then out
       this.flashText(`WAVE ${this.waveIndex + 1}: ${wave.label}`, W / 2, H / 2 - 40, "#ff8a73");
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
