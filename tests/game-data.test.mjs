@@ -25,6 +25,9 @@ assert.ok(data.enemies.boss.phases, "final boss must declare telegraphed phases"
 assert.ok(data.waves.some((w) => w.packs.some(([type]) => type === "drift")));
 assert.ok(data.waves.some((w) => w.packs.some(([type]) => type === "hexer")), "campaign waves must include the hexer support archetype");
 assert.ok(data.waves[0].gold >= 20, "early-wave economy should fund opening builds");
+assert.equal(data.waves[7].gold, 54);
+assert.equal(data.waves[8].gold, 62);
+assert.equal(data.waves[9].gold, 48);
 
 const expectedTowerRoles = {
   archer: { role: "Rapid anti-air focus", targetRule: "First enemy; can target flying enemies", counterplay: "Use against fast or flying enemies; weak into armor." },

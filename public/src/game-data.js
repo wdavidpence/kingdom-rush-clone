@@ -52,9 +52,9 @@
     { label: "Skybreak", gold: 34, spawn: 0.68, packs: [["flyer", 8], ["brute", 10], ["brood", 6], ["shield", 5]] },
     { label: "Hexfield", gold: 38, spawn: 0.6, packs: [["hexer", 4], ["shield", 8], ["ember", 6], ["brute", 6]] },
     { label: "Storm", gold: 40, spawn: 0.56, packs: [["flyer", 10], ["scout", 18], ["hexer", 3], ["brute", 8], ["drift", 5]] },
-    { label: "Titanfall", gold: 46, spawn: 0.68, packs: [["titan", 3], ["shield", 8], ["ember", 8], ["hexer", 2]] },
-    { label: "Last Gate", gold: 52, spawn: 0.52, packs: [["scout", 16], ["flyer", 8], ["brute", 10], ["titan", 2], ["hexer", 3]] },
-    { label: "Warden", gold: 0, spawn: 0.62, packs: [["boss", 1], ["titan", 4], ["flyer", 8], ["shield", 8], ["hexer", 2]] },
+    { label: "Titanfall", gold: 54, spawn: 0.68, packs: [["titan", 3], ["shield", 8], ["ember", 8], ["hexer", 2]] },
+    { label: "Last Gate", gold: 62, spawn: 0.52, packs: [["scout", 16], ["flyer", 8], ["brute", 10], ["titan", 2], ["hexer", 3]] },
+    { label: "Warden", gold: 48, spawn: 0.62, packs: [["boss", 1], ["titan", 4], ["flyer", 8], ["shield", 8], ["hexer", 2]] },
   ];
 
   window.KRCGameData = Object.freeze({ maps, towers, enemies, waves });
