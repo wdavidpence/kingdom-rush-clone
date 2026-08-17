@@ -838,6 +838,19 @@
       }
       this.gold -= cost;
       tower.level += 1;
+      // Upgrade visual: scale bounce + golden ring pulse
+      if (tower.sprite && !this.settings?.reducedMotion) {
+        this.tweens.add({ targets: tower.sprite, scale: 0.78 + tower.level * 0.04, duration: 120, yoyo: true, repeat: 1 });
+        const ring = this.add.circle(tower.x, tower.y - 8, 20, 0xf5d76e, 0.5).setStrokeStyle(3, 0xfff2ba, 1).setDepth(35);
+        this.tweens.add({ targets: ring, alpha: 0, scale: 2.5, duration: 400, onComplete: () => ring.destroy() });
+        // Golden sparkles around tower
+        for (let i = 0; i < 12; i += 1) {
+          const angle = (i / 12) * Math.PI * 2;
+          const speed = 40 + Math.random() * 30;
+          const sparkle = this.add.circle(tower.x, tower.y - 8, 1.5 + Math.random(), 0xf5d76e, 0.9).setDepth(36);
+          this.effects.push({ obj: sparkle, life: 0.4 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
+        }
+      }
       tower.sprite.setScale(0.62 + tower.level * 0.04);
       tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
       tower.rangeRing.setRadius(cfg.range[tower.level]);
@@ -848,6 +861,7 @@
         this.flashText(ability.name.toUpperCase(), tower.x, tower.y - 42, "#fff2ba");
         this.say(`${cfg.name} unlocked ${ability.name}: ${ability.description}`);
       } else {
+        this.flashText(`UPGRADE L${tower.level + 1}`, tower.x, tower.y - 42, "#fff2ba");
         this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       }
       this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
@@ -862,6 +876,15 @@
       const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
       const refund = Math.floor(spent * 0.55);
       this.gold += refund;
+      // Sell visual: gold coins scatter from tower position
+      if (!this.settings?.reducedMotion) {
+        for (let i = 0; i < 10; i += 1) {
+          const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
+          const speed = 60 + Math.random() * 50;
+          const coin = this.add.circle(tower.x, tower.y - 8, 2 + Math.random() * 1.5, 0xf5c85a, 0.9).setDepth(36);
+          this.effects.push({ obj: coin, life: 0.5 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 40 });
+        }
+      }
       tower.sprite.destroy();
       tower.label.destroy();
       tower.rangeRing.destroy();
@@ -878,6 +901,7 @@
       this.selectedPad.icon.setVisible(true);
       if (this.selectedPad.glow) this.selectedPad.glow.setVisible(true);
       this.flashText(`+${refund}`, tower.x, tower.y - 28, COLORS.gold);
+      this.createDamageNumber(tower.x, tower.y - cfg.cost - 20, `+${refund}`, COLORS.gold);
       this.say(`Sold for ${refund} gold (55% refund).`);
       this.refreshSelection();
     }
@@ -922,9 +946,27 @@
       if (!this.waveActive && this.enemies.length === 0 && this.waveIndex < WAVES.length) {
         const earlyBonus = 8 + this.waveIndex * 2;
         bonus += earlyBonus;
+        // Early call cinematic: golden flash on CALL button area
+        if (!this.settings?.reducedMotion) {
+          const flash = this.add.circle(W / 2, H - 60, 30, 0xf5c85a, 0.4).setDepth(95);
+          this.tweens.add({ targets: flash, alpha: 0, scale: 2, duration: 350, onComplete: () => flash.destroy() });
+        }
         this.flashText(`+${earlyBonus} EARLY`, W / 2, 120, "#fff2ba");
       }
       this.gold += bonus;
+      // Wave start cinematic: expanding ring from gate position
+      if (!this.settings?.reducedMotion) {
+        const gatePos = this.path[0];
+        const waveRing = this.add.circle(gatePos.x, gatePos.y, 5, 0xff623d, 0.5).setStrokeStyle(3, 0xffd07a, 1).setDepth(50);
+        this.tweens.add({ targets: waveRing, alpha: 0, scale: 15, duration: 600, onComplete: () => waveRing.destroy() });
+        // Red warning particles from gate
+        for (let i = 0; i < 12; i += 1) {
+          const angle = (i / 12) * Math.PI * 2;
+          const speed = 50 + Math.random() * 40;
+          const warn = this.add.circle(gatePos.x, gatePos.y, 1.5 + Math.random(), 0xff623d, 0.8).setDepth(51);
+          this.effects.push({ obj: warn, life: 0.4 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
+        }
+      }
       this.queue = [];
       for (const [type, count] of wave.packs) {
         for (let i = 0; i < count; i += 1) this.queue.push(type);
@@ -933,6 +975,8 @@
       this.waveActive = true;
       this.spawnTimer = 0.1;
       this.audio.play("start", 0.35, 1.08);
+      // Wave label cinematic: large text that fades in then out
+      this.flashText(`WAVE ${this.waveIndex + 1}: ${wave.label}`, W / 2, H / 2 - 40, "#ff8a73");
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
     }
 
@@ -1028,6 +1072,8 @@
         .setOrigin(0.5)
         .setDepth(44)
         .setVisible(!!badge);
+      // Pulsing glow on trait badges (animated via updateEnemies)
+      enemy.traitGlow = this.add.rectangle(enemy.x, enemy.y - base.size - 16, 30, 12, traits[0]?.color || "#e8f0ff", 0.06).setOrigin(0.5).setDepth(43.5).setVisible(!!badge);
       this.enemies.push(enemy);
       return enemy;
     }
@@ -1149,11 +1195,32 @@
       }
       if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
       else if (!enemy.base.phases) enemy.sprite.clearTint();
+      // Smooth health bar: tween width and color transition
+      const hpRatio = enemy.hp / enemy.maxHp;
+      const targetWidth = 28 * hpRatio;
+      if (Math.abs(enemy.bar.width - targetWidth) > 0.5) {
+        enemy.bar.width = Phaser.Math.Linear(enemy.bar.width, targetWidth, Math.min(1, dt * 6));
+      }
       enemy.barBg.setPosition(enemy.x, enemy.y - enemy.base.size - 8);
       enemy.bar.setPosition(enemy.x - 14, enemy.y - enemy.base.size - 8);
-      enemy.bar.width = Math.max(1, 28 * (enemy.hp / enemy.maxHp));
-      // Colorblind-safe HP: shape via width already; add pattern via bar color bands
-      enemy.bar.fillColor = enemy.hp < enemy.maxHp * 0.35 ? 0xff6b5a : enemy.hp < enemy.maxHp * 0.7 ? 0xf0c35a : 0x68d764;
+      // Color transition: green → yellow → red with smooth interpolation
+      let targetColor;
+      if (hpRatio > 0.65) {
+        const t = Math.min(1, (hpRatio - 0.65) / 0.35);
+        targetColor = Phaser.Math.Linear(0x68d764, 0xf0c35a, 1 - t);
+      } else if (hpRatio > 0.35) {
+        const t = Math.min(1, (hpRatio - 0.35) / 0.3);
+        targetColor = Phaser.Math.Linear(0xf0c35a, 0xff6b5a, 1 - t);
+      } else {
+        targetColor = 0xff6b5a;
+      }
+      enemy.bar.fillColor = targetColor;
+      // Trait badge glow pulse
+      if (enemy.traitGlow) {
+        enemy.traitGlow.setPosition(enemy.x, enemy.y - enemy.base.size - 16);
+        const pulse = Math.sin(this.time.now * 0.005 + enemy.wobble) * 0.04 + 0.06;
+        enemy.traitGlow.alpha = pulse;
+      }
       if (enemy.traitText) {
         enemy.traitText.setPosition(enemy.x, enemy.y - enemy.base.size - 16);
         enemy.traitText.setVisible(!!enemy.traitText.text);
