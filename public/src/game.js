@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.20";
+  const KRC_VERSION = "1.0.21";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4311,26 +4311,93 @@
       this.overlayActive = true;
       const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88).setDepth(600);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setDepth(600.5).setInteractive();
+
+      const created = [shade, blocker];
+
+      if (victory) {
+        const panelShadow = this.add.rectangle(W / 2, 326, 396, 276, 0x050704, 0.65).setDepth(600.8);
+        const panelWood = this.add.rectangle(W / 2, 320, 390, 270, 0x2c1f14, 1).setStrokeStyle(4, 0x5a3e26).setDepth(600.9);
+        const panelGold = this.add.rectangle(W / 2, 320, 378, 258).setStrokeStyle(2, 0xe6d282, 0.85).setDepth(600.95);
+        const panelFill = this.add.rectangle(W / 2, 320, 366, 246, 0xf4e6c8, 1).setStrokeStyle(1.5, 0x8a6a42).setDepth(601);
+
+        const decorG = this.add.graphics().setDepth(601.05);
+        decorG.lineStyle(2, 0xc8a450, 0.8);
+        decorG.beginPath();
+        decorG.moveTo(W / 2 - 130, 256);
+        decorG.lineTo(W / 2 + 130, 256);
+        decorG.strokePath();
+
+        for (const [cx, cy] of [
+          [W / 2 - 175, 203],
+          [W / 2 + 175, 203],
+          [W / 2 - 175, 437],
+          [W / 2 + 175, 437],
+        ]) {
+          decorG.fillStyle(0xe6d282, 1);
+          decorG.fillCircle(cx, cy, 4);
+          decorG.lineStyle(1, 0x4a321c, 1);
+          decorG.strokeCircle(cx, cy, 4);
+        }
+
+        created.push(panelShadow, panelWood, panelGold, panelFill, decorG);
+      } else {
+        const panelShadow = this.add.rectangle(W / 2, 326, 396, 276, 0x000000, 0.75).setDepth(600.8);
+        const panelFrame = this.add.rectangle(W / 2, 320, 390, 270, 0x161113, 1).setStrokeStyle(4, 0x3d292a).setDepth(600.9);
+        const panelFill = this.add.rectangle(W / 2, 320, 376, 256, 0x221a1b, 1).setStrokeStyle(2, 0x4d3031).setDepth(601);
+
+        const topSootBar = this.add.rectangle(W / 2, 230, 366, 52, 0x0f0b0c, 0.94).setStrokeStyle(1.5, 0x3d2020).setDepth(601.05);
+        const botSootBar = this.add.rectangle(W / 2, 400, 366, 54, 0x0f0b0c, 0.94).setStrokeStyle(1.5, 0x3d2020).setDepth(601.05);
+
+        const crackG = this.add.graphics().setDepth(601.1);
+        crackG.lineStyle(2, 0x6e2c2c, 0.85);
+        crackG.beginPath();
+        crackG.moveTo(W / 2 - 170, 210);
+        crackG.lineTo(W / 2 - 130, 240);
+        crackG.lineTo(W / 2 - 95, 225);
+        crackG.strokePath();
+
+        crackG.lineStyle(2, 0x5a2424, 0.85);
+        crackG.beginPath();
+        crackG.moveTo(W / 2 + 85, 248);
+        crackG.lineTo(W / 2 + 125, 222);
+        crackG.lineTo(W / 2 + 165, 258);
+        crackG.strokePath();
+
+        crackG.lineStyle(1.5, 0x733232, 0.7);
+        crackG.beginPath();
+        crackG.moveTo(W / 2 - 60, 310);
+        crackG.lineTo(W / 2 - 20, 335);
+        crackG.lineTo(W / 2 + 35, 320);
+        crackG.strokePath();
+
+        created.push(panelShadow, panelFrame, panelFill, topSootBar, botSootBar, crackG);
+      }
+
       const title = this.add
         .text(W / 2, 230, victory ? "VICTORY" : "GATE LOST", {
           font: "bold 44px Cinzel",
-          color: victory ? COLORS.gold : "#ff7f69",
+          color: victory ? "#d4941e" : "#ff7f69",
+          stroke: victory ? "#2b1704" : "#0f0404",
+          strokeThickness: victory ? 5 : 7,
         })
         .setOrigin(0.5)
-        .setDepth(601);
+        .setDepth(601.3);
       const starLine = victory ? `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars` : `Reached wave ${this.waveIndex + 1}`;
       const sub = this.add
         .text(W / 2, 292, victory ? `Campaign complete. ${starLine}` : starLine, {
           font: "18px 'Source Sans 3', Arial",
-          color: COLORS.ink,
+          color: victory ? "#3d2612" : "#e2d2c8",
+          stroke: victory ? null : "#140808",
+          strokeThickness: victory ? 0 : 3,
           align: "center",
         })
         .setOrigin(0.5)
-        .setDepth(601);
-      const btnShadow = this.add.rectangle(W / 2, 406, 180, 54, 0x050704, 0.62).setDepth(601);
-      const btn = this.add.rectangle(W / 2, 400, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
-      const btnShine = this.add.rectangle(W / 2, 387, 166, 12, 0xffffff, 0.17).setDepth(601.4);
-      const btnLip = this.add.rectangle(W / 2, 418, 166, 9, 0x000000, 0.2).setDepth(601.4);
+        .setDepth(601.3);
+
+      const btnShadow = this.add.rectangle(W / 2, 406, 180, 54, 0x050704, 0.62).setDepth(601.35);
+      const btn = this.add.rectangle(W / 2, 400, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.4);
+      const btnShine = this.add.rectangle(W / 2, 387, 166, 12, 0xffffff, 0.17).setDepth(601.45);
+      const btnLip = this.add.rectangle(W / 2, 418, 166, 9, 0x000000, 0.2).setDepth(601.45);
       const txt = this.add.text(W / 2, 398, "MAP SELECT", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
@@ -4340,7 +4407,8 @@
       });
       this.audio.stopMusic();
       this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
-      return [shade, blocker, title, sub, btnShadow, btn, btnShine, btnLip, txt];
+      created.push(title, sub, btnShadow, btn, btnShine, btnLip, txt);
+      return created;
     }
 
     computeStars() {
@@ -4354,22 +4422,58 @@
       this.overlay = this.add.container(0, 0).setDepth(580);
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.86));
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive());
-      this.overlay.add(this.add.text(W / 2, 220, `${this.map.name} CLEARED`, { font: "bold 28px Cinzel", color: COLORS.gold }).setOrigin(0.5));
+
+      const panelShadow = this.add.rectangle(W / 2, 351, 416, 336, 0x050704, 0.65);
+      const panelWood = this.add.rectangle(W / 2, 345, 410, 330, 0x2c1f14, 1).setStrokeStyle(4, 0x5a3e26);
+      const panelGold = this.add.rectangle(W / 2, 345, 398, 318).setStrokeStyle(2, 0xe6d282, 0.85);
+      const panelFill = this.add.rectangle(W / 2, 345, 386, 306, 0xf4e6c8, 1).setStrokeStyle(1.5, 0x8a6a42);
+
+      const decorG = this.add.graphics();
+      decorG.lineStyle(2, 0xc8a450, 0.8);
+      decorG.beginPath();
+      decorG.moveTo(W / 2 - 140, 242);
+      decorG.lineTo(W / 2 + 140, 242);
+      decorG.strokePath();
+
+      for (const [cx, cy] of [
+        [W / 2 - 185, 200],
+        [W / 2 + 185, 200],
+        [W / 2 - 185, 490],
+        [W / 2 + 185, 490],
+      ]) {
+        decorG.fillStyle(0xe6d282, 1);
+        decorG.fillCircle(cx, cy, 4);
+        decorG.lineStyle(1, 0x4a321c, 1);
+        decorG.strokeCircle(cx, cy, 4);
+      }
+
+      this.overlay.add([panelShadow, panelWood, panelGold, panelFill, decorG]);
+
       this.overlay.add(
         this.add
-          .text(W / 2, 270, `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars`, {
-            font: "22px 'Source Sans 3', Arial",
-            color: "#fff2ba",
+          .text(W / 2, 218, `${this.map.name} CLEARED`, {
+            font: "bold 28px Cinzel",
+            color: "#d4941e",
+            stroke: "#2b1704",
+            strokeThickness: 5,
           })
           .setOrigin(0.5)
       );
       this.overlay.add(
         this.add
-          .text(W / 2, 318, "Next map unlocked. Carry some gold and lives forward.", {
+          .text(W / 2, 268, `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars`, {
+            font: "22px 'Source Sans 3', Arial",
+            color: "#3d2612",
+          })
+          .setOrigin(0.5)
+      );
+      this.overlay.add(
+        this.add
+          .text(W / 2, 314, "Next map unlocked. Carry some gold and lives forward.", {
             font: "14px 'Source Sans 3', Arial",
-            color: "#cfc4a2",
+            color: "#4a321a",
             align: "center",
-            wordWrap: { width: 320 },
+            wordWrap: { width: 340 },
           })
           .setOrigin(0.5)
       );
