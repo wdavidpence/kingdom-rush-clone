@@ -524,6 +524,7 @@
         .setDepth(101);
       bg.setInteractive({ useHandCursor: true });
       bg.on("pointerdown", () => {
+        this.audio.playLayered?.("uiClick");
         this.audio.resume();
         bg.y = y + 2;
         shine.y = y - h * 0.28 + 2;
@@ -729,8 +730,15 @@
             ? `${cfg.name} level ${pad.tower.level + 1}. Tap the road to move its rally point.`
             : `${cfg.name} level ${pad.tower.level + 1}. Upgrade or sell.`
         );
+        // Range ring preview for selected tower pad
+        if (this.rangePreview) this.rangePreview.destroy();
+        const ring = this.add.graphics().setDepth(19);
+        ring.lineStyle(2, cfg.color, 0.5);
+        ring.strokeCircle(pad.x, pad.y, cfg.range[pad.tower.level]);
+        this.rangePreview = ring;
       } else {
-        this.say("Empty build pad. Choose a tower below.");
+        // Hide range preview when no tower selected
+        if (this.rangePreview) { this.rangePreview.destroy(); this.rangePreview = null; }
       }
     }
 
@@ -766,7 +774,7 @@
       const cfg = TOWERS[type];
       if (this.gold < cfg.cost) {
         this.say(`Need ${cfg.cost} gold.`);
-        this.audio.tone(110, 0.08, "sawtooth", 0.05);
+        this.audio.playLayered?.("uiError");
         return;
       }
       this.gold -= cfg.cost;
@@ -824,16 +832,19 @@
       const tower = this.selectedPad?.tower;
       if (!tower) {
         this.say("Select a built tower first.");
+        this.audio.playLayered?.("uiError");
         return;
       }
       const cfg = TOWERS[tower.type];
       if (tower.level >= cfg.upgrades.length) {
         this.say("Tower is fully upgraded.");
+        this.audio.playLayered?.("uiError");
         return;
       }
       const cost = cfg.upgrades[tower.level];
       if (this.gold < cost) {
         this.say(`Need ${cost} gold to upgrade.`);
+        this.audio.playLayered?.("uiError");
         return;
       }
       this.gold -= cost;
@@ -934,10 +945,12 @@
       if (this.overlayActive || this.gameEnded) return;
       if (!this.qaMode && this.waveIndex === 0 && this.towers.length < 2) {
         this.say("Build at least two towers before the first wave.");
+        this.audio.playLayered?.("uiError");
         return;
       }
       if (this.waveActive) {
         this.say("Wave is already marching.");
+        this.audio.playLayered?.("uiError");
         return;
       }
       if (this.waveIndex >= WAVES.length) return;
@@ -1195,6 +1208,27 @@
       }
       if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
       else if (!enemy.base.phases) enemy.sprite.clearTint();
+      // Slow visual: blue tint + ice crystal particles
+      if (enemy.slow > 0) {
+        enemy.sprite.setTint(0xaaddff);
+        if (!enemy.iceTimer || enemy.iceTimer <= 0) {
+          for (let i = 0; i < 2; i += 1) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = enemy.base.size * 0.6 + Math.random() * 4;
+            const ice = this.add.circle(
+              enemy.x + Math.cos(angle) * dist,
+              enemy.y - enemy.base.size / 2 + Math.sin(angle) * dist,
+              1.5 + Math.random(),
+              0xaaddff, 0.7
+            ).setDepth(45);
+            this.effects.push({ obj: ice, life: 0.3 + Math.random() * 0.2, vx: Math.cos(angle) * 15, vy: -20 - Math.random() * 15 });
+          }
+          enemy.iceTimer = 0.2;
+        }
+      } else {
+        if (!enemy.base.phases && enemy.hp >= enemy.maxHp * 0.35) enemy.sprite.clearTint();
+      }
+      enemy.iceTimer = Math.max(0, (enemy.iceTimer || 0) - dt);
       // Smooth health bar: tween width and color transition
       const hpRatio = enemy.hp / enemy.maxHp;
       const targetWidth = 28 * hpRatio;
@@ -1312,6 +1346,26 @@
         } else if (tower.sprite) {
           tower.sprite.clearTint();
         }
+        // Hex visual: purple crackle particles around hexed tower
+        if (tower.hexed && tower.sprite) {
+          if (!tower.hexTimer || tower.hexTimer <= 0) {
+            for (let i = 0; i < 3; i += 1) {
+              const angle = Math.random() * Math.PI * 2;
+              const dist = 15 + Math.random() * 10;
+              const crackle = this.add.circle(
+                tower.x + Math.cos(angle) * dist,
+                tower.y - 8 + Math.sin(angle) * dist,
+                1.5 + Math.random() * 1.5,
+                0xb49cff, 0.8
+              ).setDepth(35);
+              this.effects.push({ obj: crackle, life: 0.2 + Math.random() * 0.15, vx: Math.cos(angle) * 30, vy: -25 - Math.random() * 15 });
+            }
+            tower.hexTimer = 0.15;
+          }
+        } else {
+          tower.hexTimer = 0;
+        }
+        tower.hexTimer = Math.max(0, (tower.hexTimer || 0) - dt);
         if (tower.cooldown > 0) continue;
         const target = this.findTarget(tower, cfg.range[tower.level], tower.type !== "artillery");
         if (!target) continue;
@@ -1922,7 +1976,7 @@
         const target = this.enemies.reduce((best, e) => (!best || e.hp > best.hp ? e : best), null);
         if (!target) {
           this.say("No target for Meteor.");
-          this.audio.tone(150, 0.07, "sawtooth", 0.04);
+          this.audio.playLayered?.("uiError");
           return;
         }
         // Meteor trail: falling fire particles from sky to target
@@ -1943,7 +1997,7 @@
       if (id === "frost") {
         if (!this.enemies.length) {
           this.say("No enemies to freeze.");
-          this.audio.tone(150, 0.07, "sawtooth", 0.04);
+          this.audio.playLayered?.("uiError");
           return;
         }
         for (const enemy of this.enemies) {
