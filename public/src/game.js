@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.59";
+  const KRC_VERSION = "1.0.60";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2503,6 +2503,7 @@ const bannerY = 98;
 
           const onDown = () => {
             this.hideTooltip();
+            this.audio.playLayered?.("uiClick");
             this.beginMap(index);
           };
 
@@ -6112,6 +6113,7 @@ const bannerY = 98;
     // Layered sound for specific events (tower type aware)
     playLayered(type, volume = 0.25) {
       this.lastLayered = type;
+      if (type === "uiClick") this.lastUiTick = "wood";
       if (this.muted) return;
       const v = volume * (this.sfxVolume !== undefined ? this.sfxVolume : 1);
       switch (type) {
@@ -6184,9 +6186,10 @@ const bannerY = 98;
           this.tone(600, 0.08, "sine", v * 0.05);
           this.tone(400, 0.08, "sine", v * 0.04);
           break;
-        case "uiClick": // UI button click — add a subtle Kenney layer if available
-          this.tone(600, 0.03, "triangle", v * 0.08);
-          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.1, rate: 2 });
+        case "uiClick": // UI button click — quiet wood knock
+          this.tone(180, 0.018, "triangle", v * 0.08);
+          this.tone(110, 0.028, "sawtooth", v * 0.06, 0.008);
+          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.08, rate: 2.2 });
           break;
         case "uiError": // Error/no-target buzz — add a Kenney layer if available
           this.tone(150, 0.1, "sawtooth", v * 0.06);
