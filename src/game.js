@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.36";
+  const KRC_VERSION = "1.0.37";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2830,15 +2830,6 @@ const bannerY = 98;
       const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
       const refund = Math.floor(spent * 0.55);
       this.gold += refund;
-      // Sell visual: gold coins scatter from tower position
-      if (!this.settings?.reducedMotion) {
-        for (let i = 0; i < 10; i += 1) {
-          const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
-          const speed = 60 + Math.random() * 50;
-          const coin = this.add.circle(tower.x, tower.y - 8, 2 + Math.random() * 1.5, 0xf5c85a, 0.9).setDepth(36);
-          this.effects.push({ obj: coin, life: 0.5 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 40 });
-        }
-      }
       this.audio.playLayered("towerSell");
       tower.sprite.destroy();
       tower.label.destroy();
@@ -2857,6 +2848,7 @@ const bannerY = 98;
       if (this.selectedPad.glow) this.selectedPad.glow.setVisible(true);
       this.flashText(`+${refund}`, tower.x, tower.y - 28, COLORS.gold);
       this.createDamageNumber(tower.x, tower.y - cfg.cost - 20, `+${refund}`, COLORS.gold);
+      this.createCoinBurst(tower.x, tower.y - 24);
       this.say(`Sold for ${refund} gold (55% refund).`);
       this.refreshSelection();
     }
@@ -3596,6 +3588,7 @@ const bannerY = 98;
         if (source.hero) this.addHeroXp(enemy.base.bounty);
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.createDamageNumber(x, y - enemy.base.size - 10, `+${enemy.base.bounty}`, COLORS.gold);
+        this.createCoinBurst(x, y - 18);
         this.removeEnemy(enemy, true);
         if (split) {
           const [childType, count] = split;
@@ -5052,6 +5045,39 @@ const bannerY = 98;
       }
     }
 
+    createCoinBurst(x, y) {
+      if (this.settings?.reducedMotion) {
+        const coin = this.add.circle(x, y, 3.5, 0xf5c85a, 0.95).setStrokeStyle(1, 0xfff0a0, 0.9).setDepth(205);
+        this.tweens.add({
+          targets: coin,
+          alpha: 0,
+          duration: 420,
+          ease: "Quad.easeOut",
+          onComplete: () => coin.destroy(),
+        });
+        return;
+      }
+      const count = 5 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i += 1) {
+        const isRect = i % 2 === 1;
+        const coinColor = i % 3 === 0 ? 0xffd700 : (i % 3 === 1 ? 0xf5c85a : 0xe6a100);
+        const coin = isRect
+          ? this.add.rectangle(x, y, 5, 3, coinColor, 0.95).setStrokeStyle(1, 0xfff2b0, 0.9).setDepth(205)
+          : this.add.circle(x, y, 2.5 + Math.random() * 0.8, coinColor, 0.95).setStrokeStyle(1, 0xfff2b0, 0.9).setDepth(205);
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+        const speed = 45 + Math.random() * 55;
+        const life = 0.45 + Math.random() * 0.15;
+        this.effects.push({
+          obj: coin,
+          life,
+          maxLife: life,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 25,
+          gravityY: 280,
+        });
+      }
+    }
+
     updateEffects(dt) {
       for (const e of [...this.effects]) {
         if (e.isEmitter) {
@@ -5061,7 +5087,9 @@ const bannerY = 98;
           e.life -= dt;
           e.obj.x += e.vx * dt;
           e.obj.y += e.vy * dt;
-          e.obj.alpha = Math.max(0, e.life / 0.36);
+          if (e.gravityY) e.vy += e.gravityY * dt;
+          const maxLife = e.maxLife || 0.36;
+          e.obj.alpha = Math.max(0, e.life / maxLife);
           if (e.life <= 0) { e.obj.destroy(); this.effects = this.effects.filter((x) => x !== e); }
         }
       }
