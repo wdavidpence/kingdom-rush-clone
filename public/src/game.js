@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.53";
+  const KRC_VERSION = "1.0.54";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2615,6 +2615,70 @@ const bannerY = 98;
       }
     }
 
+    mapBriefing(index) {
+      return (
+        [
+          "The lane is green and honest. Hold the bend before the gate.",
+          "Stone walls funnel armor. Cover the sky.",
+          "Fissures spit fire. Do not bunch on the mud.",
+          "Cross-gusts hide flyers. Watch the switchbacks.",
+          "Cinder grit blinds the high pads. Keep a hold on the climb.",
+        ][index] || "Hold the road. Call when you are ready."
+      );
+    }
+
+    showMapBriefing(mapIndex) {
+      this.overlayActive = true;
+      if (this.briefing) this.briefing.destroy();
+      this.briefing = this.add.container(0, 0).setDepth(560);
+      const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.45).setInteractive();
+      const plaqueShadow = this.add.rectangle(W / 2 + 2, 303, 344, 174, 0x050704, 0.55);
+      const plaqueWood = this.add.rectangle(W / 2, 300, 340, 170, 0x24180e, 0.98).setStrokeStyle(3, 0x5a3e26, 0.95);
+      const plaqueGold = this.add.rectangle(W / 2, 300, 328, 158).setStrokeStyle(2, 0xf5c85a, 0.85);
+      const plaqueInner = this.add.rectangle(W / 2, 300, 320, 150, 0x162414, 0.92);
+      const title = this.add
+        .text(W / 2, 242, this.map.name, {
+          font: "bold 20px Cinzel",
+          color: "#ffd866",
+          stroke: "#2a1808",
+          strokeThickness: 4,
+        })
+        .setOrigin(0.5);
+      const body = this.add
+        .text(W / 2, 292, this.mapBriefing(mapIndex), {
+          font: "14px 'Source Sans 3', Arial",
+          color: "#fff4d8",
+          align: "center",
+          wordWrap: { width: 280 },
+        })
+        .setOrigin(0.5);
+      const marchBtn = this.makeButton(W / 2, 360, 140, 32, "MARCH", 0x2d5535, () => this.dismissMapBriefing(), {
+        font: "bold 13px Cinzel",
+      });
+      this.briefing.add([
+        dim,
+        plaqueShadow,
+        plaqueWood,
+        plaqueGold,
+        plaqueInner,
+        title,
+        body,
+        marchBtn.shadow,
+        marchBtn.bg,
+        marchBtn.shine,
+        marchBtn.lip,
+        marchBtn.text,
+      ].filter(Boolean));
+    }
+
+    dismissMapBriefing() {
+      if (this.briefing) {
+        this.briefing.destroy();
+        this.briefing = null;
+      }
+      this.overlayActive = false;
+    }
+
     beginMap(mapIndex) {
       this.hideTooltip();
       this.audio.resume();
@@ -2645,6 +2709,7 @@ const bannerY = 98;
       } else if (mapIndex === 4) {
         this.add.rectangle(W / 2, H / 2, W, H, 0x2a1810, 0.08).setDepth(5);
       }
+      this.showMapBriefing(mapIndex);
       this.say(`${this.map.name}: build two towers, then CALL. Tap pads for range preview.`);
     }
 
