@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.10";
+  const KRC_VERSION = "1.0.11";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -528,155 +528,280 @@
         ctx.moveTo(12, 6); ctx.lineTo(88, 6); ctx.stroke();
       });
 
-      // Tower 1: Archer
+      // Tower 1: Archer (Rangers bow portrait)
       make("icon_tower_archer", 72, 72, (ctx) => {
-        drawBadge(ctx, 72, 72, "#325026", "#1c3214", "#12200c");
-        ellipse(ctx, 36, 52, 22, 7, "rgba(0,0,0,0.4)");
+        drawBadge(ctx, 72, 72, "#24421b", "#0f220a", "#081406");
+
+        const forestGlow = ctx.createRadialGradient(28, 28, 4, 36, 36, 32);
+        forestGlow.addColorStop(0, "rgba(90, 180, 70, 0.28)");
+        forestGlow.addColorStop(0.6, "rgba(40, 100, 30, 0.1)");
+        forestGlow.addColorStop(1, "rgba(10, 30, 10, 0)");
+        ellipse(ctx, 36, 36, 30, 30, forestGlow);
+
+        ellipse(ctx, 36, 56, 24, 6, "rgba(0,0,0,0.45)");
 
         ctx.save();
-        ctx.translate(36, 34);
-        ctx.rotate(-0.4);
+        ctx.translate(34, 36);
+        ctx.rotate(-0.38);
 
-        ctx.lineWidth = 4.5;
+        ctx.lineWidth = 5.5;
         ctx.lineCap = "round";
-        const woodGrad = ctx.createLinearGradient(-20, -20, 20, 20);
-        woodGrad.addColorStop(0, "#e0aa50");
-        woodGrad.addColorStop(0.5, "#905a22");
-        woodGrad.addColorStop(1, "#543010");
+        const woodGrad = ctx.createLinearGradient(-22, -24, 22, 24);
+        woodGrad.addColorStop(0, "#e8b868");
+        woodGrad.addColorStop(0.3, "#a6682b");
+        woodGrad.addColorStop(0.7, "#6e3e14");
+        woodGrad.addColorStop(1, "#402008");
         ctx.strokeStyle = woodGrad;
+
         ctx.beginPath();
-        ctx.arc(-4, 0, 22, -1.2, 1.2);
+        ctx.moveTo(8, -24);
+        ctx.quadraticCurveTo(-22, -14, -6, 0);
+        ctx.quadraticCurveTo(-22, 14, 8, 24);
         ctx.stroke();
 
-        ellipse(ctx, 7, -20, 2.5, 2.5, "#f5d76e");
-        ellipse(ctx, 7, 20, 2.5, 2.5, "#f5d76e");
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = "rgba(255, 220, 150, 0.6)";
+        ctx.beginPath();
+        ctx.moveTo(7, -22);
+        ctx.quadraticCurveTo(-18, -13, -5, 0);
+        ctx.quadraticCurveTo(-18, 13, 7, 22);
+        ctx.stroke();
 
-        ctx.strokeStyle = "#eef4fa";
+        ellipse(ctx, 8, -24, 3, 3, "#f5d76e", "#947018", 1);
+        ellipse(ctx, 8, 24, 3, 3, "#f5d76e", "#947018", 1);
+
+        ctx.lineWidth = 7.5;
+        ctx.strokeStyle = "#5a3014";
+        ctx.beginPath();
+        ctx.moveTo(-7, -5); ctx.lineTo(-5, 5);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "#f5c85a";
+        ctx.beginPath();
+        ctx.moveTo(-9, -4); ctx.lineTo(-4, 4);
+        ctx.moveTo(-9, 2); ctx.lineTo(-4, -4);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#f4f8fc";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(8, -24);
+        ctx.lineTo(-4, 0);
+        ctx.lineTo(8, 24);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#dfab64";
+        ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        ctx.moveTo(-16, 0); ctx.lineTo(26, 0);
+        ctx.stroke();
+
+        poly(ctx, [[26, -6], [38, 0], [26, 6], [29, 0]], "#eef4fa", "#3a4856", 1);
+        ctx.strokeStyle = "#90a0b0";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(36, 0); ctx.stroke();
+
+        poly(ctx, [[-16, 0], [-25, -6], [-20, 0], [-25, 6]], "#388e3c", "#1b5e20", 1);
+        poly(ctx, [[-14, 0], [-21, -4], [-17, 0], [-21, 4]], "#f5c85a");
+
+        ctx.restore();
+
+        poly(ctx, [[14, 18], [18, 14], [19, 19]], "#66bb6a");
+        poly(ctx, [[54, 52], [58, 48], [57, 54]], "#81c784");
+        drawSparkle(ctx, 58, 20, 2, "#d4edda");
+      });
+
+      // Tower 2: Mage (Runes orb portrait)
+      make("icon_tower_mage", 72, 72, (ctx) => {
+        drawBadge(ctx, 72, 72, "#321a58", "#160a30", "#0c041c");
+        ellipse(ctx, 36, 58, 20, 6, "rgba(0,0,0,0.5)");
+
+        ctx.strokeStyle = "rgba(160, 100, 240, 0.35)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(36, 31, 26, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(240, 190, 255, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.arc(36, 31, 24, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        poly(ctx, [[24, 54], [48, 54], [44, 46], [28, 46]], "#3a2456", "#f5c85a", 1.5);
+        rounded(ctx, 28, 44, 16, 5, 2, "#f5c85a", "#9a7018", 1);
+        ellipse(ctx, 36, 46, 3, 2, "#00f0ff");
+
+        const orbGlow = ctx.createRadialGradient(36, 31, 6, 36, 31, 26);
+        orbGlow.addColorStop(0, "rgba(210, 160, 255, 0.85)");
+        orbGlow.addColorStop(0.4, "rgba(140, 60, 230, 0.5)");
+        orbGlow.addColorStop(0.8, "rgba(60, 20, 150, 0.2)");
+        orbGlow.addColorStop(1, "rgba(20, 5, 60, 0)");
+        ellipse(ctx, 36, 31, 26, 26, orbGlow);
+
+        const orbGrad = ctx.createRadialGradient(31, 26, 2, 36, 31, 16);
+        orbGrad.addColorStop(0, "#ffffff");
+        orbGrad.addColorStop(0.2, "#f2e4ff");
+        orbGrad.addColorStop(0.5, "#a855f7");
+        orbGrad.addColorStop(0.85, "#4c1d95");
+        orbGrad.addColorStop(1, "#240954");
+        ellipse(ctx, 36, 31, 16, 16, orbGrad, "#e9d5ff", 1.5);
+
+        ctx.strokeStyle = "#70f0ff";
         ctx.lineWidth = 1.4;
         ctx.beginPath();
-        ctx.moveTo(7, -20); ctx.lineTo(-4, 0); ctx.lineTo(7, 20);
+        ctx.arc(36, 31, 12, -0.6, 1.8);
         ctx.stroke();
 
-        ctx.strokeStyle = "#f5c85a";
-        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#e8b4ff";
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.arc(-4, 0, 22, -0.22, 0.22);
+        ctx.moveTo(36, 22); ctx.lineTo(36, 40);
+        ctx.moveTo(30, 27); ctx.lineTo(42, 35);
+        ctx.moveTo(30, 35); ctx.lineTo(42, 27);
         ctx.stroke();
 
-        ctx.strokeStyle = "#d8b068";
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        ctx.moveTo(-4, 0); ctx.lineTo(26, 0);
-        ctx.stroke();
-
-        poly(ctx, [[26, -5], [34, 0], [26, 5]], "#e0e8f0", "#3a4450", 1);
-        poly(ctx, [[-4, 0], [-10, -4], [-7, 0], [-10, 4]], "#e04838");
-
-        ctx.restore();
+        ellipse(ctx, 30, 24, 3.5, 2.2, "rgba(255,255,255,0.9)");
+        drawSparkle(ctx, 18, 18, 3.5, "#ffffff");
+        drawSparkle(ctx, 54, 20, 2.5, "#70f0ff");
+        drawSparkle(ctx, 50, 44, 2.2, "#f5d76e");
+        drawSparkle(ctx, 20, 42, 2, "#e9d5ff");
       });
 
-      // Tower 2: Mage
-      make("icon_tower_mage", 72, 72, (ctx) => {
-        drawBadge(ctx, 72, 72, "#342260", "#1c1038", "#120a24");
-        ellipse(ctx, 36, 56, 18, 6, "rgba(0,0,0,0.4)");
-
-        ellipse(ctx, 36, 50, 16, 6, null, "#f5d76e", 2.8);
-
-        const glow = ctx.createRadialGradient(36, 32, 4, 36, 32, 22);
-        glow.addColorStop(0, "rgba(220, 180, 255, 0.9)");
-        glow.addColorStop(0.4, "rgba(140, 90, 240, 0.6)");
-        glow.addColorStop(0.8, "rgba(80, 40, 180, 0.2)");
-        glow.addColorStop(1, "rgba(40, 10, 120, 0)");
-        ellipse(ctx, 36, 32, 22, 22, glow);
-
-        const orbGrad = ctx.createRadialGradient(32, 28, 2, 36, 32, 14);
-        orbGrad.addColorStop(0, "#ffffff");
-        orbGrad.addColorStop(0.25, "#e4d6ff");
-        orbGrad.addColorStop(0.65, "#8c62f0");
-        orbGrad.addColorStop(1, "#361c78");
-        ellipse(ctx, 36, 32, 14, 14, orbGrad, "#f0e6ff", 1.5);
-
-        ellipse(ctx, 31, 27, 3, 3, "#ffffff");
-        drawSparkle(ctx, 20, 22, 3, "#ffffff");
-        drawSparkle(ctx, 52, 24, 2.5, "#d8c0ff");
-        drawSparkle(ctx, 48, 44, 2, "#ffffff");
-      });
-
-      // Tower 3: Artillery
+      // Tower 3: Artillery (Mortar barrel portrait)
       make("icon_tower_artillery", 72, 72, (ctx) => {
-        drawBadge(ctx, 72, 72, "#4e2c14", "#2c1608", "#1c0d04");
-        ellipse(ctx, 36, 56, 20, 7, "rgba(0,0,0,0.42)");
+        drawBadge(ctx, 72, 72, "#4a2410", "#1e0c04", "#100402");
+        ellipse(ctx, 36, 58, 22, 6, "rgba(0,0,0,0.5)");
 
-        rounded(ctx, 20, 44, 32, 12, 3, "#6a4018", "#2c1606", 2);
-        ellipse(ctx, 36, 52, 7, 7, "#8a5828", "#f5c85a", 1.6);
-        ellipse(ctx, 36, 52, 2.5, 2.5, "#2c1606");
+        const furnaceGlow = ctx.createRadialGradient(20, 52, 4, 30, 46, 28);
+        furnaceGlow.addColorStop(0, "rgba(255, 120, 20, 0.35)");
+        furnaceGlow.addColorStop(0.6, "rgba(180, 50, 10, 0.15)");
+        furnaceGlow.addColorStop(1, "rgba(40, 10, 0, 0)");
+        ellipse(ctx, 30, 46, 28, 28, furnaceGlow);
+
+        rounded(ctx, 16, 45, 40, 14, 4, "#5c3418", "#2a1408", 2);
+        ellipse(ctx, 26, 52, 4, 4, "#8a94a0", "#202428", 1);
+        ellipse(ctx, 46, 52, 4, 4, "#8a94a0", "#202428", 1);
 
         ctx.save();
-        ctx.translate(34, 46);
-        ctx.rotate(-0.55);
+        ctx.translate(34, 40);
+        ctx.rotate(-0.52);
 
-        const ironGrad = ctx.createLinearGradient(0, -10, 0, 10);
-        ironGrad.addColorStop(0, "#88929c");
-        ironGrad.addColorStop(0.4, "#4a525a");
-        ironGrad.addColorStop(0.8, "#282c32");
-        ironGrad.addColorStop(1, "#181a1e");
-        rounded(ctx, -8, -10, 36, 20, 4, ironGrad, "#0e1012", 2);
+        const ironGrad = ctx.createLinearGradient(-10, -14, 26, 14);
+        ironGrad.addColorStop(0, "#9ea8b2");
+        ironGrad.addColorStop(0.35, "#525a62");
+        ironGrad.addColorStop(0.7, "#282c32");
+        ironGrad.addColorStop(1, "#141618");
 
-        rounded(ctx, 24, -12, 7, 24, 3, "#606872", "#0e1012", 1.5);
-        ellipse(ctx, 30, 0, 2.5, 9, "#0c0d0f");
+        rounded(ctx, -10, -13, 38, 26, 5, ironGrad, "#0e1012", 2);
 
-        ctx.strokeStyle = "#f5d76e";
-        ctx.lineWidth = 2.5;
+        const bronzeGrad = ctx.createLinearGradient(24, -15, 32, 15);
+        bronzeGrad.addColorStop(0, "#f5d76e");
+        bronzeGrad.addColorStop(0.5, "#b88c28");
+        bronzeGrad.addColorStop(1, "#664810");
+        rounded(ctx, 24, -15, 9, 30, 4, bronzeGrad, "#3d2a08", 1.5);
+
+        ellipse(ctx, 32, 0, 3, 11, "#180400", "#f5c85a", 1);
+        ellipse(ctx, 32, 0, 1.8, 8, "#660c00");
+
+        ctx.strokeStyle = "#f5c85a";
+        ctx.lineWidth = 2.2;
         ctx.beginPath();
-        ctx.moveTo(4, -10); ctx.lineTo(4, 10);
-        ctx.moveTo(16, -10); ctx.lineTo(16, 10);
+        ctx.moveTo(6, -13); ctx.lineTo(6, 13);
         ctx.stroke();
+        ellipse(ctx, 6, -8, 1.2, 1.2, "#ffffff");
+        ellipse(ctx, 6, 8, 1.2, 1.2, "#ffffff");
+
+        ctx.strokeStyle = "#d0a070";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-6, -13);
+        ctx.quadraticCurveTo(-14, -20, -22, -16);
+        ctx.stroke();
+
+        ellipse(ctx, -22, -16, 4, 4, "#ffaa00");
+        drawSparkle(ctx, -22, -16, 4.5, "#ffffff");
 
         ctx.restore();
 
-        ellipse(ctx, 18, 52, 4.5, 4.5, "#2a3038");
-        ellipse(ctx, 24, 52, 4.5, 4.5, "#2a3038");
-        ellipse(ctx, 21, 46, 4.5, 4.5, "#2a3038");
-        ellipse(ctx, 20, 45, 1.2, 1.2, "#8a94a0");
+        ellipse(ctx, 16, 51, 5, 5, "#30363d", "#141618", 1.5);
+        ellipse(ctx, 15, 49, 1.2, 1.2, "#ffffff");
+        ellipse(ctx, 23, 51, 5, 5, "#30363d", "#141618", 1.5);
+        ellipse(ctx, 22, 49, 1.2, 1.2, "#ffffff");
+        ellipse(ctx, 19.5, 43, 5, 5, "#3a424a", "#141618", 1.5);
+        ellipse(ctx, 18.5, 41, 1.4, 1.4, "#ffffff");
+
+        ellipse(ctx, 56, 22, 1.5, 1.5, "#ffcc00");
+        ellipse(ctx, 62, 34, 1.2, 1.2, "#ff6600");
+        ellipse(ctx, 50, 16, 1, 1, "#ffa000");
       });
 
-      // Tower 4: Barracks
+      // Tower 4: Barracks (Guard shield portrait)
       make("icon_tower_barracks", 72, 72, (ctx) => {
-        drawBadge(ctx, 72, 72, "#4a4218", "#28240a", "#181504");
-        ellipse(ctx, 36, 58, 18, 6, "rgba(0,0,0,0.42)");
+        drawBadge(ctx, 72, 72, "#423816", "#201a08", "#120e04");
+        ellipse(ctx, 36, 58, 22, 6, "rgba(0,0,0,0.5)");
 
-        ctx.strokeStyle = "#d8e0e8"; ctx.lineWidth = 3.5;
-        ctx.beginPath(); ctx.moveTo(18, 16); ctx.lineTo(54, 52); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(54, 16); ctx.lineTo(18, 52); ctx.stroke();
-        ctx.strokeStyle = "#f5c85a"; ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.moveTo(14, 20); ctx.lineTo(22, 12); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(58, 20); ctx.lineTo(50, 12); ctx.stroke();
+        ctx.strokeStyle = "#e2eafd"; ctx.lineWidth = 4; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(14, 14); ctx.lineTo(58, 54); ctx.stroke();
+        ctx.strokeStyle = "#404c5a"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(14, 14); ctx.lineTo(58, 54); ctx.stroke();
 
-        const shieldGrad = ctx.createLinearGradient(20, 20, 52, 56);
-        shieldGrad.addColorStop(0, "#4e823e");
-        shieldGrad.addColorStop(0.5, "#2d5422");
-        shieldGrad.addColorStop(1, "#162e10");
+        ctx.strokeStyle = "#e2eafd"; ctx.lineWidth = 4; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(58, 14); ctx.lineTo(14, 54); ctx.stroke();
+        ctx.strokeStyle = "#404c5a"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(58, 14); ctx.lineTo(14, 54); ctx.stroke();
+
+        ctx.strokeStyle = "#f5c85a"; ctx.lineWidth = 4.5;
+        ctx.beginPath(); ctx.moveTo(10, 18); ctx.lineTo(20, 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(62, 18); ctx.lineTo(52, 10); ctx.stroke();
+        ellipse(ctx, 12, 12, 2.5, 2.5, "#ffd700", "#8a6010", 1);
+        ellipse(ctx, 60, 12, 2.5, 2.5, "#ffd700", "#8a6010", 1);
+
+        const shieldGrad = ctx.createLinearGradient(20, 18, 52, 56);
+        shieldGrad.addColorStop(0, "#2a5482");
+        shieldGrad.addColorStop(0.5, "#183454");
+        shieldGrad.addColorStop(1, "#0c1a2e");
 
         ctx.beginPath();
-        ctx.moveTo(22, 20);
-        ctx.lineTo(50, 20);
-        ctx.quadraticCurveTo(52, 38, 36, 56);
-        ctx.quadraticCurveTo(20, 38, 22, 20);
+        ctx.moveTo(20, 20);
+        ctx.lineTo(52, 20);
+        ctx.quadraticCurveTo(54, 38, 36, 57);
+        ctx.quadraticCurveTo(18, 38, 20, 20);
         ctx.closePath();
         ctx.fillStyle = shieldGrad;
         ctx.fill();
-        ctx.strokeStyle = "#f5d76e";
-        ctx.lineWidth = 2.5;
+
+        const rimGrad = ctx.createLinearGradient(20, 20, 52, 56);
+        rimGrad.addColorStop(0, "#f5d76e");
+        rimGrad.addColorStop(0.5, "#c89a28");
+        rimGrad.addColorStop(1, "#78540c");
+        ctx.strokeStyle = rimGrad;
+        ctx.lineWidth = 3;
         ctx.stroke();
 
-        ctx.fillStyle = "#ffd866";
-        ctx.fillRect(33, 23, 6, 26);
-        ctx.fillRect(25, 29, 22, 6);
+        for (const [rx, ry] of [[23, 23], [49, 23], [36, 52], [24, 36], [48, 36]]) {
+          ellipse(ctx, rx, ry, 1.4, 1.4, "#e0e8f0", "#303840", 0.8);
+        }
+
+        ctx.fillStyle = "#f5c85a";
+        ctx.fillRect(33, 24, 6, 24);
+        ctx.fillRect(25, 30, 22, 6);
         ctx.strokeStyle = "#8a5810";
         ctx.lineWidth = 1;
-        ctx.strokeRect(33, 23, 6, 26);
-        ctx.strokeRect(25, 29, 22, 6);
-        ellipse(ctx, 36, 32, 2.5, 2.5, "#e04838");
+        ctx.strokeRect(33, 24, 6, 24);
+        ctx.strokeRect(25, 30, 22, 6);
+
+        ellipse(ctx, 36, 33, 4, 4, "#e04838", "#80180c", 1);
+        ellipse(ctx, 34.5, 31.5, 1.2, 1.2, "#ffffff");
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(24, 22); ctx.lineTo(46, 44);
+        ctx.stroke();
       });
 
       // Spell 1: Meteor
