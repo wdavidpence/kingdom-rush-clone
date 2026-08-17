@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.46";
+  const KRC_VERSION = "1.0.47";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -60,6 +60,7 @@
       this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
       this.gold = this.startData?.gold ?? 280;
       this.lives = this.startData?.lives ?? 20;
+      this.lives += this.starBonusLives();
       this.heroKind = this.startData?.heroKind === "sentinel" ? "sentinel" : "captain";
       if (this.qaMode && new URLSearchParams(window.location.search).get("hero") === "sentinel") {
         this.heroKind = "sentinel";
@@ -2533,6 +2534,21 @@ const bannerY = 98;
           .setOrigin(0.5)
           .setDepth(502)
       );
+
+      if (this.starBonusLives() > 0) {
+        const aegisBg = this.add
+          .rectangle(W / 2, 548, 220, 22, 0x24150a, 0.95)
+          .setStrokeStyle(1.5, 0xd8b548, 0.9)
+          .setDepth(503);
+        const aegisText = this.add
+          .text(W / 2, 548, "3★ AEGIS +1 LIFE", {
+            font: "bold 11px Cinzel",
+            color: "#f5c85a",
+          })
+          .setOrigin(0.5)
+          .setDepth(504);
+        this.overlay.add([aegisBg, aegisText]);
+      }
     }
 
     beginMap(mapIndex) {
@@ -5680,6 +5696,15 @@ const bannerY = 98;
       }
       created.push(title, sub, btnShadow, btn, btnShine, btnLip, txt);
       return created;
+    }
+
+    countPerfectStars() {
+      const results = this.campaign?.results || {};
+      return Object.values(results).filter((r) => (r?.stars || 0) >= 3).length;
+    }
+
+    starBonusLives() {
+      return this.countPerfectStars() > 0 ? 1 : 0;
     }
 
     computeStars() {
