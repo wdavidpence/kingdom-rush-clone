@@ -18,9 +18,11 @@ assert.equal(data.maps[3].name, "Gale Reach");
 assert.equal(data.maps[4].name, "Ash Spire");
 assert.equal(data.waves.length, 10, "wave schedule should retain ten waves");
 assert.deepEqual(Object.keys(data.towers).sort(), ["archer", "artillery", "barracks", "mage"]);
-assert.deepEqual(Object.keys(data.enemies).sort(), ["boss", "brood", "brute", "ember", "flyer", "hexer", "scout", "shield", "titan"]);
+assert.deepEqual(Object.keys(data.enemies).sort(), ["boss", "brood", "brute", "drift", "ember", "flyer", "hexer", "scout", "shield", "titan"]);
+assert.equal(data.enemies.drift.phaseWalk, true);
 assert.ok(data.enemies.hexer.aura && data.enemies.hexer.support, "hexer must be a support/control archetype with an aura");
 assert.ok(data.enemies.boss.phases, "final boss must declare telegraphed phases");
+assert.ok(data.waves.some((w) => w.packs.some(([type]) => type === "drift")));
 assert.ok(data.waves.some((w) => w.packs.some(([type]) => type === "hexer")), "campaign waves must include the hexer support archetype");
 assert.ok(data.waves[0].gold >= 20, "early-wave economy should fund opening builds");
 
