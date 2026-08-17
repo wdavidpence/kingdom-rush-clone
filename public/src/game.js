@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.26";
+  const KRC_VERSION = "1.0.27";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2543,6 +2543,17 @@
       if (type === "barracks") {
         tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
         tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
+        if (!this.settings?.reducedMotion) {
+          this.tweens.add({
+            targets: tower.rallyFlag,
+            angle: { from: -3.5, to: 3.5 },
+            scaleX: { from: 0.95, to: 1.05 },
+            duration: 900,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        }
         tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(0);
         tower.cooldown = 0.35;
         tower.readyBadge = this.add
@@ -2897,6 +2908,15 @@
     toggleReducedMotion() {
       this.settings.reducedMotion = !this.settings.reducedMotion;
       this.settings = window.KRCSettings?.save?.({ reducedMotion: this.settings.reducedMotion }) || this.settings;
+      if (this.settings.reducedMotion) {
+        for (const tower of this.towers) {
+          if (tower.rallyFlag && this.tweens.isTweening(tower.rallyFlag)) {
+            this.tweens.killTweensOf(tower.rallyFlag);
+            tower.rallyFlag.setAngle(0);
+            tower.rallyFlag.setScale(1);
+          }
+        }
+      }
       this.say(this.settings.reducedMotion ? "Reduced motion enabled." : "Full motion enabled.");
       return this.settings.reducedMotion;
     }
@@ -3887,6 +3907,17 @@
     updateBarracks(tower, dt) {
       const cfg = TOWERS.barracks;
       const readiness = window.KRCBarracksReadiness;
+      if (tower.rallyFlag && !this.settings?.reducedMotion && !this.tweens.isTweening(tower.rallyFlag)) {
+        this.tweens.add({
+          targets: tower.rallyFlag,
+          angle: { from: -3.5, to: 3.5 },
+          scaleX: { from: 0.95, to: 1.05 },
+          duration: 900,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      }
       tower.cooldown -= dt;
       const alive = tower.soldiers.filter((s) => !s.dead);
       tower.soldiers = alive;
@@ -3996,16 +4027,36 @@
         duration: flashKind === "crit" ? 180 : 120,
         onComplete: () => spark.destroy(),
       });
+      if (flashKind === "crit") this.flashText("CLASH", midX, midY - 16, "#fff1a0");
+      if (this.settings?.reducedMotion) return;
+
       if (soldier.sprite) {
+        const shoveFactor = flashKind === "crit" ? 0.16 : 0.13;
         this.tweens.add({
           targets: soldier.sprite,
-          x: soldier.x + (enemy.x - soldier.x) * 0.08,
-          y: soldier.y - 4 + (enemy.y - soldier.y) * 0.08,
+          x: soldier.x + (enemy.x - soldier.x) * shoveFactor,
+          y: soldier.y - 4 + (enemy.y - soldier.y) * shoveFactor,
           yoyo: true,
-          duration: 70,
+          duration: 75,
         });
       }
-      if (flashKind === "crit") this.flashText("CLASH", midX, midY - 16, "#fff1a0");
+
+      const streakCount = flashKind === "crit" ? 4 : 3;
+      for (let i = 0; i < streakCount; i += 1) {
+        const angle = (i * Math.PI * 2) / streakCount + (Math.random() - 0.5) * 0.4;
+        const dist = (flashKind === "crit" ? 18 : 12) + Math.random() * 6;
+        const endX = midX + Math.cos(angle) * dist;
+        const endY = midY + Math.sin(angle) * dist;
+        const streak = this.add.line(0, 0, midX, midY, endX, endY, color, 0.85)
+          .setLineWidth(flashKind === "crit" ? 2 : 1.5)
+          .setDepth(71);
+        this.tweens.add({
+          targets: streak,
+          alpha: 0,
+          duration: flashKind === "crit" ? 160 : 110,
+          onComplete: () => streak.destroy(),
+        });
+      }
     }
 
     fireGuardArrow(soldier, target, damage) {
