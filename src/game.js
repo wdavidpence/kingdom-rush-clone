@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.54";
+  const KRC_VERSION = "1.0.55";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3382,7 +3382,11 @@ const bannerY = 98;
             this.endGame(true);
           }
         } else {
-          this.gold += 22 + this.waveIndex * 5;
+          const bonus = this.waveIndex >= 6 ? 32 + this.waveIndex * 5 : 22 + this.waveIndex * 5;
+          this.gold += bonus;
+          if (this.waveIndex >= 6) {
+            this.flashText(`+${bonus} LATE`, W / 2, 120, "#fff2ba");
+          }
           this.say(`Wave cleared. Prepare for ${WAVES[this.waveIndex].label}.`);
           this.beginWaveCalm();
         }
