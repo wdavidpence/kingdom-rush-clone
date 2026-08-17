@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.22";
+  const KRC_VERSION = "1.0.23";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1635,7 +1635,11 @@
         dead: false,
         isHero: true,
       });
-      this.hero.ring = this.add.circle(post.x, post.y, 34, 0xf5d76e, 0.12).setStrokeStyle(2, 0xf5d76e, 0.6).setDepth(37).setVisible(false);
+      const ringContainer = this.add.container(post.x, post.y).setDepth(37).setVisible(false);
+      const innerDisc = this.add.circle(0, 0, 22, 0xf5d76e, 0.18);
+      const outerRing = this.add.circle(0, 0, 34, 0xf5d76e, 0.08).setStrokeStyle(3.5, 0xf5d76e, 0.9);
+      ringContainer.add([innerDisc, outerRing]);
+      this.hero.ring = ringContainer;
       this.hero.sprite = this.add.image(post.x, post.y - 10, "hero_captain").setScale(0.82).setDepth(46);
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
@@ -1853,6 +1857,27 @@
         btn.cooldownBar = this.add.rectangle(x - 42, SHOP_Y + 55, 1, 4, 0xf5d76e, 0.95).setOrigin(0, 0.5).setDepth(102);
         this.heroButtons.push(btn);
       }
+      // Captain portrait plate (hero_captain image in wood/gold frame)
+      const plateX = 368;
+      const plateY = SHOP_Y + 33;
+      const plateW = 84;
+      const plateH = 54;
+      const plateShadow = this.add.rectangle(plateX + 2, plateY + 2, plateW, plateH, 0x050704, 0.55).setDepth(99);
+      const plateBg = this.add.rectangle(plateX, plateY, plateW, plateH, 0x3d2716, 0.98).setStrokeStyle(2, 0xd4af37, 0.9).setDepth(100);
+      const plateInner = this.add.rectangle(plateX, plateY, plateW - 10, plateH - 10, 0x1f1712, 0.95).setStrokeStyle(1, 0x8a6a42, 0.6).setDepth(100.2);
+      const plateMat = this.add.rectangle(plateX, plateY, plateW - 16, plateH - 16, 0x243242, 0.85).setDepth(100.4);
+      const plateImg = this.add.image(plateX, plateY - 1, "hero_captain").setScale(1.0).setDepth(100.6);
+      const plateShine = this.add.rectangle(plateX, plateY - plateH / 2 + 3, plateW - 10, 2, 0xfff8d0, 0.35).setDepth(100.8);
+      const plateLabel = this.add.text(plateX, plateY + 18, "CAPTAIN", {
+        font: "900 8px 'Cinzel', 'Source Sans 3', Arial",
+        color: "#f5c85a",
+      }).setOrigin(0.5).setDepth(101);
+
+      const plateElements = [plateShadow, plateBg, plateInner, plateMat, plateImg, plateShine, plateLabel];
+      plateElements.setVisible = (val) => {
+        for (const el of plateElements) el.setVisible(val);
+      };
+      this.heroPortraitPlate = plateElements;
       this.infoText = this.add
         .text(12, SHOP_Y + 61, "Tap a tower type, then tap a build pad.", {
           font: "12px 'Source Sans 3', Arial",
@@ -2071,6 +2096,7 @@
       for (const btn of this.heroButtons || []) btn.setVisible(active);
       for (const btn of this.spellButtons || []) btn.cooldownBar?.setVisible(!active);
       for (const btn of this.heroButtons || []) btn.cooldownBar?.setVisible(active);
+      this.heroPortraitPlate?.setVisible(active);
     }
 
     showStartOverlay() {
@@ -3897,6 +3923,12 @@
       hero.sprite.setPosition(hero.x, hero.y - 8);
       hero.sprite.rotation = attackTarget ? Math.sin(this.time.now * 0.025) * 0.1 : 0;
       hero.ring.setPosition(hero.x, hero.y);
+      if (this.heroSelected && !this.settings?.reducedMotion) {
+        const pulseScale = 1 + Math.sin(this.time.now * 0.006) * 0.08;
+        hero.ring.setScale(pulseScale);
+      } else {
+        hero.ring.setScale(1);
+      }
       hero.barBg.setPosition(hero.x, hero.y - 31);
       hero.bar.setPosition(hero.x - 15, hero.y - 31);
       hero.bar.width = Math.max(1, 30 * (hero.hp / hero.maxHp));
