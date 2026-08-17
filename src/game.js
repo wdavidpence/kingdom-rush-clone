@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.57";
+  const KRC_VERSION = "1.0.58";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2245,7 +2245,7 @@ const bannerY = 98;
           heroPickSentinel.text.setColor(!isCap ? "#ffd866" : "#aaaaaa");
         }
       };
-      heroPickCaptain = this.makeButton(90, 70, 100, 26, "CAPTAIN", 0x243548, () => {
+      heroPickCaptain = this.makeButton(W / 2 - 80, 668, 120, 30, "CAPTAIN", 0x243548, () => {
         this.heroKind = "captain";
         updateHeroPicks();
         this.applyHeroKind();
@@ -2253,7 +2253,7 @@ const bannerY = 98;
         font: "bold 11px Cinzel",
         tooltip: () => "Hero: Captain\nDamage & dash-charge hunter.",
       });
-      heroPickSentinel = this.makeButton(230, 70, 100, 26, "SENTINEL", 0x334440, () => {
+      heroPickSentinel = this.makeButton(W / 2 + 80, 668, 120, 30, "SENTINEL", 0x334440, () => {
         this.heroKind = "sentinel";
         updateHeroPicks();
         this.applyHeroKind();
@@ -2531,9 +2531,9 @@ const bannerY = 98;
         ironBtn.setLabel(on ? "IRON WATCH: ON" : "IRON WATCH: OFF");
       };
       ironBtn = this.makeButton(
-        W / 2,
-        430,
-        160,
+        W / 2 - 80,
+        706,
+        150,
         28,
         this.ironMode ? "IRON WATCH: ON" : "IRON WATCH: OFF",
         0x1c241a,
@@ -2551,10 +2551,10 @@ const bannerY = 98;
       this.overlay.add([ironBtn.shadow, ironBtn.bg, ironBtn.shine, ironBtn.lip, ironBtn.text].filter(Boolean));
 
       const motionBtn = this.makeButton(
-        W / 2,
-        480,
-        210,
-        36,
+        W / 2 + 80,
+        706,
+        150,
+        28,
         this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL",
         0x334657,
         () => {
@@ -2565,7 +2565,7 @@ const bannerY = 98;
         {
           icon: this.settings.reducedMotion ? "icon_motion_reduced" : "icon_motion_full",
           iconScale: 0.44,
-          iconOffsetX: -68,
+          iconOffsetX: -52,
           textOffsetX: 12,
           font: "bold 13px 'Source Sans 3', Arial",
           tooltip: () => "Toggle Motion (R)\nSwitch between full and reduced motion effects.",
@@ -2575,7 +2575,7 @@ const bannerY = 98;
 
       this.overlay.add(
         this.add
-          .text(W / 2, 520, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
+          .text(W / 2, 738, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
             font: "12px 'Source Sans 3', Arial",
             color: "#a9b59d",
             align: "center",
@@ -2587,11 +2587,11 @@ const bannerY = 98;
 
       if (this.starBonusLives() > 0) {
         const aegisBg = this.add
-          .rectangle(W / 2, 548, 220, 22, 0x24150a, 0.95)
+          .rectangle(W / 2 - 80, 148, 160, 20, 0x24150a, 0.95)
           .setStrokeStyle(1.5, 0xd8b548, 0.9)
           .setDepth(503);
         const aegisText = this.add
-          .text(W / 2, 548, "3★ AEGIS +1 LIFE", {
+          .text(W / 2 - 80, 148, "3★ AEGIS +1 LIFE", {
             font: "bold 11px Cinzel",
             color: "#f5c85a",
           })
@@ -2602,11 +2602,11 @@ const bannerY = 98;
 
       if (this.spellRank() > 1) {
         const spellPlaqueBg = this.add
-          .rectangle(W / 2, 70, 90, 22, 0x24150a, 0.95)
+          .rectangle(W / 2 + 80, 148, 90, 20, 0x24150a, 0.95)
           .setStrokeStyle(1.5, 0xd8b548, 0.9)
           .setDepth(503);
         const spellPlaqueText = this.add
-          .text(W / 2, 70, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, {
+          .text(W / 2 + 80, 148, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, {
             font: "bold 11px Cinzel",
             color: "#f5c85a",
           })
