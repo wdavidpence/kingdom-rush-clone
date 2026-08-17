@@ -12,7 +12,9 @@ vm.runInNewContext(source, context, { filename: "game-data.js" });
 
 const data = context.window.KRCGameData;
 assert.ok(data, "game data should be exposed at window.KRCGameData");
-assert.equal(data.maps.length, 3, "campaign should retain all three maps");
+assert.equal(data.maps.length, 4, "campaign should retain all four maps");
+assert.equal(data.maps[0].name, "Forest Gate");
+assert.equal(data.maps[3].name, "Gale Reach");
 assert.equal(data.waves.length, 10, "wave schedule should retain ten waves");
 assert.deepEqual(Object.keys(data.towers).sort(), ["archer", "artillery", "barracks", "mage"]);
 assert.deepEqual(Object.keys(data.enemies).sort(), ["boss", "brood", "brute", "ember", "flyer", "hexer", "scout", "shield", "titan"]);

@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.47";
+  const KRC_VERSION = "1.0.48";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1083,6 +1083,7 @@
         { accent: 0x3a5a2e, accent2: 0x1e3018, road: 0x9a7a4a, roadEdge: 0x4a3420, pathMid: 0xc4a06a, tint: 0xffffff, skyTop: 0x6a9ac8, skyBot: 0xb8d8a0 },
         { accent: 0x3a4a50, accent2: 0x1a282c, road: 0x8a9098, roadEdge: 0x3a4048, pathMid: 0xb0b8c0, tint: 0xc8d0d8, skyTop: 0x5a7088, skyBot: 0x90a8a0 },
         { accent: 0x4a3a20, accent2: 0x2a2410, road: 0xb07a42, roadEdge: 0x5a3a18, pathMid: 0xe0a060, tint: 0xe8c898, skyTop: 0xc07040, skyBot: 0xa08040 },
+        { accent: 0x3a5550, accent2: 0x1a2c2a, road: 0x8a9a90, roadEdge: 0x3a4840, pathMid: 0xc0d0c4, tint: 0xd0e0d8, skyTop: 0x6a8890, skyBot: 0x90b0a0 },
       ];
       const theme = themes[this.mapIndex] || themes[0];
 
@@ -2341,16 +2342,18 @@ const bannerY = 98;
         "Forest Gate\nLush woodland path. Balanced lanes.\nDefend against agile scouts & brutes!",
         "Stone Pass\nNarrow rocky canyon pass.\nArmor-heavy forces and flyers ahead!",
         "Ember Marsh\nVolcanic swamp with lava fissures.\nBeware of exploding embers and bosses!",
+        "Gale Reach\nWindy cliff cut. Cross-gusts hide flyers.\nHold the switchbacks!",
       ];
 
-      // Short name plaque titles under each node (Forest / Stone / Ember)
-      const shortNames = ["Forest", "Stone", "Ember"];
+      // Short name plaque titles under each node (Forest / Stone / Ember / Gale)
+      const shortNames = ["Forest", "Stone", "Ember", "Gale"];
 
       // Node Positions on the painted map board (HARD RULE: Forest Gate stays at { x: 100, y: 375 })
       const nodePositions = [
         { x: 100, y: 375 }, // Node 0: Forest Gate (bottom-left)
         { x: 210, y: 295 }, // Node 1: Stone Pass (center)
         { x: 310, y: 225 }, // Node 2: Ember Marsh (top-right)
+        { x: 350, y: 140 }, // Node 3: Gale Reach
       ];
 
       // Draw connecting path segments between nodes
@@ -2392,6 +2395,8 @@ const bannerY = 98;
       drawPathSegment(nodePositions[0], nodePositions[1], !!this.campaign.unlocked[1]);
       // Path 1 -> 2 (unlocked if node 2 is unlocked)
       drawPathSegment(nodePositions[1], nodePositions[2], !!this.campaign.unlocked[2]);
+      // Path 2 -> 3 (unlocked if node 3 is unlocked)
+      drawPathSegment(nodePositions[2], nodePositions[3], !!this.campaign.unlocked[3]);
 
       // Render Map Nodes
       MAPS.forEach((map, index) => {
@@ -2570,6 +2575,8 @@ const bannerY = 98;
         this.add.rectangle(W / 2, H / 2, W, H, 0x3a3a3a, 0.06).setDepth(5);
       } else if (mapIndex === 2) { // Ember Marsh
         this.add.rectangle(W / 2, H / 2, W, H, 0x3a1a0a, 0.08).setDepth(5);
+      } else if (mapIndex === 3) {
+        this.add.rectangle(W / 2, H / 2, W, H, 0x1a2c2c, 0.08).setDepth(5);
       }
       this.say(`${this.map.name}: build two towers, then CALL. Tap pads for range preview.`);
     }
