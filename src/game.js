@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.58";
+  const KRC_VERSION = "1.0.59";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3299,6 +3299,7 @@ const bannerY = 98;
       }
       this.waveTotal = this.queue.length;
       this.waveActive = true;
+      this.audio.riseOnCall();
       this.spawnTimer = 0.1;
       this.audio.play("start", 0.35, 1.08);
 
@@ -3398,6 +3399,7 @@ const bannerY = 98;
 
     beginWaveCalm() {
       this.waveCalmUntil = this.time.now + 1400;
+      this.audio.fallOnCalm();
       for (const e of this.effects) {
         if ((e.life || 0) > 0.12) e.life = Math.min(e.life, 0.18);
       }
@@ -6211,6 +6213,28 @@ const bannerY = 98;
       const music = this.samples.music;
       if (music?.isPlaying) music.stop();
       this.musicStarted = false;
+    }
+
+    riseOnCall() {
+      this.lastMusicCue = "rise";
+      if (this.muted) return;
+      const music = this.samples.music;
+      if (music?.isPlaying) {
+        music.setRate(1.12);
+        music.setVolume(0.14 * this.musicVolume);
+      }
+      this.tone(196, 0.12, "sawtooth", 0.02 * this.musicVolume);
+      this.tone(294, 0.1, "triangle", 0.012 * this.musicVolume, 0.04);
+    }
+
+    fallOnCalm() {
+      this.lastMusicCue = "fall";
+      if (this.muted) return;
+      const music = this.samples.music;
+      if (music?.isPlaying) {
+        music.setRate(0.96);
+        music.setVolume(0.09 * this.musicVolume);
+      }
     }
 
     startAmbience(mapIndex) {
