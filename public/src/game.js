@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.24";
+  const KRC_VERSION = "1.0.25";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3591,6 +3591,7 @@
       projectile.sprite.setScale(tower.type === "artillery" ? 1.1 : 0.9);
       projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
       projectile.trailColor = color;
+      projectile.family = tower.type;
       this.projectiles.push(projectile);
       if (tower.type === "archer") {
         this.audio.playLayered("archerShoot");
@@ -3675,11 +3676,13 @@
         const d = Phaser.Math.Distance.Between(p.x, p.y, p.target.x, p.target.y);
         const step = p.speed * dt;
         if (d <= step || d < 8) {
+          const hitX = p.target.x;
+          const hitY = p.target.y;
+          const family = p.family || (p.tower ? p.tower.type : "archer");
+          this.createImpactDebris(hitX, hitY, family);
           if (p.splash) {
             this.explode(p.target.x, p.target.y, p.splash, p.damage, false);
           } else {
-            const hitX = p.target.x;
-            const hitY = p.target.y;
             this.damageEnemy(p.target, p.damage, { magic: p.magic, slow: p.slow });
             if (p.chain) this.chainMagic(hitX, hitY, p.damage, p.chain);
           }
@@ -3689,11 +3692,151 @@
           p.y += ((p.target.y - p.y) / d) * step;
           p.sprite.setPosition(p.x, p.y);
           p.sprite.rotation = Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
-          if (!this.settings.reducedMotion && Math.random() < 0.3) {
-            const trail = this.add.line(0, 0, p.x - Math.cos(p.sprite.rotation) * 8, p.y - Math.sin(p.sprite.rotation) * 8,
-              p.x, p.y, p.trailColor || 0xfff0c0, 0.4).setLineWidth(1.5).setDepth(59);
-            this.tweens.add({ targets: trail, alpha: 0, duration: 120, onComplete: () => trail.destroy() });
-          }
+          this.createProjectileTrail(p);
+        }
+      }
+    }
+
+    createProjectileTrail(p) {
+      if (this.settings?.reducedMotion) return;
+      const family = p.family || (p.tower ? p.tower.type : "archer");
+      const rot = p.sprite ? p.sprite.rotation : Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
+      const cos = Math.cos(rot);
+      const sin = Math.sin(rot);
+
+      if (family === "archer") {
+        const length = 12;
+        const startX = p.x - cos * length;
+        const startY = p.y - sin * length;
+        const isGold = Math.random() < 0.65;
+        const color = isGold ? 0xf0c040 : 0xd4a359;
+        const streak = this.add.line(0, 0, startX, startY, p.x, p.y, color, 0.6)
+          .setLineWidth(1.5)
+          .setDepth(59);
+        this.tweens.add({
+          targets: streak,
+          alpha: 0,
+          duration: 110,
+          onComplete: () => streak.destroy(),
+        });
+      } else if (family === "mage") {
+        const backX = p.x - cos * 6 + (Math.random() - 0.5) * 4;
+        const backY = p.y - sin * 6 + (Math.random() - 0.5) * 4;
+        const moteColor = Math.random() < 0.5 ? 0x00ffff : 0x70efff;
+        const spark = this.add.circle(backX, backY, 1.5 + Math.random() * 1.5, moteColor, 0.85).setDepth(59);
+        const driftAngle = rot + Math.PI + (Math.random() - 0.5) * 0.8;
+        const dist = 6 + Math.random() * 6;
+        this.tweens.add({
+          targets: spark,
+          x: backX + Math.cos(driftAngle) * dist,
+          y: backY + Math.sin(driftAngle) * dist,
+          alpha: 0,
+          scale: 0.2,
+          duration: 160 + Math.random() * 60,
+          onComplete: () => spark.destroy(),
+        });
+      } else if (family === "artillery") {
+        const backX = p.x - cos * 8;
+        const backY = p.y - sin * 8;
+        const smoke = this.add.circle(
+          backX + (Math.random() - 0.5) * 3,
+          backY + (Math.random() - 0.5) * 3,
+          4,
+          0x555555,
+          0.45
+        ).setDepth(58);
+        this.tweens.add({
+          targets: smoke,
+          scale: 1.8,
+          alpha: 0,
+          duration: 230,
+          onComplete: () => smoke.destroy(),
+        });
+
+        if (Math.random() < 0.6) {
+          const emberColor = Math.random() < 0.5 ? 0xff6600 : 0xffaa00;
+          const ember = this.add.circle(
+            backX + (Math.random() - 0.5) * 4,
+            backY + (Math.random() - 0.5) * 4,
+            1.5 + Math.random() * 1.0,
+            emberColor,
+            0.9
+          ).setDepth(59);
+          this.tweens.add({
+            targets: ember,
+            x: ember.x + (Math.random() - 0.5) * 8,
+            y: ember.y + (Math.random() - 0.5) * 8,
+            alpha: 0,
+            duration: 140,
+            onComplete: () => ember.destroy(),
+          });
+        }
+      }
+    }
+
+    createImpactDebris(x, y, family) {
+      if (this.settings?.reducedMotion) return;
+
+      if (family === "archer") {
+        const count = 5;
+        const colors = [0xf0c040, 0xd4a359, 0xffecb3];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 40 + Math.random() * 50;
+          const color = colors[i % colors.length];
+          const chip = this.add.circle(x, y, 1.5 + Math.random(), color, 0.85).setDepth(80);
+          this.tweens.add({
+            targets: chip,
+            x: x + Math.cos(angle) * (speed * 0.15),
+            y: y + Math.sin(angle) * (speed * 0.15),
+            alpha: 0,
+            scale: 0.3,
+            duration: 180 + Math.random() * 60,
+            onComplete: () => chip.destroy(),
+          });
+        }
+      } else if (family === "mage") {
+        const count = 6;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 50 + Math.random() * 60;
+          const color = Math.random() < 0.5 ? 0x00ffff : 0x80eeff;
+          const spark = this.add.circle(x, y, 2 + Math.random() * 1.5, color, 0.9).setDepth(80);
+          this.tweens.add({
+            targets: spark,
+            x: x + Math.cos(angle) * (speed * 0.18),
+            y: y + Math.sin(angle) * (speed * 0.18),
+            alpha: 0,
+            scale: 0.2,
+            duration: 200 + Math.random() * 80,
+            onComplete: () => spark.destroy(),
+          });
+        }
+        const flashRing = this.add.circle(x, y, 4, 0x00ffff, 0.6).setStrokeStyle(1.5, 0x80eeff).setDepth(79);
+        this.tweens.add({
+          targets: flashRing,
+          scale: 3.5,
+          alpha: 0,
+          duration: 160,
+          onComplete: () => flashRing.destroy(),
+        });
+      } else if (family === "artillery") {
+        const count = 6;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 40 + Math.random() * 60;
+          const isSmoke = i < 3;
+          const color = isSmoke ? 0x444444 : (Math.random() < 0.5 ? 0xff5500 : 0xffaa00);
+          const p = this.add.circle(x, y, isSmoke ? (3 + Math.random() * 2) : (2 + Math.random()), color, isSmoke ? 0.6 : 0.9).setDepth(80);
+          this.tweens.add({
+            targets: p,
+            x: x + Math.cos(angle) * (speed * 0.2),
+            y: y + Math.sin(angle) * (speed * 0.2),
+            alpha: 0,
+            scale: isSmoke ? 1.6 : 0.3,
+            duration: 220 + Math.random() * 80,
+            onComplete: () => p.destroy(),
+          });
         }
       }
     }
@@ -3855,6 +3998,7 @@
       });
       projectile.sprite = this.add.image(projectile.x, projectile.y, "projectile_arrow").setDepth(60).setScale(0.72);
       projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
+      projectile.family = "archer";
       this.projectiles.push(projectile);
       this.audio.play("shoot", 0.09, 1.22);
     }
