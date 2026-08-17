@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.17";
+  const KRC_VERSION = "1.0.18";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1312,6 +1312,137 @@
       const center = this.add.graphics().setDepth(-7);
       center.lineStyle(3, theme.pathMid, 0.45);
       this.strokePath(center);
+
+      if (this.mapIndex === 0) {
+        // Forest Gate: dirt ruts along road
+        const rutColor = 0x2b1c10;
+        const leftRut = this.add.graphics().setDepth(-6.8);
+        leftRut.lineStyle(2, rutColor, 0.45);
+        const rightRut = this.add.graphics().setDepth(-6.8);
+        rightRut.lineStyle(2, rutColor, 0.45);
+        for (let i = 0; i < this.path.length - 1; i += 1) {
+          const a = this.path[i];
+          const b = this.path[i + 1];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const len = Math.hypot(dx, dy);
+          if (len === 0) continue;
+          const nx = -dy / len;
+          const ny = dx / len;
+          const offset = PATH_WIDTH * 0.22;
+          if (i === 0) {
+            leftRut.beginPath();
+            leftRut.moveTo(a.x + nx * offset, a.y + ny * offset);
+            rightRut.beginPath();
+            rightRut.moveTo(a.x - nx * offset, a.y - ny * offset);
+          }
+          leftRut.lineTo(b.x + nx * offset, b.y + ny * offset);
+          rightRut.lineTo(b.x - nx * offset, b.y - ny * offset);
+        }
+        leftRut.strokePath();
+        rightRut.strokePath();
+
+        const rutMark = this.add.graphics().setDepth(-6.5);
+        rutMark.lineStyle(1.5, 0x3d2716, 0.5);
+        for (let i = 0; i < this.path.length - 1; i += 1) {
+          const a = this.path[i];
+          const b = this.path[i + 1];
+          const len = Math.hypot(b.x - a.x, b.y - a.y);
+          const count = Math.floor(len / 22);
+          for (let s = 1; s <= count; s += 1) {
+            const t = s / (count + 1);
+            const px = a.x + (b.x - a.x) * t;
+            const py = a.y + (b.y - a.y) * t;
+            const angle = Math.atan2(b.y - a.y, b.x - a.x);
+            const perp = angle + Math.PI / 2;
+            const rLen = 6 + (s % 3) * 2;
+            rutMark.beginPath();
+            rutMark.moveTo(px - Math.cos(perp) * (rLen / 2), py - Math.sin(perp) * (rLen / 2));
+            rutMark.lineTo(px + Math.cos(perp) * (rLen / 2), py + Math.sin(perp) * (rLen / 2));
+            rutMark.strokePath();
+          }
+        }
+      } else if (this.mapIndex === 1) {
+        // Stone Pass: stone flagstones along path
+        const flagG = this.add.graphics().setDepth(-6.5);
+        for (let i = 0; i < this.path.length - 1; i += 1) {
+          const a = this.path[i];
+          const b = this.path[i + 1];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const len = Math.hypot(dx, dy);
+          if (len === 0) continue;
+          const angle = Math.atan2(dy, dx);
+          const cos = Math.cos(angle);
+          const sin = Math.sin(angle);
+          const count = Math.floor(len / 18);
+          for (let s = 0; s < count; s += 1) {
+            const t = (s + 0.5) / count;
+            const px = a.x + dx * t;
+            const py = a.y + dy * t;
+            const side = (s % 2 === 0 ? 1 : -1) * (3 + (s % 3) * 2);
+            const nx = -sin * side;
+            const ny = cos * side;
+            const cx = px + nx;
+            const cy = py + ny;
+            const stoneColor = (s % 3 === 0) ? 0x5a5d5b : (s % 3 === 1) ? 0x474948 : 0x6b6e6c;
+            const hw = (10 + (s % 3) * 2) / 2;
+            const hh = (6 + (s % 2) * 2) / 2;
+            const p1x = cx - hw * cos + hh * sin, p1y = cy - hw * sin - hh * cos;
+            const p2x = cx + hw * cos + hh * sin, p2y = cy + hw * sin - hh * cos;
+            const p3x = cx + hw * cos - hh * sin, p3y = cy + hw * sin + hh * cos;
+            const p4x = cx - hw * cos - hh * sin, p4y = cy - hw * sin + hh * cos;
+
+            flagG.fillStyle(stoneColor, 0.65);
+            flagG.lineStyle(1, 0x2e302f, 0.7);
+            flagG.beginPath();
+            flagG.moveTo(p1x, p1y);
+            flagG.lineTo(p2x, p2y);
+            flagG.lineTo(p3x, p3y);
+            flagG.lineTo(p4x, p4y);
+            flagG.closePath();
+            flagG.fillPath();
+            flagG.strokePath();
+          }
+        }
+      } else if (this.mapIndex === 2) {
+        // Ember Marsh: ember crust (warm specks/cracks along road)
+        const crustG = this.add.graphics().setDepth(-6.5);
+        const emberColors = [0xff4500, 0xff8c00, 0xdaa520, 0xb22222, 0xe65100];
+        for (let i = 0; i < this.path.length - 1; i += 1) {
+          const a = this.path[i];
+          const b = this.path[i + 1];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const len = Math.hypot(dx, dy);
+          if (len === 0) continue;
+          const angle = Math.atan2(dy, dx);
+          const count = Math.floor(len / 14);
+          for (let s = 0; s < count; s += 1) {
+            const t = (s + 0.5) / count;
+            const px = a.x + dx * t;
+            const py = a.y + dy * t;
+            const side = ((s * 7) % 17 - 8);
+            const nx = -Math.sin(angle) * side;
+            const ny = Math.cos(angle) * side;
+            const cx = px + nx;
+            const cy = py + ny;
+            if (s % 2 === 0) {
+              const cLen = 8 + (s % 3) * 4;
+              const cAngle = angle + (s % 2 === 0 ? 0.4 : -0.4);
+              crustG.lineStyle(1.2, 0xff5722, 0.7);
+              crustG.beginPath();
+              crustG.moveTo(cx, cy);
+              crustG.lineTo(cx + Math.cos(cAngle) * cLen, cy + Math.sin(cAngle) * cLen);
+              crustG.strokePath();
+            } else {
+              const color = emberColors[s % emberColors.length];
+              crustG.fillStyle(color, 0.75);
+              crustG.fillCircle(cx, cy, 1.5 + (s % 3) * 0.5);
+            }
+          }
+        }
+      }
 
       if (this.textures.exists("path_mark")) {
         for (let i = 0; i < this.path.length - 1; i += 1) {
