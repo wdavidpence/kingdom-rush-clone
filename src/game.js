@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.28";
+  const KRC_VERSION = "1.0.29";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -157,6 +157,13 @@
       window.KRCSceneCleanup.destroyAll((this.effects || []).map((effect) => effect.obj));
       this.effects = [];
       this.projectiles = [];
+      for (const enemy of this.enemies || []) {
+        for (const obj of [
+          enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow,
+          enemy.auraRing, enemy.shieldRing, enemy.hexMark, enemy.crownTell,
+          enemy.emberGlow, enemy.fuseSpark, enemy.sprite
+        ]) obj?.destroy();
+      }
       this.enemies = [];
       this.soldiers = [];
       this.towers = [];
@@ -2990,6 +2997,24 @@
       } else if (type === "mage" || type === "wizard") {
         // Magic enemies get a subtle purple glow
         enemy.sprite.setTint(0xc8b0ff);
+      } else if (type === "hexer") {
+        enemy.hexMark = this.add.text(enemy.x, enemy.y - base.size - 25, "HEX", {
+          font: "900 10px 'Cinzel', Arial",
+          color: "#dcb0ff",
+          stroke: "#220838",
+          strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(45);
+      } else if (type === "titan") {
+        if (enemy.sprite.setShadow) enemy.sprite.setShadow(6, 6, 0x000000, 2.5);
+        enemy.crownTell = this.add.graphics().setDepth(41);
+        this.drawTitanCrownTell(enemy.crownTell);
+      } else if (type === "ember") {
+        enemy.emberGlow = this.add.circle(enemy.x, enemy.y, base.size + 4, 0xff4500, 0.25)
+          .setStrokeStyle(1.5, 0xffaa00, 0.6)
+          .setDepth(39);
+        enemy.fuseSpark = this.add.circle(enemy.x, enemy.y - base.size, 3, 0xffff88, 0.9)
+          .setStrokeStyle(1, 0xff4400, 0.9)
+          .setDepth(41);
       } else if (type === "boss") {
         // Boss gets a larger shadow and pulsing aura
         if (enemy.sprite.setShadow) enemy.sprite.setShadow(8, 8, 0x000000, 3);
@@ -3026,6 +3051,62 @@
       return child;
     }
 
+    drawTitanCrownTell(graphics) {
+      if (!graphics) return;
+      graphics.clear();
+      // Shoulder pauldrons
+      graphics.fillStyle(0x3a322b, 0.95);
+      graphics.fillRoundedRect(-22, -6, 12, 10, 3);
+      graphics.lineStyle(1.5, 0xd4af37, 0.9);
+      graphics.strokeRoundedRect(-22, -6, 12, 10, 3);
+
+      graphics.fillStyle(0x3a322b, 0.95);
+      graphics.fillRoundedRect(10, -6, 12, 10, 3);
+      graphics.lineStyle(1.5, 0xd4af37, 0.9);
+      graphics.strokeRoundedRect(10, -6, 12, 10, 3);
+
+      // Heavy stone & gold crown base
+      graphics.fillStyle(0x2a241e, 0.95);
+      graphics.fillRoundedRect(-11, -21, 22, 6, 2);
+      graphics.lineStyle(1, 0x8e8379, 0.9);
+      graphics.strokeRoundedRect(-11, -21, 22, 6, 2);
+
+      // Crown spikes (left, center, right)
+      graphics.fillStyle(0xd4af37, 0.95);
+      graphics.lineStyle(1, 0x584010, 0.9);
+
+      // Left spike
+      graphics.beginPath();
+      graphics.moveTo(-11, -21);
+      graphics.lineTo(-8, -27);
+      graphics.lineTo(-4, -21);
+      graphics.closePath();
+      graphics.fillPath();
+      graphics.strokePath();
+
+      // Center spike (taller)
+      graphics.beginPath();
+      graphics.moveTo(-4, -21);
+      graphics.lineTo(0, -30);
+      graphics.lineTo(4, -21);
+      graphics.closePath();
+      graphics.fillPath();
+      graphics.strokePath();
+
+      // Right spike
+      graphics.beginPath();
+      graphics.moveTo(4, -21);
+      graphics.lineTo(8, -27);
+      graphics.lineTo(11, -21);
+      graphics.closePath();
+      graphics.fillPath();
+      graphics.strokePath();
+
+      // Ruby gem in center peak
+      graphics.fillStyle(0xff2244, 1);
+      graphics.fillCircle(0, -22, 2.5);
+    }
+
     updateEnemies(dt) {
       for (const enemy of [...this.enemies]) {
         if (enemy.dead) continue;
@@ -3056,6 +3137,40 @@
           }
         }
 
+        // For titans: heavy stomp puff and shockwave when blocked
+        if (enemy.type === "titan" && enemy.blockedBy) {
+          if (!this.settings?.reducedMotion) {
+            enemy.stompTimer = (enemy.stompTimer || 0) - dt;
+            if (enemy.stompTimer <= 0) {
+              enemy.stompTimer = 0.45;
+              for (const side of [-1, 1]) {
+                const dust = this.add.circle(enemy.x + side * 10, enemy.y + 12, 4, 0x9e8e7a, 0.6).setDepth(39);
+                this.tweens.add({
+                  targets: dust,
+                  x: dust.x + side * 14,
+                  y: dust.y - 2,
+                  scale: 2.2,
+                  alpha: 0,
+                  duration: 350,
+                  ease: "Quad.easeOut",
+                  onComplete: () => dust.destroy(),
+                });
+              }
+              const wave = this.add.circle(enemy.x, enemy.y + 10, 8, 0x807060, 0.3)
+                .setStrokeStyle(2, 0xc4b4a0, 0.8)
+                .setDepth(38);
+              this.tweens.add({
+                targets: wave,
+                scale: 2.5,
+                alpha: 0,
+                duration: 300,
+                ease: "Quad.easeOut",
+                onComplete: () => wave.destroy(),
+              });
+            }
+          }
+        }
+
         this.updateEnemyVisual(enemy, dt);
         if (enemy.seg >= this.path.length - 1) this.leakEnemy(enemy);
       }
@@ -3074,10 +3189,18 @@
           }
         }
         if (!enemy.auraRing) {
-          enemy.auraRing = this.add.circle(enemy.x, enemy.y, radius, 0x9b7cff, 0.05).setStrokeStyle(1, 0xb9a0ff, 0.35).setDepth(21);
+          enemy.auraRing = this.add.circle(enemy.x, enemy.y, radius, 0x8a2be2, 0.12).setStrokeStyle(2, 0xd8b0ff, 0.75).setDepth(21);
         } else {
           enemy.auraRing.setPosition(enemy.x, enemy.y);
           enemy.auraRing.setVisible(true);
+          if (!this.settings?.reducedMotion) {
+            const pulse = Math.sin(this.time.now * 0.005 + enemy.wobble);
+            enemy.auraRing.setAlpha(0.75 + pulse * 0.25);
+            enemy.auraRing.setScale(1 + pulse * 0.04);
+          } else {
+            enemy.auraRing.setAlpha(0.85);
+            enemy.auraRing.setScale(1);
+          }
         }
       }
     }
@@ -3311,6 +3434,57 @@
         enemy.traitText.setPosition(enemy.x, enemy.y - enemy.base.size - 16);
         enemy.traitText.setVisible(!!enemy.traitText.text);
       }
+      if (enemy.hexMark) {
+        enemy.hexMark.setPosition(enemy.x, enemy.y - enemy.base.size - 25);
+        if (!reducedMotion) {
+          enemy.hexMark.y += Math.sin(this.time.now * 0.006 + enemy.wobble) * 2;
+        }
+      }
+      if (enemy.crownTell) {
+        enemy.crownTell.setPosition(enemy.x, enemy.sprite ? enemy.sprite.y : enemy.y - 4);
+        if (!reducedMotion && enemy.sprite) {
+          enemy.crownTell.setRotation(enemy.sprite.rotation);
+          enemy.crownTell.setScale(enemy.sprite.scaleX, enemy.sprite.scaleY);
+        } else if (enemy.sprite) {
+          enemy.crownTell.setRotation(enemy.sprite.rotation);
+          enemy.crownTell.setScale(baseScale);
+        }
+      }
+      if (enemy.emberGlow) {
+        enemy.emberGlow.setPosition(enemy.x, enemy.y);
+        if (!reducedMotion) {
+          const tick = Math.abs(Math.sin(this.time.now * 0.01 + enemy.wobble));
+          enemy.emberGlow.setAlpha(0.2 + tick * 0.35);
+          enemy.emberGlow.setScale(0.9 + tick * 0.25);
+        } else {
+          enemy.emberGlow.setAlpha(0.3);
+          enemy.emberGlow.setScale(1);
+        }
+      }
+      if (enemy.fuseSpark) {
+        const headY = enemy.sprite ? enemy.sprite.y - enemy.base.size * 0.7 : enemy.y - enemy.base.size;
+        if (!reducedMotion) {
+          const jitterX = (Math.random() - 0.5) * 3;
+          const jitterY = (Math.random() - 0.5) * 3;
+          enemy.fuseSpark.setPosition(enemy.x + jitterX, headY + jitterY);
+          enemy.fuseSpark.setAlpha(0.6 + Math.random() * 0.4);
+          if (Math.random() < 0.25) {
+            const spark = this.add.circle(enemy.x + jitterX, headY + jitterY, 1.5, 0xffea00, 0.9).setDepth(42);
+            this.tweens.add({
+              targets: spark,
+              x: spark.x + (Math.random() - 0.5) * 12,
+              y: spark.y - 6 - Math.random() * 8,
+              alpha: 0,
+              scale: 0.2,
+              duration: 180 + Math.random() * 120,
+              onComplete: () => spark.destroy(),
+            });
+          }
+        } else {
+          enemy.fuseSpark.setPosition(enemy.x, headY);
+          enemy.fuseSpark.setAlpha(0.85);
+        }
+      }
     }
 
     leakEnemy(enemy) {
@@ -3363,8 +3537,17 @@
     removeEnemy(enemy, killed) {
       this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
-      for (const obj of [enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow, enemy.auraRing, enemy.shieldRing]) obj?.destroy();
+      for (const obj of [
+        enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow,
+        enemy.auraRing, enemy.shieldRing, enemy.hexMark, enemy.crownTell,
+        enemy.emberGlow, enemy.fuseSpark
+      ]) obj?.destroy();
       enemy.shieldRing = null;
+      enemy.auraRing = null;
+      enemy.hexMark = null;
+      enemy.crownTell = null;
+      enemy.emberGlow = null;
+      enemy.fuseSpark = null;
       if (enemy.speedLines) {
         for (const line of enemy.speedLines) line?.destroy();
         enemy.speedLines = null;
