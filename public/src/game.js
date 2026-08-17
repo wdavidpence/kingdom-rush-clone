@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.56";
+  const KRC_VERSION = "1.0.57";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -271,6 +271,7 @@
       this.updateProjectiles(dt);
       this.updateEffects(dt);
       this.audio.music(dt, this.waveActive && !this.gameEnded);
+      this.audio.ambience(dt);
       this.updateHud();
     }
 
@@ -2692,6 +2693,7 @@ const bannerY = 98;
       }
       this.overlayActive = false;
       this.overlay.destroy();
+      this.audio.startAmbience(mapIndex);
       if (this.ironMode) {
         this.lives = 1;
         if (!this.ironHud && this.livesText) {
@@ -3335,6 +3337,7 @@ const bannerY = 98;
       this.settings.reducedMotion = !this.settings.reducedMotion;
       this.settings = window.KRCSettings?.save?.({ reducedMotion: this.settings.reducedMotion }) || this.settings;
       if (this.settings.reducedMotion) {
+        this.audio.stopAmbience();
         for (const tower of this.towers) {
           if (tower.rallyFlag && this.tweens.isTweening(tower.rallyFlag)) {
             this.tweens.killTweensOf(tower.rallyFlag);
@@ -6005,6 +6008,7 @@ const bannerY = 98;
       this.musicClock = 0;
       this.musicStep = 0;
       this.musicStarted = false;
+      this.ambienceOn = false; this.ambienceId = 0; this.ambienceClock = 0; this.lastAmbience = null;
       this.muted = false;
       this.musicVolume = typeof scene?.settings?.musicVolume === "number" ? scene.settings.musicVolume : 0.6;
       this.sfxVolume = typeof scene?.settings?.sfxVolume === "number" ? scene.settings.sfxVolume : 1.0;
@@ -6023,7 +6027,10 @@ const bannerY = 98;
     setMuted(value) {
       this.muted = !!value;
       this.scene.sound.mute = this.muted;
-      if (this.muted) this.stopMusic();
+      if (this.muted) {
+        this.stopMusic();
+        this.stopAmbience();
+      }
     }
 
     setMix(musicVolume, sfxVolume) {
@@ -6206,11 +6213,41 @@ const bannerY = 98;
       this.musicStarted = false;
     }
 
+    startAmbience(mapIndex) {
+      this.ambienceId = mapIndex | 0;
+      this.lastAmbience = ["forest", "stone", "marsh", "gale", "ash"][this.ambienceId] || "forest";
+      this.ambienceOn = !this.muted && !this.scene.settings?.reducedMotion;
+      this.ambienceClock = 0;
+    }
+
+    stopAmbience() {
+      this.ambienceOn = false;
+      this.lastAmbience = null;
+    }
+
+    ambience(dt) {
+      if (this.muted || this.scene.settings?.reducedMotion || !this.ambienceOn) return;
+      this.ambienceClock -= dt;
+      if (this.ambienceClock > 0) return;
+      this.ambienceClock = 2.4;
+      const beds = {
+        0: [196, 247],
+        1: [110, 147],
+        2: [82, 98],
+        3: [220, 330],
+        4: [98, 73],
+      };
+      const notes = beds[this.ambienceId] || beds[0];
+      this.tone(notes[0], 0.18, "sine", 0.004 * this.musicVolume);
+      this.tone(notes[1], 0.22, "triangle", 0.003 * this.musicVolume, 0.05);
+    }
+
     stopAll() {
       for (const sample of Object.values(this.samples)) {
         if (sample?.isPlaying) sample.stop();
       }
       this.musicStarted = false;
+      this.stopAmbience();
     }
 
     tone(freq, duration = 0.08, type = "square", volume = 0.025, delay = 0) {
