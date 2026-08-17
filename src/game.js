@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.21";
+  const KRC_VERSION = "1.0.22";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1753,6 +1753,12 @@
             textOffsetY: 16,
             font: "bold 12px 'Source Sans 3', Arial",
             textColor: "#ffd866",
+            roleMark: {
+              type: t.id,
+              shape: t.id === "archer" ? "triangle" : t.id === "mage" ? "diamond" : t.id === "artillery" ? "circle" : "shield",
+              label: t.shopLabel,
+              glyph: t.glyph,
+            },
             tooltip: () => `${t.name} (${t.cost}g)\n${t.role}\nDmg: ${t.damage[0]} · Rng: ${t.range[0]} · Spd: ${t.rate[0]}s\n${t.desc}`,
           }
         );
@@ -1892,6 +1898,78 @@
         .setOrigin(0.5)
         .setDepth(101.2);
 
+      let roleMarkShadow = null;
+      let roleMarkG = null;
+      let roleMarkText = null;
+      let roleMarkX = 0;
+      let roleMarkY = 0;
+      let roleMarkTextOffsetY = 0;
+
+      if (options.roleMark) {
+        const rm = options.roleMark;
+        roleMarkX = x - 20;
+        roleMarkY = y - 15;
+
+        const roleColors = {
+          archer: { fill: 0x152613, stroke: 0x8ae67c },
+          mage: { fill: 0x181636, stroke: 0x9b94ff },
+          artillery: { fill: 0x301e13, stroke: 0xf0aa54 },
+          barracks: { fill: 0x2e2815, stroke: 0xe6d47c },
+        };
+        const palette = roleColors[rm.type] || { fill: 0x222222, stroke: 0xf5c85a };
+
+        roleMarkShadow = this.add.graphics().setDepth(100.9);
+        roleMarkShadow.setPosition(roleMarkX + 1, roleMarkY + 1.5);
+        roleMarkShadow.fillStyle(0x000000, 0.6);
+
+        roleMarkG = this.add.graphics().setDepth(101.1);
+        roleMarkG.setPosition(roleMarkX, roleMarkY);
+        roleMarkG.fillStyle(palette.fill, 0.95);
+        roleMarkG.lineStyle(1.5, palette.stroke, 0.95);
+
+        const drawShape = (g) => {
+          g.beginPath();
+          if (rm.shape === "triangle") {
+            g.moveTo(0, -10);
+            g.lineTo(12, 8);
+            g.lineTo(-12, 8);
+            roleMarkTextOffsetY = 1;
+          } else if (rm.shape === "diamond") {
+            g.moveTo(0, -10);
+            g.lineTo(12, 0);
+            g.lineTo(0, 10);
+            g.lineTo(-12, 0);
+            roleMarkTextOffsetY = 0;
+          } else if (rm.shape === "circle") {
+            g.arc(0, 0, 10.5, 0, Math.PI * 2);
+            roleMarkTextOffsetY = 0;
+          } else if (rm.shape === "shield") {
+            g.moveTo(-11, -9);
+            g.lineTo(11, -9);
+            g.lineTo(11, 1);
+            g.lineTo(0, 10);
+            g.lineTo(-11, 1);
+            roleMarkTextOffsetY = -1;
+          }
+          g.closePath();
+          g.fillPath();
+          g.strokePath();
+        };
+
+        drawShape(roleMarkShadow);
+        drawShape(roleMarkG);
+
+        const fontSz = rm.label.length >= 4 ? "bold 8.5px 'Source Sans 3', Arial" : "bold 9.5px 'Source Sans 3', Arial";
+        roleMarkText = this.add
+          .text(roleMarkX, roleMarkY + roleMarkTextOffsetY, rm.label, {
+            font: fontSz,
+            color: "#ffffff",
+            align: "center",
+          })
+          .setOrigin(0.5)
+          .setDepth(101.3);
+      }
+
       bg.setInteractive({ useHandCursor: true });
 
       const applyPressed = (down) => {
@@ -1902,6 +1980,9 @@
         text.y = y + textOffsetY + dy;
         if (icon) icon.y = y + iconOffsetY + dy;
         if (iconShadow) iconShadow.y = y + iconOffsetY + 2 + dy;
+        if (roleMarkG) roleMarkG.y = roleMarkY + dy;
+        if (roleMarkShadow) roleMarkShadow.y = roleMarkY + 1.5 + dy;
+        if (roleMarkText) roleMarkText.y = roleMarkY + roleMarkTextOffsetY + dy;
       };
 
       bg.on("pointerdown", () => {
@@ -1919,6 +2000,9 @@
           lip.setScale(1.03);
           text.setScale(1.03);
           if (icon) icon.setScale(iconScale * 1.05);
+          if (roleMarkG) roleMarkG.setScale(1.03);
+          if (roleMarkShadow) roleMarkShadow.setScale(1.03);
+          if (roleMarkText) roleMarkText.setScale(1.03);
         }
         const tip = typeof options.tooltip === "function" ? options.tooltip() : options.tooltip;
         if (tip) {
@@ -1933,6 +2017,9 @@
         lip.setScale(1);
         text.setScale(1);
         if (icon) icon.setScale(iconScale);
+        if (roleMarkG) roleMarkG.setScale(1);
+        if (roleMarkShadow) roleMarkShadow.setScale(1);
+        if (roleMarkText) roleMarkText.setScale(1);
         this.hideTooltip();
       });
 
@@ -1944,6 +2031,9 @@
         lip,
         icon,
         iconShadow,
+        roleMarkShadow,
+        roleMarkG,
+        roleMarkText,
         x,
         y,
         w,
@@ -1965,10 +2055,10 @@
         },
         setLabel: (value) => text.setText(value),
         setAlpha: (value) => {
-          for (const obj of [shadow, bg, shine, lip, text, icon, iconShadow].filter(Boolean)) obj.setAlpha(value);
+          for (const obj of [shadow, bg, shine, lip, text, icon, iconShadow, roleMarkShadow, roleMarkG, roleMarkText].filter(Boolean)) obj.setAlpha(value);
         },
         setVisible: (value) => {
-          for (const obj of [shadow, bg, shine, lip, text, icon, iconShadow].filter(Boolean)) obj.setVisible(value);
+          for (const obj of [shadow, bg, shine, lip, text, icon, iconShadow, roleMarkShadow, roleMarkG, roleMarkText].filter(Boolean)) obj.setVisible(value);
           if (value) bg.setInteractive({ useHandCursor: true });
           else bg.disableInteractive();
         },
