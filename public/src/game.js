@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.12";
+  const KRC_VERSION = "1.0.13";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2831,6 +2831,21 @@
           tower.hexTimer = 0;
         }
         tower.hexTimer = Math.max(0, (tower.hexTimer || 0) - dt);
+        if (tower.sprite && !tower.hexed && !this.settings?.reducedMotion && !this.tweens.isTweening(tower.sprite)) {
+          const t = this.time.now;
+          const baseX = tower.x;
+          const baseY = tower.y - 8;
+          if (tower.type === "archer") {
+            tower.sprite.x = baseX + Math.sin(t * 0.003 + baseX) * 0.6;
+            tower.sprite.y = baseY;
+          } else if (tower.type === "mage") {
+            tower.sprite.x = baseX;
+            tower.sprite.y = baseY + Math.sin(t * 0.004 + baseX) * 0.9;
+          } else if (tower.type === "artillery") {
+            tower.sprite.x = baseX;
+            tower.sprite.y = baseY + Math.sin(t * 0.002 + baseX) * 0.5;
+          }
+        }
         if (tower.cooldown > 0) continue;
         const target = this.findTarget(tower, cfg.range[tower.level], tower.type !== "artillery");
         if (!target) continue;
@@ -2957,13 +2972,65 @@
       this.createMuzzleFlash(tower.x, tower.y - 10, angle);
       if (tower.sprite && !this.settings.reducedMotion) {
         const recoilAngle = Phaser.Math.Angle.Between(tower.x, tower.y, target.x, target.y);
-        this.tweens.add({
-          targets: tower.sprite,
-          x: tower.x - Math.cos(recoilAngle) * 4,
-          y: tower.y - 5 - Math.sin(recoilAngle) * 3,
-          yoyo: true,
-          duration: 70,
-        });
+        const baseX = tower.x;
+        const baseY = tower.y - 8;
+        if (tower.type === "archer") {
+          // Short snap toward target, then settle
+          this.tweens.add({
+            targets: tower.sprite,
+            x: baseX + Math.cos(recoilAngle) * 4,
+            y: baseY + Math.sin(recoilAngle) * 3,
+            yoyo: true,
+            duration: 60,
+            onComplete: () => {
+              if (tower.sprite) tower.sprite.setPosition(baseX, baseY);
+            },
+          });
+        } else if (tower.type === "mage") {
+          // Scale pulse + violet glow, then settle
+          const baseScale = 0.62 + (tower.level || 0) * 0.04;
+          this.tweens.add({
+            targets: tower.sprite,
+            scaleX: baseScale * 1.2,
+            scaleY: baseScale * 1.2,
+            yoyo: true,
+            duration: 90,
+            onComplete: () => {
+              if (tower.sprite) tower.sprite.setScale(baseScale);
+            },
+          });
+          const glow = this.add.circle(tower.x, tower.y - 8, 16, 0x9b59b6, 0.55).setDepth(35);
+          this.tweens.add({
+            targets: glow,
+            alpha: 0,
+            scale: 1.5,
+            duration: 160,
+            onComplete: () => glow.destroy(),
+          });
+        } else if (tower.type === "artillery") {
+          // Heavier kick away from target, then settle
+          this.tweens.add({
+            targets: tower.sprite,
+            x: baseX - Math.cos(recoilAngle) * 7,
+            y: baseY - Math.sin(recoilAngle) * 5,
+            yoyo: true,
+            duration: 110,
+            onComplete: () => {
+              if (tower.sprite) tower.sprite.setPosition(baseX, baseY);
+            },
+          });
+        } else {
+          this.tweens.add({
+            targets: tower.sprite,
+            x: baseX - Math.cos(recoilAngle) * 4,
+            y: baseY - Math.sin(recoilAngle) * 3,
+            yoyo: true,
+            duration: 70,
+            onComplete: () => {
+              if (tower.sprite) tower.sprite.setPosition(baseX, baseY);
+            },
+          });
+        }
       }
     }
 
