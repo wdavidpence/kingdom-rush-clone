@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.30";
+  const KRC_VERSION = "1.0.31";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1791,14 +1791,15 @@
       );
       this.sellButton = this.makeButton(
         370,
-        SHOP_Y + 88,
+        SHOP_Y + 89,
         84,
-        32,
+        40,
         "SELL",
         0x643a31,
         () => this.sellSelected(),
         {
           font: "bold 12px 'Source Sans 3', Arial",
+          minHitH: 44,
           tooltip: () => this.getSellTooltip(),
         }
       );
@@ -1811,9 +1812,9 @@
       for (const [id, x, label, iconKey, tip] of spellDefs) {
         const btn = this.makeButton(
           x,
-          SHOP_Y + 91,
+          SHOP_Y + 89,
           86,
-          32,
+          40,
           label,
           0x334f6b,
           () => this.castSpell(id),
@@ -1823,6 +1824,7 @@
             iconOffsetX: -22,
             textOffsetX: 12,
             font: "bold 12px 'Source Sans 3', Arial",
+            minHitH: 44,
             tooltip: () => {
               const s = this.spells[id];
               return s.ready > 0 ? `${tip}\nCooldown: ${Math.ceil(s.ready)}s` : `${tip}\n[READY TO CAST]`;
@@ -1830,7 +1832,7 @@
           }
         );
         btn.spell = id;
-        btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 105, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102);
+        btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 104, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102);
         this.spellButtons.push(btn);
       }
       this.heroButtons = [];
@@ -2003,7 +2005,18 @@
           .setDepth(101.3);
       }
 
-      bg.setInteractive({ useHandCursor: true });
+      const minHitH = options.minHitH ?? 44;
+      const hitW = options.hitW ?? w;
+      const hitH = options.hitH ?? Math.max(h, minHitH);
+      if (hitW !== w || hitH !== h) {
+        bg.setInteractive({
+          hitArea: new Phaser.Geom.Rectangle((w - hitW) / 2, (h - hitH) / 2, hitW, hitH),
+          hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+          useHandCursor: true,
+        });
+      } else {
+        bg.setInteractive({ useHandCursor: true });
+      }
 
       const applyPressed = (down) => {
         const dy = down ? 2 : 0;
