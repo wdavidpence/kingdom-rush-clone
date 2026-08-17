@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.38";
+  const KRC_VERSION = "1.0.39";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -70,6 +70,8 @@
       this.soldiers = [];
       this.projectiles = [];
       this.effects = [];
+      this.killStreak = 0;
+      this.killStreakUntil = 0;
       this.entityRegistry = window.KRCEntityState.createRegistry();
       this.selectedPad = null;
       this.selectedBuild = null;
@@ -169,6 +171,8 @@
       this.soldiers = [];
       this.towers = [];
       this.queue = [];
+      this.killStreak = 0;
+      this.killStreakUntil = 0;
     }
 
     showTooltip(x, y, text) {
@@ -3591,6 +3595,10 @@ const bannerY = 98;
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.createDamageNumber(x, y - enemy.base.size - 10, `+${enemy.base.bounty}`, COLORS.gold);
         this.createCoinBurst(x, y - 18);
+        const now = this.time.now;
+        this.killStreak = now < (this.killStreakUntil || 0) ? (this.killStreak || 0) + 1 : 1;
+        this.killStreakUntil = now + 1600;
+        this.showKillPop(x, y, enemy.base.size, this.killStreak);
         this.removeEnemy(enemy, true);
         if (split) {
           const [childType, count] = split;
@@ -5016,6 +5024,48 @@ const bannerY = 98;
         ease: "Quad.easeOut",
         onComplete: () => t.destroy(),
       });
+    }
+
+    showKillPop(x, y, size, streak) {
+      const baseY = y - (size || 16) - 36;
+      const last = this.add.text(x, baseY, "LAST", {
+        font: "900 11px Cinzel, serif",
+        color: "#fff6d0",
+        stroke: "#2a1608",
+        strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(212);
+      if (this.settings?.reducedMotion) {
+        this.time.delayedCall(500, () => last.destroy());
+      } else {
+        this.tweens.add({
+          targets: last,
+          y: baseY - 16,
+          alpha: 0,
+          duration: 520,
+          ease: "Quad.out",
+          onComplete: () => last.destroy(),
+        });
+      }
+      if (streak < 2) return;
+      const combo = this.add.text(x + 18, baseY - 10, `x${streak}`, {
+        font: "900 13px Cinzel, serif",
+        color: "#ffd36a",
+        stroke: "#2a1608",
+        strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(213);
+      if (this.settings?.reducedMotion) {
+        this.time.delayedCall(500, () => combo.destroy());
+      } else {
+        this.tweens.add({
+          targets: combo,
+          y: baseY - 28,
+          scale: 1.15,
+          alpha: 0,
+          duration: 640,
+          ease: "Quad.out",
+          onComplete: () => combo.destroy(),
+        });
+      }
     }
 
     createHitSparks(x, y, color) {
