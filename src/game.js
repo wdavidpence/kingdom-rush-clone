@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.27";
+  const KRC_VERSION = "1.0.28";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3095,16 +3095,61 @@
           enemy.speed *= 1.12;
           this.flashText("WARDEN SHIELD", enemy.x, enemy.y - 48, "#d7c3ff");
           this.say("Warden raises a shield — pierce with Runes or focus fire.");
-          const ring = this.add.circle(enemy.x, enemy.y, 40, 0xc9a6ff, 0.18).setStrokeStyle(3, 0xf0d8ff, 0.9).setDepth(70);
-          this.tweens.add({ targets: ring, alpha: 0, scale: 1.8, duration: 500, onComplete: () => ring.destroy() });
+          if (this.settings?.reducedMotion) {
+            const flash = this.add.circle(enemy.x, enemy.y, 10, 0xd7c3ff, 0.85).setDepth(70);
+            this.tweens.add({ targets: flash, alpha: 0, scale: 2.5, duration: 200, onComplete: () => flash.destroy() });
+          } else {
+            const ring = this.add.circle(enemy.x, enemy.y, 40, 0xc9a6ff, 0.18).setStrokeStyle(3, 0xf0d8ff, 0.9).setDepth(70);
+            this.tweens.add({ targets: ring, alpha: 0, scale: 1.8, duration: 500, onComplete: () => ring.destroy() });
+
+            if (enemy.shieldRing) { enemy.shieldRing.destroy(); enemy.shieldRing = null; }
+            const glyph = this.add.graphics().setDepth(70);
+            glyph.lineStyle(2, 0xf0d8ff, 0.9);
+            glyph.strokeCircle(0, 0, 24);
+            glyph.lineStyle(1.5, 0xc9a6ff, 0.85);
+            glyph.fillStyle(0x9b51e0, 0.28);
+            glyph.beginPath();
+            glyph.moveTo(-8, -10);
+            glyph.lineTo(8, -10);
+            glyph.lineTo(8, 0);
+            glyph.lineTo(0, 10);
+            glyph.lineTo(-8, 0);
+            glyph.closePath();
+            glyph.fillPath();
+            glyph.strokePath();
+            glyph.setPosition(enemy.x, enemy.y);
+            enemy.shieldRing = glyph;
+          }
         } else if (nextPhase === 3) {
+          if (enemy.shieldRing) { enemy.shieldRing.destroy(); enemy.shieldRing = null; }
           enemy.armorBuff = 0;
           enemy.speed *= 1.15;
           this.flashText("WARDEN RAGE", enemy.x, enemy.y - 48, "#ff9ad8");
           this.say("Warden enrages — stall with Guards and burst during the open window.");
           for (let i = 0; i < 3; i += 1) this.spawnEnemyFrom("scout", enemy);
-          const ring = this.add.circle(enemy.x, enemy.y, 48, 0xff6ab8, 0.2).setStrokeStyle(3, 0xffd0ea, 0.95).setDepth(70);
-          this.tweens.add({ targets: ring, alpha: 0, scale: 2.0, duration: 550, onComplete: () => ring.destroy() });
+          if (this.settings?.reducedMotion) {
+            const flash = this.add.circle(enemy.x, enemy.y, 10, 0xff4455, 0.85).setDepth(70);
+            this.tweens.add({ targets: flash, alpha: 0, scale: 2.5, duration: 200, onComplete: () => flash.destroy() });
+          } else {
+            const ring = this.add.circle(enemy.x, enemy.y, 48, 0xff2244, 0.25).setStrokeStyle(4, 0xff8899, 0.95).setDepth(70);
+            this.tweens.add({ targets: ring, alpha: 0, scale: 2.2, duration: 550, onComplete: () => ring.destroy() });
+
+            const exclMark = this.add.text(enemy.x, enemy.y - 64, "!", {
+              font: "900 30px Cinzel",
+              color: "#ff2255",
+              stroke: "#ffffff",
+              strokeThickness: 4
+            }).setOrigin(0.5).setDepth(72);
+            this.tweens.add({
+              targets: exclMark,
+              y: enemy.y - 84,
+              scale: { from: 0.6, to: 1.3 },
+              alpha: { from: 1, to: 0 },
+              duration: 750,
+              ease: "Back.easeOut",
+              onComplete: () => exclMark.destroy()
+            });
+          }
         }
       }
       if (enemy.phase === 2 && enemy.phaseTimer > 0) {
@@ -3137,6 +3182,14 @@
     updateEnemyVisual(enemy, dt) {
       enemy.sprite.setPosition(enemy.x, enemy.y);
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
+      if (enemy.shieldRing) {
+        if (this.settings?.reducedMotion) {
+          enemy.shieldRing.destroy();
+          enemy.shieldRing = null;
+        } else {
+          enemy.shieldRing.setPosition(enemy.x, enemy.y);
+        }
+      }
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
       const baseScale = enemy.base.size / 30;
       const reducedMotion = !!this.settings?.reducedMotion;
@@ -3295,6 +3348,13 @@
           const [childType, count] = split;
           for (let i = 0; i < count; i += 1) this.spawnEnemyFrom(childType, enemy);
           this.flashText("BROOD SPLIT", x, y - 38, "#f2bbd0");
+          if (this.settings?.reducedMotion) {
+            const flash = this.add.circle(x, y, 8, 0xf2bbd0, 0.85).setDepth(70);
+            this.tweens.add({ targets: flash, alpha: 0, scale: 2.5, duration: 200, onComplete: () => flash.destroy() });
+          } else {
+            const burstRing = this.add.circle(x, y, 16, 0xff69b4, 0.35).setStrokeStyle(3, 0xf2bbd0, 0.95).setDepth(70);
+            this.tweens.add({ targets: burstRing, alpha: 0, scale: 2.8, duration: 450, ease: "Quad.easeOut", onComplete: () => burstRing.destroy() });
+          }
         }
         if (burn) this.explode(x, y, 38, 24, true);
       }
@@ -3303,7 +3363,8 @@
     removeEnemy(enemy, killed) {
       this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
-      for (const obj of [enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow, enemy.auraRing]) obj?.destroy();
+      for (const obj of [enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow, enemy.auraRing, enemy.shieldRing]) obj?.destroy();
+      enemy.shieldRing = null;
       if (enemy.speedLines) {
         for (const line of enemy.speedLines) line?.destroy();
         enemy.speedLines = null;
