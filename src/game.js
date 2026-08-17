@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.42";
+  const KRC_VERSION = "1.0.43";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3042,7 +3042,35 @@ const bannerY = 98;
         } else {
           this.gold += 22 + this.waveIndex * 5;
           this.say(`Wave cleared. Prepare for ${WAVES[this.waveIndex].label}.`);
+          this.beginWaveCalm();
         }
+      }
+    }
+
+    beginWaveCalm() {
+      this.waveCalmUntil = this.time.now + 1400;
+      for (const e of this.effects) {
+        if ((e.life || 0) > 0.12) e.life = Math.min(e.life, 0.18);
+      }
+      if (this.settings?.reducedMotion) return;
+      const pts = this.path && this.path.length ? this.path : [{ x: 200, y: 300 }];
+      for (let i = 0; i < 8; i += 1) {
+        const pt = pts[i % pts.length];
+        const dust = this.add.circle(
+          pt.x + (Math.random() - 0.5) * 20,
+          pt.y + 6,
+          2.5 + Math.random() * 2,
+          0xc8b89a,
+          0.4
+        ).setDepth(18);
+        this.tweens.add({
+          targets: dust,
+          alpha: 0,
+          y: dust.y + 10,
+          duration: 720,
+          ease: "Quad.out",
+          onComplete: () => dust.destroy(),
+        });
       }
     }
 
