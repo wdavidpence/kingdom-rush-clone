@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.50";
+  const KRC_VERSION = "1.0.51";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3348,7 +3348,10 @@ const bannerY = 98;
         dead: false,
       });
       enemy.sprite = this.add.image(enemy.x, enemy.y - 4, `enemy_${type}`).setScale(base.size / 30).setDepth(40);
-      if (type === "scout") {
+      if (type === "drift") {
+        if (!this.textures.exists("enemy_drift")) enemy.sprite.setTexture("enemy_scout");
+        enemy.sprite.setTint(0xb8e8ff).setAlpha(0.72);
+      } else if (type === "scout") {
         // Scouts are smaller and faster — add speed lines when moving
         enemy.speedLines = [];
       } else if (type === "brute") {
@@ -5042,6 +5045,7 @@ const bannerY = 98;
 
     findBlockingSoldier(enemy) {
       if (enemy.base.flying) return null;
+      if (enemy.base.phaseWalk) return null;
       const heroRadius = this.hero && !this.hero.dead && this.hero.holdUntil > this.time.now ? enemy.base.size + 62 : enemy.base.size + 14;
       if (
         this.hero &&
