@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.41";
+  const KRC_VERSION = "1.0.42";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2843,6 +2843,8 @@ const bannerY = 98;
       tower.readyBadge?.destroy();
       tower.readyMeter?.destroy();
       tower.readyFill?.destroy();
+      tower.hexVeil?.destroy();
+      tower.hexSlash?.destroy();
       this.entityRegistry.transition(tower, "removed");
       for (const s of tower.soldiers) this.killSoldier(s);
       this.towers = this.towers.filter((t) => t !== tower);
@@ -3278,6 +3280,34 @@ const bannerY = 98;
             enemy.auraRing.setScale(1);
           }
         }
+      }
+      for (const tower of this.towers) this.syncTowerHex(tower);
+    }
+
+    syncTowerHex(tower) {
+      if (!tower.sprite) return;
+      if (!tower.hexVeil) {
+        tower.hexVeil = this.add.circle(tower.x, tower.y - 8, 20, 0x2a1038, 0.42)
+          .setStrokeStyle(2, 0xc89bff, 0.8).setDepth(32);
+      }
+      if (!tower.hexSlash) {
+        tower.hexSlash = this.add.text(tower.x, tower.y - 8, "/", {
+          font: "900 22px Cinzel, serif",
+          color: "#e6c8ff",
+          stroke: "#220838",
+          strokeThickness: 4,
+        }).setOrigin(0.5).setDepth(33);
+      }
+      const on = !!tower.hexed;
+      tower.hexVeil.setPosition(tower.x, tower.y - 8).setVisible(on);
+      tower.hexSlash.setPosition(tower.x + 1, tower.y - 8).setVisible(on);
+      tower.sprite.setAlpha(on ? 0.52 : 1);
+      if (this.settings?.reducedMotion) {
+        tower.hexVeil.setAlpha(on ? 0.45 : 0);
+        tower.hexSlash.setAlpha(on ? 0.9 : 0);
+      } else if (on) {
+        const pulse = 0.32 + Math.sin(this.time.now * 0.01) * 0.1;
+        tower.hexVeil.setAlpha(pulse);
       }
     }
 
