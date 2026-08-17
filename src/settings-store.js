@@ -7,7 +7,7 @@
   "use strict";
 
   var STORAGE_KEY = "krc.settings.v1";
-  var DEFAULTS = Object.freeze({ muted: false, reducedMotion: false });
+  var DEFAULTS = Object.freeze({ muted: false, reducedMotion: false, musicVolume: 0.6, sfxVolume: 1.0 });
 
   /**
    * Load settings from localStorage. Returns a fresh defaults object when
@@ -19,15 +19,28 @@
       if (raw === null) return Object.assign({}, DEFAULTS);
       var parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== "object") return Object.assign({}, DEFAULTS);
-      return Object.assign({}, DEFAULTS, parsed);
+      var result = Object.assign({}, DEFAULTS, parsed);
+      if (typeof result.musicVolume === "number" && !isNaN(result.musicVolume)) {
+        result.musicVolume = Math.max(0, Math.min(1, result.musicVolume));
+      } else {
+        result.musicVolume = DEFAULTS.musicVolume;
+      }
+      if (typeof result.sfxVolume === "number" && !isNaN(result.sfxVolume)) {
+        result.sfxVolume = Math.max(0, Math.min(1, result.sfxVolume));
+      } else {
+        result.sfxVolume = DEFAULTS.sfxVolume;
+      }
+      if (typeof result.muted !== "boolean") result.muted = DEFAULTS.muted;
+      if (typeof result.reducedMotion !== "boolean") result.reducedMotion = DEFAULTS.reducedMotion;
+      return result;
     } catch (_) {
       return Object.assign({}, DEFAULTS);
     }
   }
 
   /**
-   * Save a partial settings object. Only boolean `muted` and `reducedMotion`
-   * values are merged onto the current storage entry; everything else is ignored.
+   * Save a partial settings object. Boolean `muted`/`reducedMotion` and
+   * numeric `musicVolume`/`sfxVolume` (clamped 0-1) are merged; everything else is ignored.
    */
   function save(partial) {
     var stored = load();
@@ -37,6 +50,9 @@
           if ((key === "muted" || key === "reducedMotion") &&
               typeof partial[key] === "boolean") {
             stored[key] = partial[key];
+          } else if ((key === "musicVolume" || key === "sfxVolume") &&
+                     typeof partial[key] === "number" && !isNaN(partial[key])) {
+            stored[key] = Math.max(0, Math.min(1, partial[key]));
           }
         }
       }
