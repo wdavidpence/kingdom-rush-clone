@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.25";
+  const KRC_VERSION = "1.0.26";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3501,6 +3501,13 @@
           .slice(0, 2);
         for (const extra of extras) this.fireTower(tower, extra);
         if (extras.length) {
+          if (this.settings?.reducedMotion) {
+            const ring = this.add.circle(tower.x, tower.y, 6, 0xb7f08a, 0.8).setDepth(56);
+            this.tweens.add({ targets: ring, alpha: 0, scale: 2, duration: 150, onComplete: () => ring.destroy() });
+          } else {
+            const ring = this.add.circle(tower.x, tower.y, 20, 0xb7f08a, 0.15).setStrokeStyle(2.5, 0xb7f08a, 0.95).setDepth(56);
+            this.tweens.add({ targets: ring, alpha: 0, scale: 1.6, duration: 350, ease: "Quad.easeOut", onComplete: () => ring.destroy() });
+          }
           this.flashText("VOLLEY", tower.x, tower.y - 40, "#b7f08a");
           Object.assign(tower, api.afterTrigger(tower));
           this.audio.play("shoot", 0.18, 1.5);
@@ -3508,6 +3515,13 @@
         return;
       }
       if (ability.id === "nova") {
+        if (this.settings?.reducedMotion) {
+          const ring = this.add.circle(target.x, target.y, 8, 0xc2b6ff, 0.8).setDepth(56);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 2.5, duration: 150, onComplete: () => ring.destroy() });
+        } else {
+          const ring = this.add.circle(target.x, target.y, 54, 0xc2b6ff, 0.15).setStrokeStyle(2.5, 0xc2b6ff, 0.95).setDepth(56);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 1.3, duration: 400, ease: "Quad.easeOut", onComplete: () => ring.destroy() });
+        }
         this.explode(target.x, target.y, 54, cfg.damage[tower.level] * 0.55, true);
         for (const enemy of this.enemies) {
           if (!enemy.dead && Phaser.Math.Distance.Between(target.x, target.y, enemy.x, enemy.y) <= 54) {
@@ -3522,9 +3536,18 @@
       if (ability.id === "barrage") {
         const x = target.x;
         const y = target.y;
+        const strikeX = x + 18;
+        const strikeY = y - 10;
+        if (this.settings?.reducedMotion) {
+          const ring = this.add.circle(strikeX, strikeY, 8, 0xf0c27a, 0.8).setDepth(56);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 2.5, duration: 150, onComplete: () => ring.destroy() });
+        } else {
+          const ring = this.add.circle(strikeX, strikeY, 44, 0xf0c27a, 0.15).setStrokeStyle(2.5, 0xf0c27a, 0.95).setDepth(56);
+          this.tweens.add({ targets: ring, alpha: 0, scale: 1.3, duration: 350, ease: "Quad.easeOut", onComplete: () => ring.destroy() });
+        }
         this.time.delayedCall(220, () => {
           if (this.gameEnded) return;
-          this.explode(x + 18, y - 10, (cfg.splash?.[tower.level] || 50) * 1.15, cfg.damage[tower.level] * 0.7, false);
+          this.explode(strikeX, strikeY, (cfg.splash?.[tower.level] || 50) * 1.15, cfg.damage[tower.level] * 0.7, false);
           this.flashText("BARRAGE", x, y - 42, "#f0c27a");
         });
         Object.assign(tower, api.afterTrigger(tower));
