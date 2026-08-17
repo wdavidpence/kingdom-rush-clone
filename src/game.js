@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.55";
+  const KRC_VERSION = "1.0.56";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4759,7 +4759,7 @@ const bannerY = 98;
             });
             this.damageEnemy(meleeTarget, strike.damage, {});
             this.meleeImpactFx(soldier, meleeTarget, strike.flash);
-            this.audio.play("impact", strike.flash === "crit" ? 0.2 : 0.12, strike.flash === "crit" ? 0.9 : 1.25);
+            this.audio.playLayered("guardStrike");
           }
         } else {
           soldier.target = null;
@@ -6102,20 +6102,28 @@ const bannerY = 98;
 
     // Layered sound for specific events (tower type aware)
     playLayered(type, volume = 0.25) {
+      this.lastLayered = type;
       if (this.muted) return;
       const v = volume * (this.sfxVolume !== undefined ? this.sfxVolume : 1);
       switch (type) {
         case "archerShoot": // Archer tower shoot
           if (this.samples.shoot) this.samples.shoot.play({ volume: v * 0.7, rate: 1 });
           this.tone(800, 0.04, "triangle", v * 0.06);
+          this.tone(1600, 0.03, "triangle", v * 0.04);
           break;
         case "mageShoot": // Mage tower shoot
           if (this.samples.magic) this.samples.magic.play({ volume: v * 0.6, rate: 1 });
           this.tone(1200, 0.06, "sine", v * 0.05);
+          this.tone(480, 0.08, "sine", v * 0.04);
           break;
         case "artilleryShoot": // Artillery tower shoot
           if (this.samples.boom) this.samples.boom.play({ volume: v * 0.5, rate: 0.9 });
           this.tone(80, 0.12, "sawtooth", v * 0.08);
+          this.tone(40, 0.16, "sawtooth", v * 0.06);
+          break;
+        case "guardStrike": // Barracks melee strike
+          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.55, rate: 0.92 });
+          this.tone(220, 0.05, "square", v * 0.05);
           break;
         case "enemyHit": // Enemy takes damage
           if (this.samples.impact) this.samples.impact.play({ volume: v * 0.5, rate: 1 });
