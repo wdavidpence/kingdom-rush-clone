@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.11";
+  const KRC_VERSION = "1.0.12";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2141,8 +2141,63 @@
       }
       this.towers.push(tower);
       if (!this.settings?.reducedMotion) {
+        tower.sprite.setPosition(pad.x, pad.y + 6).setScale(0.35);
+        this.tweens.add({
+          targets: tower.sprite,
+          y: pad.y - 8,
+          scale: 0.62,
+          duration: 240,
+          ease: "Cubic.out",
+        });
+
         const flash = this.add.circle(pad.x, pad.y - 8, 12, 0xf5d76e, 0.7).setDepth(35);
         this.tweens.add({ targets: flash, scale: 2.2, alpha: 0, duration: 250, onComplete: () => flash.destroy() });
+
+        const dustColors = [0xc2b280, 0xd4c596, 0x8b7d6b, 0x9e9484, 0xdfd3b6];
+        for (let i = 0; i < 6; i += 1) {
+          const angle = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+          const dist = 6 + Math.random() * 12;
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * (dist * 0.6);
+          const r = 4 + Math.random() * 4;
+          const color = dustColors[i % dustColors.length];
+          const dust = this.add.circle(pad.x + dx * 0.3, pad.y + dy * 0.3, r, color, 0.65).setDepth(34);
+          this.tweens.add({
+            targets: dust,
+            x: pad.x + dx * 1.5,
+            y: pad.y + dy * 1.5 - 4,
+            scale: 1.8,
+            alpha: 0,
+            duration: 300 + Math.random() * 100,
+            ease: "Quad.out",
+            onComplete: () => dust.destroy(),
+          });
+        }
+
+        const woodColors = [0x8b5a2b, 0x654321, 0xa0522d, 0xd2b48c];
+        for (let i = 0; i < 6; i += 1) {
+          const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+          const dist = 10 + Math.random() * 14;
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist - (5 + Math.random() * 8);
+          const w = 3 + Math.random() * 2;
+          const h = 2 + Math.random() * 2;
+          const color = woodColors[i % woodColors.length];
+          const chip = this.add.rectangle(pad.x, pad.y - 4, w, h, color, 0.9).setDepth(36);
+          chip.setRotation(Math.random() * Math.PI * 2);
+          this.tweens.add({
+            targets: chip,
+            x: pad.x + dx,
+            y: pad.y + dy,
+            rotation: chip.rotation + (Math.random() > 0.5 ? 3.14 : -3.14),
+            scale: 0.4,
+            alpha: 0,
+            duration: 250 + Math.random() * 100,
+            ease: "Quad.out",
+            onComplete: () => chip.destroy(),
+          });
+        }
+
         for (let i = 0; i < 8; i += 1) {
           const angle = (i / 8) * Math.PI * 2;
           const speed = 35 + Math.random() * 25;
