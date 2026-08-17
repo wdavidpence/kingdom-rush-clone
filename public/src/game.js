@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.31";
+  const KRC_VERSION = "1.0.32";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2138,7 +2138,7 @@
 
       // Title Banner Frame
       const bannerX = W / 2;
-      const bannerY = 82;
+const bannerY = 98;
       const bannerW = 360;
       const bannerH = 68;
 
