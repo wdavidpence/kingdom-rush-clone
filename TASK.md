@@ -1,9 +1,9 @@
-# TASK: KRC v1.0.6 — Map Atmosphere Enhancements & Tower Upgrade Polish
+# TASK: KRC v1.0.7 — Hero Ability Sounds, Spell Sounds, Projectile Trails, Hero Aura
 
 ## Context
-KRC is a Phaser 3 tower defense game at `/Users/davidpence/kingdom-rush-clone`. v1.0.5 added enemy slow/hex VFX, range ring preview, UI sounds.
+KRC is a Phaser 3 tower defense game at `/Users/davidpence/kingdom-rush-clone`. v1.0.6 added map atmosphere, tower polish, layered shoot/death sounds. The SoundBox class already has `playLayered()` with handlers for all hero abilities and spells — they just need to be wired up in the game code.
 
-**Goal for v1.0.6:** Add map-specific atmosphere enhancements and tower upgrade polish to approach AAA quality.
+**Goal for v1.0.7:** Wire up hero ability sounds, spell sounds, add projectile trail enhancement, and hero command indicator aura.
 
 ## Constraints
 - Single-file HTML game — Phaser 3.80 from CDN, all JS loaded inline
@@ -13,47 +13,79 @@ KRC is a Phaser 3 tower defense game at `/Users/davidpence/kingdom-rush-clone`. 
 
 ## Scope — What to Build
 
-### 1. Forest Gate Atmosphere (map index 0)
-Add subtle leaf particles drifting on wind:
-- Use existing particle system helpers (createParticles or manual circle + effects)
-- 6 leaf particles drifting slowly across the screen
-- Green/brown colors, slow horizontal drift + slight vertical bob
+### 1. Hero Ability Sound Layering (castHeroAbility method)
+Wire up the existing playLayered handlers:
 
-### 2. Stone Pass Atmosphere (map index 1)
-Add stone dust particles near road edges:
-- 4 small grey/brown particles floating near the path
-- Slow upward drift (like dust in sunlight)
+**Charge ability:** Replace `this.audio.play("impact", 0.3)` with `this.audio.playLayered("chargeAbility")`
+**Banner ability:** Replace `this.audio.play("ready", 0.3)` with `this.audio.playLayered("bannerAbility")`
+**Heal ability:** Replace `this.audio.play("magic", 0.25)` with `this.audio.playLayered("healAbility")`
 
-### 3. Ember Marsh Atmosphere (map index 2)
-Add marsh gas bubbles rising from ground:
-- 5 green/yellow particles rising slowly from random positions near the path
-- Slight horizontal wobble as they rise
+### 2. Spell Sound Layering (castSpell method)
+Wire up the existing playLayered handlers:
 
-### 4. Tower Upgrade Visual Polish (upgradeSelected method)
-Enhance the existing upgrade VFX:
-- Add level-specific ring color (bronze for L2, silver for L3, gold for L4+, diamond for MAX)
-- Add a brief screen flash on upgrade (subtle, 50ms)
+**Meteor spell:** Replace `this.audio.play("boom", 0.4)` with `this.audio.playLayered("meteorSpell")`
+**Frost spell:** Replace `this.audio.play("magic", 0.28)` with `this.audio.playLayered("frostSpell")`
+**Rally spell:** Replace `this.audio.play("ready", 0.3)` with `this.audio.playLayered("rallySpell")`
 
-### 5. Tower Build Visual Polish (buildTower method)
-Enhance the existing build effect:
-- Add a brief golden flash at build position (scale up then fade)
-- Add 8 small particles radiating outward from build point
+### 3. Projectile Trail Enhancement (updateProjectiles method)
+Replace random-dot trails with continuous trail lines:
 
-### 6. Enemy Death Sound Enhancement (removeEnemy method)
-Replace single-clip death sound with layered:
-- Use `this.audio.playLayered("enemyDeath")` instead of single play
+Instead of the existing `Math.random() < 0.45` dot spawning, add a trail line behind each projectile:
+```javascript
+// In updateProjectiles, replace the random dot with a trail line:
+if (!this.settings.reducedMotion && Math.random() < 0.3) {
+  const trail = this.add.line(0, 0, p.x - Math.cos(p.sprite.rotation) * 8, p.y - Math.sin(p.sprite.rotation) * 8,
+    p.x, p.y, p.trailColor || 0xfff0c0, 0.4).setLineWidth(1.5).setDepth(59);
+  this.tweens.add({ targets: trail, alpha: 0, duration: 120, onComplete: () => trail.destroy() });
+}
+```
 
-### 7. Tower Shoot Sound Enhancement (fireTower method)
-Replace single-clip shoot sound with layered:
-- Archer: `this.audio.playLayered("archerShoot")`
-- Mage: `this.audio.playLayered("mageShoot")`
-- Artillery: `this.audio.playLayered("artilleryShoot")`
+### 4. Hero Command Indicator Aura (updateHero method)
+When the hero is selected or moving, add a golden pulsing aura:
+
+```javascript
+// In updateHero, after existing hero logic:
+if (hero && !hero.dead) {
+  // Golden aura around hero that pulses
+  if (!this.heroAura || this.heroAura.destroyed) {
+    this.heroAura = this.add.circle(hero.x, hero.y - 4, 20, 0xf5d76e, 0.15).setStrokeStyle(2, 0xfff2ba, 0.6).setDepth(45);
+  } else {
+    this.heroAura.setPosition(hero.x, hero.y - 4);
+    const pulse = Math.sin(this.time.now * 0.006) * 0.05 + 0.15;
+    this.heroAura.setFillStyle(0xf5d76e, pulse);
+  }
+} else if (this.heroAura) {
+  this.heroAura.destroy();
+  this.heroAura = null;
+}
+```
+
+### 5. Tower Build Sound Enhancement (buildTower method)
+Replace single-clip build sound with layered:
+```javascript
+// Replace this.audio.play("ready", 0.28) with:
+this.audio.playLayered("towerBuild");
+```
+
+### 6. Tower Upgrade Sound Enhancement (upgradeSelected method)
+Replace single-clip upgrade sound with layered:
+```javascript
+// Replace this.audio.play("ready", 0.34, ...) with:
+this.audio.playLayered("towerUpgrade");
+```
+
+### 7. Tower Sell Sound Enhancement (sellSelected method)
+Replace single-clip sell sound with layered:
+```javascript
+// Add after the refund logic, before tower.sprite.destroy():
+this.audio.playLayered("towerSell");
+```
 
 ### 8. Version Hash Update (public/index.html)
-Change CSS version to `?v=20260817-4`
+Change CSS version to `?v=20260817-5`
 
 ## Implementation Strategy
-- Modify `public/src/game.js` only (SoundBox already has playLayered from v1.0.4)
+- Modify `public/src/game.js` only (SoundBox already has all playLayered handlers from v1.0.4)
 - Update version hash in `public/index.html`
 
 ## Verification (run ALL before reporting)
@@ -63,4 +95,4 @@ Change CSS version to `?v=20260817-4`
 4. Report summary of changes and verification results
 
 ## IMPORTANT: Use agy for all file modifications
-Run commands like: /Users/davidpence/.local/bin/agy --dangerously-skip-permissions --print "implement the changes described above in public/src/game.js and index.html" with workdir=/Users/davidpence/kingdom-rush-clone
+Run commands like: /Users/davidpence/.local/bin/agy --dangerously-skip-permissions --model 'gemini-3.7-flash-high' --print "implement the changes described above in public/src/game.js and index.html" with workdir=/Users/davidpence/kingdom-rush-clone

@@ -888,7 +888,7 @@
           this.effects.push({ obj: p, life: 0.35 + Math.random() * 0.15, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
         }
       }
-      this.audio.play("ready", 0.28);
+      this.audio.playLayered("towerBuild");
       this.selectedPad = pad;
       this.selectedBuild = null;
       this.setHeroPanel(false);
@@ -958,7 +958,7 @@
         this.flashText(`UPGRADE L${tower.level + 1}`, tower.x, tower.y - 42, "#fff2ba");
         this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       }
-      this.audio.play("ready", 0.34, 1 + tower.level * 0.08);
+      this.audio.playLayered("towerUpgrade");
       this.updateUpgradeLabel();
     }
 
@@ -979,6 +979,7 @@
           this.effects.push({ obj: coin, life: 0.5 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 40 });
         }
       }
+      this.audio.playLayered("towerSell");
       tower.sprite.destroy();
       tower.label.destroy();
       tower.rangeRing.destroy();
@@ -1608,9 +1609,10 @@
           p.y += ((p.target.y - p.y) / d) * step;
           p.sprite.setPosition(p.x, p.y);
           p.sprite.rotation = Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
-          if (!this.settings.reducedMotion && Math.random() < 0.45) {
-            const dot = this.add.circle(p.x, p.y, 2.2, p.trailColor || 0xfff0c0, 0.55).setDepth(59);
-            this.tweens.add({ targets: dot, alpha: 0, scale: 0.2, duration: 160, onComplete: () => dot.destroy() });
+          if (!this.settings.reducedMotion && Math.random() < 0.3) {
+            const trail = this.add.line(0, 0, p.x - Math.cos(p.sprite.rotation) * 8, p.y - Math.sin(p.sprite.rotation) * 8,
+              p.x, p.y, p.trailColor || 0xfff0c0, 0.4).setLineWidth(1.5).setDepth(59);
+            this.tweens.add({ targets: trail, alpha: 0, duration: 120, onComplete: () => trail.destroy() });
           }
         }
       }
@@ -1815,6 +1817,10 @@
       for (const ability of Object.values(this.heroAbilities)) ability.ready = Math.max(0, ability.ready - dt);
       this.bannerTime = Math.max(0, (this.bannerTime || 0) - dt);
       if (hero.dead) {
+        if (this.heroAura) {
+          this.heroAura.destroy();
+          this.heroAura = null;
+        }
         hero.respawn -= dt;
         if (hero.respawn <= 0) this.respawnHero();
         return;
@@ -1841,6 +1847,19 @@
       hero.bar.setPosition(hero.x - 15, hero.y - 31);
       hero.bar.width = Math.max(1, 30 * (hero.hp / hero.maxHp));
       hero.levelText.setPosition(hero.x, hero.y + 18).setText(`H${hero.level}`);
+      if (hero && !hero.dead) {
+        // Golden aura around hero that pulses
+        if (!this.heroAura || this.heroAura.destroyed) {
+          this.heroAura = this.add.circle(hero.x, hero.y - 4, 20, 0xf5d76e, 0.15).setStrokeStyle(2, 0xfff2ba, 0.6).setDepth(45);
+        } else {
+          this.heroAura.setPosition(hero.x, hero.y - 4);
+          const pulse = Math.sin(this.time.now * 0.006) * 0.05 + 0.15;
+          this.heroAura.setFillStyle(0xf5d76e, pulse);
+        }
+      } else if (this.heroAura) {
+        this.heroAura.destroy();
+        this.heroAura = null;
+      }
     }
 
     castHeroAbility(id) {
@@ -1905,7 +1924,9 @@
         this.flashText("HEAL", hero.x, hero.y - 42, "#9eff9c");
       }
       ability.ready = ability.cooldown;
-      this.audio.play(id === "charge" ? "impact" : "ready", 0.32, id === "charge" ? 0.85 : 1.05);
+      if (id === "charge") this.audio.playLayered("chargeAbility");
+      else if (id === "banner") this.audio.playLayered("bannerAbility");
+      else if (id === "heal") this.audio.playLayered("healAbility");
     }
 
     respawnHero() {
@@ -1931,6 +1952,10 @@
       hero.hp = 0;
       this.heroSelected = false;
       hero.ring.setVisible(false);
+      if (this.heroAura) {
+        this.heroAura.destroy();
+        this.heroAura = null;
+      }
       for (const obj of [hero.sprite, hero.barBg, hero.bar, hero.levelText]) obj.setVisible(false);
       this.say("Captain is recovering.");
     }
@@ -2122,7 +2147,9 @@
         this.flashText("RALLY", W / 2, 312, "#fff1a0");
       }
       spell.ready = spell.cooldown;
-      this.audio.play(id === "meteor" ? "boom" : "magic", id === "meteor" ? 0.4 : 0.28, id === "frost" ? 0.78 : 1.1);
+      if (id === "meteor") this.audio.playLayered("meteorSpell");
+      else if (id === "frost") this.audio.playLayered("frostSpell");
+      else if (id === "rally") this.audio.playLayered("rallySpell");
     }
 
     updateSpells(dt) {
