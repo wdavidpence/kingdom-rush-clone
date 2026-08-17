@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.33";
+  const KRC_VERSION = "1.0.34";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -5190,7 +5190,18 @@ const bannerY = 98;
         this.scene.restart({ mapIndex: 0, gold: 280, lives: 20 });
       });
       this.audio.stopMusic();
-      this.audio.play(victory ? "ready" : "fail", 0.5, victory ? 0.9 : 1);
+      if (victory) {
+        this.audio.play("start", 0.65);
+        this.audio.tone(440, 0.3, "triangle", 0.06, 0);
+        this.audio.tone(554.37, 0.3, "triangle", 0.06, 0.04);
+        this.audio.tone(659.25, 0.35, "sine", 0.07, 0.08);
+        this.audio.tone(880, 0.45, "sine", 0.08, 0.12);
+      } else {
+        this.audio.play("fail", 0.6);
+        this.audio.tone(240, 0.18, "sawtooth", 0.08, 0);
+        this.audio.tone(196, 0.22, "sawtooth", 0.08, 0.1);
+        this.audio.tone(146, 0.3, "sawtooth", 0.09, 0.2);
+      }
       created.push(title, sub, btnShadow, btn, btnShine, btnLip, txt);
       return created;
     }
@@ -5352,12 +5363,15 @@ const bannerY = 98;
           break;
         case "start": // Wave start — fanfare + rise
           if (sample) sample.play({ volume: Math.min(1, volume * 0.85), rate });
-          this.tone(440, 0.06, "sine", volume * 0.08);
-          this.tone(554, 0.06, "sine", volume * 0.06);
+          this.tone(440, 0.08, "sine", volume * 0.08, 0);
+          this.tone(554, 0.08, "sine", volume * 0.07, 0.04);
+          this.tone(659, 0.12, "sine", volume * 0.06, 0.08);
           break;
         case "fail": // Game over — descending tone
           if (sample) sample.play({ volume: Math.min(1, volume * 0.9), rate });
-          this.tone(200, 0.15, "sawtooth", volume * 0.08);
+          this.tone(260, 0.15, "sawtooth", volume * 0.08, 0);
+          this.tone(200, 0.18, "sawtooth", volume * 0.08, 0.08);
+          this.tone(150, 0.25, "sawtooth", volume * 0.09, 0.16);
           break;
         default: // Fallback for unknown sounds
           if (sample) {
@@ -5473,7 +5487,7 @@ const bannerY = 98;
     }
 
     tone(freq, duration = 0.08, type = "square", volume = 0.025, delay = 0) {
-      if (!this.ctx) return;
+      if (this.muted || !this.ctx) return;
       const now = this.ctx.currentTime + delay;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
