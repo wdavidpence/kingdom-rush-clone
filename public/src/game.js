@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.34";
+  const KRC_VERSION = "1.0.35";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -81,8 +81,9 @@
       this.tooltipText = "";
       this.audio = new SoundBox(this);
       this.events.once("shutdown", this.cleanupScene, this);
-      this.settings = window.KRCSettings?.load?.() || { muted: false, reducedMotion: false };
+      this.settings = window.KRCSettings?.load?.() || { muted: false, reducedMotion: false, musicVolume: 0.6, sfxVolume: 1.0 };
       this.audio.setMuted(this.settings.muted);
+      this.audio.setMix(this.settings.musicVolume, this.settings.sfxVolume);
       this.spells = {
         meteor: { name: "Meteor", ready: 0, cooldown: 24 },
         frost: { name: "Frost", ready: 0, cooldown: 22 },
@@ -5304,12 +5305,14 @@ const bannerY = 98;
       this.musicStep = 0;
       this.musicStarted = false;
       this.muted = false;
+      this.musicVolume = typeof scene?.settings?.musicVolume === "number" ? scene.settings.musicVolume : 0.6;
+      this.sfxVolume = typeof scene?.settings?.sfxVolume === "number" ? scene.settings.sfxVolume : 1.0;
       this.samples = {};
       const keys = ["shoot", "impact", "boom", "start", "ready", "fail", "magic", "music"];
       for (const key of keys) {
         if (scene.cache.audio.exists(`sfx_${key}`)) {
           this.samples[key] = scene.sound.add(`sfx_${key}`, {
-            volume: key === "music" ? 0.11 : 0.32,
+            volume: key === "music" ? 0.11 * this.musicVolume : 0.32 * this.sfxVolume,
             loop: key === "music",
           });
         }
@@ -5320,6 +5323,19 @@ const bannerY = 98;
       this.muted = !!value;
       this.scene.sound.mute = this.muted;
       if (this.muted) this.stopMusic();
+    }
+
+    setMix(musicVolume, sfxVolume) {
+      if (typeof musicVolume === "number" && !isNaN(musicVolume)) {
+        this.musicVolume = Math.max(0, Math.min(1, musicVolume));
+      }
+      if (typeof sfxVolume === "number" && !isNaN(sfxVolume)) {
+        this.sfxVolume = Math.max(0, Math.min(1, sfxVolume));
+      }
+      if (this.samples.music && this.samples.music.isPlaying) {
+        const baseVol = 0.09 * this.musicVolume;
+        this.samples.music.setVolume(baseVol);
+      }
     }
 
     resume() {
@@ -5335,49 +5351,50 @@ const bannerY = 98;
 
     play(name, volume = 0.25, rate = 1) {
       if (this.muted) return;
+      const v = volume * (this.sfxVolume !== undefined ? this.sfxVolume : 1);
       const sample = this.samples[name];
       // Layered sound system: combine Kenney clips with WebAudio tones for richness
       switch (name) {
         case "shoot": // Archer tower — whoosh + thwip + tip
-          if (sample) sample.play({ volume: volume * 0.8, rate });
-          this.tone(320, 0.08, "triangle", volume * 0.15);
-          this.tone(800, 0.04, "triangle", volume * 0.06);
+          if (sample) sample.play({ volume: v * 0.8, rate });
+          this.tone(320, 0.08, "triangle", v * 0.15);
+          this.tone(800, 0.04, "triangle", v * 0.06);
           break;
         case "magic": // Mage tower — spell + shimmer + sparkle
-          if (sample) sample.play({ volume: volume * 0.7, rate });
-          this.tone(520, 0.1, "sine", volume * 0.1);
-          this.tone(1200, 0.06, "sine", volume * 0.05);
+          if (sample) sample.play({ volume: v * 0.7, rate });
+          this.tone(520, 0.1, "sine", v * 0.1);
+          this.tone(1200, 0.06, "sine", v * 0.05);
           break;
         case "boom": // Artillery — explosion + rumble + sub-bass
-          if (sample) sample.play({ volume: Math.min(1, volume * 0.9), rate });
-          this.tone(80, 0.15, "sawtooth", volume * 0.12);
-          this.tone(120, 0.08, "triangle", volume * 0.1);
+          if (sample) sample.play({ volume: Math.min(1, v * 0.9), rate });
+          this.tone(80, 0.15, "sawtooth", v * 0.12);
+          this.tone(120, 0.08, "triangle", v * 0.1);
           break;
         case "impact": // Enemy hit/death — thud + damage layer
-          if (sample) sample.play({ volume: Math.min(1, volume * 0.85), rate });
-          this.tone(200, 0.06, "triangle", volume * 0.08);
+          if (sample) sample.play({ volume: Math.min(1, v * 0.85), rate });
+          this.tone(200, 0.06, "triangle", v * 0.08);
           break;
         case "ready": // Build/upgrade — click + chime
-          if (sample) sample.play({ volume: Math.min(1, volume * 0.85), rate });
-          this.tone(600, 0.04, "triangle", volume * 0.07);
+          if (sample) sample.play({ volume: Math.min(1, v * 0.85), rate });
+          this.tone(600, 0.04, "triangle", v * 0.07);
           break;
         case "start": // Wave start — fanfare + rise
-          if (sample) sample.play({ volume: Math.min(1, volume * 0.85), rate });
-          this.tone(440, 0.08, "sine", volume * 0.08, 0);
-          this.tone(554, 0.08, "sine", volume * 0.07, 0.04);
-          this.tone(659, 0.12, "sine", volume * 0.06, 0.08);
+          if (sample) sample.play({ volume: Math.min(1, v * 0.85), rate });
+          this.tone(440, 0.08, "sine", v * 0.08, 0);
+          this.tone(554, 0.08, "sine", v * 0.07, 0.04);
+          this.tone(659, 0.12, "sine", v * 0.06, 0.08);
           break;
         case "fail": // Game over — descending tone
-          if (sample) sample.play({ volume: Math.min(1, volume * 0.9), rate });
-          this.tone(260, 0.15, "sawtooth", volume * 0.08, 0);
-          this.tone(200, 0.18, "sawtooth", volume * 0.08, 0.08);
-          this.tone(150, 0.25, "sawtooth", volume * 0.09, 0.16);
+          if (sample) sample.play({ volume: Math.min(1, v * 0.9), rate });
+          this.tone(260, 0.15, "sawtooth", v * 0.08, 0);
+          this.tone(200, 0.18, "sawtooth", v * 0.08, 0.08);
+          this.tone(150, 0.25, "sawtooth", v * 0.09, 0.16);
           break;
         default: // Fallback for unknown sounds
           if (sample) {
-            try { sample.play({ volume, rate }); } catch (_e) {}
+            try { sample.play({ volume: v, rate }); } catch (_e) {}
           } else {
-            this.tone(name === "boom" ? 120 : name === "magic" ? 520 : 320, 0.08, name === "boom" ? "sawtooth" : "triangle", volume * 0.12);
+            this.tone(name === "boom" ? 120 : name === "magic" ? 520 : 320, 0.08, name === "boom" ? "sawtooth" : "triangle", v * 0.12);
           }
       }
     }
@@ -5385,76 +5402,77 @@ const bannerY = 98;
     // Layered sound for specific events (tower type aware)
     playLayered(type, volume = 0.25) {
       if (this.muted) return;
+      const v = volume * (this.sfxVolume !== undefined ? this.sfxVolume : 1);
       switch (type) {
         case "archerShoot": // Archer tower shoot
-          if (this.samples.shoot) this.samples.shoot.play({ volume: volume * 0.7, rate: 1 });
-          this.tone(800, 0.04, "triangle", volume * 0.06);
+          if (this.samples.shoot) this.samples.shoot.play({ volume: v * 0.7, rate: 1 });
+          this.tone(800, 0.04, "triangle", v * 0.06);
           break;
         case "mageShoot": // Mage tower shoot
-          if (this.samples.magic) this.samples.magic.play({ volume: volume * 0.6, rate: 1 });
-          this.tone(1200, 0.06, "sine", volume * 0.05);
+          if (this.samples.magic) this.samples.magic.play({ volume: v * 0.6, rate: 1 });
+          this.tone(1200, 0.06, "sine", v * 0.05);
           break;
         case "artilleryShoot": // Artillery tower shoot
-          if (this.samples.boom) this.samples.boom.play({ volume: volume * 0.5, rate: 0.9 });
-          this.tone(80, 0.12, "sawtooth", volume * 0.08);
+          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.5, rate: 0.9 });
+          this.tone(80, 0.12, "sawtooth", v * 0.08);
           break;
         case "enemyHit": // Enemy takes damage
-          if (this.samples.impact) this.samples.impact.play({ volume: volume * 0.5, rate: 1 });
+          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.5, rate: 1 });
           break;
         case "enemyDeath": // Enemy dies — thud + fade
-          if (this.samples.impact) this.samples.impact.play({ volume: volume * 0.6, rate: 1 });
-          if (this.samples.boom) this.samples.boom.play({ volume: volume * 0.2, rate: 0.8 });
-          this.tone(400, 0.15, "sine", volume * 0.06);
+          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.6, rate: 1 });
+          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.2, rate: 0.8 });
+          this.tone(400, 0.15, "sine", v * 0.06);
           break;
         case "towerBuild": // Tower placed
-          if (this.samples.ready) this.samples.ready.play({ volume: volume * 0.6, rate: 1 });
-          if (this.samples.start) this.samples.start.play({ volume: volume * 0.15, rate: 1.2 });
+          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.6, rate: 1 });
+          if (this.samples.start) this.samples.start.play({ volume: v * 0.15, rate: 1.2 });
           break;
         case "towerUpgrade": // Tower upgraded — chime sweep
-          if (this.samples.ready) this.samples.ready.play({ volume: volume * 0.7, rate: 1 });
-          this.tone(300, 0.08, "sine", volume * 0.06);
-          this.tone(600, 0.08, "sine", volume * 0.05);
+          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.7, rate: 1 });
+          this.tone(300, 0.08, "sine", v * 0.06);
+          this.tone(600, 0.08, "sine", v * 0.05);
           break;
         case "towerSell": // Tower sold — coin jingle
-          if (this.samples.impact) this.samples.impact.play({ volume: volume * 0.5, rate: 1 });
-          this.tone(800, 0.04, "triangle", volume * 0.05);
-          this.tone(1200, 0.04, "triangle", volume * 0.04);
+          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.5, rate: 1 });
+          this.tone(800, 0.04, "triangle", v * 0.05);
+          this.tone(1200, 0.04, "triangle", v * 0.04);
           break;
         case "meteorSpell": // Meteor spell
-          if (this.samples.boom) this.samples.boom.play({ volume: volume * 0.7, rate: 1 });
-          this.tone(150, 0.2, "sawtooth", volume * 0.08);
+          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.7, rate: 1 });
+          this.tone(150, 0.2, "sawtooth", v * 0.08);
           break;
         case "frostSpell": // Frost spell
-          if (this.samples.magic) this.samples.magic.play({ volume: volume * 0.6, rate: 1 });
-          this.tone(1400, 0.08, "sine", volume * 0.05);
+          if (this.samples.magic) this.samples.magic.play({ volume: v * 0.6, rate: 1 });
+          this.tone(1400, 0.08, "sine", v * 0.05);
           break;
         case "rallySpell": // Rally spell
-          if (this.samples.ready) this.samples.ready.play({ volume: volume * 0.6, rate: 1 });
-          this.tone(440, 0.1, "sine", volume * 0.05);
-          this.tone(554, 0.1, "sine", volume * 0.04);
+          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.6, rate: 1 });
+          this.tone(440, 0.1, "sine", v * 0.05);
+          this.tone(554, 0.1, "sine", v * 0.04);
           break;
         case "chargeAbility": // Hero charge — speed sweep
-          if (this.samples.impact) this.samples.impact.play({ volume: volume * 0.6, rate: 1 });
-          this.tone(200, 0.05, "sawtooth", volume * 0.06);
-          this.tone(800, 0.05, "sawtooth", volume * 0.04);
+          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.6, rate: 1 });
+          this.tone(200, 0.05, "sawtooth", v * 0.06);
+          this.tone(800, 0.05, "sawtooth", v * 0.04);
           break;
         case "bannerAbility": // Hero banner — warm chord
-          if (this.samples.ready) this.samples.ready.play({ volume: volume * 0.6, rate: 1 });
-          this.tone(440, 0.12, "sine", volume * 0.05);
-          this.tone(554, 0.12, "sine", volume * 0.04);
+          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.6, rate: 1 });
+          this.tone(440, 0.12, "sine", v * 0.05);
+          this.tone(554, 0.12, "sine", v * 0.04);
           break;
         case "healAbility": // Hero heal — gentle sweep
-          if (this.samples.magic) this.samples.magic.play({ volume: volume * 0.5, rate: 1 });
-          this.tone(600, 0.08, "sine", volume * 0.05);
-          this.tone(400, 0.08, "sine", volume * 0.04);
+          if (this.samples.magic) this.samples.magic.play({ volume: v * 0.5, rate: 1 });
+          this.tone(600, 0.08, "sine", v * 0.05);
+          this.tone(400, 0.08, "sine", v * 0.04);
           break;
         case "uiClick": // UI button click — add a subtle Kenney layer if available
-          this.tone(600, 0.03, "triangle", volume * 0.08);
-          if (this.samples.ready) this.samples.ready.play({ volume: volume * 0.1, rate: 2 });
+          this.tone(600, 0.03, "triangle", v * 0.08);
+          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.1, rate: 2 });
           break;
         case "uiError": // Error/no-target buzz — add a Kenney layer if available
-          this.tone(150, 0.1, "sawtooth", volume * 0.06);
-          if (this.samples.fail) this.samples.fail.play({ volume: volume * 0.15, rate: 0.8 });
+          this.tone(150, 0.1, "sawtooth", v * 0.06);
+          if (this.samples.fail) this.samples.fail.play({ volume: v * 0.15, rate: 0.8 });
           break;
         default: // Fallback to standard play
           this.play(type, volume);
@@ -5467,7 +5485,7 @@ const bannerY = 98;
       if (!music || this.musicStarted) return;
       this.musicStarted = true;
       try {
-        music.play({ volume: 0.09, loop: true });
+        music.play({ volume: 0.09 * this.musicVolume, loop: true });
       } catch (_e) {
         this.musicStarted = false;
       }
@@ -5502,13 +5520,14 @@ const bannerY = 98;
     }
 
     music(dt, urgent) {
+      if (this.muted) return;
       if (this.musicStarted) {
         const music = this.samples.music;
         if (music?.isPlaying) {
           const targetRate = urgent ? 1.12 : 0.96;
-          const targetVol = urgent ? 0.14 : 0.09;
+          const targetVol = (urgent ? 0.14 : 0.09) * this.musicVolume;
           music.setRate(Phaser.Math.Linear(music.rate || 1, targetRate, Math.min(1, dt * 2.5)));
-          music.setVolume(Phaser.Math.Linear(music.volume || 0.09, targetVol, Math.min(1, dt * 2.2)));
+          music.setVolume(Phaser.Math.Linear(music.volume || (0.09 * this.musicVolume), targetVol, Math.min(1, dt * 2.2)));
         }
         return;
       }
@@ -5520,8 +5539,8 @@ const bannerY = 98;
       const notes = urgent ? [146, 174, 196, 220, 174] : [130, 164, 196, 164];
       const note = notes[this.musicStep % notes.length];
       this.musicStep += 1;
-      this.tone(note, urgent ? 0.055 : 0.09, "triangle", urgent ? 0.014 : 0.007);
-      if (urgent) this.tone(note * 1.5, 0.03, "sine", 0.004, 0.02);
+      this.tone(note, urgent ? 0.055 : 0.09, "triangle", (urgent ? 0.014 : 0.007) * this.musicVolume);
+      if (urgent) this.tone(note * 1.5, 0.03, "sine", 0.004 * this.musicVolume, 0.02);
     }
   }
 
