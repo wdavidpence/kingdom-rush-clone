@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.49";
+  const KRC_VERSION = "1.0.50";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -65,6 +65,11 @@
       if (this.qaMode && new URLSearchParams(window.location.search).get("hero") === "sentinel") {
         this.heroKind = "sentinel";
       }
+      this.ironMode = this.startData?.ironMode === true;
+      if (new URLSearchParams(window.location.search).get("iron") === "1") {
+        this.ironMode = true;
+      }
+      if (this.ironMode) this.lives = 1;
       this.waveIndex = 0;
       this.waveActive = false;
       this.waveTotal = 0;
@@ -1715,6 +1720,9 @@
       if (this.textures.exists("icon_heart")) this.add.image(110, 19, "icon_heart").setScale(0.8).setDepth(100);
       this.goldText = this.add.text(25, 10, "", { font: "bold 15px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
       this.livesText = this.add.text(121, 10, "", { font: "bold 15px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
+      if (this.ironMode && !this.ironHud) {
+        this.ironHud = this.add.text(168, 26, "IRON", { font: "bold 10px Cinzel", color: "#c8d0d8" }).setDepth(100);
+      }
       this.waveText = this.add.text(228, 8, "", { font: "bold 14px Cinzel", color: COLORS.ink }).setDepth(100);
       this.mapText = this.add.text(228, 26, "", { font: "bold 10px Cinzel", color: "#cfc4a2" }).setDepth(100);
       this.waveBarBg = this.add.rectangle(228, 42, 72, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
@@ -2510,6 +2518,34 @@ const bannerY = 98;
         }
       });
 
+      let ironBtn;
+      const updateIronBtn = () => {
+        if (!ironBtn) return;
+        const on = !!this.ironMode;
+        ironBtn.bg.setStrokeStyle(on ? 2.5 : 1.5, on ? 0xf5c85a : 0x5a6a5a, on ? 1 : 0.6);
+        ironBtn.text.setColor(on ? "#ffd866" : "#8a9688");
+        ironBtn.setLabel(on ? "IRON WATCH: ON" : "IRON WATCH: OFF");
+      };
+      ironBtn = this.makeButton(
+        W / 2,
+        430,
+        160,
+        28,
+        this.ironMode ? "IRON WATCH: ON" : "IRON WATCH: OFF",
+        0x1c241a,
+        () => {
+          this.ironMode = !this.ironMode;
+          updateIronBtn();
+        },
+        {
+          font: "bold 11px Cinzel",
+          tooltip: () => "Iron Watch Challenge\n1 life, no selling, no early-call bonus.",
+        }
+      );
+      ironBtn.bg.on("pointerout", () => updateIronBtn());
+      updateIronBtn();
+      this.overlay.add([ironBtn.shadow, ironBtn.bg, ironBtn.shine, ironBtn.lip, ironBtn.text].filter(Boolean));
+
       const motionBtn = this.makeButton(
         W / 2,
         480,
@@ -2569,11 +2605,17 @@ const bannerY = 98;
       if (mapIndex !== this.mapIndex) {
         this.overlayActive = false;
         this.overlay?.destroy();
-        this.scene.restart({ mapIndex, gold: 280, lives: 20, heroKind: this.heroKind });
+        this.scene.restart({ mapIndex, gold: 280, lives: this.ironMode ? 1 : 20, heroKind: this.heroKind, ironMode: this.ironMode });
         return;
       }
       this.overlayActive = false;
       this.overlay.destroy();
+      if (this.ironMode) {
+        this.lives = 1;
+        if (!this.ironHud && this.livesText) {
+          this.ironHud = this.add.text(168, 26, "IRON", { font: "bold 10px Cinzel", color: "#c8d0d8" }).setDepth(100);
+        }
+      }
       if (mapIndex === 0) { // Forest Gate
         this.add.rectangle(W / 2, H / 2, W, H, 0x1a3c14, 0.08).setDepth(5);
       } else if (mapIndex === 1) { // Stone Pass
@@ -3036,6 +3078,10 @@ const bannerY = 98;
 
     sellSelected() {
       if (this.overlayActive || this.gameEnded) return;
+      if (this.ironMode) {
+        this.say("Iron Watch: no selling.");
+        return;
+      }
       this.clearFamilyPathPick();
       const tower = this.selectedPad?.tower;
       if (!tower) return;
@@ -3122,7 +3168,7 @@ const bannerY = 98;
       if (this.waveIndex >= WAVES.length) return;
       const wave = WAVES[this.waveIndex];
       let bonus = wave.gold;
-      if (!this.waveActive && this.enemies.length === 0 && this.waveIndex < WAVES.length) {
+      if (!this.ironMode && !this.waveActive && this.enemies.length === 0 && this.waveIndex < WAVES.length) {
         const earlyBonus = 8 + this.waveIndex * 2;
         bonus += earlyBonus;
         // Early call cinematic: golden flash on CALL button area
@@ -5693,7 +5739,7 @@ const bannerY = 98;
       btn.on("pointerdown", () => {
         this.audio.stopAll();
         this.overlayActive = false;
-        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20, heroKind: this.heroKind });
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20, heroKind: this.heroKind, ironMode: this.ironMode });
       });
       this.audio.stopMusic();
       if (victory) {
@@ -5796,8 +5842,9 @@ const bannerY = 98;
         this.scene.restart({
           mapIndex: this.mapIndex + 1,
           gold: Math.min(this.gold + 180, 650),
-          lives: Math.min(20, this.lives + 4),
+          lives: this.ironMode ? 1 : Math.min(20, this.lives + 4),
           heroKind: this.heroKind,
+          ironMode: this.ironMode,
         });
       });
       const menu = this.add.rectangle(W / 2, 468, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
@@ -5806,7 +5853,7 @@ const bannerY = 98;
       menu.on("pointerdown", () => {
         this.overlayActive = false;
         this.overlay.destroy();
-        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20, heroKind: this.heroKind });
+        this.scene.restart({ mapIndex: 0, gold: 280, lives: 20, heroKind: this.heroKind, ironMode: this.ironMode });
       });
       this.overlay.add([next, nextText, menu, menuText]);
     }
