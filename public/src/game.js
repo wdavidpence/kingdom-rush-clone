@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.8";
+  const KRC_VERSION = "1.0.9";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -183,7 +183,7 @@
       lines.forEach((line, i) => {
         const isHeader = i === 0;
         const t = this.add.text(clampedX - maxWidth / 2 + 10, clampedY - height / 2 + 7 + i * 16, line, {
-          font: isHeader ? "bold 12px Arial" : "11px Arial",
+          font: isHeader ? "bold 12px 'Source Sans 3', Arial" : "11px 'Source Sans 3', Arial",
           color: isHeader ? "#fff2ba" : "#e0dbca",
         }).setOrigin(0, 0).setDepth(901);
         texts.push(t);
@@ -1102,7 +1102,7 @@
 
       this.add
         .text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", {
-          font: "bold 11px Arial",
+          font: "bold 11px 'Source Sans 3', Arial",
           color: "#f8ecd0",
           backgroundColor: "#00000066",
           padding: { x: 4, y: 2 },
@@ -1150,7 +1150,7 @@
       }
       this.add
         .text(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY + 22, "GATE", {
-          font: "bold 10px Arial",
+          font: "bold 10px 'Source Sans 3', Arial",
           color: "#f0e0b0",
           backgroundColor: "#00000055",
           padding: { x: 4, y: 1 },
@@ -1184,7 +1184,7 @@
           pad.base = this.add.circle(pad.x, pad.y, 25, 0x1a2215, 0.95).setStrokeStyle(3, 0xb19b58, 0.9);
         }
         pad.icon = this.add
-          .text(pad.x, pad.y - 4, "+", { font: "bold 22px Arial", color: "#fff2ba", stroke: "#3a2810", strokeThickness: 3 })
+          .text(pad.x, pad.y - 4, "+", { font: "bold 22px 'Source Sans 3', Arial", color: "#fff2ba", stroke: "#3a2810", strokeThickness: 3 })
           .setOrigin(0.5)
           .setDepth(9);
       }
@@ -1213,26 +1213,36 @@
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
       this.hero.levelText = this.add
-        .text(post.x, post.y + 18, "H1", { font: "bold 9px Arial", color: "#fff2ba" })
+        .text(post.x, post.y + 18, "H1", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" })
         .setOrigin(0.5)
         .setDepth(49);
     }
 
     createHud() {
-      this.add.rectangle(W / 2, TOP_H / 2, W, TOP_H, 0x121a10, 0.94).setDepth(90);
-      this.add.rectangle(W / 2, TOP_H / 2 - 8, W - 16, TOP_H - 18, 0x1c2818, 0.35).setDepth(90.5);
-      this.add.rectangle(W / 2, TOP_H, W, 3, 0x8a9a48).setDepth(91);
-      this.add.rectangle(W / 2, TOP_H - 1, W, 1, 0xf0d878, 0.35).setDepth(91.5);
+      // Layered Wood & Stone Base HUD Bar
+      this.add.rectangle(W / 2, TOP_H / 2, W, TOP_H, 0x1f1712, 0.98).setDepth(90);
+      this.add.rectangle(W / 2, TOP_H / 2 - 12, W, TOP_H / 2 - 4, 0x2b2019, 0.6).setDepth(90.2);
+      this.add.rectangle(W / 2, TOP_H / 2 + 10, W, TOP_H / 2 - 4, 0x1a120c, 0.6).setDepth(90.2);
+      this.add.rectangle(W / 2, TOP_H / 2 - 4, W - 16, TOP_H - 22, 0x2d2116, 0.85).setDepth(90.5);
+      this.add.rectangle(W / 2, TOP_H / 2 - 4, W - 20, TOP_H - 26, 0x3d2f20, 0.35).setDepth(90.6);
+      this.add.rectangle(W / 2, TOP_H, W, 4, 0x4a3726).setDepth(91);
+      this.add.rectangle(W / 2, TOP_H - 1, W, 2, 0x8a6a42).setDepth(91.2);
+      this.add.rectangle(W / 2, TOP_H - 2, W, 1, 0xf5c85a, 0.6).setDepth(91.5);
+      const nailX = [12, 110, 210, 310, 408];
+      nailX.forEach((nx) => {
+        this.add.circle(nx, 6, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
+        this.add.circle(nx, TOP_H - 8, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
+      });
       if (this.textures.exists("icon_gold")) this.add.image(18, 20, "icon_gold").setScale(0.9).setDepth(100);
       if (this.textures.exists("icon_heart")) this.add.image(144, 20, "icon_heart").setScale(0.9).setDepth(100);
-      this.goldText = this.add.text(30, 10, "", { font: "bold 18px Arial", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
-      this.livesText = this.add.text(156, 10, "", { font: "bold 18px Arial", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
-      this.waveText = this.add.text(236, 8, "", { font: "bold 16px Arial", color: COLORS.ink }).setDepth(100);
-      this.mapText = this.add.text(236, 27, "", { font: "bold 10px Arial", color: "#cfc4a2" }).setDepth(100);
+      this.goldText = this.add.text(30, 10, "", { font: "bold 18px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
+      this.livesText = this.add.text(156, 10, "", { font: "bold 18px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
+      this.waveText = this.add.text(236, 8, "", { font: "bold 16px Cinzel", color: COLORS.ink }).setDepth(100);
+      this.mapText = this.add.text(236, 27, "", { font: "bold 10px Cinzel", color: "#cfc4a2" }).setDepth(100);
       this.waveBarBg = this.add.rectangle(236, 42, 86, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
       this.waveBar = this.add.rectangle(236, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
-        .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 232 } })
+        .text(12, 42, "", { font: "bold 12px 'Source Sans 3', Arial", color: "#f8f0d8", wordWrap: { width: 232 } })
         .setOrigin(0, 0.5)
         .setDepth(100);
       this.muteButton = this.makeButton(
@@ -1259,7 +1269,7 @@
         0x3d4f5a,
         () => this.togglePause(),
         {
-          font: "bold 14px Arial",
+          font: "bold 14px 'Source Sans 3', Arial",
           tooltip: () => this.paused ? "Resume Battle (P)" : "Pause Battle (P)",
         }
       );
@@ -1272,17 +1282,30 @@
         0x7a4f25,
         () => this.callWave(),
         {
-          font: "bold 13px Arial",
+          font: "bold 13px Cinzel",
           tooltip: () => this.waveActive ? "Wave marching — defend the road!" : "Call Next Wave (SPACE)\nCall early for an extra gold bonus!",
         }
       );
     }
 
     createShop() {
-      this.add.rectangle(W / 2, SHOP_Y + SHOP_H / 2, W, SHOP_H, COLORS.panel, 0.98).setDepth(90);
-      this.add.rectangle(W / 2, SHOP_Y + SHOP_H / 2, W - 12, SHOP_H - 10, 0x24351c, 0.4).setDepth(90.5);
-      this.add.rectangle(W / 2, SHOP_Y, W, 3, 0x8a9a48).setDepth(91);
-      this.add.rectangle(W / 2, SHOP_Y + 1, W, 1, 0xf0d878, 0.35).setDepth(91.5);
+      // Layered Wood & Stone Base Shop Bar
+      const shopMidY = SHOP_Y + SHOP_H / 2;
+      this.add.rectangle(W / 2, shopMidY, W, SHOP_H, 0x1f1712, 0.98).setDepth(90);
+      this.add.rectangle(W / 2, SHOP_Y + 31, W, 60, 0x2b2019, 0.5).setDepth(90.2);
+      this.add.rectangle(W / 2, SHOP_Y + 62, W, 3, 0x140d08, 0.8).setDepth(90.3);
+      this.add.rectangle(W / 2, SHOP_Y + 93, W, 58, 0x241b14, 0.5).setDepth(90.2);
+      this.add.rectangle(W / 2, shopMidY, W - 14, SHOP_H - 10, 0x2d2116, 0.85).setDepth(90.5);
+      this.add.rectangle(W / 2, shopMidY, W - 20, SHOP_H - 16, 0x3d2f20, 0.35).setDepth(90.6);
+      this.add.rectangle(W / 2, SHOP_Y, W, 4, 0x4a3726).setDepth(91);
+      this.add.rectangle(W / 2, SHOP_Y + 1, W, 2, 0x8a6a42).setDepth(91.2);
+      this.add.rectangle(W / 2, SHOP_Y + 2, W, 1, 0xf5c85a, 0.6).setDepth(91.5);
+      const shopNailX = [10, 110, 210, 310, 410];
+      shopNailX.forEach((nx) => {
+        this.add.circle(nx, SHOP_Y + 7, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
+        this.add.circle(nx, SHOP_Y + 62, 2, 0xd4af37, 0.85).setStrokeStyle(1, 0x3a250c).setDepth(92);
+        this.add.circle(nx, SHOP_Y + SHOP_H - 7, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
+      });
       this.shopButtons = [];
       const types = Object.values(TOWERS);
       for (let i = 0; i < types.length; i += 1) {
@@ -1301,7 +1324,7 @@
             iconScale: 0.52,
             iconOffsetY: -9,
             textOffsetY: 16,
-            font: "bold 12px Arial",
+            font: "bold 12px 'Source Sans 3', Arial",
             textColor: "#ffd866",
             tooltip: () => `${t.name} (${t.cost}g)\n${t.role}\nDmg: ${t.damage[0]} · Rng: ${t.range[0]} · Spd: ${t.rate[0]}s\n${t.desc}`,
           }
@@ -1318,7 +1341,7 @@
         0x55743c,
         () => this.upgradeSelected(),
         {
-          font: "bold 13px Arial",
+          font: "bold 13px 'Source Sans 3', Arial",
           tooltip: () => this.getUpgradeTooltip(),
         }
       );
@@ -1331,7 +1354,7 @@
         0x643a31,
         () => this.sellSelected(),
         {
-          font: "bold 12px Arial",
+          font: "bold 12px 'Source Sans 3', Arial",
           tooltip: () => this.getSellTooltip(),
         }
       );
@@ -1355,7 +1378,7 @@
             iconScale: 0.38,
             iconOffsetX: -22,
             textOffsetX: 12,
-            font: "bold 12px Arial",
+            font: "bold 12px 'Source Sans 3', Arial",
             tooltip: () => {
               const s = this.spells[id];
               return s.ready > 0 ? `${tip}\nCooldown: ${Math.ceil(s.ready)}s` : `${tip}\n[READY TO CAST]`;
@@ -1386,7 +1409,7 @@
             iconScale: 0.48,
             iconOffsetY: -9,
             textOffsetY: 16,
-            font: "bold 12px Arial",
+            font: "bold 12px 'Source Sans 3', Arial",
             tooltip: () => {
               const a = this.heroAbilities[id];
               return a.ready > 0 ? `${tip}\nCooldown: ${Math.ceil(a.ready)}s` : `${tip}\n[READY TO USE]`;
@@ -1399,7 +1422,7 @@
       }
       this.infoText = this.add
         .text(12, SHOP_Y + 61, "Tap a tower type, then tap a build pad.", {
-          font: "12px Arial",
+          font: "12px 'Source Sans 3', Arial",
           color: "#d9d0ae",
           wordWrap: { width: 330 },
         })
@@ -1435,7 +1458,7 @@
       const textOffsetY = options.textOffsetY ?? (hasIcon && label ? h * 0.22 : -1);
       const text = this.add
         .text(x + textOffsetX, y + textOffsetY, label, {
-          font: options.font || "bold 13px Arial",
+          font: options.font || "bold 13px 'Source Sans 3', Arial",
           color: options.textColor || "#fff4d8",
           align: "center",
         })
@@ -1569,19 +1592,19 @@
       });
 
       const titleShadow = this.add.text(bannerX + 2, bannerY - 4, "KRC CAMPAIGN", {
-        font: "bold 30px Arial",
+        font: "bold 30px Cinzel",
         color: "#180f06",
       }).setOrigin(0.5).setDepth(502);
 
       const title = this.add.text(bannerX, bannerY - 6, "KRC CAMPAIGN", {
-        font: "bold 30px Arial",
+        font: "bold 30px Cinzel",
         color: "#ffd866",
         stroke: "#2a1808",
         strokeThickness: 5,
       }).setOrigin(0.5).setDepth(503);
 
       const versionMark = this.add.text(bannerX, bannerY + 20, `v${KRC_VERSION}`, {
-        font: "bold 12px Arial",
+        font: "bold 12px 'Source Sans 3', Arial",
         color: "#d8b548",
       }).setOrigin(0.5).setDepth(503);
 
@@ -1610,7 +1633,7 @@
       this.overlay.add(
         this.add
           .text(W / 2, 130, "Choose a map. Stars unlock from lives remaining.", {
-            font: "14px Arial",
+            font: "14px 'Source Sans 3', Arial",
             color: "#cfc4a2",
             align: "center",
             wordWrap: { width: 340 },
@@ -1650,7 +1673,7 @@
         const textX = W / 2 - cardW / 2 + 70;
         const cardTitle = this.add
           .text(textX, y - 18, `${index + 1}. ${map.name}`, {
-            font: "bold 17px Arial",
+            font: "bold 17px Cinzel",
             color: unlocked ? "#fff2ba" : "#7a8478",
           })
           .setOrigin(0, 0.5)
@@ -1659,7 +1682,7 @@
         const starText = "★".repeat(result.stars || 0) + "☆".repeat(Math.max(0, 3 - (result.stars || 0)));
         const stars = this.add
           .text(textX, y + 3, starText, {
-            font: "bold 14px Arial",
+            font: "bold 14px 'Source Sans 3', Arial",
             color: result.stars > 0 ? "#f5c85a" : "#6a7468",
           })
           .setOrigin(0, 0.5)
@@ -1668,7 +1691,7 @@
         const bonusInfo = index === 0 ? "+40g bonus" : index === 1 ? "+50g bonus" : "+60g bonus";
         const meta = this.add
           .text(textX + 54, y + 3, unlocked ? `·  ${bonusInfo} (best: ${result.bestGold || 0}g)` : "LOCKED — clear previous map", {
-            font: "12px Arial",
+            font: "12px 'Source Sans 3', Arial",
             color: unlocked ? "#c8d8b8" : "#687068",
           })
           .setOrigin(0, 0.5)
@@ -1729,7 +1752,7 @@
           iconScale: 0.44,
           iconOffsetX: -68,
           textOffsetX: 12,
-          font: "bold 13px Arial",
+          font: "bold 13px 'Source Sans 3', Arial",
           tooltip: () => "Toggle Motion (R)\nSwitch between full and reduced motion effects.",
         }
       );
@@ -1738,7 +1761,7 @@
       this.overlay.add(
         this.add
           .text(W / 2, 520, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
-            font: "12px Arial",
+            font: "12px 'Source Sans 3', Arial",
             color: "#a9b59d",
             align: "center",
             wordWrap: { width: 330 },
@@ -1910,16 +1933,16 @@
       }
       pad.tower = tower;
       tower.sprite = this.add.image(pad.x, pad.y - 8, `tower_${type}`).setScale(0.62).setDepth(30);
-      tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
+      tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.add.circle(pad.x, pad.y, cfg.range[0], cfg.color, 0.08).setStrokeStyle(1, cfg.color, 0.22).setDepth(20).setVisible(false);
       if (type === "barracks") {
         tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
-        tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
+        tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
         tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(0);
         tower.cooldown = 0.35;
         tower.readyBadge = this.add
           .text(pad.x, pad.y + 28, "READY", {
-            font: "bold 10px Arial",
+            font: "bold 10px 'Source Sans 3', Arial",
             color: "#d8f7a8",
             backgroundColor: "#1a2412",
             padding: { x: 4, y: 2 },
@@ -2011,7 +2034,7 @@
         this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       }
       const levelBadge = this.add.text(tower.x, tower.y - 50, `L${tower.level + 1}`, {
-        font: "bold 16px Arial",
+        font: "bold 16px 'Source Sans 3', Arial",
         color: tower.level >= 3 ? "#f5d76e" : "#fff2ba",
       }).setOrigin(0.5).setDepth(100);
       this.tweens.add({ targets: levelBadge, y: tower.y - 70, alpha: 0, duration: 800, onComplete: () => levelBadge.destroy() });
@@ -2246,7 +2269,7 @@
         // Boss gets a larger shadow and pulsing aura
         if (enemy.sprite.setShadow) enemy.sprite.setShadow(8, 8, 0x000000, 3);
       }
-      enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
+      enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px 'Source Sans 3', Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
       const traits = window.KRCEnemyTraits ? window.KRCEnemyTraits.traitsFor(base) : [];
@@ -2254,7 +2277,7 @@
       const badge = window.KRCEnemyTraits ? window.KRCEnemyTraits.badgeText(traits) : "";
       enemy.traitText = this.add
         .text(enemy.x, enemy.y - base.size - 16, badge, {
-          font: "bold 9px Arial",
+          font: "bold 9px 'Source Sans 3', Arial",
           color: traits[0]?.color || "#e8f0ff",
           backgroundColor: "#141a14aa",
           padding: { x: 3, y: 1 },
@@ -3311,7 +3334,7 @@
 
     createDamageNumber(x, y, text, color) {
       const t = this.add.text(x + (Math.random() - 0.5) * 16, y - 12, text, {
-        font: "bold 14px Arial",
+        font: "bold 14px 'Source Sans 3', Arial",
         color: color || "#fff2ba",
         stroke: "#0a0804",
         strokeThickness: 3,
@@ -3377,7 +3400,7 @@
     }
 
     flashText(text, x, y, color) {
-      const t = this.add.text(x, y, text, { font: "bold 15px Arial", color }).setOrigin(0.5).setDepth(200);
+      const t = this.add.text(x, y, text, { font: "bold 15px Cinzel", color }).setOrigin(0.5).setDepth(200);
       if (this.settings?.reducedMotion) {
         this.time.delayedCall(520, () => t.destroy());
         return;
@@ -3465,7 +3488,7 @@
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setDepth(600.5).setInteractive();
       const title = this.add
         .text(W / 2, 230, victory ? "VICTORY" : "GATE LOST", {
-          font: "bold 44px Arial",
+          font: "bold 44px Cinzel",
           color: victory ? COLORS.gold : "#ff7f69",
         })
         .setOrigin(0.5)
@@ -3473,7 +3496,7 @@
       const starLine = victory ? `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars` : `Reached wave ${this.waveIndex + 1}`;
       const sub = this.add
         .text(W / 2, 292, victory ? `Campaign complete. ${starLine}` : starLine, {
-          font: "18px Arial",
+          font: "18px 'Source Sans 3', Arial",
           color: COLORS.ink,
           align: "center",
         })
@@ -3483,7 +3506,7 @@
       const btn = this.add.rectangle(W / 2, 400, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.2);
       const btnShine = this.add.rectangle(W / 2, 387, 166, 12, 0xffffff, 0.17).setDepth(601.4);
       const btnLip = this.add.rectangle(W / 2, 418, 166, 9, 0x000000, 0.2).setDepth(601.4);
-      const txt = this.add.text(W / 2, 398, "MAP SELECT", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
+      const txt = this.add.text(W / 2, 398, "MAP SELECT", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
         this.audio.stopAll();
@@ -3506,11 +3529,11 @@
       this.overlay = this.add.container(0, 0).setDepth(580);
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.86));
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive());
-      this.overlay.add(this.add.text(W / 2, 220, `${this.map.name} CLEARED`, { font: "bold 28px Arial", color: COLORS.gold }).setOrigin(0.5));
+      this.overlay.add(this.add.text(W / 2, 220, `${this.map.name} CLEARED`, { font: "bold 28px Cinzel", color: COLORS.gold }).setOrigin(0.5));
       this.overlay.add(
         this.add
           .text(W / 2, 270, `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars`, {
-            font: "22px Arial",
+            font: "22px 'Source Sans 3', Arial",
             color: "#fff2ba",
           })
           .setOrigin(0.5)
@@ -3518,7 +3541,7 @@
       this.overlay.add(
         this.add
           .text(W / 2, 318, "Next map unlocked. Carry some gold and lives forward.", {
-            font: "14px Arial",
+            font: "14px 'Source Sans 3', Arial",
             color: "#cfc4a2",
             align: "center",
             wordWrap: { width: 320 },
@@ -3526,7 +3549,7 @@
           .setOrigin(0.5)
       );
       const next = this.add.rectangle(W / 2, 400, 200, 52, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
-      const nextText = this.add.text(W / 2, 398, "NEXT MAP", { font: "bold 18px Arial", color: "#fff7dc" }).setOrigin(0.5);
+      const nextText = this.add.text(W / 2, 398, "NEXT MAP", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5);
       next.setInteractive({ useHandCursor: true });
       next.on("pointerdown", () => {
         this.overlayActive = false;
@@ -3538,7 +3561,7 @@
         });
       });
       const menu = this.add.rectangle(W / 2, 468, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
-      const menuText = this.add.text(W / 2, 466, "MAP SELECT", { font: "bold 14px Arial", color: "#e8f5ff" }).setOrigin(0.5);
+      const menuText = this.add.text(W / 2, 466, "MAP SELECT", { font: "bold 14px Cinzel", color: "#e8f5ff" }).setOrigin(0.5);
       menu.setInteractive({ useHandCursor: true });
       menu.on("pointerdown", () => {
         this.overlayActive = false;
