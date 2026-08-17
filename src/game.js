@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.37";
+  const KRC_VERSION = "1.0.38";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3289,6 +3289,7 @@ const bannerY = 98;
           enemy.speed *= 1.12;
           this.flashText("WARDEN SHIELD", enemy.x, enemy.y - 48, "#d7c3ff");
           this.say("Warden raises a shield — pierce with Runes or focus fire.");
+          this.cameraPunch("boss");
           if (this.settings?.reducedMotion) {
             const flash = this.add.circle(enemy.x, enemy.y, 10, 0xd7c3ff, 0.85).setDepth(70);
             this.tweens.add({ targets: flash, alpha: 0, scale: 2.5, duration: 200, onComplete: () => flash.destroy() });
@@ -3320,6 +3321,7 @@ const bannerY = 98;
           enemy.speed *= 1.15;
           this.flashText("WARDEN RAGE", enemy.x, enemy.y - 48, "#ff9ad8");
           this.say("Warden enrages — stall with Guards and burst during the open window.");
+          this.cameraPunch("boss");
           for (let i = 0; i < 3; i += 1) this.spawnEnemyFrom("scout", enemy);
           if (this.settings?.reducedMotion) {
             const flash = this.add.circle(enemy.x, enemy.y, 10, 0xff4455, 0.85).setDepth(70);
@@ -4569,6 +4571,7 @@ const bannerY = 98;
       if (id === "charge") this.audio.playLayered("chargeAbility");
       else if (id === "banner") this.audio.playLayered("bannerAbility");
       else if (id === "heal") this.audio.playLayered("healAbility");
+      this.cameraPunch("ability");
     }
 
     respawnHero() {
@@ -5102,6 +5105,18 @@ const bannerY = 98;
         return;
       }
       this.tweens.add({ targets: t, y: y - 26, alpha: 0, duration: 760, ease: "Quad.easeOut", onComplete: () => t.destroy() });
+    }
+
+    cameraPunch(kind) {
+      if (this.settings?.reducedMotion) return;
+      const cam = this.cameras?.main;
+      if (!cam || typeof cam.shake !== "function") return;
+      if (cam._krcPunchUntil && this.time.now < cam._krcPunchUntil) return;
+      const boss = kind === "boss";
+      const duration = boss ? 140 : 80;
+      const intensity = boss ? 0.007 : 0.003;
+      cam._krcPunchUntil = this.time.now + duration + 40;
+      cam.shake(duration, intensity);
     }
 
     say(text) {
