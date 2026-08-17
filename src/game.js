@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.14";
+  const KRC_VERSION = "1.0.15";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2678,15 +2678,66 @@
       enemy.sprite.setPosition(enemy.x, enemy.y);
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
-      const bob = Math.sin(this.time.now * 0.008 + enemy.wobble);
-      enemy.sprite.y += bob * (enemy.base.flying ? 4 : enemy.blockedBy ? 0.6 : 1.2);
-      if (enemy.blockedBy) {
-        enemy.sprite.rotation = Math.sin(this.time.now * 0.03 + enemy.wobble) * 0.18;
-        enemy.sprite.setScale((enemy.base.size / 30) * (1 + Math.sin(this.time.now * 0.04) * 0.04));
-      } else if (enemy.seg < this.path.length - 1) {
+      const baseScale = enemy.base.size / 30;
+      const reducedMotion = !!this.settings?.reducedMotion;
+      let pathAngle = 0;
+      if (!enemy.blockedBy && enemy.seg < this.path.length - 1) {
         const next = this.path[enemy.seg + 1];
-        enemy.sprite.rotation = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
-        enemy.sprite.setScale(enemy.base.size / 30);
+        pathAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
+      }
+      if (reducedMotion) {
+        enemy.sprite.setScale(baseScale);
+        enemy.sprite.rotation = pathAngle;
+      } else {
+        const isFlyer = enemy.type === "flyer" || enemy.base?.flying;
+        if (enemy.type === "scout") {
+          const t = this.time.now * 0.016 + enemy.wobble;
+          const strideBob = Math.sin(t) * (enemy.blockedBy ? 0.4 : 0.7);
+          const quickLean = enemy.blockedBy
+            ? Math.sin(this.time.now * 0.035 + enemy.wobble) * 0.22
+            : pathAngle + Math.sin(t) * 0.14;
+          enemy.sprite.y += strideBob;
+          enemy.sprite.rotation = quickLean;
+          enemy.sprite.setScale(baseScale);
+        } else if (enemy.type === "brute") {
+          const t = this.time.now * 0.007 + enemy.wobble;
+          const stompBob = Math.sin(t) * (enemy.blockedBy ? 0.8 : 1.5);
+          const squash = Math.sin(t * 2);
+          const scaleX = baseScale * (1 + squash * 0.08);
+          const scaleY = baseScale * (1 - squash * 0.08);
+          const rot = enemy.blockedBy
+            ? Math.sin(this.time.now * 0.02 + enemy.wobble) * 0.15
+            : pathAngle;
+          enemy.sprite.y += stompBob;
+          enemy.sprite.rotation = rot;
+          enemy.sprite.setScale(scaleX, scaleY);
+        } else if (enemy.type === "shield") {
+          const t = this.time.now * 0.004 + enemy.wobble;
+          const bounce = Math.sin(t * 2) * (enemy.blockedBy ? 0.2 : 0.35);
+          const sideSway = Math.sin(t) * 0.12;
+          const rot = enemy.blockedBy ? sideSway * 1.2 : pathAngle + sideSway;
+          enemy.sprite.y += bounce;
+          enemy.sprite.rotation = rot;
+          enemy.sprite.setScale(baseScale);
+        } else if (isFlyer) {
+          const t = this.time.now * 0.006 + enemy.wobble;
+          const floatY = Math.sin(t) * 4.5;
+          const tilt = Math.sin(t * 0.8) * 0.08;
+          const rot = enemy.blockedBy ? tilt * 1.5 : pathAngle + tilt;
+          enemy.sprite.y += floatY;
+          enemy.sprite.rotation = rot;
+          enemy.sprite.setScale(baseScale);
+        } else {
+          const bob = Math.sin(this.time.now * 0.008 + enemy.wobble);
+          enemy.sprite.y += bob * (enemy.blockedBy ? 0.6 : 1.2);
+          if (enemy.blockedBy) {
+            enemy.sprite.rotation = Math.sin(this.time.now * 0.03 + enemy.wobble) * 0.18;
+            enemy.sprite.setScale(baseScale * (1 + Math.sin(this.time.now * 0.04) * 0.04));
+          } else {
+            enemy.sprite.rotation = pathAngle;
+            enemy.sprite.setScale(baseScale);
+          }
+        }
       }
       if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
       else if (!enemy.base.phases) {
