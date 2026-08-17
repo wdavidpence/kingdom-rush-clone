@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.32";
+  const KRC_VERSION = "1.0.33";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4005,7 +4005,18 @@ const bannerY = 98;
     }
 
     createProjectileTrail(p) {
-      if (this.settings?.reducedMotion) return;
+      if (this.settings?.reducedMotion) {
+        const family = p.family || (p.tower ? p.tower.type : "archer");
+        const color = family === "mage" ? 0x00ffff : family === "artillery" ? 0xffaa00 : 0xf0c040;
+        const flash = this.add.circle(p.x, p.y, 2.5, color, 0.85).setDepth(59);
+        this.tweens.add({
+          targets: flash,
+          alpha: 0,
+          duration: 100,
+          onComplete: () => flash.destroy(),
+        });
+        return;
+      }
       const family = p.family || (p.tower ? p.tower.type : "archer");
       const rot = p.sprite ? p.sprite.rotation : Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
       const cos = Math.cos(rot);
@@ -4082,7 +4093,18 @@ const bannerY = 98;
     }
 
     createImpactDebris(x, y, family) {
-      if (this.settings?.reducedMotion) return;
+      if (this.settings?.reducedMotion) {
+        const color = family === "mage" ? 0x00ffff : family === "artillery" ? 0xff5500 : 0xf0c040;
+        const radius = family === "artillery" ? 8 : family === "mage" ? 6 : 4;
+        const flash = this.add.circle(x, y, radius, color, 0.8).setDepth(80);
+        this.tweens.add({
+          targets: flash,
+          alpha: 0,
+          duration: 140,
+          onComplete: () => flash.destroy(),
+        });
+        return;
+      }
 
       if (family === "archer") {
         const count = 5;
