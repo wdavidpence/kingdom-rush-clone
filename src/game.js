@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.18";
+  const KRC_VERSION = "1.0.19";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1461,14 +1461,42 @@
         }
       }
 
-      this.add
-        .text(MAP_LAYOUT.entryLabelX, MAP_LAYOUT.entryLabelY, "IN", {
-          font: "bold 11px 'Source Sans 3', Arial",
-          color: "#f8ecd0",
-          backgroundColor: "#00000066",
-          padding: { x: 4, y: 2 },
-        })
-        .setDepth(-6);
+      const renderPlaque = (cx, cy, labelText) => {
+        const pw = labelText === "OUT" ? 34 : 28;
+        const ph = 18;
+        const plaqueG = this.add.graphics().setDepth(-6.2);
+        plaqueG.fillStyle(0x0c0704, 0.45);
+        plaqueG.fillRoundedRect(cx - pw / 2 + 1, cy - ph / 2 + 1, pw, ph, 4);
+        plaqueG.fillStyle(0x382213, 1);
+        plaqueG.fillRoundedRect(cx - pw / 2, cy - ph / 2, pw, ph, 4);
+        plaqueG.fillStyle(0x5e3e26, 1);
+        plaqueG.fillRoundedRect(cx - pw / 2 + 1.5, cy - ph / 2 + 1.5, pw - 3, ph - 3, 3);
+        plaqueG.lineStyle(1, 0x997048, 0.65);
+        plaqueG.lineBetween(cx - pw / 2 + 3, cy - ph / 2 + 2, cx + pw / 2 - 3, cy - ph / 2 + 2);
+        plaqueG.fillStyle(0xd49e4d, 0.85);
+        plaqueG.fillCircle(cx - pw / 2 + 3, cy - ph / 2 + 3, 1);
+        plaqueG.fillCircle(cx + pw / 2 - 3, cy - ph / 2 + 3, 1);
+        plaqueG.fillCircle(cx - pw / 2 + 3, cy + ph / 2 - 3, 1);
+        plaqueG.fillCircle(cx + pw / 2 - 3, cy + ph / 2 - 3, 1);
+
+        this.add
+          .text(cx, cy, labelText, {
+            font: "bold 11px 'Source Sans 3', Arial",
+            color: "#f8ecd0",
+            shadow: { offsetX: 1, offsetY: 1, color: "#1a0e05", blur: 1, fill: true },
+          })
+          .setOrigin(0.5, 0.5)
+          .setDepth(-6);
+      };
+
+      renderPlaque(MAP_LAYOUT.entryLabelX + 12, MAP_LAYOUT.entryLabelY + 7, "IN");
+
+      if (this.path && this.path.length > 0) {
+        const exitPt = this.path[this.path.length - 1];
+        const outX = exitPt.x > W - 12 ? W - 22 : (exitPt.x < 12 ? 22 : exitPt.x);
+        const outY = exitPt.y > SHOP_Y - 12 ? SHOP_Y - 14 : (exitPt.y < TOP_H + 12 ? TOP_H + 14 : exitPt.y);
+        renderPlaque(outX, outY, "OUT");
+      }
 
       const placeAway = (n, minDist, fn) => {
         let placed = 0;
@@ -1515,6 +1543,31 @@
           }
         }
       });
+
+      const gateGlow = this.add.graphics().setDepth(-5.5);
+      gateGlow.fillStyle(0xffaa22, 0.22);
+      gateGlow.fillCircle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY - 4, 30);
+      gateGlow.fillStyle(0xff7700, 0.28);
+      gateGlow.fillCircle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY - 4, 18);
+      gateGlow.fillStyle(0xffd455, 0.65);
+      gateGlow.fillCircle(MAP_LAYOUT.gateX - 20, MAP_LAYOUT.gateY - 10, 3.5);
+      gateGlow.fillCircle(MAP_LAYOUT.gateX + 20, MAP_LAYOUT.gateY - 10, 3.5);
+      gateGlow.fillStyle(0xff8800, 0.45);
+      gateGlow.fillCircle(MAP_LAYOUT.gateX - 20, MAP_LAYOUT.gateY - 10, 6.5);
+      gateGlow.fillCircle(MAP_LAYOUT.gateX + 20, MAP_LAYOUT.gateY - 10, 6.5);
+
+      if (!this.settings?.reducedMotion) {
+        this.tweens.add({
+          targets: gateGlow,
+          alpha: { from: 0.75, to: 1.0 },
+          scaleX: { from: 0.96, to: 1.05 },
+          scaleY: { from: 0.96, to: 1.05 },
+          duration: 850 + Math.random() * 300,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      }
 
       if (this.textures.exists("gate_arch")) {
         this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.05);
