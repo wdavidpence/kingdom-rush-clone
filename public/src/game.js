@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.44";
+  const KRC_VERSION = "1.0.45";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -79,6 +79,7 @@
       this.entityRegistry = window.KRCEntityState.createRegistry();
       this.selectedPad = null;
       this.selectedBuild = null;
+      this.rangerPathBtns = null;
       this.messageTimer = 0;
       this.gameEnded = false;
       this.paused = false;
@@ -158,6 +159,7 @@
     }
 
     cleanupScene() {
+      this.clearRangerPathPick?.();
       this.hideTooltip();
       this.input.off("pointerdown", this.handlePointer, this);
       this.audio?.stopAll?.();
@@ -2610,6 +2612,7 @@ const bannerY = 98;
     }
 
     selectPad(pad) {
+      this.clearRangerPathPick();
       this.selectedPad = pad;
       this.selectedBuild = null;
       this.heroSelected = false;
@@ -2634,6 +2637,7 @@ const bannerY = 98;
     }
 
     clearSelection() {
+      this.clearRangerPathPick();
       this.selectedPad = null;
       this.selectedBuild = null;
       this.heroSelected = false;
@@ -2798,6 +2802,82 @@ const bannerY = 98;
       this.say(`${cfg.name} built.`);
     }
 
+    clearRangerPathPick() {
+      if (this.rangerPathBtns) {
+        for (const btn of this.rangerPathBtns) {
+          if (btn) {
+            for (const obj of [
+              btn.shadow,
+              btn.bg,
+              btn.shine,
+              btn.lip,
+              btn.text,
+              btn.icon,
+              btn.iconShadow,
+              btn.roleMarkShadow,
+              btn.roleMarkG,
+              btn.roleMarkText,
+            ]) {
+              obj?.destroy?.();
+            }
+          }
+        }
+        this.rangerPathBtns = null;
+      }
+    }
+
+    showRangerPathPick(tower) {
+      this.clearRangerPathPick();
+      const bSkybit = this.makeButton(
+        tower.x - 52,
+        tower.y - 56,
+        88,
+        28,
+        "SKYBIT",
+        0x2d5535,
+        () => this.confirmRangerPath(tower, "skybit")
+      );
+      const bPinshot = this.makeButton(
+        tower.x + 52,
+        tower.y - 56,
+        88,
+        28,
+        "PINSHOT",
+        0x5a3e28,
+        () => this.confirmRangerPath(tower, "pinshot")
+      );
+      this.rangerPathBtns = [bSkybit, bPinshot];
+      this.say("SKYBIT hits flyers harder. PINSHOT bites armor. Pick before the last upgrade.");
+    }
+
+    confirmRangerPath(tower, path) {
+      if (this.overlayActive || this.gameEnded) return;
+      if (!this.selectedPad || this.selectedPad.tower !== tower || tower.level !== 3 || tower.type !== "archer") {
+        return;
+      }
+      const cfg = TOWERS.archer;
+      const cost = cfg.upgrades[3];
+      if (this.gold < cost) {
+        this.say(`Need ${cost} gold to upgrade.`);
+        this.audio.playLayered?.("uiError");
+        return;
+      }
+      this.gold -= cost;
+      tower.level += 1;
+      tower.path = path;
+      this.clearRangerPathPick();
+      if (tower.sprite) tower.sprite.setScale(0.62 + tower.level * 0.04);
+      tower.label.setText(
+        ["I", "II", "III", "IV", "V"][tower.level] +
+          (tower.path === "skybit" ? " SKY" : tower.path === "pinshot" ? " PIN" : "")
+      );
+      tower.rangeRing.setRadius(cfg.range[tower.level]);
+      this.flashText(path.toUpperCase(), tower.x, tower.y - 42, "#fff2ba");
+      this.say(`${cfg.name} upgraded to ${path.toUpperCase()}.`);
+      this.audio.playLayered?.("towerUpgrade");
+      this.updateUpgradeLabel();
+    }
+
     upgradeSelected() {
       if (this.overlayActive || this.gameEnded) return;
       const tower = this.selectedPad?.tower;
@@ -2810,6 +2890,10 @@ const bannerY = 98;
       if (tower.level >= cfg.upgrades.length) {
         this.say("Tower is fully upgraded.");
         this.audio.playLayered?.("uiError");
+        return;
+      }
+      if (tower.type === "archer" && tower.level === 3 && !tower.path) {
+        this.showRangerPathPick(tower);
         return;
       }
       const cost = cfg.upgrades[tower.level];
@@ -2871,7 +2955,10 @@ const bannerY = 98;
         this.cameras.main.flash(40, 255, 250, 220, false);
       }
       tower.sprite.setScale(0.62 + tower.level * 0.04);
-      tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
+      tower.label.setText(
+        ["I", "II", "III", "IV", "V"][tower.level] +
+          (tower.path === "skybit" ? " SKY" : tower.path === "pinshot" ? " PIN" : "")
+      );
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       const unlocked = window.KRCTowerAbilities?.isUnlocked(tower.type, tower.level);
       const ability = window.KRCTowerAbilities?.getAbility(tower.type);
@@ -2894,6 +2981,7 @@ const bannerY = 98;
 
     sellSelected() {
       if (this.overlayActive || this.gameEnded) return;
+      this.clearRangerPathPick();
       const tower = this.selectedPad?.tower;
       if (!tower) return;
       const cfg = TOWERS[tower.type];
@@ -4105,13 +4193,16 @@ const bannerY = 98;
       const cfg = TOWERS[tower.type];
       const level = tower.level;
       const color = cfg.color;
+      let damage = cfg.damage[level];
+      if (tower.path === "skybit" && target.base?.flying) damage *= 1.28;
+      if (tower.path === "pinshot" && (target.base?.armor || 0) >= 3) damage *= 1.22;
       const projectile = this.entityRegistry.create("projectile", {
         x: tower.x,
         y: tower.y - 10,
         target,
         tower,
         speed: tower.type === "artillery" ? 250 : 430,
-        damage: cfg.damage[level],
+        damage,
         magic: !!cfg.magic,
         slow: cfg.slow?.[level] || 0,
         splash: cfg.splash?.[level] || 0,
