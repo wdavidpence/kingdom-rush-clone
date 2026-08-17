@@ -1,4 +1,6 @@
 (() => {
+  const KRC_VERSION = "1.0.8";
+  window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
 
@@ -75,6 +77,8 @@
       this.gameEnded = false;
       this.paused = false;
       this.overlayActive = true;
+      this.tooltip = null;
+      this.tooltipText = "";
       this.audio = new SoundBox(this);
       this.events.once("shutdown", this.cleanupScene, this);
       this.settings = window.KRCSettings?.load?.() || { muted: false, reducedMotion: false };
@@ -147,6 +151,7 @@
     }
 
     cleanupScene() {
+      this.hideTooltip();
       this.input.off("pointerdown", this.handlePointer, this);
       this.audio?.stopAll?.();
       window.KRCSceneCleanup.destroyAll((this.effects || []).map((effect) => effect.obj));
@@ -156,6 +161,76 @@
       this.soldiers = [];
       this.towers = [];
       this.queue = [];
+    }
+
+    showTooltip(x, y, text) {
+      if (this.settings?.reducedMotion || !text) return;
+      this.hideTooltip();
+      const lines = String(text).split("\n");
+      const maxWidth = Math.max(...lines.map((l) => l.length)) * 7 + 24;
+      const height = lines.length * 16 + 14;
+
+      const clampedX = Phaser.Math.Clamp(x, maxWidth / 2 + 10, W - maxWidth / 2 - 10);
+      const clampedY = Phaser.Math.Clamp(y, height / 2 + 10, H - height / 2 - 10);
+
+      const shadow = this.add.rectangle(clampedX + 2, clampedY + 2, maxWidth, height, 0x000000, 0.5).setDepth(899);
+      const bg = this.add.rectangle(clampedX, clampedY, maxWidth, height, 0x141c12, 0.96)
+        .setStrokeStyle(1.5, 0xe6d282, 0.85)
+        .setDepth(900);
+      const highlight = this.add.rectangle(clampedX, clampedY - height / 2 + 1, maxWidth - 4, 1, 0xfff0a0, 0.3).setDepth(900.5);
+
+      const texts = [];
+      lines.forEach((line, i) => {
+        const isHeader = i === 0;
+        const t = this.add.text(clampedX - maxWidth / 2 + 10, clampedY - height / 2 + 7 + i * 16, line, {
+          font: isHeader ? "bold 12px Arial" : "11px Arial",
+          color: isHeader ? "#fff2ba" : "#e0dbca",
+        }).setOrigin(0, 0).setDepth(901);
+        texts.push(t);
+      });
+
+      this.tooltip = { bg, shadow, highlight, texts, x: clampedX, y: clampedY };
+    }
+
+    hideTooltip() {
+      if (this.tooltip) {
+        if (this.tooltip.shadow) this.tooltip.shadow.destroy();
+        if (this.tooltip.bg) this.tooltip.bg.destroy();
+        if (this.tooltip.highlight) this.tooltip.highlight.destroy();
+        for (const t of this.tooltip.texts) t.destroy();
+        this.tooltip = null;
+      }
+    }
+
+    getUpgradeTooltip() {
+      const tower = this.selectedPad?.tower;
+      if (!tower) return "Upgrade Tower (U)\nSelect a placed tower on a build pad.";
+      const cfg = TOWERS[tower.type];
+      const ability = window.KRCTowerAbilities?.getAbility(tower.type);
+      const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
+      if (tower.level >= cfg.upgrades.length) {
+        if (unlocked) {
+          const cd = Math.ceil(Math.max(0, tower.abilityCooldown || 0));
+          return `${cfg.name} Special Ability\n${ability.name}: ${ability.desc || "Active ability"}\n${cd > 0 ? "Cooldown: " + cd + "s" : "[READY TO FIRE]"}`;
+        }
+        return `${cfg.name} (MAX Level)\nFully upgraded to maximum power!`;
+      }
+      const cost = cfg.upgrades[tower.level];
+      const curDmg = cfg.damage[tower.level];
+      const nextDmg = cfg.damage[tower.level + 1];
+      const curRng = cfg.range[tower.level];
+      const nextRng = cfg.range[tower.level + 1];
+      const afford = this.gold >= cost ? "Can afford" : `Need ${cost - this.gold}g more`;
+      return `Upgrade to Level ${tower.level + 2} (${cost}g)\nDamage: ${curDmg} -> ${nextDmg}\nRange: ${curRng} -> ${nextRng}\nStatus: ${afford}`;
+    }
+
+    getSellTooltip() {
+      const tower = this.selectedPad?.tower;
+      if (!tower) return "Sell Tower (S)\nSelect a placed tower to sell for 55% refund.";
+      const cfg = TOWERS[tower.type];
+      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      const refund = Math.floor(spent * 0.55);
+      return `Sell ${cfg.name} (L${tower.level + 1})\nRefund: +${refund} gold (55% of ${spent}g total invested).`;
     }
 
     update(_time, deltaMs) {
@@ -177,41 +252,684 @@
     makeTextures() {
       if (window.KRCArt?.bake) {
         window.KRCArt.bake(this);
-        return;
+      } else {
+        const make = (key, w, h, draw) => {
+          if (this.textures.exists(key)) this.textures.remove(key);
+          const texture = this.textures.createCanvas(key, w, h);
+          const ctx = texture.getContext();
+          ctx.clearRect(0, 0, w, h);
+          draw(ctx, w, h);
+          texture.refresh();
+        };
+        make("tower_archer", 32, 32, (ctx) => { ctx.fillStyle = "#6fa546"; ctx.fillRect(4, 4, 24, 24); });
+        make("tower_mage", 32, 32, (ctx) => { ctx.fillStyle = "#7867db"; ctx.fillRect(4, 4, 24, 24); });
+        make("tower_artillery", 32, 32, (ctx) => { ctx.fillStyle = "#b87431"; ctx.fillRect(4, 4, 24, 24); });
+        make("tower_barracks", 32, 32, (ctx) => { ctx.fillStyle = "#b99c43"; ctx.fillRect(4, 4, 24, 24); });
+        ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
+          make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+        });
+        make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
+        make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
+        make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
+        make("soldier_guard", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
+        make("hero_captain", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
+        make("tree_pine", 24, 32, (ctx) => { ctx.fillStyle = "#3a6a30"; ctx.fillRect(4,0,16,32); });
+        make("rock_moss", 20, 14, (ctx) => { ctx.fillStyle = "#686c64"; ctx.fillRect(0,0,20,14); });
+        make("pad_empty", 48, 32, (ctx) => { ctx.fillStyle = "#4a3c2a"; ctx.beginPath(); ctx.ellipse(24,16,20,10,0,0,Math.PI*2); ctx.fill(); });
+        make("gate_arch", 64, 40, (ctx) => { ctx.fillStyle = "#5a4a38"; ctx.fillRect(0,0,64,40); });
+        make("bush_round", 24, 18, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,24,18); });
+        make("flower_patch", 20, 14, (ctx) => { ctx.fillStyle = "#f0d060"; ctx.fillRect(0,0,20,14); });
+        make("tree_oak", 32, 32, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,32,32); });
+        make("ruin_pillar", 20, 32, (ctx) => { ctx.fillStyle = "#8a8070"; ctx.fillRect(0,0,20,32); });
+        make("banner_flag", 20, 32, (ctx) => { ctx.fillStyle = "#e07050"; ctx.fillRect(0,0,20,32); });
+        make("cloud_soft", 48, 24, (ctx) => { ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fillRect(0,0,48,24); });
+        make("path_mark", 16, 10, (ctx) => { ctx.fillStyle = "rgba(180,150,100,.35)"; ctx.fillRect(0,0,16,10); });
+        make("icon_gold", 16, 16, (ctx) => { ctx.fillStyle = "#f5c85a"; ctx.fillRect(0,0,16,16); });
+        make("icon_heart", 16, 16, (ctx) => { ctx.fillStyle = "#e66550"; ctx.fillRect(0,0,16,16); });
       }
+      this.bakeMenuIcons();
+    }
+
+    bakeMenuIcons() {
       const make = (key, w, h, draw) => {
         if (this.textures.exists(key)) this.textures.remove(key);
         const texture = this.textures.createCanvas(key, w, h);
         const ctx = texture.getContext();
         ctx.clearRect(0, 0, w, h);
+        ctx.imageSmoothingEnabled = true;
         draw(ctx, w, h);
         texture.refresh();
       };
-      make("tower_archer", 32, 32, (ctx) => { ctx.fillStyle = "#6fa546"; ctx.fillRect(4, 4, 24, 24); });
-      make("tower_mage", 32, 32, (ctx) => { ctx.fillStyle = "#7867db"; ctx.fillRect(4, 4, 24, 24); });
-      make("tower_artillery", 32, 32, (ctx) => { ctx.fillStyle = "#b87431"; ctx.fillRect(4, 4, 24, 24); });
-      make("tower_barracks", 32, 32, (ctx) => { ctx.fillStyle = "#b99c43"; ctx.fillRect(4, 4, 24, 24); });
-      ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
-        make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+
+      const rounded = (ctx, x, y, w, h, r, fill, stroke = null, line = 1) => {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = line;
+          ctx.stroke();
+        }
+      };
+
+      const ellipse = (ctx, x, y, rx, ry, fill, stroke = null, line = 1) => {
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = line;
+          ctx.stroke();
+        }
+      };
+
+      const poly = (ctx, points, fill, stroke = null, line = 1) => {
+        ctx.beginPath();
+        ctx.moveTo(points[0][0], points[0][1]);
+        for (let i = 1; i < points.length; i += 1) ctx.lineTo(points[i][0], points[i][1]);
+        ctx.closePath();
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = line;
+          ctx.stroke();
+        }
+      };
+
+      const drawBadge = (ctx, w, h, c0, c1, cBorder) => {
+        const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+        bgGrad.addColorStop(0, c0);
+        bgGrad.addColorStop(1, c1);
+        rounded(ctx, 3, 3, w - 6, h - 6, 8, bgGrad, cBorder, 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(8, 5);
+        ctx.lineTo(w - 8, 5);
+        ctx.stroke();
+      };
+
+      const drawSparkle = (ctx, x, y, r, color = "#ffffff") => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x, y - r);
+        ctx.lineTo(x + r * 0.35, y - r * 0.35);
+        ctx.lineTo(x + r, y);
+        ctx.lineTo(x + r * 0.35, y + r * 0.35);
+        ctx.lineTo(x, y + r);
+        ctx.lineTo(x - r * 0.35, y + r * 0.35);
+        ctx.lineTo(x - r, y);
+        ctx.lineTo(x - r * 0.35, y - r * 0.35);
+        ctx.closePath();
+        ctx.fill();
+      };
+
+      // Map 0: Forest Gate
+      make("map_preview_0", 100, 100, (ctx) => {
+        const bgGrad = ctx.createLinearGradient(0, 0, 100, 100);
+        bgGrad.addColorStop(0, "#487434");
+        bgGrad.addColorStop(0.5, "#2d4e22");
+        bgGrad.addColorStop(1, "#182c12");
+        rounded(ctx, 4, 4, 92, 92, 10, bgGrad, "#162810", 3);
+
+        const treeGrad = ctx.createLinearGradient(0, 10, 0, 40);
+        treeGrad.addColorStop(0, "#5e9444");
+        treeGrad.addColorStop(1, "#26421a");
+        for (const [tx, ty, r] of [[18, 22, 12], [34, 16, 14], [66, 16, 14], [82, 22, 12], [50, 12, 11]]) {
+          ellipse(ctx, tx, ty, r, r * 0.9, treeGrad, "#162810", 1);
+        }
+
+        ctx.strokeStyle = "#8a6638";
+        ctx.lineWidth = 14;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(8, 74);
+        ctx.bezierCurveTo(36, 76, 38, 52, 50, 48);
+        ctx.bezierCurveTo(62, 44, 70, 72, 92, 70);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#b58d52";
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(8, 74);
+        ctx.bezierCurveTo(36, 76, 38, 52, 50, 48);
+        ctx.bezierCurveTo(62, 44, 70, 72, 92, 70);
+        ctx.stroke();
+
+        rounded(ctx, 36, 32, 8, 22, 2, "#686a60", "#2c2e28", 1.5);
+        rounded(ctx, 56, 32, 8, 22, 2, "#686a60", "#2c2e28", 1.5);
+        rounded(ctx, 34, 28, 32, 8, 2, "#7e8278", "#2c2e28", 1.5);
+        rounded(ctx, 44, 35, 12, 19, 1, "#5c3d20", "#2c1a0c", 1);
+        ctx.strokeStyle = "#d4b050";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(44, 40, 12, 3);
+
+        ellipse(ctx, 16, 74, 9, 7, "#42762a", "#1b3610", 1);
+        ellipse(ctx, 84, 70, 10, 8, "#42762a", "#1b3610", 1);
+        ellipse(ctx, 24, 84, 2.5, 2.5, "#f5d76e");
+        ellipse(ctx, 78, 82, 2.5, 2.5, "#ff7282");
+        ellipse(ctx, 28, 62, 2, 2, "#ffffff");
+
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(12, 6);
+        ctx.lineTo(88, 6);
+        ctx.stroke();
       });
-      make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
-      make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
-      make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
-      make("soldier_guard", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
-      make("hero_captain", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
-      make("tree_pine", 24, 32, (ctx) => { ctx.fillStyle = "#3a6a30"; ctx.fillRect(4,0,16,32); });
-      make("rock_moss", 20, 14, (ctx) => { ctx.fillStyle = "#686c64"; ctx.fillRect(0,0,20,14); });
-      make("pad_empty", 48, 32, (ctx) => { ctx.fillStyle = "#4a3c2a"; ctx.beginPath(); ctx.ellipse(24,16,20,10,0,0,Math.PI*2); ctx.fill(); });
-      make("gate_arch", 64, 40, (ctx) => { ctx.fillStyle = "#5a4a38"; ctx.fillRect(0,0,64,40); });
-      make("bush_round", 24, 18, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,24,18); });
-      make("flower_patch", 20, 14, (ctx) => { ctx.fillStyle = "#f0d060"; ctx.fillRect(0,0,20,14); });
-      make("tree_oak", 32, 32, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,32,32); });
-      make("ruin_pillar", 20, 32, (ctx) => { ctx.fillStyle = "#8a8070"; ctx.fillRect(0,0,20,32); });
-      make("banner_flag", 20, 32, (ctx) => { ctx.fillStyle = "#e07050"; ctx.fillRect(0,0,20,32); });
-      make("cloud_soft", 48, 24, (ctx) => { ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fillRect(0,0,48,24); });
-      make("path_mark", 16, 10, (ctx) => { ctx.fillStyle = "rgba(180,150,100,.35)"; ctx.fillRect(0,0,16,10); });
-      make("icon_gold", 16, 16, (ctx) => { ctx.fillStyle = "#f5c85a"; ctx.fillRect(0,0,16,16); });
-      make("icon_heart", 16, 16, (ctx) => { ctx.fillStyle = "#e66550"; ctx.fillRect(0,0,16,16); });
+
+      // Map 1: Stone Pass
+      make("map_preview_1", 100, 100, (ctx) => {
+        const bgGrad = ctx.createLinearGradient(0, 0, 100, 100);
+        bgGrad.addColorStop(0, "#4a5a68");
+        bgGrad.addColorStop(0.5, "#323c46");
+        bgGrad.addColorStop(1, "#1c2228");
+        rounded(ctx, 4, 4, 92, 92, 10, bgGrad, "#12161a", 3);
+
+        poly(ctx, [[10, 50], [30, 22], [52, 50]], "#3a4652", "#1e262e", 1);
+        poly(ctx, [[40, 50], [65, 14], [90, 50]], "#4c5c6c", "#1e262e", 1);
+        poly(ctx, [[58, 22], [65, 14], [72, 22]], "#e4edf6");
+
+        ctx.fillStyle = "#68727c";
+        ctx.beginPath();
+        ctx.moveTo(38, 38); ctx.lineTo(62, 38); ctx.lineTo(72, 92); ctx.lineTo(28, 92);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#8e9ba8";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        poly(ctx, [[6, 34], [28, 36], [32, 90], [6, 90]], "#525c66", "#20262c", 1.5);
+        poly(ctx, [[94, 34], [72, 36], [68, 90], [94, 90]], "#525c66", "#20262c", 1.5);
+
+        rounded(ctx, 28, 42, 44, 8, 2, "#7a8692", "#262e36", 1.5);
+
+        ellipse(ctx, 22, 78, 6, 4.5, "#606a74", "#20262c", 1);
+        ellipse(ctx, 76, 82, 7, 5, "#606a74", "#20262c", 1);
+        ellipse(ctx, 32, 86, 4, 3, "#74808c");
+
+        ellipse(ctx, 24, 76, 3.5, 2, "#4a6e42");
+        ellipse(ctx, 74, 80, 4, 2, "#4a6e42");
+
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(12, 6); ctx.lineTo(88, 6); ctx.stroke();
+      });
+
+      // Map 2: Ember Marsh
+      make("map_preview_2", 100, 100, (ctx) => {
+        const bgGrad = ctx.createLinearGradient(0, 0, 100, 100);
+        bgGrad.addColorStop(0, "#5a2614");
+        bgGrad.addColorStop(0.4, "#323820");
+        bgGrad.addColorStop(1, "#181e10");
+        rounded(ctx, 4, 4, 92, 92, 10, bgGrad, "#160e08", 3);
+
+        ellipse(ctx, 50, 60, 42, 28, "#1a2414");
+
+        ctx.strokeStyle = "#e85820";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(16, 56); ctx.quadraticCurveTo(45, 68, 84, 52); ctx.stroke();
+        ctx.strokeStyle = "#ffd040";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(16, 56); ctx.quadraticCurveTo(45, 68, 84, 52); ctx.stroke();
+
+        ctx.strokeStyle = "#5a4225";
+        ctx.lineWidth = 13;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(12, 38); ctx.bezierCurveTo(40, 28, 45, 78, 88, 76); ctx.stroke();
+        ctx.strokeStyle = "#7a5c34";
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(12, 38); ctx.bezierCurveTo(40, 28, 45, 78, 88, 76); ctx.stroke();
+
+        for (const [tx, ty] of [[24, 22], [74, 26]]) {
+          ctx.strokeStyle = "#1e2616";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(tx, ty + 18); ctx.lineTo(tx, ty);
+          ctx.lineTo(tx - 6, ty - 8);
+          ctx.moveTo(tx, ty + 6); ctx.lineTo(tx + 7, ty - 4);
+          ctx.stroke();
+        }
+
+        for (const [fx, fy, r, c1, c2] of [
+          [32, 46, 2.8, "#ffe870", "rgba(255,140,0,0.4)"],
+          [62, 38, 3.2, "#ffdd50", "rgba(255,100,0,0.5)"],
+          [48, 74, 2.2, "#fff090", "rgba(255,160,0,0.4)"],
+          [78, 64, 2.8, "#ffe060", "rgba(255,90,0,0.4)"],
+          [20, 76, 2.2, "#ffcc40", "rgba(255,120,0,0.4)"],
+        ]) {
+          ellipse(ctx, fx, fy, r * 2.2, r * 2.2, c2);
+          ellipse(ctx, fx, fy, r, r, c1);
+        }
+
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(12, 6); ctx.lineTo(88, 6); ctx.stroke();
+      });
+
+      // Tower 1: Archer
+      make("icon_tower_archer", 72, 72, (ctx) => {
+        drawBadge(ctx, 72, 72, "#325026", "#1c3214", "#12200c");
+        ellipse(ctx, 36, 52, 22, 7, "rgba(0,0,0,0.4)");
+
+        ctx.save();
+        ctx.translate(36, 34);
+        ctx.rotate(-0.4);
+
+        ctx.lineWidth = 4.5;
+        ctx.lineCap = "round";
+        const woodGrad = ctx.createLinearGradient(-20, -20, 20, 20);
+        woodGrad.addColorStop(0, "#e0aa50");
+        woodGrad.addColorStop(0.5, "#905a22");
+        woodGrad.addColorStop(1, "#543010");
+        ctx.strokeStyle = woodGrad;
+        ctx.beginPath();
+        ctx.arc(-4, 0, 22, -1.2, 1.2);
+        ctx.stroke();
+
+        ellipse(ctx, 7, -20, 2.5, 2.5, "#f5d76e");
+        ellipse(ctx, 7, 20, 2.5, 2.5, "#f5d76e");
+
+        ctx.strokeStyle = "#eef4fa";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(7, -20); ctx.lineTo(-4, 0); ctx.lineTo(7, 20);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#f5c85a";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(-4, 0, 22, -0.22, 0.22);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#d8b068";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(-4, 0); ctx.lineTo(26, 0);
+        ctx.stroke();
+
+        poly(ctx, [[26, -5], [34, 0], [26, 5]], "#e0e8f0", "#3a4450", 1);
+        poly(ctx, [[-4, 0], [-10, -4], [-7, 0], [-10, 4]], "#e04838");
+
+        ctx.restore();
+      });
+
+      // Tower 2: Mage
+      make("icon_tower_mage", 72, 72, (ctx) => {
+        drawBadge(ctx, 72, 72, "#342260", "#1c1038", "#120a24");
+        ellipse(ctx, 36, 56, 18, 6, "rgba(0,0,0,0.4)");
+
+        ellipse(ctx, 36, 50, 16, 6, null, "#f5d76e", 2.8);
+
+        const glow = ctx.createRadialGradient(36, 32, 4, 36, 32, 22);
+        glow.addColorStop(0, "rgba(220, 180, 255, 0.9)");
+        glow.addColorStop(0.4, "rgba(140, 90, 240, 0.6)");
+        glow.addColorStop(0.8, "rgba(80, 40, 180, 0.2)");
+        glow.addColorStop(1, "rgba(40, 10, 120, 0)");
+        ellipse(ctx, 36, 32, 22, 22, glow);
+
+        const orbGrad = ctx.createRadialGradient(32, 28, 2, 36, 32, 14);
+        orbGrad.addColorStop(0, "#ffffff");
+        orbGrad.addColorStop(0.25, "#e4d6ff");
+        orbGrad.addColorStop(0.65, "#8c62f0");
+        orbGrad.addColorStop(1, "#361c78");
+        ellipse(ctx, 36, 32, 14, 14, orbGrad, "#f0e6ff", 1.5);
+
+        ellipse(ctx, 31, 27, 3, 3, "#ffffff");
+        drawSparkle(ctx, 20, 22, 3, "#ffffff");
+        drawSparkle(ctx, 52, 24, 2.5, "#d8c0ff");
+        drawSparkle(ctx, 48, 44, 2, "#ffffff");
+      });
+
+      // Tower 3: Artillery
+      make("icon_tower_artillery", 72, 72, (ctx) => {
+        drawBadge(ctx, 72, 72, "#4e2c14", "#2c1608", "#1c0d04");
+        ellipse(ctx, 36, 56, 20, 7, "rgba(0,0,0,0.42)");
+
+        rounded(ctx, 20, 44, 32, 12, 3, "#6a4018", "#2c1606", 2);
+        ellipse(ctx, 36, 52, 7, 7, "#8a5828", "#f5c85a", 1.6);
+        ellipse(ctx, 36, 52, 2.5, 2.5, "#2c1606");
+
+        ctx.save();
+        ctx.translate(34, 46);
+        ctx.rotate(-0.55);
+
+        const ironGrad = ctx.createLinearGradient(0, -10, 0, 10);
+        ironGrad.addColorStop(0, "#88929c");
+        ironGrad.addColorStop(0.4, "#4a525a");
+        ironGrad.addColorStop(0.8, "#282c32");
+        ironGrad.addColorStop(1, "#181a1e");
+        rounded(ctx, -8, -10, 36, 20, 4, ironGrad, "#0e1012", 2);
+
+        rounded(ctx, 24, -12, 7, 24, 3, "#606872", "#0e1012", 1.5);
+        ellipse(ctx, 30, 0, 2.5, 9, "#0c0d0f");
+
+        ctx.strokeStyle = "#f5d76e";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(4, -10); ctx.lineTo(4, 10);
+        ctx.moveTo(16, -10); ctx.lineTo(16, 10);
+        ctx.stroke();
+
+        ctx.restore();
+
+        ellipse(ctx, 18, 52, 4.5, 4.5, "#2a3038");
+        ellipse(ctx, 24, 52, 4.5, 4.5, "#2a3038");
+        ellipse(ctx, 21, 46, 4.5, 4.5, "#2a3038");
+        ellipse(ctx, 20, 45, 1.2, 1.2, "#8a94a0");
+      });
+
+      // Tower 4: Barracks
+      make("icon_tower_barracks", 72, 72, (ctx) => {
+        drawBadge(ctx, 72, 72, "#4a4218", "#28240a", "#181504");
+        ellipse(ctx, 36, 58, 18, 6, "rgba(0,0,0,0.42)");
+
+        ctx.strokeStyle = "#d8e0e8"; ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.moveTo(18, 16); ctx.lineTo(54, 52); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(54, 16); ctx.lineTo(18, 52); ctx.stroke();
+        ctx.strokeStyle = "#f5c85a"; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(14, 20); ctx.lineTo(22, 12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(58, 20); ctx.lineTo(50, 12); ctx.stroke();
+
+        const shieldGrad = ctx.createLinearGradient(20, 20, 52, 56);
+        shieldGrad.addColorStop(0, "#4e823e");
+        shieldGrad.addColorStop(0.5, "#2d5422");
+        shieldGrad.addColorStop(1, "#162e10");
+
+        ctx.beginPath();
+        ctx.moveTo(22, 20);
+        ctx.lineTo(50, 20);
+        ctx.quadraticCurveTo(52, 38, 36, 56);
+        ctx.quadraticCurveTo(20, 38, 22, 20);
+        ctx.closePath();
+        ctx.fillStyle = shieldGrad;
+        ctx.fill();
+        ctx.strokeStyle = "#f5d76e";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffd866";
+        ctx.fillRect(33, 23, 6, 26);
+        ctx.fillRect(25, 29, 22, 6);
+        ctx.strokeStyle = "#8a5810";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(33, 23, 6, 26);
+        ctx.strokeRect(25, 29, 22, 6);
+        ellipse(ctx, 36, 32, 2.5, 2.5, "#e04838");
+      });
+
+      // Spell 1: Meteor
+      make("icon_spell_meteor", 64, 64, (ctx) => {
+        drawBadge(ctx, 64, 64, "#501c0e", "#2c0c04", "#180602");
+
+        ctx.save();
+        ctx.translate(32, 32);
+        ctx.rotate(0.65);
+
+        const flameGrad = ctx.createLinearGradient(-26, 0, 16, 0);
+        flameGrad.addColorStop(0, "rgba(255, 60, 0, 0)");
+        flameGrad.addColorStop(0.4, "rgba(255, 100, 20, 0.7)");
+        flameGrad.addColorStop(0.8, "rgba(255, 200, 40, 0.95)");
+        flameGrad.addColorStop(1, "#ffffff");
+        ctx.fillStyle = flameGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(14, 0);
+        ctx.quadraticCurveTo(-6, -14, -26, -6);
+        ctx.quadraticCurveTo(-14, -2, -28, 4);
+        ctx.quadraticCurveTo(-12, 6, -24, 12);
+        ctx.quadraticCurveTo(-4, 12, 14, 0);
+        ctx.fill();
+
+        const coreGrad = ctx.createRadialGradient(8, -2, 2, 6, 0, 12);
+        coreGrad.addColorStop(0, "#ffffff");
+        coreGrad.addColorStop(0.3, "#fff066");
+        coreGrad.addColorStop(0.6, "#ff6a20");
+        coreGrad.addColorStop(1, "#941c08");
+        ellipse(ctx, 6, 0, 10, 10, coreGrad, "#ffe880", 1.5);
+
+        ctx.restore();
+      });
+
+      // Spell 2: Frost
+      make("icon_spell_frost", 64, 64, (ctx) => {
+        drawBadge(ctx, 64, 64, "#1c405c", "#0c2032", "#06121c");
+
+        ctx.save();
+        ctx.translate(32, 32);
+
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 22);
+        glow.addColorStop(0, "rgba(200, 240, 255, 0.8)");
+        glow.addColorStop(0.5, "rgba(100, 190, 255, 0.4)");
+        glow.addColorStop(1, "rgba(50, 120, 220, 0)");
+        ellipse(ctx, 0, 0, 22, 22, glow);
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        for (let i = 0; i < 6; i += 1) {
+          ctx.rotate(Math.PI / 3);
+          ctx.beginPath();
+          ctx.moveTo(0, 0); ctx.lineTo(0, -18);
+          ctx.moveTo(0, -11); ctx.lineTo(-5, -15);
+          ctx.moveTo(0, -11); ctx.lineTo(5, -15);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#b8edff";
+        ctx.beginPath();
+        for (let i = 0; i < 6; i += 1) {
+          const angle = (i * Math.PI) / 3;
+          const hx = Math.cos(angle) * 7;
+          const hy = Math.sin(angle) * 7;
+          if (i === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.restore();
+      });
+
+      // Spell 3: Rally
+      make("icon_spell_rally", 64, 64, (ctx) => {
+        drawBadge(ctx, 64, 64, "#543e14", "#2c2008", "#181004");
+
+        ctx.save();
+        ctx.translate(30, 34);
+
+        const hornGrad = ctx.createLinearGradient(-18, 14, 18, -14);
+        hornGrad.addColorStop(0, "#a06818");
+        hornGrad.addColorStop(0.4, "#ffd866");
+        hornGrad.addColorStop(0.8, "#e6a820");
+        hornGrad.addColorStop(1, "#8a5010");
+        ctx.fillStyle = hornGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(-16, 12);
+        ctx.quadraticCurveTo(-4, 16, 14, 6);
+        ctx.lineTo(16, -10);
+        ctx.quadraticCurveTo(-2, 0, -18, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#ffe890";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ellipse(ctx, 15, -2, 4, 9, "#ffd866", "#5a3408", 1.2);
+
+        ctx.strokeStyle = "#fff0a0";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(15, -2, 10, -0.6, 0.6); ctx.stroke();
+        ctx.strokeStyle = "rgba(255, 240, 160, 0.6)";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(15, -2, 16, -0.6, 0.6); ctx.stroke();
+
+        ctx.restore();
+      });
+
+      // Hero Ability 1: Charge
+      make("icon_ability_charge", 64, 64, (ctx) => {
+        drawBadge(ctx, 64, 64, "#504010", "#2c2206", "#181202");
+
+        ctx.save();
+        ctx.translate(32, 32);
+
+        const boltGrad = ctx.createLinearGradient(0, -20, 0, 20);
+        boltGrad.addColorStop(0, "#ffffff");
+        boltGrad.addColorStop(0.3, "#fff37a");
+        boltGrad.addColorStop(0.8, "#ffaa00");
+        boltGrad.addColorStop(1, "#e66000");
+
+        poly(ctx, [[2, -20], [-13, -2], [-2, 0], [-9, 20], [13, -2], [2, 0]], boltGrad, "#ffffff", 1.5);
+
+        ctx.restore();
+      });
+
+      // Hero Ability 2: Banner
+      make("icon_ability_banner", 64, 64, (ctx) => {
+        drawBadge(ctx, 64, 64, "#501818", "#2c0c0c", "#180404");
+
+        ctx.strokeStyle = "#ffd866";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(20, 10); ctx.lineTo(20, 54); ctx.stroke();
+        poly(ctx, [[20, 6], [17, 12], [23, 12]], "#ffffff");
+
+        const flagGrad = ctx.createLinearGradient(20, 14, 52, 38);
+        flagGrad.addColorStop(0, "#e63e2e");
+        flagGrad.addColorStop(0.6, "#a82014");
+        flagGrad.addColorStop(1, "#5c0e06");
+        ctx.fillStyle = flagGrad;
+
+        ctx.beginPath();
+        ctx.moveTo(20, 14);
+        ctx.quadraticCurveTo(34, 10, 48, 16);
+        ctx.lineTo(38, 28);
+        ctx.lineTo(50, 40);
+        ctx.quadraticCurveTo(34, 34, 20, 38);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#ffd866";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ellipse(ctx, 32, 26, 4, 4, "#ffd866");
+      });
+
+      // Hero Ability 3: Heal
+      make("icon_ability_heal", 64, 64, (ctx) => {
+        drawBadge(ctx, 64, 64, "#164426", "#0c2614", "#041408");
+
+        ctx.save();
+        ctx.translate(32, 32);
+
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 22);
+        glow.addColorStop(0, "rgba(160, 255, 180, 0.8)");
+        glow.addColorStop(0.5, "rgba(80, 220, 120, 0.4)");
+        glow.addColorStop(1, "rgba(30, 140, 60, 0)");
+        ellipse(ctx, 0, 0, 22, 22, glow);
+
+        const crossGrad = ctx.createLinearGradient(-12, -12, 12, 12);
+        crossGrad.addColorStop(0, "#b4f8c8");
+        crossGrad.addColorStop(0.4, "#4ee47a");
+        crossGrad.addColorStop(1, "#188c3e");
+        ctx.fillStyle = crossGrad;
+
+        const cw = 7, clen = 17;
+        ctx.fillRect(-cw / 2, -clen, cw, clen * 2);
+        ctx.fillRect(-clen, -cw / 2, clen * 2, cw);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-cw / 2, -clen, cw, clen * 2);
+        ctx.strokeRect(-clen, -cw / 2, clen * 2, cw);
+
+        poly(ctx, [[0, -4], [4, 0], [0, 4], [-4, 0]], "#ffffff");
+
+        ctx.restore();
+      });
+
+      // Sound Icons
+      make("icon_sound_on", 48, 48, (ctx) => {
+        ctx.save();
+        ctx.translate(22, 24);
+        poly(ctx, [[-12, -5], [-6, -5], [0, -11], [0, 11], [-6, 5], [-12, 5]], "#d8e4f0", "#8098b0", 1.5);
+        ctx.strokeStyle = "#f5d76e";
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(0, 0, 6, -0.7, 0.7); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, 11, -0.8, 0.8); ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, 0, 16, -0.9, 0.9); ctx.stroke();
+        ctx.restore();
+      });
+
+      make("icon_sound_off", 48, 48, (ctx) => {
+        ctx.save();
+        ctx.translate(22, 24);
+        poly(ctx, [[-12, -5], [-6, -5], [0, -11], [0, 11], [-6, 5], [-12, 5]], "#8a9aa8");
+        ctx.strokeStyle = "#ff4838";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(16, 14); ctx.stroke();
+        ctx.restore();
+      });
+
+      // Motion Icons
+      make("icon_motion_full", 48, 48, (ctx) => {
+        ctx.save();
+        ctx.translate(24, 24);
+        ctx.strokeStyle = "#9ee0ff";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-14, 12); ctx.quadraticCurveTo(0, -6, 14, -12); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-6, 6); ctx.lineTo(-12, -2);
+        ctx.moveTo(0, 0); ctx.lineTo(-4, -10);
+        ctx.moveTo(6, -6); ctx.lineTo(2, -14);
+        ctx.stroke();
+        ctx.strokeStyle = "#ffd866";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(-16, -8); ctx.lineTo(6, -8); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-12, 16); ctx.lineTo(12, 16); ctx.stroke();
+        ctx.restore();
+      });
+
+      make("icon_motion_reduced", 48, 48, (ctx) => {
+        ctx.save();
+        ctx.translate(24, 24);
+        ctx.strokeStyle = "#a0b4c4";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-14, 12); ctx.quadraticCurveTo(0, -6, 14, -12); ctx.stroke();
+        ctx.fillStyle = "#f5d76e";
+        ctx.fillRect(-6, -10, 4, 10);
+        ctx.fillRect(2, -10, 4, 10);
+        ctx.restore();
+      });
     }
 
     drawMap() {
@@ -517,9 +1235,47 @@
         .text(12, 42, "", { font: "bold 12px Arial", color: "#f8f0d8", wordWrap: { width: 232 } })
         .setOrigin(0, 0.5)
         .setDepth(100);
-      this.muteButton = this.makeButton(211, 18, 34, 20, this.settings.muted ? "×" : "♪", 0x3d4f5a, () => this.toggleMuted());
-      this.pauseButton = this.makeButton(337, 39, 36, 30, "II", 0x3d4f5a, () => this.togglePause());
-      this.callButton = this.makeButton(385, 39, 60, 30, "CALL", 0x7a4f25, () => this.callWave());
+      this.muteButton = this.makeButton(
+        211,
+        18,
+        34,
+        20,
+        "",
+        0x3d4f5a,
+        () => this.toggleMuted(),
+        {
+          icon: this.settings.muted ? "icon_sound_off" : "icon_sound_on",
+          iconScale: 0.38,
+          iconOffsetY: 0,
+          tooltip: () => this.settings.muted ? "Unmute Audio (M)" : "Mute Audio (M)",
+        }
+      );
+      this.pauseButton = this.makeButton(
+        337,
+        39,
+        36,
+        30,
+        "II",
+        0x3d4f5a,
+        () => this.togglePause(),
+        {
+          font: "bold 14px Arial",
+          tooltip: () => this.paused ? "Resume Battle (P)" : "Pause Battle (P)",
+        }
+      );
+      this.callButton = this.makeButton(
+        385,
+        39,
+        60,
+        30,
+        "CALL",
+        0x7a4f25,
+        () => this.callWave(),
+        {
+          font: "bold 13px Arial",
+          tooltip: () => this.waveActive ? "Wave marching — defend the road!" : "Call Next Wave (SPACE)\nCall early for an extra gold bonus!",
+        }
+      );
     }
 
     createShop() {
@@ -532,32 +1288,111 @@
       for (let i = 0; i < types.length; i += 1) {
         const t = types[i];
         const x = 48 + i * 81;
-        const b = this.makeButton(x, SHOP_Y + 33, 72, 54, `${t.glyph}\n${t.cost}g\n${t.shopLabel}`, t.color, () => this.chooseBuild(t.id));
+        const b = this.makeButton(
+          x,
+          SHOP_Y + 33,
+          74,
+          54,
+          `${t.cost}g`,
+          t.color,
+          () => this.chooseBuild(t.id),
+          {
+            icon: `icon_tower_${t.id}`,
+            iconScale: 0.52,
+            iconOffsetY: -9,
+            textOffsetY: 16,
+            font: "bold 12px Arial",
+            textColor: "#ffd866",
+            tooltip: () => `${t.name} (${t.cost}g)\n${t.role}\nDmg: ${t.damage[0]} · Rng: ${t.range[0]} · Spd: ${t.rate[0]}s\n${t.desc}`,
+          }
+        );
         b.type = t.id;
         this.shopButtons.push(b);
       }
-      this.upgradeButton = this.makeButton(370, SHOP_Y + 33, 84, 54, "UP\n-", 0x55743c, () => this.upgradeSelected());
-      this.sellButton = this.makeButton(370, SHOP_Y + 88, 84, 32, "SELL", 0x643a31, () => this.sellSelected());
+      this.upgradeButton = this.makeButton(
+        370,
+        SHOP_Y + 33,
+        84,
+        54,
+        "UP\n-",
+        0x55743c,
+        () => this.upgradeSelected(),
+        {
+          font: "bold 13px Arial",
+          tooltip: () => this.getUpgradeTooltip(),
+        }
+      );
+      this.sellButton = this.makeButton(
+        370,
+        SHOP_Y + 88,
+        84,
+        32,
+        "SELL",
+        0x643a31,
+        () => this.sellSelected(),
+        {
+          font: "bold 12px Arial",
+          tooltip: () => this.getSellTooltip(),
+        }
+      );
       this.spellButtons = [];
       const spellDefs = [
-        ["meteor", 56, "MET"],
-        ["frost", 153, "ICE"],
-        ["rally", 250, "RLY"],
+        ["meteor", 56, "MET", "icon_spell_meteor", "Meteor (24s cooldown)\nMassive AoE explosion (270 dmg).\nStrikes highest HP enemy swarm."],
+        ["frost", 153, "ICE", "icon_spell_frost", "Frost (22s cooldown)\nFreezes & slows all active enemies\nfor 4.2 seconds."],
+        ["rally", 250, "RLY", "icon_spell_rally", "Rally (28s cooldown)\nInspires all Guards & soldiers with\nboosted attack & temporary armor."],
       ];
-      for (const [id, x, label] of spellDefs) {
-        const btn = this.makeButton(x, SHOP_Y + 91, 86, 32, label, 0x334f6b, () => this.castSpell(id));
+      for (const [id, x, label, iconKey, tip] of spellDefs) {
+        const btn = this.makeButton(
+          x,
+          SHOP_Y + 91,
+          86,
+          32,
+          label,
+          0x334f6b,
+          () => this.castSpell(id),
+          {
+            icon: iconKey,
+            iconScale: 0.38,
+            iconOffsetX: -22,
+            textOffsetX: 12,
+            font: "bold 12px Arial",
+            tooltip: () => {
+              const s = this.spells[id];
+              return s.ready > 0 ? `${tip}\nCooldown: ${Math.ceil(s.ready)}s` : `${tip}\n[READY TO CAST]`;
+            },
+          }
+        );
         btn.spell = id;
         btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 105, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102);
         this.spellButtons.push(btn);
       }
       this.heroButtons = [];
       const heroDefs = [
-        ["charge", 63, "CHG"],
-        ["banner", 166, "BAN"],
-        ["heal", 269, "HEAL"],
+        ["charge", 63, "CHG", "icon_ability_charge", "Hero Charge (16s cooldown)\nCaptain dashes to target area with\na high-damage piercing strike."],
+        ["banner", 166, "BAN", "icon_ability_banner", "Hero Banner (24s cooldown)\nPlants an inspiring battle standard\nto buff nearby soldiers."],
+        ["heal", 269, "HEAL", "icon_ability_heal", "Hero Heal (28s cooldown)\nRestores health to Captain\nand all nearby allied guards."],
       ];
-      for (const [id, x, label] of heroDefs) {
-        const btn = this.makeButton(x, SHOP_Y + 33, 92, 54, label, 0x4f6f9f, () => this.castHeroAbility(id));
+      for (const [id, x, label, iconKey, tip] of heroDefs) {
+        const btn = this.makeButton(
+          x,
+          SHOP_Y + 33,
+          92,
+          54,
+          label,
+          0x4f6f9f,
+          () => this.castHeroAbility(id),
+          {
+            icon: iconKey,
+            iconScale: 0.48,
+            iconOffsetY: -9,
+            textOffsetY: 16,
+            font: "bold 12px Arial",
+            tooltip: () => {
+              const a = this.heroAbilities[id];
+              return a.ready > 0 ? `${tip}\nCooldown: ${Math.ceil(a.ready)}s` : `${tip}\n[READY TO USE]`;
+            },
+          }
+        );
         btn.ability = id;
         btn.cooldownBar = this.add.rectangle(x - 42, SHOP_Y + 55, 1, 4, 0xf5d76e, 0.95).setOrigin(0, 0.5).setDepth(102);
         this.heroButtons.push(btn);
@@ -572,55 +1407,118 @@
       this.setHeroPanel(false);
     }
 
-    makeButton(x, y, w, h, label, color, cb) {
+    makeButton(x, y, w, h, label, color, cb, options = {}) {
       const shadow = this.add.rectangle(x, y + 4, w, h, 0x050704, 0.55).setStrokeStyle(1, 0x000000, 0.5).setDepth(99);
       const bg = this.add.rectangle(x, y, w, h, color, 0.98).setStrokeStyle(2, 0xf2df92, 0.45).setDepth(100);
       const shine = this.add.rectangle(x, y - h * 0.28, w - 8, Math.max(4, h * 0.24), 0xffffff, 0.16).setDepth(100.5);
       const lip = this.add.rectangle(x, y + h * 0.35, w - 8, Math.max(3, h * 0.16), 0x000000, 0.18).setDepth(100.5);
+
+      let icon = null;
+      let iconShadow = null;
+      const hasIcon = !!options.icon && this.textures.exists(options.icon);
+      const iconOffsetX = options.iconOffsetX ?? 0;
+      const iconOffsetY = options.iconOffsetY ?? (label ? -8 : 0);
+      const iconScale = options.iconScale || 0.7;
+
+      if (hasIcon) {
+        iconShadow = this.add.image(x + iconOffsetX + 1, y + iconOffsetY + 2, options.icon)
+          .setScale(iconScale * 0.96)
+          .setTint(0x000000)
+          .setAlpha(0.4)
+          .setDepth(100.8);
+        icon = this.add.image(x + iconOffsetX, y + iconOffsetY, options.icon)
+          .setScale(iconScale)
+          .setDepth(101);
+      }
+
+      const textOffsetX = options.textOffsetX ?? 0;
+      const textOffsetY = options.textOffsetY ?? (hasIcon && label ? h * 0.22 : -1);
       const text = this.add
-        .text(x, y - 1, label, { font: "bold 13px Arial", color: "#fff4d8", align: "center" })
+        .text(x + textOffsetX, y + textOffsetY, label, {
+          font: options.font || "bold 13px Arial",
+          color: options.textColor || "#fff4d8",
+          align: "center",
+        })
         .setOrigin(0.5)
-        .setDepth(101);
+        .setDepth(101.2);
+
       bg.setInteractive({ useHandCursor: true });
+
+      const applyPressed = (down) => {
+        const dy = down ? 2 : 0;
+        bg.y = y + dy;
+        shine.y = y - h * 0.28 + dy;
+        lip.y = y + h * 0.35 + dy;
+        text.y = y + textOffsetY + dy;
+        if (icon) icon.y = y + iconOffsetY + dy;
+        if (iconShadow) iconShadow.y = y + iconOffsetY + 2 + dy;
+      };
+
       bg.on("pointerdown", () => {
         this.audio.playLayered?.("uiClick");
         this.audio.resume();
-        bg.y = y + 2;
-        shine.y = y - h * 0.28 + 2;
-        lip.y = y + h * 0.35 + 2;
-        text.y = y + 1;
+        applyPressed(true);
         cb();
       });
-      bg.on("pointerup", () => {
-        bg.y = y;
-        shine.y = y - h * 0.28;
-        lip.y = y + h * 0.35;
-        text.y = y - 1;
+      bg.on("pointerup", () => applyPressed(false));
+      bg.on("pointerover", () => {
+        bg.setStrokeStyle(3, 0xfff2ba, 0.9);
+        if (!this.settings?.reducedMotion) {
+          bg.setScale(1.03);
+          shine.setScale(1.03);
+          lip.setScale(1.03);
+          text.setScale(1.03);
+          if (icon) icon.setScale(iconScale * 1.05);
+        }
+        const tip = typeof options.tooltip === "function" ? options.tooltip() : options.tooltip;
+        if (tip) {
+          this.showTooltip(x, y - h / 2 - 10, tip);
+        }
       });
       bg.on("pointerout", () => {
-        bg.y = y;
-        shine.y = y - h * 0.28;
-        lip.y = y + h * 0.35;
-        text.y = y - 1;
+        applyPressed(false);
+        bg.setStrokeStyle(2, 0xf2df92, 0.45);
+        bg.setScale(1);
+        shine.setScale(1);
+        lip.setScale(1);
+        text.setScale(1);
+        if (icon) icon.setScale(iconScale);
+        this.hideTooltip();
       });
+
       return {
         bg,
         text,
         shadow,
         shine,
         lip,
+        icon,
+        iconShadow,
         x,
         y,
         w,
         h,
         label,
+        baseLabel: label,
         color,
+        setIcon: (key) => {
+          if (this.textures.exists(key)) {
+            if (icon) {
+              icon.setTexture(key);
+              icon.setVisible(true);
+            }
+            if (iconShadow) {
+              iconShadow.setTexture(key);
+              iconShadow.setVisible(true);
+            }
+          }
+        },
         setLabel: (value) => text.setText(value),
         setAlpha: (value) => {
-          for (const obj of [shadow, bg, shine, lip, text]) obj.setAlpha(value);
+          for (const obj of [shadow, bg, shine, lip, text, icon, iconShadow].filter(Boolean)) obj.setAlpha(value);
         },
         setVisible: (value) => {
-          for (const obj of [shadow, bg, shine, lip, text]) obj.setVisible(value);
+          for (const obj of [shadow, bg, shine, lip, text, icon, iconShadow].filter(Boolean)) obj.setVisible(value);
           if (value) bg.setInteractive({ useHandCursor: true });
           else bg.disableInteractive();
         },
@@ -631,8 +1529,8 @@
       const normalButtons = [...(this.shopButtons || []), this.upgradeButton, this.sellButton, ...(this.spellButtons || [])].filter(Boolean);
       for (const btn of normalButtons) btn.setVisible(!active);
       for (const btn of this.heroButtons || []) btn.setVisible(active);
-      for (const btn of this.spellButtons || []) btn.cooldownBar.setVisible(!active);
-      for (const btn of this.heroButtons || []) btn.cooldownBar.setVisible(active);
+      for (const btn of this.spellButtons || []) btn.cooldownBar?.setVisible(!active);
+      for (const btn of this.heroButtons || []) btn.cooldownBar?.setVisible(active);
     }
 
     showStartOverlay() {
@@ -644,58 +1542,199 @@
       this.overlay.add(borderGlow);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive();
       this.overlay.add(blocker);
-      // Title with shadow layer for depth
-      const titleShadow = this.add.text(W / 2 + 1, 87, "KRC CAMPAIGN", { font: "bold 34px Arial", color: "#2a1a08" }).setOrigin(0.5).setDepth(499);
-      const title = this.add.text(W / 2, 86, "KRC CAMPAIGN", { font: "bold 34px Arial", color: COLORS.gold, stroke: "#2a1a08", strokeThickness: 6 }).setOrigin(0.5).setDepth(501);
-      this.overlay.add(titleShadow);
+
+      // Title Banner Frame
+      const bannerX = W / 2;
+      const bannerY = 82;
+      const bannerW = 360;
+      const bannerH = 68;
+
+      const bannerShadow = this.add.rectangle(bannerX + 3, bannerY + 3, bannerW, bannerH, 0x000000, 0.55).setDepth(500);
+      const bannerBg = this.add.rectangle(bannerX, bannerY, bannerW, bannerH, 0x162414, 0.98)
+        .setStrokeStyle(2.5, 0xf5c85a, 0.9)
+        .setDepth(501);
+      const bannerInner = this.add.rectangle(bannerX, bannerY, bannerW - 10, bannerH - 10, 0x223520, 0.7)
+        .setStrokeStyle(1, 0xd8b548, 0.5)
+        .setDepth(501.5);
+      const bannerShine = this.add.rectangle(bannerX, bannerY - bannerH / 2 + 3, bannerW - 12, 2, 0xfff8d0, 0.35).setDepth(501.8);
+
+      const corners = [
+        [bannerX - bannerW / 2 + 8, bannerY - bannerH / 2 + 8],
+        [bannerX + bannerW / 2 - 8, bannerY - bannerH / 2 + 8],
+        [bannerX - bannerW / 2 + 8, bannerY + bannerH / 2 - 8],
+        [bannerX + bannerW / 2 - 8, bannerY + bannerH / 2 - 8],
+      ];
+      const cornerDots = corners.map(([cx, cy]) => {
+        return this.add.circle(cx, cy, 3, 0xffd866, 0.9).setStrokeStyle(1, 0x4a3410).setDepth(502);
+      });
+
+      const titleShadow = this.add.text(bannerX + 2, bannerY - 4, "KRC CAMPAIGN", {
+        font: "bold 30px Arial",
+        color: "#180f06",
+      }).setOrigin(0.5).setDepth(502);
+
+      const title = this.add.text(bannerX, bannerY - 6, "KRC CAMPAIGN", {
+        font: "bold 30px Arial",
+        color: "#ffd866",
+        stroke: "#2a1808",
+        strokeThickness: 5,
+      }).setOrigin(0.5).setDepth(503);
+
+      const versionMark = this.add.text(bannerX, bannerY + 20, `v${KRC_VERSION}`, {
+        font: "bold 12px Arial",
+        color: "#d8b548",
+      }).setOrigin(0.5).setDepth(503);
+
+      this.overlay.add([bannerShadow, bannerBg, bannerInner, bannerShine, ...cornerDots, titleShadow, title, versionMark]);
+
+      // Subtle floating golden sparkle particles around title
+      if (!this.settings?.reducedMotion) {
+        for (let i = 0; i < 14; i += 1) {
+          const sx = bannerX - bannerW / 2 + 20 + Math.random() * (bannerW - 40);
+          const sy = bannerY - bannerH / 2 + 6 + Math.random() * (bannerH - 12);
+          const sparkle = this.add.circle(sx, sy, 1 + Math.random() * 1.8, 0xffeb7a, 0.3 + Math.random() * 0.5).setDepth(504);
+          this.overlay.add(sparkle);
+          this.tweens.add({
+            targets: sparkle,
+            y: sy + (Math.random() * 8 - 4),
+            alpha: 0.1 + Math.random() * 0.7,
+            scale: 0.6 + Math.random() * 0.8,
+            duration: 1200 + Math.random() * 1000,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        }
+      }
+
       this.overlay.add(
         this.add
-          .text(W / 2, 122, "Choose a map. Stars unlock from lives remaining.", {
+          .text(W / 2, 130, "Choose a map. Stars unlock from lives remaining.", {
             font: "14px Arial",
             color: "#cfc4a2",
             align: "center",
             wordWrap: { width: 340 },
           })
           .setOrigin(0.5)
+          .setDepth(502)
       );
+
+      const mapDescriptions = [
+        "Forest Gate\nLush woodland path. Balanced lanes.\nDefend against agile scouts & brutes!",
+        "Stone Pass\nNarrow rocky canyon pass.\nArmor-heavy forces and flyers ahead!",
+        "Ember Marsh\nVolcanic swamp with lava fissures.\nBeware of exploding embers and bosses!",
+      ];
 
       MAPS.forEach((map, index) => {
         const unlocked = !!this.campaign.unlocked[index];
         const result = this.campaign.results[String(index)] || { stars: 0, bestGold: 0 };
-        const y = 178 + index * 92;
-        const card = this.add.rectangle(W / 2, y, 320, 78, unlocked ? 0x243528 : 0x1a1f1a, 1).setStrokeStyle(2, unlocked ? 0xe6d282 : 0x445044);
-        const title = this.add
-          .text(W / 2 - 140, y - 18, `${index + 1}. ${map.name}`, {
-            font: "bold 18px Arial",
+        const y = 186 + index * 88;
+        const cardW = 330;
+        const cardH = 74;
+
+        const cardShadow = this.add.rectangle(W / 2 + 2, y + 3, cardW, cardH, 0x000000, 0.45).setDepth(500);
+        const card = this.add.rectangle(W / 2, y, cardW, cardH, unlocked ? 0x223424 : 0x161a16, 0.98)
+          .setStrokeStyle(2, unlocked ? 0xd4bc68 : 0x3d483d)
+          .setDepth(501);
+        const cardShine = this.add.rectangle(W / 2, y - cardH / 2 + 2, cardW - 4, 1, 0xffffff, unlocked ? 0.15 : 0.05).setDepth(501.5);
+
+        const iconKey = `map_preview_${index}`;
+        let iconImage = null;
+        let iconShadow = null;
+        if (this.textures.exists(iconKey)) {
+          iconShadow = this.add.ellipse(W / 2 - cardW / 2 + 36, y + 23, 46, 12, 0x000000, 0.45).setDepth(501.8);
+          iconImage = this.add.image(W / 2 - cardW / 2 + 36, y, iconKey).setDisplaySize(50, 50).setDepth(502);
+          if (!unlocked) iconImage.setTint(0x555555);
+        }
+
+        const textX = W / 2 - cardW / 2 + 70;
+        const cardTitle = this.add
+          .text(textX, y - 18, `${index + 1}. ${map.name}`, {
+            font: "bold 17px Arial",
             color: unlocked ? "#fff2ba" : "#7a8478",
           })
-          .setOrigin(0, 0.5);
+          .setOrigin(0, 0.5)
+          .setDepth(502);
+
         const starText = "★".repeat(result.stars || 0) + "☆".repeat(Math.max(0, 3 - (result.stars || 0)));
-        const meta = this.add
-          .text(W / 2 - 140, y + 12, unlocked ? `${starText}  best gold ${result.bestGold || 0}` : "LOCKED — clear previous map", {
-            font: "13px Arial",
-            color: unlocked ? "#d7e7c8" : "#6f776d",
+        const stars = this.add
+          .text(textX, y + 3, starText, {
+            font: "bold 14px Arial",
+            color: result.stars > 0 ? "#f5c85a" : "#6a7468",
           })
-          .setOrigin(0, 0.5);
-        this.overlay.add([card, title, meta]);
+          .setOrigin(0, 0.5)
+          .setDepth(502);
+
+        const bonusInfo = index === 0 ? "+40g bonus" : index === 1 ? "+50g bonus" : "+60g bonus";
+        const meta = this.add
+          .text(textX + 54, y + 3, unlocked ? `·  ${bonusInfo} (best: ${result.bestGold || 0}g)` : "LOCKED — clear previous map", {
+            font: "12px Arial",
+            color: unlocked ? "#c8d8b8" : "#687068",
+          })
+          .setOrigin(0, 0.5)
+          .setDepth(502);
+
+        this.overlay.add([cardShadow, card, cardShine, iconShadow, iconImage, cardTitle, stars, meta].filter(Boolean));
+
         if (unlocked) {
           card.setInteractive({ useHandCursor: true });
-          card.on("pointerdown", () => this.beginMap(index));
-          title.setInteractive({ useHandCursor: true });
-          title.on("pointerdown", () => this.beginMap(index));
+          cardTitle.setInteractive({ useHandCursor: true });
+
+          const cardGroup = [card, cardShine, cardTitle, stars, meta, iconImage].filter(Boolean);
+
+          const onOver = () => {
+            card.setStrokeStyle(3, 0xfff0a0, 1);
+            if (!this.settings?.reducedMotion) {
+              this.tweens.add({ targets: cardGroup, scaleX: 1.025, scaleY: 1.025, duration: 120, ease: "Quad.easeOut" });
+            }
+            this.showTooltip(W / 2, y - cardH / 2 - 12, mapDescriptions[index]);
+          };
+
+          const onOut = () => {
+            card.setStrokeStyle(2, 0xd4bc68, 0.85);
+            if (!this.settings?.reducedMotion) {
+              this.tweens.add({ targets: cardGroup, scaleX: 1, scaleY: 1, duration: 120, ease: "Quad.easeOut" });
+            }
+            this.hideTooltip();
+          };
+
+          card.on("pointerover", onOver);
+          card.on("pointerout", onOut);
+          cardTitle.on("pointerover", onOver);
+          cardTitle.on("pointerout", onOut);
+
+          const onDown = () => {
+            this.hideTooltip();
+            this.beginMap(index);
+          };
+          card.on("pointerdown", onDown);
+          cardTitle.on("pointerdown", onDown);
         }
       });
 
-      const motion = this.add.rectangle(W / 2, 480, 188, 34, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
-      const motionText = this.add
-        .text(W / 2, 480, this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL", { font: "bold 13px Arial", color: "#e8f5ff" })
-        .setOrigin(0.5);
-      motion.setInteractive({ useHandCursor: true });
-      motion.on("pointerdown", () => {
-        const reduced = this.toggleReducedMotion();
-        motionText.setText(reduced ? "MOTION: REDUCED" : "MOTION: FULL");
-      });
-      this.overlay.add([motion, motionText]);
+      const motionBtn = this.makeButton(
+        W / 2,
+        480,
+        210,
+        36,
+        this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL",
+        0x334657,
+        () => {
+          const reduced = this.toggleReducedMotion();
+          motionBtn.setLabel(reduced ? "MOTION: REDUCED" : "MOTION: FULL");
+          motionBtn.setIcon(reduced ? "icon_motion_reduced" : "icon_motion_full");
+        },
+        {
+          icon: this.settings.reducedMotion ? "icon_motion_reduced" : "icon_motion_full",
+          iconScale: 0.44,
+          iconOffsetX: -68,
+          textOffsetX: 12,
+          font: "bold 13px Arial",
+          tooltip: () => "Toggle Motion (R)\nSwitch between full and reduced motion effects.",
+        }
+      );
+      this.overlay.add([motionBtn.shadow, motionBtn.bg, motionBtn.shine, motionBtn.lip, motionBtn.text, motionBtn.icon, motionBtn.iconShadow].filter(Boolean));
+
       this.overlay.add(
         this.add
           .text(W / 2, 520, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
@@ -705,10 +1744,12 @@
             wordWrap: { width: 330 },
           })
           .setOrigin(0.5)
+          .setDepth(502)
       );
     }
 
     beginMap(mapIndex) {
+      this.hideTooltip();
       this.audio.resume();
       this.audio.play("start", 0.45);
       this.audio.startMusic();
@@ -720,6 +1761,13 @@
       }
       this.overlayActive = false;
       this.overlay.destroy();
+      if (mapIndex === 0) { // Forest Gate
+        this.add.rectangle(W / 2, H / 2, W, H, 0x1a3c14, 0.08).setDepth(5);
+      } else if (mapIndex === 1) { // Stone Pass
+        this.add.rectangle(W / 2, H / 2, W, H, 0x3a3a3a, 0.06).setDepth(5);
+      } else if (mapIndex === 2) { // Ember Marsh
+        this.add.rectangle(W / 2, H / 2, W, H, 0x3a1a0a, 0.08).setDepth(5);
+      }
       this.say(`${this.map.name}: build two towers, then CALL. Tap pads for range preview.`);
     }
 
@@ -816,6 +1864,10 @@
           pad.glow.setVisible(!pad.tower);
           pad.glow.setStrokeStyle(active ? 3 : 2, active ? 0xfff0a0 : 0xf5d76e, active ? 0.85 : 0.35);
           pad.glow.setFillStyle(0xf5d76e, active ? 0.18 : 0.08);
+          if (active && !pad.tower && !this.settings?.reducedMotion) {
+            pad.glow.setScale(0);
+            this.tweens.add({ targets: pad.glow, scale: 1, duration: 150, ease: "Quad.easeOut" });
+          }
           if (pad.base?.setTint) pad.base.setTint(active ? 0xfff2c0 : 0xffffff);
         } else if (pad.base?.setStrokeStyle) {
           pad.base.setStrokeStyle(active ? 4 : 3, active ? 0xf5d76e : 0xb19b58, 1);
@@ -958,6 +2010,11 @@
         this.flashText(`UPGRADE L${tower.level + 1}`, tower.x, tower.y - 42, "#fff2ba");
         this.say(`${cfg.name} upgraded to level ${tower.level + 1}.`);
       }
+      const levelBadge = this.add.text(tower.x, tower.y - 50, `L${tower.level + 1}`, {
+        font: "bold 16px Arial",
+        color: tower.level >= 3 ? "#f5d76e" : "#fff2ba",
+      }).setOrigin(0.5).setDepth(100);
+      this.tweens.add({ targets: levelBadge, y: tower.y - 70, alpha: 0, duration: 800, onComplete: () => levelBadge.destroy() });
       this.audio.playLayered("towerUpgrade");
       this.updateUpgradeLabel();
     }
@@ -1006,7 +2063,10 @@
       if (!tower) {
         this.upgradeButton.setLabel("UP\n-");
         this.sellButton.setLabel("SELL");
-        for (const t of this.towers) t.rangeRing.setVisible(false);
+        for (const t of this.towers) {
+          t.rangeRing.setVisible(false);
+          t.rangeRing._animated = false;
+        }
         return;
       }
       const cfg = TOWERS[tower.type];
@@ -1021,8 +2081,20 @@
       const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
       const refund = Math.floor(spent * 0.55);
       this.sellButton.setLabel(`SELL\n${refund}g`);
-      tower.rangeRing.setVisible(true);
-      for (const t of this.towers) if (t !== tower) t.rangeRing.setVisible(false);
+      if (tower.rangeRing) {
+        tower.rangeRing.setVisible(true);
+        if (!this.settings?.reducedMotion && !tower.rangeRing._animated) {
+          tower.rangeRing.setScale(0);
+          this.tweens.add({ targets: tower.rangeRing, scale: 1, duration: 200, ease: "Quad.easeOut" });
+          tower.rangeRing._animated = true;
+        }
+      }
+      for (const t of this.towers) {
+        if (t !== tower) {
+          t.rangeRing.setVisible(false);
+          t.rangeRing._animated = false;
+        }
+      }
     }
 
     callWave() {
@@ -1082,8 +2154,16 @@
       this.settings = window.KRCSettings?.save?.({ muted: this.settings.muted }) || this.settings;
       this.audio.setMuted(this.settings.muted);
       if (!this.settings.muted) this.audio.startMusic();
-      this.muteButton.setLabel(this.settings.muted ? "×" : "♪");
+      if (this.muteButton?.setIcon) {
+        this.muteButton.setIcon(this.settings.muted ? "icon_sound_off" : "icon_sound_on");
+      } else {
+        this.muteButton?.setLabel?.(this.settings.muted ? "×" : "♪");
+      }
       this.say(this.settings.muted ? "Sound muted." : "Sound restored.");
+    }
+
+    toggleMute() {
+      return this.toggleMuted();
     }
 
     toggleReducedMotion() {
@@ -1153,6 +2233,19 @@
         dead: false,
       });
       enemy.sprite = this.add.image(enemy.x, enemy.y - 4, `enemy_${type}`).setScale(base.size / 30).setDepth(40);
+      if (type === "scout") {
+        // Scouts are smaller and faster — add speed lines when moving
+        enemy.speedLines = [];
+      } else if (type === "brute") {
+        // Brutes are larger and slower — add heavy shadow
+        if (enemy.sprite.setShadow) enemy.sprite.setShadow(4, 4, 0x000000, 2);
+      } else if (type === "mage" || type === "wizard") {
+        // Magic enemies get a subtle purple glow
+        enemy.sprite.setTint(0xc8b0ff);
+      } else if (type === "boss") {
+        // Boss gets a larger shadow and pulsing aura
+        if (enemy.sprite.setShadow) enemy.sprite.setShadow(8, 8, 0x000000, 3);
+      }
       enemy.nameText = this.add.text(enemy.x, enemy.y + 1, "", { font: "bold 10px Arial", color: "#102030" }).setOrigin(0.5).setDepth(41);
       enemy.barBg = this.add.rectangle(enemy.x, enemy.y - base.size - 8, 28, 4, 0x2a120e).setDepth(42);
       enemy.bar = this.add.rectangle(enemy.x - 14, enemy.y - base.size - 8, 28, 4, 0x68d764).setOrigin(0, 0.5).setDepth(43);
@@ -1181,7 +2274,7 @@
       child.y = parent.y;
       child.seg = parent.seg;
       child.slow = 0;
-      this.updateEnemyVisual(child);
+      this.updateEnemyVisual(child, 0);
       return child;
     }
 
@@ -1198,7 +2291,24 @@
         } else {
           this.moveEnemy(enemy, dt);
         }
-        this.updateEnemyVisual(enemy);
+
+        // For scouts: speed lines when moving fast
+        if (enemy.type === "scout" && !enemy.blockedBy) {
+          if (!this.settings?.reducedMotion && Math.random() < 0.3) {
+            const line = this.add.line(0, 0, enemy.x, enemy.y, enemy.x - 12, enemy.y, 0xffffff, 0.3).setLineWidth(1).setDepth(42);
+            this.tweens.add({ targets: line, alpha: 0, duration: 80, onComplete: () => line.destroy() });
+          }
+        }
+
+        // For brutes: heavy thud effect when blocked
+        if (enemy.type === "brute" && enemy.blockedBy) {
+          if (!this.settings?.reducedMotion && Math.random() < 0.1) {
+            const thud = this.add.circle(enemy.x, enemy.y + 8, 3, 0x8a6a45, 0.5).setDepth(42);
+            this.tweens.add({ targets: thud, alpha: 0, scale: 2, duration: 150, onComplete: () => thud.destroy() });
+          }
+        }
+
+        this.updateEnemyVisual(enemy, dt);
         if (enemy.seg >= this.path.length - 1) this.leakEnemy(enemy);
       }
       this.applySupportAuras();
@@ -1276,7 +2386,7 @@
       }
     }
 
-    updateEnemyVisual(enemy) {
+    updateEnemyVisual(enemy, dt) {
       enemy.sprite.setPosition(enemy.x, enemy.y);
       enemy.nameText.setPosition(enemy.x, enemy.y + 1);
       enemy.sprite.setAlpha(enemy.slow > 0 ? 0.72 : 1);
@@ -1291,7 +2401,10 @@
         enemy.sprite.setScale(enemy.base.size / 30);
       }
       if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
-      else if (!enemy.base.phases) enemy.sprite.clearTint();
+      else if (!enemy.base.phases) {
+        if (enemy.type === "mage" || enemy.type === "wizard") enemy.sprite.setTint(0xc8b0ff);
+        else enemy.sprite.clearTint();
+      }
       // Slow visual: blue tint + ice crystal particles
       if (enemy.slow > 0) {
         enemy.sprite.setTint(0xaaddff);
@@ -1310,7 +2423,10 @@
           enemy.iceTimer = 0.2;
         }
       } else {
-        if (!enemy.base.phases && enemy.hp >= enemy.maxHp * 0.35) enemy.sprite.clearTint();
+        if (!enemy.base.phases && enemy.hp >= enemy.maxHp * 0.35) {
+          if (enemy.type === "mage" || enemy.type === "wizard") enemy.sprite.setTint(0xc8b0ff);
+          else enemy.sprite.clearTint();
+        }
       }
       enemy.iceTimer = Math.max(0, (enemy.iceTimer || 0) - dt);
       // Smooth health bar: tween width and color transition
@@ -2156,7 +3272,8 @@
       for (const spell of Object.values(this.spells)) spell.ready = Math.max(0, spell.ready - dt);
       for (const b of this.spellButtons || []) {
         const s = this.spells[b.spell];
-        b.setLabel(s.ready > 0 ? `${b.label}\n${Math.ceil(s.ready)}` : b.label);
+        const base = b.baseLabel || b.label;
+        b.setLabel(s.ready > 0 ? `${base}\n${Math.ceil(s.ready)}` : base);
         b.setAlpha(s.ready > 0 ? 0.55 : 1);
         const pct = s.ready > 0 ? 1 - s.ready / s.cooldown : 1;
         b.cooldownBar.width = Math.max(1, 78 * pct);
@@ -2164,7 +3281,8 @@
       }
       for (const b of this.heroButtons || []) {
         const ability = this.heroAbilities[b.ability];
-        b.setLabel(ability.ready > 0 ? `${b.label}\n${Math.ceil(ability.ready)}` : b.label);
+        const base = b.baseLabel || b.label;
+        b.setLabel(ability.ready > 0 ? `${base}\n${Math.ceil(ability.ready)}` : base);
         b.setAlpha(ability.ready > 0 ? 0.55 : 1);
         const pct = ability.ready > 0 ? 1 - ability.ready / ability.cooldown : 1;
         b.cooldownBar.width = Math.max(1, 84 * pct);
@@ -2580,11 +3698,13 @@
           this.tone(600, 0.08, "sine", volume * 0.05);
           this.tone(400, 0.08, "sine", volume * 0.04);
           break;
-        case "uiClick": // UI button click
+        case "uiClick": // UI button click — add a subtle Kenney layer if available
           this.tone(600, 0.03, "triangle", volume * 0.08);
+          if (this.samples.ready) this.samples.ready.play({ volume: volume * 0.1, rate: 2 });
           break;
-        case "uiError": // Error/no-target buzz
+        case "uiError": // Error/no-target buzz — add a Kenney layer if available
           this.tone(150, 0.1, "sawtooth", volume * 0.06);
+          if (this.samples.fail) this.samples.fail.play({ volume: volume * 0.15, rate: 0.8 });
           break;
         default: // Fallback to standard play
           this.play(type, volume);
@@ -2681,6 +3801,6 @@
   };
 
   window.addEventListener("load", () => {
-    new Phaser.Game(config);
+    window.__KRC_GAME__ = new Phaser.Game(config);
   });
 })();

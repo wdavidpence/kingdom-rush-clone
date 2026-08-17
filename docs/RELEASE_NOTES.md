@@ -1,5 +1,13 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.8 — Campaign chrome, tooltips, combat visual fix
+
+- Visible `v1.0.8` on document title, shell subtitle, and campaign banner.
+- Campaign map cards, HUD icons, hover tooltips, and button press/shine polish.
+- `window.__KRC_GAME__` + `window.KRC_VERSION` for live probes.
+- Fixed `ReferenceError: dt is not defined` in `updateEnemyVisual` (wave combat).
+- Original IP only. Next: AAA presentation program in `docs/aaa-50-iteration-plan.md`.
+
 ## KRC 1.0 — Polished Original Fantasy Tower Defense
 
 Released as a static Phaser 3 campaign with durable modular helpers, automated Node contract tests, and GitHub Pages delivery.
