@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.40";
+  const KRC_VERSION = "1.0.41";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -164,7 +164,8 @@
         for (const obj of [
           enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow,
           enemy.auraRing, enemy.shieldRing, enemy.hexMark, enemy.crownTell,
-          enemy.emberGlow, enemy.fuseSpark, enemy.sprite
+          enemy.emberGlow, enemy.fuseSpark, enemy.sprite,
+          enemy.frostCrust, enemy.armorPlate, enemy.burnCrust
         ]) obj?.destroy();
       }
       this.enemies = [];
@@ -3185,6 +3186,7 @@ const bannerY = 98;
       for (const enemy of [...this.enemies]) {
         if (enemy.dead) continue;
         enemy.slow = Math.max(0, enemy.slow - dt);
+        enemy.burnTime = Math.max(0, (enemy.burnTime || 0) - dt);
         if (enemy.type === "boss" && enemy.base.phases) this.updateBossPhases(enemy, dt);
         if (!enemy.blockedBy || enemy.blockedBy.dead) {
           enemy.blockedBy = this.findBlockingSoldier(enemy);
@@ -3561,6 +3563,39 @@ const bannerY = 98;
           enemy.fuseSpark.setAlpha(0.85);
         }
       }
+      this.syncEnemyMaterials(enemy);
+    }
+
+    syncEnemyMaterials(enemy) {
+      const size = enemy.base?.size || 16;
+      const armor = (enemy.base?.armor || 0) + (enemy.armorBuff || 0);
+      const slowed = (enemy.slow || 0) > 0;
+      const burning = !!(enemy.base?.burn || (enemy.burnTime || 0) > 0);
+      if (!enemy.frostCrust) {
+        enemy.frostCrust = this.add.circle(enemy.x, enemy.y + 4, size * 0.55, 0xaee9ff, 0.22)
+          .setStrokeStyle(2, 0xd8f6ff, 0.55).setDepth(41);
+      }
+      if (!enemy.armorPlate) {
+        enemy.armorPlate = this.add.circle(enemy.x, enemy.y - 2, size * 0.62, 0xb7bfca, 0.0)
+          .setStrokeStyle(2.5, 0xe8eef4, 0.7).setDepth(41.2);
+      }
+      if (!enemy.burnCrust) {
+        enemy.burnCrust = this.add.circle(enemy.x, enemy.y + 3, size * 0.5, 0xff623d, 0.28)
+          .setStrokeStyle(1.5, 0xffd07a, 0.65).setDepth(39.5);
+      }
+      enemy.frostCrust.setPosition(enemy.x, enemy.y + 4).setVisible(slowed);
+      enemy.armorPlate.setPosition(enemy.x, enemy.y - 2).setVisible(armor >= 3);
+      enemy.burnCrust.setPosition(enemy.x, enemy.y + 3).setVisible(burning);
+      if (this.settings?.reducedMotion) {
+        enemy.frostCrust.setAlpha(slowed ? 0.35 : 0);
+        enemy.armorPlate.setAlpha(armor >= 3 ? 0.8 : 0);
+        enemy.burnCrust.setAlpha(burning ? 0.4 : 0);
+      } else {
+        const t = this.time.now * 0.008;
+        if (slowed) enemy.frostCrust.setAlpha(0.18 + Math.sin(t) * 0.06);
+        if (armor >= 3) enemy.armorPlate.setAlpha(0.55 + Math.sin(t * 0.7) * 0.12);
+        if (burning) enemy.burnCrust.setScale(1 + Math.sin(t * 1.4) * 0.08);
+      }
     }
 
     leakEnemy(enemy) {
@@ -3573,6 +3608,7 @@ const bannerY = 98;
 
     damageEnemy(enemy, amount, source = {}) {
       if (enemy.dead) return;
+      if (source.fire) enemy.burnTime = Math.max(enemy.burnTime || 0, 1.1);
       let damage = amount;
       const armor = (enemy.base.armor || 0) + (enemy.armorBuff || 0);
       if (!source.magic) damage = Math.max(1, amount - armor * 3);
@@ -3621,7 +3657,8 @@ const bannerY = 98;
       for (const obj of [
         enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow,
         enemy.auraRing, enemy.shieldRing, enemy.hexMark, enemy.crownTell,
-        enemy.emberGlow, enemy.fuseSpark
+        enemy.emberGlow, enemy.fuseSpark,
+        enemy.frostCrust, enemy.armorPlate, enemy.burnCrust
       ]) obj?.destroy();
       enemy.shieldRing = null;
       enemy.auraRing = null;
@@ -3629,6 +3666,9 @@ const bannerY = 98;
       enemy.crownTell = null;
       enemy.emberGlow = null;
       enemy.fuseSpark = null;
+      enemy.frostCrust = null;
+      enemy.armorPlate = null;
+      enemy.burnCrust = null;
       if (enemy.speedLines) {
         for (const line of enemy.speedLines) line?.destroy();
         enemy.speedLines = null;
@@ -4242,7 +4282,7 @@ const bannerY = 98;
       this.tweens.add({ targets: ring, alpha: 0, scale: 1.2, duration: 250, onComplete: () => ring.destroy() });
       for (const enemy of [...this.enemies]) {
         if (Phaser.Math.Distance.Between(x, y, enemy.x, enemy.y) <= radius) {
-          this.damageEnemy(enemy, damage, { magic: fire });
+          this.damageEnemy(enemy, damage, { magic: fire, fire });
         }
       }
       this.audio.play("boom", 0.28, fire ? 0.92 : 1.08);
