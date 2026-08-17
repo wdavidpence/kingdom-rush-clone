@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.23";
+  const KRC_VERSION = "1.0.24";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4179,17 +4179,68 @@
           this.audio.playLayered?.("uiError");
           return;
         }
-        // Meteor trail: falling fire particles from sky to target
-        if (!this.settings?.reducedMotion) {
+        if (this.settings?.reducedMotion) {
+          const flash = this.add.circle(target.x, target.y, 8, 0xfff8c0, 0.9).setDepth(56);
+          this.tweens.add({ targets: flash, alpha: 0, scale: 4, duration: 200, onComplete: () => flash.destroy() });
+        } else {
+          // Dashed / crosshair targeting reticle at target
+          const reticle = this.add.graphics().setDepth(57);
+          reticle.lineStyle(2, 0xffd07a, 0.95);
+          const r = 36;
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+            reticle.beginPath();
+            reticle.arc(target.x, target.y, r, a, a + Math.PI / 8);
+            reticle.strokePath();
+          }
+          reticle.lineStyle(2, 0xff5522, 0.9);
+          reticle.lineBetween(target.x - 48, target.y, target.x - 20, target.y);
+          reticle.lineBetween(target.x + 20, target.y, target.x + 48, target.y);
+          reticle.lineBetween(target.x, target.y - 48, target.x, target.y - 20);
+          reticle.lineBetween(target.x, target.y + 48, target.x, target.y + 20);
+          reticle.fillStyle(0xfff8c0, 0.9);
+          reticle.fillCircle(target.x, target.y, 4);
+
+          this.tweens.add({
+            targets: reticle,
+            scale: { from: 1.35, to: 1.0 },
+            alpha: { from: 0.2, to: 1.0 },
+            duration: 180,
+            ease: "Quad.easeOut",
+            onComplete: () => reticle.destroy()
+          });
+
+          // Meteor trail: falling fire particles from sky to target
           for (let i = 0; i < 15; i += 1) {
             const trailX = target.x + (Math.random() - 0.5) * 30;
             const trailY = 60 + Math.random() * (target.y - 80);
             const trail = this.add.circle(trailX, trailY, 2 + Math.random() * 4, 0xff623d, 0.7).setDepth(58);
             this.effects.push({ obj: trail, life: 0.4 + Math.random() * 0.3, vx: (Math.random() - 0.5) * 20, vy: Math.random() * 30 });
           }
-          // Impact flash ring
-          const flash = this.add.circle(target.x, target.y, 8, 0xfff8c0, 0.9).setDepth(56);
-          this.tweens.add({ targets: flash, alpha: 0, scale: 4, duration: 200, onComplete: () => flash.destroy() });
+
+          // Fire bloom impact set-piece
+          const bloomOuter = this.add.circle(target.x, target.y, 16, 0xff3300, 0.75).setStrokeStyle(3, 0xffaa00, 0.95).setDepth(56);
+          this.tweens.add({ targets: bloomOuter, alpha: 0, scale: 5.5, duration: 360, ease: "Quad.easeOut", onComplete: () => bloomOuter.destroy() });
+
+          const bloomInner = this.add.circle(target.x, target.y, 10, 0xffb733, 0.9).setDepth(56.5);
+          this.tweens.add({ targets: bloomInner, alpha: 0, scale: 4.5, duration: 260, ease: "Quad.easeOut", onComplete: () => bloomInner.destroy() });
+
+          const flash = this.add.circle(target.x, target.y, 8, 0xfff8c0, 0.95).setDepth(57);
+          this.tweens.add({ targets: flash, alpha: 0, scale: 3, duration: 180, ease: "Quad.easeOut", onComplete: () => flash.destroy() });
+
+          for (let i = 0; i < 12; i += 1) {
+            const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.2;
+            const dist = 15 + Math.random() * 35;
+            const spark = this.add.circle(target.x, target.y, 2 + Math.random() * 2, 0xffd07a, 0.9).setDepth(58);
+            this.tweens.add({
+              targets: spark,
+              x: target.x + Math.cos(angle) * dist,
+              y: target.y + Math.sin(angle) * dist,
+              alpha: 0,
+              scale: 0.2,
+              duration: 300 + Math.random() * 150,
+              onComplete: () => spark.destroy()
+            });
+          }
         }
         this.explode(target.x, target.y, 72, 270, true);
         this.flashText("METEOR", target.x, target.y - 50, "#ffd37a");
@@ -4202,31 +4253,138 @@
         }
         for (const enemy of this.enemies) {
           enemy.slow = Math.max(enemy.slow, 4.2);
-          // Frost sparkle on each enemy
-          if (!this.settings?.reducedMotion) {
-            const frost = this.add.circle(enemy.x, enemy.y - 10, 3, 0xaee9ff, 0.8).setDepth(72);
-            this.tweens.add({ targets: frost, alpha: 0, y: enemy.y - 30, duration: 400, onComplete: () => frost.destroy() });
-          }
         }
-        // Frost wave expanding from center
-        if (!this.settings?.reducedMotion) {
-          const wave = this.add.circle(W / 2, H / 2, 10, 0xaee9ff, 0.3).setStrokeStyle(3, 0xd0f0ff, 0.8).setDepth(55);
-          this.tweens.add({ targets: wave, alpha: 0, scale: 12, duration: 500, onComplete: () => wave.destroy() });
+        if (this.settings?.reducedMotion) {
+          const flash = this.add.circle(W / 2, H / 2, 10, 0xaee9ff, 0.8).setDepth(56);
+          this.tweens.add({ targets: flash, alpha: 0, scale: 5, duration: 200, onComplete: () => flash.destroy() });
+        } else {
+          // Ice reticle / ground mark
+          const cx = W / 2;
+          const cy = H / 2;
+          const iceMark = this.add.graphics().setDepth(57);
+          iceMark.lineStyle(2, 0xd0f0ff, 0.9);
+          iceMark.strokeCircle(cx, cy, 46);
+          iceMark.lineStyle(1.5, 0xaee9ff, 0.85);
+          iceMark.strokeCircle(cx, cy, 26);
+          for (let i = 0; i < 6; i += 1) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x1 = cx + Math.cos(angle) * 16;
+            const y1 = cy + Math.sin(angle) * 16;
+            const x2 = cx + Math.cos(angle) * 54;
+            const y2 = cy + Math.sin(angle) * 54;
+            iceMark.lineBetween(x1, y1, x2, y2);
+          }
+          this.tweens.add({
+            targets: iceMark,
+            scale: { from: 0.7, to: 1.1 },
+            alpha: { from: 0, to: 0.95 },
+            duration: 200,
+            ease: "Quad.easeOut",
+            onComplete: () => iceMark.destroy()
+          });
+
+          // Frost sparkles on each enemy
+          for (const enemy of this.enemies) {
+            const frost = this.add.circle(enemy.x, enemy.y - 10, 3.5, 0xaee9ff, 0.85).setDepth(72);
+            this.tweens.add({ targets: frost, alpha: 0, y: enemy.y - 32, duration: 400, onComplete: () => frost.destroy() });
+          }
+
+          // Frost wave expanding from center
+          const wave = this.add.circle(cx, cy, 10, 0xaee9ff, 0.35).setStrokeStyle(3, 0xd0f0ff, 0.9).setDepth(55);
+          this.tweens.add({ targets: wave, alpha: 0, scale: 13, duration: 500, onComplete: () => wave.destroy() });
+
+          // Crystal shards
+          const shardCount = 14;
+          for (let i = 0; i < shardCount; i += 1) {
+            const shard = this.add.graphics().setDepth(74);
+            shard.fillStyle(i % 2 === 0 ? 0xe0ffff : 0x80d8ff, 0.9);
+            shard.lineStyle(1, 0xffffff, 0.95);
+            shard.beginPath();
+            shard.moveTo(0, -10);
+            shard.lineTo(4, 0);
+            shard.lineTo(0, 10);
+            shard.lineTo(-4, 0);
+            shard.closePath();
+            shard.fillPath();
+            shard.strokePath();
+
+            const angle = (i / shardCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+            const startDist = 20;
+            const targetDist = 70 + Math.random() * 60;
+            const sx = cx + Math.cos(angle) * startDist;
+            const sy = cy + Math.sin(angle) * startDist;
+            shard.setPosition(sx, sy);
+            shard.setRotation(angle);
+
+            this.tweens.add({
+              targets: shard,
+              x: cx + Math.cos(angle) * targetDist,
+              y: cy + Math.sin(angle) * targetDist,
+              rotation: angle + Math.PI,
+              alpha: 0,
+              scale: { from: 1.2, to: 0.4 },
+              duration: 450 + Math.random() * 150,
+              ease: "Cubic.easeOut",
+              onComplete: () => shard.destroy()
+            });
+          }
         }
         this.flashText("FROST", W / 2, 312, "#aee9ff");
         this.cameras.main.flash(140, 130, 210, 255, false);
       }
       if (id === "rally") {
         this.rallyTime = 7;
-        // Golden aura pulse from center
-        if (!this.settings?.reducedMotion) {
-          const aura = this.add.circle(W / 2, H / 2, 10, 0xf5d76e, 0.4).setStrokeStyle(3, 0xfff2ba, 0.9).setDepth(55);
+        if (this.settings?.reducedMotion) {
+          const flash = this.add.circle(W / 2, H / 2, 10, 0xf5d76e, 0.8).setDepth(56);
+          this.tweens.add({ targets: flash, alpha: 0, scale: 5, duration: 200, onComplete: () => flash.destroy() });
+        } else {
+          // Banner-style ring
+          const cx = W / 2;
+          const cy = H / 2;
+          const bannerRing = this.add.graphics().setDepth(57);
+          bannerRing.lineStyle(3, 0xf5d76e, 0.95);
+          bannerRing.strokeCircle(cx, cy, 44);
+          bannerRing.lineStyle(1.5, 0xfff2ba, 0.9);
+          bannerRing.strokeCircle(cx, cy, 32);
+          const tabPositions = [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2];
+          bannerRing.fillStyle(0xf5d76e, 0.95);
+          bannerRing.lineStyle(1.5, 0x7a5810, 0.9);
+          for (const angle of tabPositions) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            const perpX = -sin * 7;
+            const perpY = cos * 7;
+            const tipX = cx + cos * 56;
+            const tipY = cy + sin * 56;
+            const base1X = cx + cos * 42 + perpX;
+            const base1Y = cy + sin * 42 + perpY;
+            const base2X = cx + cos * 42 - perpX;
+            const base2Y = cy + sin * 42 - perpY;
+            bannerRing.beginPath();
+            bannerRing.moveTo(base1X, base1Y);
+            bannerRing.lineTo(tipX, tipY);
+            bannerRing.lineTo(base2X, base2Y);
+            bannerRing.closePath();
+            bannerRing.fillPath();
+            bannerRing.strokePath();
+          }
+          this.tweens.add({
+            targets: bannerRing,
+            scale: { from: 1.3, to: 1.0 },
+            alpha: { from: 0.2, to: 1.0 },
+            duration: 200,
+            ease: "Quad.easeOut",
+            onComplete: () => bannerRing.destroy()
+          });
+
+          // Golden aura pulse from center
+          const aura = this.add.circle(cx, cy, 10, 0xf5d76e, 0.4).setStrokeStyle(3, 0xfff2ba, 0.9).setDepth(55);
           this.tweens.add({ targets: aura, alpha: 0, scale: 10, duration: 600, onComplete: () => aura.destroy() });
           // Golden particles spreading outward
           for (let i = 0; i < 20; i += 1) {
             const angle = (i / 20) * Math.PI * 2;
             const speed = 60 + Math.random() * 40;
-            const particle = this.add.circle(W / 2, H / 2, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+            const particle = this.add.circle(cx, cy, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
             this.effects.push({ obj: particle, life: 0.5 + Math.random() * 0.3, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
           }
         }
