@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.15";
+  const KRC_VERSION = "1.0.16";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2843,29 +2843,147 @@
     removeEnemy(enemy, killed) {
       this.entityRegistry.transition(enemy, killed ? "dead" : "leaked");
       enemy.dead = true;
-      for (const obj of [enemy.sprite, enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.auraRing]) obj?.destroy();
+      for (const obj of [enemy.nameText, enemy.barBg, enemy.bar, enemy.traitText, enemy.traitGlow, enemy.auraRing]) obj?.destroy();
+      if (enemy.speedLines) {
+        for (const line of enemy.speedLines) line?.destroy();
+        enemy.speedLines = null;
+      }
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
+        if (this.settings?.reducedMotion) {
+          enemy.sprite?.destroy();
+          this.puff(enemy.x, enemy.y, enemy.base?.color);
+          return;
+        }
         this.audio.playLayered("enemyDeath");
-        const size = enemy.base.size;
-        // Multi-layer death explosion: core puff + ring burst + debris
-        this.puff(enemy.x, enemy.y, enemy.base.color);
-        // Ring burst
-        const ring = this.add.circle(enemy.x, enemy.y, 4, enemy.base.color, 0.6).setStrokeStyle(2, "#fff8c0", 0.9).setDepth(75);
-        this.tweens.add({ targets: ring, alpha: 0, scale: size / 8 + 1.5, duration: 280, onComplete: () => ring.destroy() });
-        // Debris particles (larger for bigger enemies)
-        const debrisCount = Math.min(12, 4 + size / 3);
-        for (let i = 0; i < debrisCount; i += 1) {
-          const angle = (i / debrisCount) * Math.PI * 2 + Math.random() * 0.3;
-          const speed = 50 + Math.random() * 80;
-          const debris = this.add.circle(enemy.x, enemy.y, 1.5 + Math.random() * 2.5, enemy.base.color, 0.8).setDepth(76);
-          this.effects.push({ obj: debris, life: 0.3 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 30 });
+        const sprite = enemy.sprite;
+        enemy.sprite = null;
+        const family = enemy.type;
+        const isFlyer = family === "flyer" || enemy.base?.flying;
+        if (family === "scout") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 15) / 30;
+            const crumpleAngle = sprite.rotation + (Math.random() < 0.5 ? 0.6 : -0.6);
+            this.tweens.add({
+              targets: sprite,
+              rotation: crumpleAngle,
+              scaleY: baseScale * 0.45,
+              scaleX: baseScale * 1.15,
+              y: sprite.y + 6,
+              alpha: 0,
+              duration: 320,
+              ease: "Quad.easeOut",
+              onComplete: () => sprite.destroy(),
+            });
+          }
+        } else if (family === "brute") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 18) / 30;
+            const startY = sprite.y;
+            const ex = enemy.x;
+            this.tweens.add({
+              targets: sprite,
+              y: startY + 8,
+              scaleY: baseScale * 0.35,
+              scaleX: baseScale * 1.3,
+              duration: 220,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                const dustY = startY + 8;
+                for (let i = 0; i < 5; i += 1) {
+                  const dir = i % 2 === 0 ? 1 : -1;
+                  const dust = this.add.circle(ex, dustY, 2 + Math.random() * 2, 0xd0c4b4, 0.7).setDepth(76);
+                  this.effects.push({
+                    obj: dust,
+                    life: 0.35 + Math.random() * 0.15,
+                    vx: dir * (20 + Math.random() * 40),
+                    vy: -8 - Math.random() * 12,
+                  });
+                }
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  duration: 160,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+            if ((enemy.base?.size || 0) >= 20) {
+              this.cameras.main.shake(120, 0.006);
+            }
+          }
+        } else if (family === "shield") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 20) / 30;
+            const startRot = sprite.rotation;
+            this.tweens.add({
+              targets: sprite,
+              rotation: startRot + 0.35,
+              y: sprite.y + 4,
+              duration: 80,
+              yoyo: true,
+              repeat: 2,
+              ease: "Sine.easeInOut",
+              onComplete: () => {
+                this.tweens.add({
+                  targets: sprite,
+                  rotation: startRot - 0.5,
+                  y: sprite.y + 8,
+                  scaleY: baseScale * 0.6,
+                  alpha: 0,
+                  duration: 200,
+                  ease: "Quad.easeOut",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+          }
+        } else if (isFlyer) {
+          if (sprite) {
+            const startY = sprite.y;
+            const spin = (Math.random() < 0.5 ? 1 : -1) * 0.9;
+            this.tweens.add({
+              targets: sprite,
+              y: startY + 28,
+              rotation: sprite.rotation + spin,
+              duration: 260,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  duration: 140,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+          }
+        } else {
+          sprite?.destroy();
+          const size = enemy.base?.size || 16;
+          // Multi-layer death explosion: core puff + ring burst + debris
+          this.puff(enemy.x, enemy.y, enemy.base?.color);
+          // Ring burst
+          const ring = this.add.circle(enemy.x, enemy.y, 4, enemy.base?.color, 0.6).setStrokeStyle(2, "#fff8c0", 0.9).setDepth(75);
+          this.tweens.add({ targets: ring, alpha: 0, scale: size / 8 + 1.5, duration: 280, onComplete: () => ring.destroy() });
+          // Debris particles (larger for bigger enemies)
+          const debrisCount = Math.min(12, 4 + size / 3);
+          for (let i = 0; i < debrisCount; i += 1) {
+            const angle = (i / debrisCount) * Math.PI * 2 + Math.random() * 0.3;
+            const speed = 50 + Math.random() * 80;
+            const debris = this.add.circle(enemy.x, enemy.y, 1.5 + Math.random() * 2.5, enemy.base?.color, 0.8).setDepth(76);
+            this.effects.push({ obj: debris, life: 0.3 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 30 });
+          }
+          // Screen shake on big enemies
+          if (size >= 20) {
+            this.cameras.main.shake(120, 0.006);
+          }
         }
-        // Screen shake on big enemies
-        if (size >= 20 && !this.settings?.reducedMotion) {
-          this.cameras.main.shake(120, 0.006);
-        }
+      } else {
+        enemy.sprite?.destroy();
       }
     }
 
