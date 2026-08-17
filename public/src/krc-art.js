@@ -876,6 +876,103 @@
       ctx.lineWidth = 1.2;
       ctx.stroke();
     });
+
+    make("campaign_board_bg", 360, 300, (ctx) => {
+      // Wood/leather outer frame
+      rounded(ctx, 0, 0, 360, 300, 14, linGrad(ctx, 0, 0, 360, 300, [
+        [0, "#2c2016"],
+        [0.5, "#1e160e"],
+        [1, "#140e08"]
+      ]), "#4a3824", 3);
+
+      // Gold frame inlay line
+      rounded(ctx, 6, 6, 348, 288, 10, null, "#c8a450", 1.5);
+
+      // Parchment map inner background
+      const mapGrad = ctx.createLinearGradient(0, 0, 360, 300);
+      mapGrad.addColorStop(0, "#e8d8b4");
+      mapGrad.addColorStop(0.35, "#d6c296");
+      mapGrad.addColorStop(0.7, "#c4b082");
+      mapGrad.addColorStop(1, "#b09c70");
+      rounded(ctx, 10, 10, 340, 280, 8, mapGrad, "#2a1e12", 2);
+
+      // Painted Regions on the parchment:
+      // 1. Forest Gate region (bottom-left)
+      ellipse(ctx, 95, 235, 85, 55, radGrad(ctx, 95, 235, 10, 85, [
+        [0, "rgba(86, 128, 70, 0.45)"],
+        [0.7, "rgba(60, 96, 48, 0.3)"],
+        [1, "rgba(60, 96, 48, 0)"]
+      ]));
+      for (const [tx, ty, r] of [[45, 240, 9], [65, 220, 11], [75, 255, 10], [120, 245, 12], [140, 225, 9]]) {
+        ellipse(ctx, tx, ty, r, r * 0.9, "#486838", "#24381b", 0.8);
+      }
+
+      // 2. Stone Pass region (middle)
+      ellipse(ctx, 195, 160, 90, 60, radGrad(ctx, 195, 160, 10, 90, [
+        [0, "rgba(100, 115, 130, 0.4)"],
+        [0.7, "rgba(70, 82, 94, 0.25)"],
+        [1, "rgba(70, 82, 94, 0)"]
+      ]));
+      poly(ctx, [[140, 160], [165, 125], [190, 160]], "#62707c", "#2c343c", 1);
+      poly(ctx, [[175, 155], [200, 115], [225, 155]], "#748492", "#2c343c", 1);
+      poly(ctx, [[210, 165], [235, 130], [260, 165]], "#586470", "#2c343c", 1);
+      poly(ctx, [[192, 128], [200, 115], [208, 128]], "#e8f0f8");
+
+      // 3. Ember Marsh region (top-right)
+      ellipse(ctx, 285, 95, 75, 55, radGrad(ctx, 285, 95, 10, 75, [
+        [0, "rgba(140, 50, 30, 0.45)"],
+        [0.7, "rgba(90, 32, 18, 0.25)"],
+        [1, "rgba(90, 32, 18, 0)"]
+      ]));
+      ctx.strokeStyle = "#e85820";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(250, 110);
+      ctx.quadraticCurveTo(280, 85, 320, 100);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffc030";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(250, 110);
+      ctx.quadraticCurveTo(280, 85, 320, 100);
+      ctx.stroke();
+
+      // Winding road connecting regions
+      ctx.strokeStyle = "rgba(160, 125, 80, 0.5)";
+      ctx.lineWidth = 14;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(70, 230);
+      ctx.bezierCurveTo(110, 210, 140, 180, 180, 160);
+      ctx.bezierCurveTo(215, 140, 240, 110, 280, 90);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(220, 185, 125, 0.8)";
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(70, 230);
+      ctx.bezierCurveTo(110, 210, 140, 180, 180, 160);
+      ctx.bezierCurveTo(215, 140, 240, 110, 280, 90);
+      ctx.stroke();
+
+      // Compass Rose in bottom-right corner
+      const cx = 315;
+      const cy = 245;
+      ellipse(ctx, cx, cy, 17, 17, "rgba(230, 210, 170, 0.6)", "#6a5030", 1);
+      poly(ctx, [[cx, cy - 15], [cx + 4, cy - 3], [cx, cy], [cx - 4, cy - 3]], "#8a2424");
+      poly(ctx, [[cx, cy + 15], [cx + 4, cy + 3], [cx, cy], [cx - 4, cy + 3]], "#4a3824");
+      poly(ctx, [[cx + 15, cy], [cx + 3, cy + 4], [cx, cy], [cx + 3, cy - 4]], "#4a3824");
+      poly(ctx, [[cx - 15, cy], [cx - 3, cy + 4], [cx, cy], [cx - 3, cy - 4]], "#4a3824");
+
+      // Banner Ribbon Title at top of map
+      rounded(ctx, 100, 16, 160, 24, 4, linGrad(ctx, 100, 16, 260, 40, [[0, "#3a2a1b"], [1, "#1e140a"]]), "#c8a450", 1.2);
+      ctx.fillStyle = "#f5d88c";
+      ctx.font = "bold 11px Cinzel, serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("KINGDOM OF KRC", 180, 28);
+    });
   };
 
   window.KRCArt = { bake };

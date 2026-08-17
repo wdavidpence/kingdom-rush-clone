@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.9";
+  const KRC_VERSION = "1.0.10";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1632,7 +1632,7 @@
 
       this.overlay.add(
         this.add
-          .text(W / 2, 130, "Choose a map. Stars unlock from lives remaining.", {
+          .text(W / 2, 130, "Select a province to defend. Earn up to 3 stars per victory.", {
             font: "14px 'Source Sans 3', Arial",
             color: "#cfc4a2",
             align: "center",
@@ -1642,96 +1642,158 @@
           .setDepth(502)
       );
 
+      // --- Painted Campaign Kingdom Board ---
+      const boardX = W / 2;
+      const boardY = 295;
+      const boardW = 360;
+      const boardH = 300;
+
+      if (this.textures.exists("campaign_board_bg")) {
+        const boardBg = this.add.image(boardX, boardY, "campaign_board_bg").setDepth(501);
+        this.overlay.add(boardBg);
+      } else {
+        const boardBg = this.add.rectangle(boardX, boardY, boardW, boardH, 0x1e281c, 0.98)
+          .setStrokeStyle(2, 0xd4bc68)
+          .setDepth(501);
+        this.overlay.add(boardBg);
+      }
+
       const mapDescriptions = [
         "Forest Gate\nLush woodland path. Balanced lanes.\nDefend against agile scouts & brutes!",
         "Stone Pass\nNarrow rocky canyon pass.\nArmor-heavy forces and flyers ahead!",
         "Ember Marsh\nVolcanic swamp with lava fissures.\nBeware of exploding embers and bosses!",
       ];
 
+      // Node Positions on the painted map board
+      const nodePositions = [
+        { x: 100, y: 375 }, // Node 0: Forest Gate (bottom-left)
+        { x: 210, y: 295 }, // Node 1: Stone Pass (center)
+        { x: 310, y: 225 }, // Node 2: Ember Marsh (top-right)
+      ];
+
+      // Draw connecting path segments between nodes
+      const drawPathSegment = (from, to, isUnlocked) => {
+        const steps = 10;
+        const color = isUnlocked ? 0xf5c85a : 0x556054;
+        const alpha = isUnlocked ? 0.9 : 0.6;
+        for (let i = 1; i < steps; i += 1) {
+          const t = i / steps;
+          const px = Phaser.Math.Linear(from.x, to.x, t);
+          const py = Phaser.Math.Linear(from.y, to.y, t);
+          const dot = this.add.circle(px, py, isUnlocked ? 3 : 2.5, color, alpha).setDepth(502);
+          if (isUnlocked) dot.setStrokeStyle(1, 0x221a0c, 0.8);
+          this.overlay.add(dot);
+        }
+      };
+
+      // Path 0 -> 1 (unlocked if node 1 is unlocked)
+      drawPathSegment(nodePositions[0], nodePositions[1], !!this.campaign.unlocked[1]);
+      // Path 1 -> 2 (unlocked if node 2 is unlocked)
+      drawPathSegment(nodePositions[1], nodePositions[2], !!this.campaign.unlocked[2]);
+
+      // Render Map Nodes
       MAPS.forEach((map, index) => {
         const unlocked = !!this.campaign.unlocked[index];
         const result = this.campaign.results[String(index)] || { stars: 0, bestGold: 0 };
-        const y = 186 + index * 88;
-        const cardW = 330;
-        const cardH = 74;
+        const pos = nodePositions[index];
+        const nx = pos.x;
+        const ny = pos.y;
 
-        const cardShadow = this.add.rectangle(W / 2 + 2, y + 3, cardW, cardH, 0x000000, 0.45).setDepth(500);
-        const card = this.add.rectangle(W / 2, y, cardW, cardH, unlocked ? 0x223424 : 0x161a16, 0.98)
-          .setStrokeStyle(2, unlocked ? 0xd4bc68 : 0x3d483d)
-          .setDepth(501);
-        const cardShine = this.add.rectangle(W / 2, y - cardH / 2 + 2, cardW - 4, 1, 0xffffff, unlocked ? 0.15 : 0.05).setDepth(501.5);
+        // Node Shadow & Base Emblem Circle
+        const nodeShadow = this.add.circle(nx + 2, ny + 3, 27, 0x000000, 0.45).setDepth(502);
+        const nodeBg = this.add.circle(nx, ny, 26, unlocked ? 0x2a3e26 : 0x1c221b)
+          .setStrokeStyle(unlocked ? 3 : 2, unlocked ? 0xf5c85a : 0x4a554a, unlocked ? 1 : 0.7)
+          .setDepth(503);
 
         const iconKey = `map_preview_${index}`;
-        let iconImage = null;
-        let iconShadow = null;
+        let iconImg = null;
         if (this.textures.exists(iconKey)) {
-          iconShadow = this.add.ellipse(W / 2 - cardW / 2 + 36, y + 23, 46, 12, 0x000000, 0.45).setDepth(501.8);
-          iconImage = this.add.image(W / 2 - cardW / 2 + 36, y, iconKey).setDisplaySize(50, 50).setDepth(502);
-          if (!unlocked) iconImage.setTint(0x555555);
+          iconImg = this.add.image(nx, ny, iconKey).setDisplaySize(42, 42).setDepth(504);
+          if (!unlocked) iconImg.setTint(0x444444);
         }
 
-        const textX = W / 2 - cardW / 2 + 70;
-        const cardTitle = this.add
-          .text(textX, y - 18, `${index + 1}. ${map.name}`, {
-            font: "bold 17px Cinzel",
+        // Lock indicator if node is locked
+        let lockBg = null;
+        let lockText = null;
+        if (!unlocked) {
+          lockBg = this.add.circle(nx, ny, 14, 0x101410, 0.85).setDepth(505);
+          lockText = this.add.text(nx, ny, "🔒", { font: "13px Arial" }).setOrigin(0.5).setDepth(506);
+        }
+
+        // Star Rating Display
+        const starStr = "★".repeat(result.stars || 0) + "☆".repeat(Math.max(0, 3 - (result.stars || 0)));
+        const starsText = this.add
+          .text(nx, ny - 36, starStr, {
+            font: "bold 14px 'Source Sans 3', Arial",
+            color: result.stars > 0 ? "#f5c85a" : "#687266",
+            stroke: "#1a1008",
+            strokeThickness: 3,
+          })
+          .setOrigin(0.5)
+          .setDepth(505);
+
+        // Map Name Plaque Label
+        const labelW = 114;
+        const labelH = 22;
+        const labelShadow = this.add.rectangle(nx + 1, ny + 37, labelW, labelH, 0x000000, 0.5).setDepth(503);
+        const labelBg = this.add.rectangle(nx, ny + 36, labelW, labelH, unlocked ? 0x1a2818 : 0x121612, 0.95)
+          .setStrokeStyle(1.5, unlocked ? 0xd8b548 : 0x3e483e)
+          .setDepth(504);
+        const labelText = this.add
+          .text(nx, ny + 36, `${index + 1}. ${map.name}`, {
+            font: "bold 12px Cinzel",
             color: unlocked ? "#fff2ba" : "#7a8478",
           })
-          .setOrigin(0, 0.5)
-          .setDepth(502);
+          .setOrigin(0.5)
+          .setDepth(505);
 
-        const starText = "★".repeat(result.stars || 0) + "☆".repeat(Math.max(0, 3 - (result.stars || 0)));
-        const stars = this.add
-          .text(textX, y + 3, starText, {
-            font: "bold 14px 'Source Sans 3', Arial",
-            color: result.stars > 0 ? "#f5c85a" : "#6a7468",
-          })
-          .setOrigin(0, 0.5)
-          .setDepth(502);
+        this.overlay.add(
+          [nodeShadow, nodeBg, iconImg, lockBg, lockText, starsText, labelShadow, labelBg, labelText].filter(Boolean)
+        );
 
-        const bonusInfo = index === 0 ? "+40g bonus" : index === 1 ? "+50g bonus" : "+60g bonus";
-        const meta = this.add
-          .text(textX + 54, y + 3, unlocked ? `·  ${bonusInfo} (best: ${result.bestGold || 0}g)` : "LOCKED — clear previous map", {
-            font: "12px 'Source Sans 3', Arial",
-            color: unlocked ? "#c8d8b8" : "#687068",
-          })
-          .setOrigin(0, 0.5)
-          .setDepth(502);
-
-        this.overlay.add([cardShadow, card, cardShine, iconShadow, iconImage, cardTitle, stars, meta].filter(Boolean));
+        // Node Interactivity
+        const interactiveTargets = [nodeBg, labelBg, labelText, iconImg].filter(Boolean);
+        const nodeGroup = [nodeBg, iconImg, labelBg, labelText, starsText].filter(Boolean);
 
         if (unlocked) {
-          card.setInteractive({ useHandCursor: true });
-          cardTitle.setInteractive({ useHandCursor: true });
-
-          const cardGroup = [card, cardShine, cardTitle, stars, meta, iconImage].filter(Boolean);
+          interactiveTargets.forEach((target) => target.setInteractive({ useHandCursor: true }));
 
           const onOver = () => {
-            card.setStrokeStyle(3, 0xfff0a0, 1);
+            nodeBg.setStrokeStyle(3.5, 0xfff0a0, 1);
+            labelBg.setStrokeStyle(2, 0xfff0a0, 1);
             if (!this.settings?.reducedMotion) {
-              this.tweens.add({ targets: cardGroup, scaleX: 1.025, scaleY: 1.025, duration: 120, ease: "Quad.easeOut" });
+              this.tweens.add({ targets: nodeGroup, scaleX: 1.07, scaleY: 1.07, duration: 120, ease: "Quad.easeOut" });
             }
-            this.showTooltip(W / 2, y - cardH / 2 - 12, mapDescriptions[index]);
+            this.showTooltip(nx, ny - 50, mapDescriptions[index]);
           };
 
           const onOut = () => {
-            card.setStrokeStyle(2, 0xd4bc68, 0.85);
+            nodeBg.setStrokeStyle(3, 0xf5c85a, 1);
+            labelBg.setStrokeStyle(1.5, 0xd8b548, 1);
             if (!this.settings?.reducedMotion) {
-              this.tweens.add({ targets: cardGroup, scaleX: 1, scaleY: 1, duration: 120, ease: "Quad.easeOut" });
+              this.tweens.add({ targets: nodeGroup, scaleX: 1, scaleY: 1, duration: 120, ease: "Quad.easeOut" });
             }
             this.hideTooltip();
           };
-
-          card.on("pointerover", onOver);
-          card.on("pointerout", onOut);
-          cardTitle.on("pointerover", onOver);
-          cardTitle.on("pointerout", onOut);
 
           const onDown = () => {
             this.hideTooltip();
             this.beginMap(index);
           };
-          card.on("pointerdown", onDown);
-          cardTitle.on("pointerdown", onDown);
+
+          interactiveTargets.forEach((target) => {
+            target.on("pointerover", onOver);
+            target.on("pointerout", onOut);
+            target.on("pointerdown", onDown);
+          });
+        } else {
+          nodeBg.setInteractive({ useHandCursor: true });
+          nodeBg.on("pointerover", () => {
+            this.showTooltip(nx, ny - 50, `${map.name}\nLOCKED — Clear previous map to unlock!`);
+          });
+          nodeBg.on("pointerout", () => {
+            this.hideTooltip();
+          });
         }
       });
 
