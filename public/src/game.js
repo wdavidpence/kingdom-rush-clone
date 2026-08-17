@@ -261,6 +261,23 @@
               alpha: 0.2, duration: 1500 + Math.random() * 1000, yoyo: true, repeat: -1,
             });
           }
+          // Forest Gate: drifting leaf particles
+          const leafColors = [0x4a7c30, 0x8b6b3d, 0x5c7a29, 0x7c5a2b, 0x6e8b3d, 0x665233];
+          for (let i = 0; i < 6; i += 1) {
+            const lx = (i * 70 + 20) % W;
+            const ly = 90 + ((i * 85) % 440);
+            const leaf = this.add.circle(lx, ly, 2.5 + (i % 2), leafColors[i], 0.65).setDepth(-17);
+            this.tweens.add({
+              targets: leaf,
+              x: { from: lx, to: (lx + 140) % W },
+              y: { from: ly, to: ly + (i % 2 === 0 ? 14 : -14) },
+              alpha: { from: 0.7, to: 0.35 },
+              duration: 3600 + i * 400,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
         } else if (this.mapIndex === 1) {
           // Stone Pass: mist layers
           for (let i = 0; i < 3; i += 1) {
@@ -269,6 +286,24 @@
             const mist = this.add.ellipse(mistX, mistY, 80 + i * 20, 16, theme.tint, 0.15).setDepth(-17);
             this.tweens.add({
               targets: mist, x: mistX + 40 - i * 20, duration: 3000 + i * 1000, yoyo: true, repeat: -1,
+            });
+          }
+          // Stone Pass: stone dust particles near road edges
+          const dustColors = [0x9a9890, 0x7c7468, 0x8e8a80, 0x6a6458];
+          for (let i = 0; i < 4; i += 1) {
+            const pt = this.path[Math.min(this.path.length - 1, 1 + i * 2)] || this.path[i % this.path.length];
+            const dx = pt.x + (i % 2 === 0 ? 18 : -18);
+            const dy = pt.y + (i % 2 === 0 ? -10 : 10);
+            const dust = this.add.circle(dx, dy, 1.5 + (i % 2) * 0.5, dustColors[i], 0.55).setDepth(-17);
+            this.tweens.add({
+              targets: dust,
+              y: dy - 25 - i * 6,
+              x: dx + (i % 2 === 0 ? 6 : -6),
+              alpha: { from: 0.6, to: 0.15 },
+              duration: 2500 + i * 400,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
             });
           }
         } else if (this.mapIndex === 2) {
@@ -280,6 +315,30 @@
             this.tweens.add({
               targets: bubble, y: by - 20 - Math.random() * 15, alpha: 0, duration: 2000 + Math.random() * 1500,
               yoyo: false, repeat: -1, delay: i * 400,
+            });
+          }
+          // Ember Marsh: marsh gas bubbles rising from ground
+          const gasColors = [0x98c838, 0xd4d840, 0x78a830, 0xb8d048, 0x88b030];
+          for (let i = 0; i < 5; i += 1) {
+            const pt = this.path[Math.min(this.path.length - 1, i * 2)] || this.path[0];
+            const gx = pt.x + ((i * 37) % 50) - 25;
+            const gy = pt.y + ((i * 29) % 40) - 10;
+            const gas = this.add.circle(gx, gy, 2 + (i % 2), gasColors[i], 0.55).setDepth(-17);
+            this.tweens.add({
+              targets: gas,
+              y: gy - 36,
+              alpha: { from: 0.65, to: 0 },
+              duration: 2200 + i * 300,
+              repeat: -1,
+              delay: i * 350,
+            });
+            this.tweens.add({
+              targets: gas,
+              x: gx + (i % 2 === 0 ? 8 : -8),
+              duration: 650 + (i % 3) * 150,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
             });
           }
         }
@@ -819,6 +878,16 @@
         tower.readyFill = this.add.rectangle(pad.x - 18, pad.y + 40, 36, 4, 0x8fd45a).setOrigin(0, 0.5).setDepth(33);
       }
       this.towers.push(tower);
+      if (!this.settings?.reducedMotion) {
+        const flash = this.add.circle(pad.x, pad.y - 8, 12, 0xf5d76e, 0.7).setDepth(35);
+        this.tweens.add({ targets: flash, scale: 2.2, alpha: 0, duration: 250, onComplete: () => flash.destroy() });
+        for (let i = 0; i < 8; i += 1) {
+          const angle = (i / 8) * Math.PI * 2;
+          const speed = 35 + Math.random() * 25;
+          const p = this.add.circle(pad.x, pad.y - 8, 1.5 + Math.random(), 0xf5d76e, 0.85).setDepth(36);
+          this.effects.push({ obj: p, life: 0.35 + Math.random() * 0.15, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
+        }
+      }
       this.audio.play("ready", 0.28);
       this.selectedPad = pad;
       this.selectedBuild = null;
@@ -849,18 +918,32 @@
       }
       this.gold -= cost;
       tower.level += 1;
-      // Upgrade visual: scale bounce + golden ring pulse
+      // Upgrade visual: scale bounce + level-specific ring pulse
       if (tower.sprite && !this.settings?.reducedMotion) {
         this.tweens.add({ targets: tower.sprite, scale: 0.78 + tower.level * 0.04, duration: 120, yoyo: true, repeat: 1 });
-        const ring = this.add.circle(tower.x, tower.y - 8, 20, 0xf5d76e, 0.5).setStrokeStyle(3, 0xfff2ba, 1).setDepth(35);
+        const isMax = tower.level >= cfg.upgrades.length;
+        let ringColor = 0xcd7f32; // Bronze for L2
+        let strokeColor = 0xdf9b52;
+        if (isMax) {
+          ringColor = 0x70d6ff; // Diamond for MAX
+          strokeColor = 0xffffff;
+        } else if (tower.level >= 3) {
+          ringColor = 0xf5d76e; // Gold for L4+
+          strokeColor = 0xfff2ba;
+        } else if (tower.level === 2) {
+          ringColor = 0xc0c8d0; // Silver for L3
+          strokeColor = 0xf0f4f8;
+        }
+        const ring = this.add.circle(tower.x, tower.y - 8, 20, ringColor, 0.5).setStrokeStyle(3, strokeColor, 1).setDepth(35);
         this.tweens.add({ targets: ring, alpha: 0, scale: 2.5, duration: 400, onComplete: () => ring.destroy() });
-        // Golden sparkles around tower
+        // Sparkles around tower matching ring theme
         for (let i = 0; i < 12; i += 1) {
           const angle = (i / 12) * Math.PI * 2;
           const speed = 40 + Math.random() * 30;
-          const sparkle = this.add.circle(tower.x, tower.y - 8, 1.5 + Math.random(), 0xf5d76e, 0.9).setDepth(36);
+          const sparkle = this.add.circle(tower.x, tower.y - 8, 1.5 + Math.random(), ringColor, 0.9).setDepth(36);
           this.effects.push({ obj: sparkle, life: 0.4 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
         }
+        this.cameras.main.flash(50, 255, 250, 220, false);
       }
       tower.sprite.setScale(0.62 + tower.level * 0.04);
       tower.label.setText(["I", "II", "III", "IV", "V"][tower.level]);
@@ -1308,7 +1391,7 @@
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
-        this.audio.play("impact", 0.2, 0.95 + Math.random() * 0.16);
+        this.audio.playLayered("enemyDeath");
         const size = enemy.base.size;
         // Multi-layer death explosion: core puff + ring burst + debris
         this.puff(enemy.x, enemy.y, enemy.base.color);
@@ -1480,7 +1563,13 @@
       projectile.sprite.rotation = Phaser.Math.Angle.Between(projectile.x, projectile.y, target.x, target.y);
       projectile.trailColor = color;
       this.projectiles.push(projectile);
-      this.audio.play(tower.type === "mage" ? "magic" : "shoot", tower.type === "artillery" ? 0.2 : 0.13, tower.type === "archer" ? 1.35 : 0.95);
+      if (tower.type === "archer") {
+        this.audio.playLayered("archerShoot");
+      } else if (tower.type === "mage") {
+        this.audio.playLayered("mageShoot");
+      } else if (tower.type === "artillery") {
+        this.audio.playLayered("artilleryShoot");
+      }
       // Muzzle flash effect
       const angle = Phaser.Math.Angle.Between(tower.x, tower.y - 10, target.x, target.y);
       this.createMuzzleFlash(tower.x, tower.y - 10, angle);
