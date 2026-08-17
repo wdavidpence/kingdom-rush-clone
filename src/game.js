@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.39";
+  const KRC_VERSION = "1.0.40";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2557,9 +2557,8 @@ const bannerY = 98;
         );
         // Range ring preview for selected tower pad
         if (this.rangePreview) this.rangePreview.destroy();
-        const ring = this.add.graphics().setDepth(19);
-        ring.lineStyle(2, cfg.color, 0.5);
-        ring.strokeCircle(pad.x, pad.y, cfg.range[pad.tower.level]);
+        const ring = this.makeRangeDecal(pad.x, pad.y, cfg.range[pad.tower.level], cfg.color);
+        ring.setVisible(true);
         this.rangePreview = ring;
       } else {
         // Hide range preview when no tower selected
@@ -2629,7 +2628,7 @@ const bannerY = 98;
       pad.tower = tower;
       tower.sprite = this.add.image(pad.x, pad.y - 8, `tower_${type}`).setScale(0.62).setDepth(30);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
-      tower.rangeRing = this.add.circle(pad.x, pad.y, cfg.range[0], cfg.color, 0.08).setStrokeStyle(1, cfg.color, 0.22).setDepth(20).setVisible(false);
+      tower.rangeRing = this.makeRangeDecal(pad.x, pad.y, cfg.range[0], cfg.color);
       if (type === "barracks") {
         tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
         tower.rallyFlag = this.add.text(tower.rallyX, tower.rallyY - 20, "RLY", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(29);
@@ -5167,6 +5166,34 @@ const bannerY = 98;
       const intensity = boss ? 0.007 : 0.003;
       cam._krcPunchUntil = this.time.now + duration + 40;
       cam.shake(duration, intensity);
+    }
+
+    makeRangeDecal(x, y, radius, color) {
+      const g = this.add.graphics().setDepth(8);
+      const paint = (r) => {
+        g.clear();
+        const fill = color || 0x4a3420;
+        g.fillStyle(fill, 0.15);
+        g.fillCircle(0, 0, r);
+        g.fillStyle(fill, 0.08);
+        g.fillCircle(-r * 0.18, r * 0.12, r * 0.52);
+        g.fillCircle(r * 0.2, -r * 0.14, r * 0.38);
+        g.lineStyle(2, 0x5a4030, 0.32);
+        const steps = 18;
+        for (let i = 0; i < steps; i += 1) {
+          if (i % 3 === 0) continue;
+          const a0 = (i / steps) * Math.PI * 2;
+          const a1 = ((i + 0.55) / steps) * Math.PI * 2;
+          g.beginPath();
+          g.arc(0, 0, Math.max(4, r - 1), a0, a1);
+          g.strokePath();
+        }
+      };
+      g.setPosition(x, y);
+      g.setRadius = (r) => { g._krcRadius = r; paint(r); };
+      g.setRadius(radius);
+      g.setVisible(false);
+      return g;
     }
 
     say(text) {
