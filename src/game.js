@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.51";
+  const KRC_VERSION = "1.0.52";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2702,6 +2702,7 @@ const bannerY = 98;
         const ring = this.makeRangeDecal(pad.x, pad.y, cfg.range[pad.tower.level], cfg.color);
         ring.setVisible(true);
         this.rangePreview = ring;
+        this.syncRallyReadability(pad.tower);
       } else {
         // Hide range preview when no tower selected
         if (this.rangePreview) { this.rangePreview.destroy(); this.rangePreview = null; }
@@ -2715,6 +2716,9 @@ const bannerY = 98;
       this.heroSelected = false;
       this.setHeroPanel(false);
       this.refreshSelection();
+      for (const tower of this.towers) {
+        if (tower.type === "barracks") this.syncRallyReadability(tower);
+      }
     }
 
     refreshSelection() {
@@ -4814,12 +4818,44 @@ const bannerY = 98;
       this.say("Captain moving.");
     }
 
+    syncRallyReadability(tower) {
+      if (!tower || tower.type !== "barracks" || !tower.rallyRing || !tower.rallyFlag) return;
+      const selected = this.selectedPad?.tower === tower;
+      tower.rallyRing.setFillStyle(0xf5d76e, selected ? 0.22 : 0.08);
+      tower.rallyRing.setStrokeStyle(selected ? 3 : 2, 0xf5d76e, selected ? 1 : 0.9);
+      tower.rallyFlag.setText(selected ? "HOLD" : "RLY");
+      tower.rallyFlag.setFont(selected ? "bold 11px 'Source Sans 3', Arial" : "bold 9px 'Source Sans 3', Arial");
+    }
+
     setRallyPoint(tower, rally) {
       tower.rallyX = rally.x;
       tower.rallyY = rally.y;
       tower.rallySegment = rally.segment;
       tower.rallyRing.setPosition(rally.x, rally.y);
       tower.rallyFlag.setPosition(rally.x, rally.y - 20);
+      this.syncRallyReadability(tower);
+      if (!this.settings?.reducedMotion) {
+        for (let i = 0; i < 4; i += 1) {
+          const angle = (i / 4) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+          const dist = 5 + Math.random() * 8;
+          const dust = this.add.circle(
+            rally.x + Math.cos(angle) * 3,
+            rally.y + Math.sin(angle) * 2,
+            2 + Math.random() * 1.5,
+            0xd4c596,
+            0.6
+          ).setDepth(18);
+          this.tweens.add({
+            targets: dust,
+            x: rally.x + Math.cos(angle) * dist,
+            y: rally.y + Math.sin(angle) * dist,
+            alpha: 0,
+            duration: 500,
+            ease: "Quad.out",
+            onComplete: () => dust.destroy(),
+          });
+        }
+      }
       this.audio.play("ready", 0.22, 1.16);
       this.flashText("RALLY", rally.x, rally.y - 34, "#fff1a0");
       this.say("Guard rally point set. Troops are moving to hold the road.");
