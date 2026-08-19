@@ -3438,11 +3438,78 @@
       ctx.restore();
     };
 
+    const drawScoutDead = (ctx) => {
+      shadow(ctx, 40, 56, 26, 5, 0.35);
+      const outline = "#2a4018";
+      const skinLit = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#d8f26a"], [0.45, "#88bc3c"], [1, "#446820"]]);
+      const skinShaded = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#769c34"], [0.5, "#4c6e22"], [1, "#263e12"]]);
+
+      // Broken spear lying on ground
+      ctx.strokeStyle = "#8a6030";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(10, 58);
+      ctx.lineTo(32, 53);
+      ctx.moveTo(40, 54);
+      ctx.lineTo(66, 48);
+      ctx.stroke();
+
+      // Spearhead
+      poly(ctx, [[74, 46], [64, 42], [66, 52]], linGrad(ctx, 64, 42, 74, 52, [[0, "#d8e2eb"], [1, "#7a8898"]]), "#3a4048", 1);
+
+      // Back leg & boot
+      poly(ctx, [[26, 46], [16, 50], [14, 55], [24, 52]], skinShaded(14, 46, 26, 55), outline, 1.2);
+      rounded(ctx, 10, 51, 8, 5, 2, "#3a2818", outline, 1);
+
+      // Front leg & boot
+      poly(ctx, [[30, 48], [24, 56], [28, 58], [36, 50]], skinLit(24, 48, 36, 58), outline, 1.2);
+      rounded(ctx, 23, 55, 9, 4.5, 2, "#3a2818", outline, 1);
+
+      // Back arm
+      rounded(ctx, 18, 41, 10, 5, 2.5, skinShaded(18, 41, 28, 46), outline, 1);
+
+      // Torso collapsed prone
+      rounded(ctx, 25, 40, 26, 14, 6, linGrad(ctx, 25, 40, 51, 54, [[0, "#d8ec7c"], [0.5, "#80b03e"], [1, "#2c4c16"]]), outline, 1.8);
+      rounded(ctx, 33, 40.5, 4, 13, 1, "#4e3620");
+      rounded(ctx, 32, 45, 6, 4, 1, "#d4af37", "#2a1e10", 0.8);
+
+      // Head resting on dirt
+      ellipse(ctx, 52, 45, 11, 10, linGrad(ctx, 44, 37, 60, 53, [[0, "#d8f26a"], [0.5, "#88bc3c"], [1, "#446820"]]), outline, 1.8);
+
+      // Limp ears flopped backward
+      poly(ctx, [[54, 37], [68, 34], [58, 42]], skinShaded(54, 34, 68, 42), outline, 1.2);
+      poly(ctx, [[58, 41], [72, 42], [59, 47]], skinLit(58, 41, 72, 47), outline, 1.2);
+
+      // Knocked out X eye
+      ctx.strokeStyle = "#1a280c";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(49, 42);
+      ctx.lineTo(54, 47);
+      ctx.moveTo(54, 42);
+      ctx.lineTo(49, 47);
+      ctx.stroke();
+
+      // Slack mouth
+      ctx.strokeStyle = "#243410";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(47, 50);
+      ctx.lineTo(51, 51);
+      ctx.stroke();
+
+      // Front arm draped limp
+      rounded(ctx, 42, 46, 11, 5, 2.5, skinLit(42, 46, 53, 51), outline, 1.1);
+      ellipse(ctx, 41, 48.5, 3, 2.5, skinLit(39, 46, 43, 50), outline, 1);
+    };
+
     make("enemy_scout", 80, 72, (ctx) => drawScout(ctx, 0));
     make("enemy_scout_w0", 80, 72, (ctx) => drawScout(ctx, 0));
     make("enemy_scout_w1", 80, 72, (ctx) => drawScout(ctx, 1));
     make("enemy_scout_w2", 80, 72, (ctx) => drawScout(ctx, 2));
     make("enemy_scout_w3", 80, 72, (ctx) => drawScout(ctx, 3));
+    make("enemy_scout_dead", 80, 72, (ctx) => drawScoutDead(ctx));
+    make("enemy_drift_dead", 80, 72, (ctx) => drawScoutDead(ctx));
 
     const drawBrute = (ctx, frame = 0) => {
       shadow(ctx, 40, 62, 24, 7, 0.42);
@@ -3652,11 +3719,79 @@
       ctx.restore();
     };
 
+    const drawBruteDead = (ctx) => {
+      shadow(ctx, 40, 58, 34, 7, 0.45);
+      const outline = "#3a2010";
+      const bruteSkinLit = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#f8d2a6"], [0.45, "#c4763e"], [1, "#662e14"]]);
+      const bruteSkinShaded = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#a4582a"], [0.5, "#6e3216"], [1, "#3c1608"]]);
+
+      // Dropped club lying flat
+      ctx.save();
+      ctx.translate(14, 52);
+      ctx.rotate(0.12);
+      rounded(ctx, 0, -3, 22, 6, 2, linGrad(ctx, 0, -3, 0, 3, [[0, "#9c6e48"], [1, "#2e1608"]]), "#1a1008", 1.4);
+      ellipse(ctx, 24, 0, 8, 7, linGrad(ctx, 16, -7, 32, 7, [[0, "#8a5c3c"], [1, "#26140a"]]), "#1a1008", 1.4);
+      for (const [ix, iy] of [[20, -5], [28, -4], [24, 5]]) {
+        ellipse(ctx, ix, iy, 1.5, 1.5, "#d0a870", "#2a1808", 0.7);
+      }
+      ctx.restore();
+
+      // Back leg & boot
+      poly(ctx, [[18, 46], [8, 52], [10, 58], [22, 53]], bruteSkinShaded(8, 46, 22, 58), outline, 1.4);
+      rounded(ctx, 4, 52, 9, 5.5, 2, "#361a0c", outline, 1.1);
+
+      // Front leg & boot
+      poly(ctx, [[24, 48], [16, 56], [20, 60], [28, 54]], bruteSkinLit(16, 48, 28, 60), outline, 1.4);
+      rounded(ctx, 13, 56, 10, 5.5, 2, "#361a0c", outline, 1.1);
+
+      // Heavy muscular torso collapsed forward
+      rounded(ctx, 24, 38, 34, 20, 8, bruteSkinLit(24, 38, 58, 58), outline, 2.2);
+
+      // Muscle creases
+      ctx.strokeStyle = "rgba(40, 14, 6, 0.45)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(34, 42);
+      ctx.lineTo(48, 44);
+      ctx.moveTo(32, 48);
+      ctx.lineTo(46, 50);
+      ctx.stroke();
+
+      // Left shoulder & limp arm
+      ellipse(ctx, 28, 42, 8, 7, bruteSkinLit(20, 35, 36, 49), outline, 1.5);
+      rounded(ctx, 18, 48, 12, 6, 3, bruteSkinShaded(18, 48, 30, 54), outline, 1.2);
+      ellipse(ctx, 17, 51, 4, 4, bruteSkinLit(13, 47, 21, 55), outline, 1.1);
+
+      // Massive head slumped on dirt
+      ellipse(ctx, 58, 44, 13, 12, bruteSkinLit(45, 32, 71, 56), outline, 2);
+
+      // Horns (one chipped)
+      ellipse(ctx, 64, 35, 4, 6, "#faecc8", "#4a3018", 1.1);
+      ellipse(ctx, 55, 34, 3.5, 4.5, "#faecc8", "#4a3018", 1.1);
+
+      // Knocked out X eye
+      ctx.strokeStyle = "#2a1408";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(56, 42);
+      ctx.lineTo(61, 47);
+      ctx.moveTo(61, 42);
+      ctx.lineTo(56, 47);
+      ctx.stroke();
+
+      // Tusk & jaw
+      ellipse(ctx, 62, 49, 3, 5, "#ffffff", "#4a3018", 1);
+
+      // Dust speckles
+      speckles(ctx, 12, 54, 56, 8, 5, "rgba(200, 180, 160, 0.4)", 1.5);
+    };
+
     make("enemy_brute", 80, 72, (ctx) => drawBrute(ctx, 0));
     make("enemy_brute_w0", 80, 72, (ctx) => drawBrute(ctx, 0));
     make("enemy_brute_w1", 80, 72, (ctx) => drawBrute(ctx, 1));
     make("enemy_brute_w2", 80, 72, (ctx) => drawBrute(ctx, 2));
     make("enemy_brute_w3", 80, 72, (ctx) => drawBrute(ctx, 3));
+    make("enemy_brute_dead", 80, 72, (ctx) => drawBruteDead(ctx));
 
     const drawShield = (ctx, frame = 0) => {
       shadow(ctx, 40, 62, 22, 6);
@@ -3787,11 +3922,71 @@
       ctx.restore();
     };
 
+    const drawShieldDead = (ctx) => {
+      shadow(ctx, 40, 58, 32, 6, 0.4);
+      const outline = "#1a2028";
+
+      // Fallen kite shield tilted flat
+      poly(
+        ctx,
+        [[14, 52], [38, 46], [46, 57], [32, 62], [16, 58]],
+        linGrad(ctx, 14, 46, 46, 62, [[0, "#d0d8e0"], [0.5, "#708090"], [1, "#384048"]]),
+        "#1a2028",
+        2
+      );
+      poly(ctx, [[22, 51], [32, 48], [35, 55], [25, 57]], "#c0a040", "#4a3810", 1);
+      ctx.strokeStyle = "#1a2028";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(20, 49);
+      ctx.lineTo(34, 58);
+      ctx.stroke();
+
+      // Dropped steel sword
+      ctx.strokeStyle = "#c0c8d0";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(54, 56);
+      ctx.lineTo(74, 53);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(54, 55.5);
+      ctx.lineTo(74, 52.5);
+      ctx.stroke();
+      rounded(ctx, 50, 54, 5, 5, 1.5, "#c0a040", "#3a2a10", 1);
+
+      // Crumpled plate armor body
+      rounded(ctx, 32, 40, 24, 16, 5, linGrad(ctx, 32, 40, 56, 56, [[0, "#e8eef0"], [0.5, "#98a0a8"], [1, "#4a545c"]]), outline, 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(34, 48);
+      ctx.lineTo(54, 48);
+      ctx.stroke();
+
+      // Armored legs slumped back
+      poly(ctx, [[48, 48], [62, 50], [60, 55], [46, 53]], "#8a9098", outline, 1.3);
+      rounded(ctx, 58, 50, 9, 5, 2, "#3a4048", outline, 1);
+
+      // Helmet fallen askew
+      ellipse(ctx, 30, 42, 11, 10, linGrad(ctx, 22, 34, 38, 50, [[0, "#f0f4f8"], [1, "#6a747c"]]), outline, 2);
+      rounded(ctx, 24, 42, 12, 3.5, 1, "#0a0c10");
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(26, 36);
+      ctx.lineTo(34, 38);
+      ctx.stroke();
+    };
+
     make("enemy_shield", 80, 72, (ctx) => drawShield(ctx, 0));
     make("enemy_shield_w0", 80, 72, (ctx) => drawShield(ctx, 0));
     make("enemy_shield_w1", 80, 72, (ctx) => drawShield(ctx, 1));
     make("enemy_shield_w2", 80, 72, (ctx) => drawShield(ctx, 2));
     make("enemy_shield_w3", 80, 72, (ctx) => drawShield(ctx, 3));
+    make("enemy_shield_dead", 80, 72, (ctx) => drawShieldDead(ctx));
 
     const drawEmber = (ctx, frame = 0) => {
       const f = frame % 4;
@@ -3867,11 +4062,64 @@
       }
     };
 
+    const drawEmberDead = (ctx) => {
+      shadow(ctx, 40, 58, 26, 6, 0.45);
+      ellipse(ctx, 40, 56, 22, 5, "rgba(20, 8, 4, 0.65)");
+
+      // Crumbled charcoal cinder mound
+      poly(
+        ctx,
+        [[18, 56], [26, 44], [38, 48], [46, 42], [58, 46], [64, 56], [42, 60]],
+        linGrad(ctx, 20, 42, 60, 60, [[0, "#483834"], [0.5, "#2a1c18"], [1, "#140a08"]]),
+        "#1a0c06",
+        2
+      );
+
+      // Fading magma veins in cracks
+      ctx.strokeStyle = "#ff5511";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(28, 52);
+      ctx.lineTo(38, 50);
+      ctx.lineTo(44, 54);
+      ctx.moveTo(46, 48);
+      ctx.lineTo(54, 52);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffcc33";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(30, 52);
+      ctx.lineTo(37, 50);
+      ctx.moveTo(47, 49);
+      ctx.lineTo(52, 52);
+      ctx.stroke();
+
+      // Dimmed eyes
+      ellipse(ctx, 36, 49, 2.5, 2, "#401808");
+      ellipse(ctx, 46, 47, 2.5, 2, "#401808");
+      ellipse(ctx, 36, 49, 1, 0.8, "rgba(255, 120, 40, 0.5)");
+      ellipse(ctx, 46, 47, 1, 0.8, "rgba(255, 120, 40, 0.5)");
+
+      // Cool grey smoke wisps rising
+      ellipse(ctx, 34, 38, 3.5, 2.5, "rgba(90, 80, 75, 0.5)");
+      ellipse(ctx, 48, 34, 4.5, 3, "rgba(90, 80, 75, 0.4)");
+      ellipse(ctx, 42, 26, 3, 2, "rgba(110, 100, 95, 0.3)");
+      ellipse(ctx, 54, 22, 2.2, 1.5, "rgba(120, 110, 105, 0.2)");
+
+      // Cooling cinders
+      for (const [cx, cy] of [[20, 58], [24, 60], [58, 59], [62, 57]]) {
+        ellipse(ctx, cx, cy, 1.5, 1.2, "#2a1a14");
+      }
+    };
+
     make("enemy_ember", 80, 72, (ctx) => drawEmber(ctx, 0));
     make("enemy_ember_w0", 80, 72, (ctx) => drawEmber(ctx, 0));
     make("enemy_ember_w1", 80, 72, (ctx) => drawEmber(ctx, 1));
     make("enemy_ember_w2", 80, 72, (ctx) => drawEmber(ctx, 2));
     make("enemy_ember_w3", 80, 72, (ctx) => drawEmber(ctx, 3));
+    make("enemy_ember_dead", 80, 72, (ctx) => drawEmberDead(ctx));
 
     const drawBrood = (ctx, frame = 0) => {
       shadow(ctx, 40, 60, 22, 6);
@@ -3953,11 +4201,53 @@
       poly(ctx, [[44 + fangSpread, headY + 6], [47 + fangSpread, headY + 12], [42 + fangSpread, headY + 8]], "#f0e0f0", "#401828", 1);
     };
 
+    const drawBroodDead = (ctx) => {
+      shadow(ctx, 40, 58, 24, 6, 0.35);
+
+      // Curled spider legs tightly tucked
+      ctx.strokeStyle = "#381420";
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+
+      // Left curled legs
+      ctx.beginPath(); ctx.moveTo(32, 48); ctx.quadraticCurveTo(18, 38, 22, 30); ctx.quadraticCurveTo(24, 24, 30, 26); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(34, 52); ctx.quadraticCurveTo(14, 48, 18, 36); ctx.quadraticCurveTo(22, 30, 28, 32); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(36, 55); ctx.quadraticCurveTo(16, 58, 22, 48); ctx.quadraticCurveTo(26, 42, 32, 44); ctx.stroke();
+
+      // Right curled legs
+      ctx.beginPath(); ctx.moveTo(48, 48); ctx.quadraticCurveTo(62, 38, 58, 30); ctx.quadraticCurveTo(56, 24, 50, 26); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(46, 52); ctx.quadraticCurveTo(66, 48, 62, 36); ctx.quadraticCurveTo(58, 30, 52, 32); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(44, 55); ctx.quadraticCurveTo(64, 58, 58, 48); ctx.quadraticCurveTo(54, 42, 48, 44); ctx.stroke();
+
+      // Deflated abdomen
+      ellipse(ctx, 40, 50, 15, 10, linGrad(ctx, 28, 42, 52, 58, [[0, "#d888a4"], [0.5, "#904060"], [1, "#381020"]]), "#280a14", 2);
+      ctx.strokeStyle = "#ffbad0";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(36, 48);
+      ctx.lineTo(42, 52);
+      ctx.lineTo(46, 49);
+      ctx.stroke();
+
+      // Cephalothorax & head
+      ellipse(ctx, 40, 42, 10, 8, linGrad(ctx, 32, 36, 48, 48, [[0, "#e89cb4"], [1, "#68203c"]]), "#280a14", 1.8);
+
+      // Extinguished cluster eyes
+      for (const [dx, dy] of [[-4, -1], [4, -1], [-2, 2], [2, 2], [0, -3]]) {
+        ellipse(ctx, 40 + dx, 41 + dy, 1.4, 1.4, "#806858");
+      }
+
+      // Limp fangs
+      poly(ctx, [[37, 46], [35, 52], [38, 48]], "#d8c0d0", "#301018", 0.8);
+      poly(ctx, [[43, 46], [45, 52], [42, 48]], "#d8c0d0", "#301018", 0.8);
+    };
+
     make("enemy_brood", 80, 72, (ctx) => drawBrood(ctx, 0));
     make("enemy_brood_w0", 80, 72, (ctx) => drawBrood(ctx, 0));
     make("enemy_brood_w1", 80, 72, (ctx) => drawBrood(ctx, 1));
     make("enemy_brood_w2", 80, 72, (ctx) => drawBrood(ctx, 2));
     make("enemy_brood_w3", 80, 72, (ctx) => drawBrood(ctx, 3));
+    make("enemy_brood_dead", 80, 72, (ctx) => drawBroodDead(ctx));
 
     const drawFlyer = (ctx, frame = 0) => {
       const f = frame % 4;
@@ -4037,11 +4327,64 @@
       poly(ctx, [[40, headY - 14], [34, headY - 6], [46, headY - 6]], "#a0e0f0", "#184858", 1.2);
     };
 
+    const drawFlyerDead = (ctx) => {
+      shadow(ctx, 40, 58, 30, 6, 0.35);
+      ellipse(ctx, 40, 57, 24, 4, "rgba(80, 140, 170, 0.2)");
+
+      // Broken wings crumpled on ground
+      poly(
+        ctx,
+        [[30, 50], [8, 54], [14, 44], [24, 46], [32, 52]],
+        linGrad(ctx, 8, 44, 32, 54, [[0, "rgba(160,220,240,.7)"], [1, "rgba(40,100,140,.5)"]]),
+        "#2a7090",
+        1.3
+      );
+      poly(
+        ctx,
+        [[50, 50], [72, 54], [66, 44], [56, 46], [48, 52]],
+        linGrad(ctx, 72, 44, 48, 54, [[0, "rgba(160,220,240,.7)"], [1, "rgba(40,100,140,.5)"]]),
+        "#2a7090",
+        1.3
+      );
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(30, 50); ctx.lineTo(14, 44);
+      ctx.moveTo(50, 50); ctx.lineTo(66, 44);
+      ctx.stroke();
+
+      // Limp body lying flat
+      ellipse(ctx, 40, 50, 13, 9, linGrad(ctx, 28, 42, 52, 58, [[0, "#d0f0fa"], [0.5, "#48a8c8"], [1, "#184860"]]), "#103040", 1.8);
+      ellipse(ctx, 40, 52, 7, 5, "rgba(255,255,255,.25)");
+
+      // Slumped head & broken crest
+      ellipse(ctx, 52, 46, 8, 7, linGrad(ctx, 46, 40, 58, 52, [[0, "#e8f8fc"], [1, "#3890b0"]]), "#103040", 1.6);
+      poly(ctx, [[54, 40], [60, 36], [56, 42]], "#80c8d8", "#103040", 1);
+
+      // Knocked out X eye
+      ctx.strokeStyle = "#082028";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(50, 43); ctx.lineTo(54, 47);
+      ctx.moveTo(54, 43); ctx.lineTo(50, 47);
+      ctx.stroke();
+
+      // Limp tail coiled on ground
+      ctx.strokeStyle = "#3890b0";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(30, 52);
+      ctx.quadraticCurveTo(20, 56, 24, 60);
+      ctx.quadraticCurveTo(28, 62, 34, 59);
+      ctx.stroke();
+    };
+
     make("enemy_flyer", 80, 72, (ctx) => drawFlyer(ctx, 0));
     make("enemy_flyer_w0", 80, 72, (ctx) => drawFlyer(ctx, 0));
     make("enemy_flyer_w1", 80, 72, (ctx) => drawFlyer(ctx, 1));
     make("enemy_flyer_w2", 80, 72, (ctx) => drawFlyer(ctx, 2));
     make("enemy_flyer_w3", 80, 72, (ctx) => drawFlyer(ctx, 3));
+    make("enemy_flyer_dead", 80, 72, (ctx) => drawFlyerDead(ctx));
 
     const drawHexer = (ctx, frame = 0) => {
       shadow(ctx, 40, 62, 20, 6);
@@ -4178,11 +4521,59 @@
       }
     };
 
+    const drawHexerDead = (ctx) => {
+      shadow(ctx, 40, 58, 28, 6, 0.4);
+
+      // Collapsed robe puddle
+      poly(
+        ctx,
+        [[16, 56], [28, 44], [46, 42], [62, 48], [66, 58], [42, 62]],
+        linGrad(ctx, 16, 42, 66, 62, [[0, "#b8a0f0"], [0.5, "#6040a8"], [1, "#201040"]]),
+        "#140828",
+        2.2
+      );
+      ctx.strokeStyle = "rgba(20, 8, 40, 0.5)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(32, 46); ctx.lineTo(44, 58);
+      ctx.moveTo(48, 45); ctx.lineTo(56, 56);
+      ctx.stroke();
+
+      // Empty deflated hood
+      poly(
+        ctx,
+        [[24, 46], [36, 36], [48, 46], [40, 52], [28, 50]],
+        linGrad(ctx, 24, 36, 48, 52, [[0, "#d0c0f8"], [1, "#402070"]]),
+        "#140828",
+        1.8
+      );
+      ellipse(ctx, 36, 46, 6, 4, "#0e061c");
+
+      // Broken staff
+      ctx.strokeStyle = "#5a3c24";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(18, 58);
+      ctx.lineTo(58, 44);
+      ctx.stroke();
+
+      // Shattered crystal orb shards
+      poly(ctx, [[60, 43], [66, 40], [64, 46]], "#e0d0ff", "#7040b0", 1);
+      poly(ctx, [[62, 48], [68, 46], [65, 51]], "#c0a0ff", "#502090", 1);
+      ellipse(ctx, 64, 45, 1.5, 1.5, "#ffffff");
+
+      // Fading magic dust
+      for (const [sx, sy] of [[22, 42], [48, 38], [54, 58], [30, 60]]) {
+        ellipse(ctx, sx, sy, 1.4, 1.4, "rgba(210, 160, 255, 0.7)");
+      }
+    };
+
     make("enemy_hexer", 80, 72, (ctx) => drawHexer(ctx, 0));
     make("enemy_hexer_w0", 80, 72, (ctx) => drawHexer(ctx, 0));
     make("enemy_hexer_w1", 80, 72, (ctx) => drawHexer(ctx, 1));
     make("enemy_hexer_w2", 80, 72, (ctx) => drawHexer(ctx, 2));
     make("enemy_hexer_w3", 80, 72, (ctx) => drawHexer(ctx, 3));
+    make("enemy_hexer_dead", 80, 72, (ctx) => drawHexerDead(ctx));
 
     const drawTitan = (ctx, frame = 0) => {
       shadow(ctx, 44, 70, 30, 8);
@@ -4290,11 +4681,102 @@
       speckles(ctx, rFistX - 5, rFistY - 5, 10, 10, 3, "rgba(255,255,255,0.2)", 1.2);
     };
 
+    const drawTitanDead = (ctx) => {
+      shadow(ctx, 44, 68, 38, 8, 0.5);
+      ellipse(ctx, 44, 66, 32, 6, "rgba(20, 16, 12, 0.45)");
+      const outline = "#2a241e";
+
+      // Center fractured torso slab
+      poly(
+        ctx,
+        [[28, 62], [32, 44], [56, 42], [62, 58], [46, 66]],
+        linGrad(ctx, 28, 42, 62, 66, [[0, "#d0c8b8"], [0.5, "#888078"], [1, "#383028"]]),
+        outline,
+        2.4
+      );
+
+      // Fissure crack
+      ctx.strokeStyle = "#1a140e";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(42, 43);
+      ctx.lineTo(45, 53);
+      ctx.lineTo(39, 58);
+      ctx.lineTo(44, 65);
+      ctx.stroke();
+
+      // Left fallen fist boulder
+      ellipse(ctx, 20, 58, 10, 8, linGrad(ctx, 12, 52, 28, 64, [[0, "#c0b8a8"], [1, "#504840"]]), outline, 2);
+
+      // Right fallen fist boulder
+      ellipse(ctx, 70, 58, 10, 8, linGrad(ctx, 62, 52, 78, 64, [[0, "#c0b8a8"], [1, "#504840"]]), outline, 2);
+
+      // Dislodged head resting in rubble
+      ellipse(ctx, 48, 42, 13, 11, linGrad(ctx, 38, 34, 58, 50, [[0, "#d8d0c0"], [1, "#585048"]]), outline, 2);
+      ctx.strokeStyle = "#1a140e";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(42, 38);
+      ctx.lineTo(54, 40);
+      ctx.stroke();
+
+      // Extinguished eye sockets
+      ellipse(ctx, 44, 43, 2.5, 2, "#1e1814");
+      ellipse(ctx, 52, 44, 2.5, 2, "#1e1814");
+
+      // Moss & gravel rubble
+      ellipse(ctx, 35, 52, 5, 3, "rgba(90,150,60,.4)");
+      ellipse(ctx, 58, 54, 4, 2.5, "rgba(90,150,60,.35)");
+      for (const [rx, ry, s] of [[12, 64, 2], [16, 66, 1.5], [68, 66, 2.2], [76, 63, 1.8], [44, 68, 2]]) {
+        rounded(ctx, rx, ry, s * 2, s * 1.5, 1, "#686058", "#2a241e", 0.8);
+      }
+    };
+
     make("enemy_titan", 88, 80, (ctx) => drawTitan(ctx, 0));
     make("enemy_titan_w0", 88, 80, (ctx) => drawTitan(ctx, 0));
     make("enemy_titan_w1", 88, 80, (ctx) => drawTitan(ctx, 1));
     make("enemy_titan_w2", 88, 80, (ctx) => drawTitan(ctx, 2));
     make("enemy_titan_w3", 88, 80, (ctx) => drawTitan(ctx, 3));
+    make("enemy_titan_dead", 88, 80, (ctx) => drawTitanDead(ctx));
+
+    const drawBossDead = (ctx) => {
+      shadow(ctx, 48, 76, 40, 9, 0.45);
+
+      // Torn purple cape
+      poly(
+        ctx,
+        [[14, 68], [28, 48], [68, 46], [84, 66], [48, 76]],
+        linGrad(ctx, 14, 46, 84, 76, [[0, "#c080d0"], [0.5, "#602078"], [1, "#200830"]]),
+        "#140420",
+        2.2
+      );
+
+      // Collapsed ornate armor
+      rounded(ctx, 28, 46, 38, 22, 6, linGrad(ctx, 28, 46, 66, 68, [[0, "#e8a0f8"], [0.5, "#8828a8"], [1, "#380a48"]]), "#1a0424", 2.2);
+      ellipse(ctx, 26, 52, 9, 8, "#a050c0", "#1a0424", 1.8);
+      ellipse(ctx, 64, 52, 9, 8, "#a050c0", "#1a0424", 1.8);
+
+      // Fallen head
+      ellipse(ctx, 50, 40, 13, 12, linGrad(ctx, 40, 30, 60, 50, [[0, "#f0c0f8"], [1, "#781898"]]), "#1a0424", 2);
+      ctx.strokeStyle = "#200428";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(45, 38); ctx.lineTo(49, 42); ctx.moveTo(49, 38); ctx.lineTo(45, 42);
+      ctx.moveTo(53, 38); ctx.lineTo(57, 42); ctx.moveTo(57, 38); ctx.lineTo(53, 42);
+      ctx.stroke();
+
+      // Fallen crown
+      poly(ctx, [[62, 38], [66, 28], [72, 34], [78, 26], [82, 36], [64, 42]], linGrad(ctx, 62, 26, 82, 42, [[0, "#fff0b0"], [1, "#a07020"]]), "#3a2008", 1.4);
+
+      // Broken orb staff
+      ctx.strokeStyle = "#a07020";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(18, 70);
+      ctx.lineTo(76, 56);
+      ctx.stroke();
+      ellipse(ctx, 80, 55, 6, 6, "rgba(220,120,255,.5)", "#c060e0", 1.5);
+    };
 
     make("enemy_boss", 96, 88, (ctx) => {
       shadow(ctx, 48, 76, 34, 9);
@@ -4332,6 +4814,7 @@
       ctx.ellipse(48, 48, 36, 12, 0, 0, Math.PI * 2);
       ctx.stroke();
     });
+    make("enemy_boss_dead", 96, 88, (ctx) => drawBossDead(ctx));
 
     // —— Projectiles ——
     make("projectile_arrow", 40, 20, (ctx) => {

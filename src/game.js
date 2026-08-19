@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.69";
+  const KRC_VERSION = "1.0.70";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -315,6 +315,7 @@
           for (let fi = 0; fi < 4; fi += 1) {
             make(`enemy_${k}_w${fi}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
           }
+          make(`enemy_${k}_dead`, 32, 32, (ctx) => { ctx.fillStyle = "#808080"; ctx.fillRect(4, 16, 24, 10); });
         });
         make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
         make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
@@ -4265,46 +4266,60 @@ const bannerY = 98;
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
-        if (this.settings?.reducedMotion) {
-          enemy.sprite?.destroy();
-          this.puff(enemy.x, enemy.y, enemy.base?.color);
-          return;
-        }
         this.audio.playLayered("enemyDeath");
         const sprite = enemy.sprite;
         enemy.sprite = null;
         const family = enemy.type;
+        const deadKey = `enemy_${family}_dead`;
+        if (sprite && this.textures.exists(deadKey)) {
+          sprite.setTexture(deadKey);
+        }
+
+        if (this.settings?.reducedMotion) {
+          if (sprite) {
+            sprite.rotation = 0;
+            this.tweens.add({
+              targets: sprite,
+              alpha: 0,
+              duration: 400,
+              ease: "Linear",
+              onComplete: () => sprite.destroy(),
+            });
+          } else {
+            this.puff(enemy.x, enemy.y, enemy.base?.color);
+          }
+          return;
+        }
+
         const isFlyer = family === "flyer" || enemy.base?.flying;
         if (family === "scout") {
           if (sprite) {
             const baseScale = (enemy.base?.size || 15) / 30;
-            const crumpleAngle = sprite.rotation + (Math.random() < 0.5 ? 0.6 : -0.6);
+            sprite.setScale(baseScale);
+            this.puff(enemy.x, enemy.y + 2, enemy.base?.color);
             this.tweens.add({
               targets: sprite,
-              rotation: crumpleAngle,
-              scaleY: baseScale * 0.45,
-              scaleX: baseScale * 1.15,
-              y: sprite.y + 6,
+              y: sprite.y + 4,
+              rotation: sprite.flipX ? -0.1 : 0.1,
               alpha: 0,
-              duration: 320,
-              ease: "Quad.easeOut",
+              duration: 420,
+              ease: "Quad.easeIn",
               onComplete: () => sprite.destroy(),
             });
           }
         } else if (family === "brute") {
           if (sprite) {
             const baseScale = (enemy.base?.size || 18) / 30;
+            sprite.setScale(baseScale);
             const startY = sprite.y;
             const ex = enemy.x;
             this.tweens.add({
               targets: sprite,
-              y: startY + 8,
-              scaleY: baseScale * 0.35,
-              scaleX: baseScale * 1.3,
-              duration: 220,
+              y: startY + 6,
+              duration: 180,
               ease: "Quad.easeIn",
               onComplete: () => {
-                const dustY = startY + 8;
+                const dustY = startY + 6;
                 for (let i = 0; i < 5; i += 1) {
                   const dir = i % 2 === 0 ? 1 : -1;
                   const dust = this.add.circle(ex, dustY, 2 + Math.random() * 2, 0xd0c4b4, 0.7).setDepth(76);
@@ -4318,7 +4333,7 @@ const bannerY = 98;
                 this.tweens.add({
                   targets: sprite,
                   alpha: 0,
-                  duration: 160,
+                  duration: 380,
                   ease: "Linear",
                   onComplete: () => sprite.destroy(),
                 });
@@ -4331,24 +4346,68 @@ const bannerY = 98;
         } else if (family === "shield") {
           if (sprite) {
             const baseScale = (enemy.base?.size || 20) / 30;
-            const startRot = sprite.rotation;
+            sprite.setScale(baseScale);
             this.tweens.add({
               targets: sprite,
-              rotation: startRot + 0.35,
               y: sprite.y + 4,
-              duration: 80,
-              yoyo: true,
-              repeat: 2,
-              ease: "Sine.easeInOut",
+              rotation: sprite.flipX ? -0.15 : 0.15,
+              duration: 150,
+              ease: "Quad.easeOut",
+              onComplete: () => {
+                for (let i = 0; i < 3; i += 1) {
+                  const spark = this.add.circle(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, 1.5, 0xfff0b0, 0.9).setDepth(76);
+                  this.effects.push({ obj: spark, life: 0.25, vx: (Math.random() - 0.5) * 30, vy: -15 - Math.random() * 15 });
+                }
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  duration: 400,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+          }
+        } else if (family === "ember") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 17) / 30;
+            sprite.setScale(baseScale);
+            this.tweens.add({
+              targets: sprite,
+              y: sprite.y + 4,
+              duration: 150,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                for (let i = 0; i < 4; i += 1) {
+                  const smoke = this.add.circle(enemy.x + (Math.random() - 0.5) * 14, enemy.y - 2, 2 + Math.random() * 2, 0x504038, 0.6).setDepth(76);
+                  this.effects.push({ obj: smoke, life: 0.4 + Math.random() * 0.2, vx: (Math.random() - 0.5) * 15, vy: -20 - Math.random() * 15 });
+                }
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  duration: 420,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+          }
+        } else if (family === "brood") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 16) / 30;
+            sprite.setScale(baseScale);
+            this.puff(enemy.x, enemy.y, enemy.base?.color);
+            this.tweens.add({
+              targets: sprite,
+              y: sprite.y + 4,
+              duration: 160,
+              ease: "Quad.easeIn",
               onComplete: () => {
                 this.tweens.add({
                   targets: sprite,
-                  rotation: startRot - 0.5,
-                  y: sprite.y + 8,
-                  scaleY: baseScale * 0.6,
                   alpha: 0,
-                  duration: 200,
-                  ease: "Quad.easeOut",
+                  duration: 380,
+                  ease: "Linear",
                   onComplete: () => sprite.destroy(),
                 });
               },
@@ -4356,19 +4415,77 @@ const bannerY = 98;
           }
         } else if (isFlyer) {
           if (sprite) {
+            const baseScale = (enemy.base?.size || 15) / 30;
+            sprite.setScale(baseScale);
             const startY = sprite.y;
-            const spin = (Math.random() < 0.5 ? 1 : -1) * 0.9;
             this.tweens.add({
               targets: sprite,
-              y: startY + 28,
-              rotation: sprite.rotation + spin,
-              duration: 260,
+              y: startY + 16,
+              rotation: sprite.flipX ? -0.2 : 0.2,
+              duration: 220,
               ease: "Quad.easeIn",
               onComplete: () => {
+                this.puff(enemy.x, startY + 16, 0x73d9ff);
                 this.tweens.add({
                   targets: sprite,
                   alpha: 0,
-                  duration: 140,
+                  duration: 380,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+          }
+        } else if (family === "hexer") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 18) / 30;
+            sprite.setScale(baseScale);
+            this.tweens.add({
+              targets: sprite,
+              y: sprite.y + 5,
+              duration: 180,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                for (let i = 0; i < 4; i += 1) {
+                  const spark = this.add.circle(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, 1.8, 0xd090ff, 0.85).setDepth(76);
+                  this.effects.push({ obj: spark, life: 0.35 + Math.random() * 0.15, vx: (Math.random() - 0.5) * 25, vy: -20 - Math.random() * 15 });
+                }
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  duration: 420,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
+            });
+          }
+        } else if (family === "titan") {
+          if (sprite) {
+            const baseScale = (enemy.base?.size || 24) / 30;
+            sprite.setScale(baseScale);
+            const startY = sprite.y;
+            const ex = enemy.x;
+            this.tweens.add({
+              targets: sprite,
+              y: startY + 6,
+              duration: 200,
+              ease: "Quad.easeIn",
+              onComplete: () => {
+                for (let i = 0; i < 8; i += 1) {
+                  const rock = this.add.circle(ex + (Math.random() - 0.5) * 24, startY + 6 + (Math.random() - 0.5) * 8, 1.8 + Math.random() * 2, 0x888078, 0.85).setDepth(76);
+                  this.effects.push({
+                    obj: rock,
+                    life: 0.4 + Math.random() * 0.2,
+                    vx: (Math.random() - 0.5) * 60,
+                    vy: -15 - Math.random() * 25,
+                  });
+                }
+                this.cameras.main.shake(140, 0.008);
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  duration: 460,
                   ease: "Linear",
                   onComplete: () => sprite.destroy(),
                 });
@@ -4376,14 +4493,10 @@ const bannerY = 98;
             });
           }
         } else {
-          sprite?.destroy();
           const size = enemy.base?.size || 16;
-          // Multi-layer death explosion: core puff + ring burst + debris
           this.puff(enemy.x, enemy.y, enemy.base?.color);
-          // Ring burst
           const ring = this.add.circle(enemy.x, enemy.y, 4, enemy.base?.color, 0.6).setStrokeStyle(2, "#fff8c0", 0.9).setDepth(75);
           this.tweens.add({ targets: ring, alpha: 0, scale: size / 8 + 1.5, duration: 280, onComplete: () => ring.destroy() });
-          // Debris particles (larger for bigger enemies)
           const debrisCount = Math.min(12, 4 + size / 3);
           for (let i = 0; i < debrisCount; i += 1) {
             const angle = (i / debrisCount) * Math.PI * 2 + Math.random() * 0.3;
@@ -4391,9 +4504,20 @@ const bannerY = 98;
             const debris = this.add.circle(enemy.x, enemy.y, 1.5 + Math.random() * 2.5, enemy.base?.color, 0.8).setDepth(76);
             this.effects.push({ obj: debris, life: 0.3 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 30 });
           }
-          // Screen shake on big enemies
           if (size >= 20) {
             this.cameras.main.shake(120, 0.006);
+          }
+          if (sprite) {
+            const baseScale = size / 30;
+            sprite.setScale(baseScale);
+            this.tweens.add({
+              targets: sprite,
+              y: sprite.y + 4,
+              alpha: 0,
+              duration: 450,
+              ease: "Linear",
+              onComplete: () => sprite.destroy(),
+            });
           }
         }
       } else {
