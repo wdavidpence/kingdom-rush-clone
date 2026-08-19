@@ -5256,6 +5256,632 @@
       ellipse(ctx, 30, 6, 5, 5, radGrad(ctx, 29, 5, 1, 5, [[0, "#fff8c0"], [0.4, "#ff9020"], [1, "rgba(200,40,0,.05)"]]));
     });
 
+    // —— Spell Impact Effects (Original KRC VFX) ——
+    const drawFxMeteor0 = (ctx) => {
+      const cx = 64;
+      const cy = 64;
+
+      // Outer heat haze / volcanic glow
+      const haze = radGrad(ctx, cx, cy, 10, 62, [
+        [0, "rgba(255, 100, 0, 0.45)"],
+        [0.45, "rgba(220, 40, 0, 0.25)"],
+        [0.8, "rgba(140, 10, 0, 0.1)"],
+        [1, "rgba(60, 0, 0, 0)"],
+      ]);
+      ellipse(ctx, cx, cy, 60, 60, haze);
+
+      // Radiating flame spikes (12 spikes with alternating reach)
+      const numSpikes = 12;
+      for (let i = 0; i < numSpikes; i += 1) {
+        const angle = (i / numSpikes) * Math.PI * 2 + (i % 2 === 0 ? 0 : 0.1);
+        const len = i % 2 === 0 ? 56 : 42;
+        const width = i % 2 === 0 ? 9 : 6;
+        const tipX = cx + Math.cos(angle) * len;
+        const tipY = cy + Math.sin(angle) * len;
+        const perpX = -Math.sin(angle) * width;
+        const perpY = Math.cos(angle) * width;
+        const base1X = cx + Math.cos(angle) * 14 + perpX;
+        const base1Y = cy + Math.sin(angle) * 14 + perpY;
+        const base2X = cx + Math.cos(angle) * 14 - perpX;
+        const base2Y = cy + Math.sin(angle) * 14 - perpY;
+
+        poly(
+          ctx,
+          [[base1X, base1Y], [tipX, tipY], [base2X, base2Y]],
+          linGrad(ctx, cx, cy, tipX, tipY, [
+            [0, "#ffe870"],
+            [0.35, "#ff7010"],
+            [0.75, "#c81800"],
+            [1, "#500600"],
+          ]),
+          "#280000",
+          1.2
+        );
+      }
+
+      // Swirling molten crater petals / fire blast lobe ring
+      const lobes = 7;
+      for (let i = 0; i < lobes; i += 1) {
+        const a = (i / lobes) * Math.PI * 2;
+        const lx = cx + Math.cos(a) * 22;
+        const ly = cy + Math.sin(a) * 22;
+        ellipse(
+          ctx,
+          lx,
+          ly,
+          18,
+          16,
+          radGrad(ctx, lx, ly, 2, 18, [
+            [0, "#fff590"],
+            [0.45, "#ff6010"],
+            [0.85, "#aa1400"],
+            [1, "rgba(80, 8, 0, 0.2)"],
+          ])
+        );
+      }
+
+      // Blazing fireball core
+      const coreGrad = radGrad(ctx, cx, cy, 0, 26, [
+        [0, "#ffffff"],
+        [0.35, "#fff8b0"],
+        [0.65, "#ff9420"],
+        [0.9, "#e02800"],
+        [1, "#800800"],
+      ]);
+      ellipse(ctx, cx, cy, 26, 26, coreGrad, "#400400", 1.5);
+
+      // Brilliant 4-pointed lens flare cross
+      poly(
+        ctx,
+        [
+          [cx, cy - 38],
+          [cx + 3, cy - 6],
+          [cx + 38, cy],
+          [cx + 3, cy + 6],
+          [cx, cy + 38],
+          [cx - 3, cy + 6],
+          [cx - 38, cy],
+          [cx - 3, cy - 6],
+        ],
+        "#ffffff"
+      );
+      poly(
+        ctx,
+        [
+          [cx, cy - 24],
+          [cx + 2, cy - 4],
+          [cx + 24, cy],
+          [cx + 2, cy + 4],
+          [cx, cy + 24],
+          [cx - 2, cy + 4],
+          [cx - 24, cy],
+          [cx - 2, cy - 4],
+        ],
+        "#fff4a0"
+      );
+
+      // Molten flying sparks
+      const sparks = [
+        [cx + 42, cy - 32, 2.5],
+        [cx - 36, cy - 38, 2.2],
+        [cx + 38, cy + 36, 2.6],
+        [cx - 44, cy + 28, 2.0],
+        [cx + 10, cy - 50, 1.8],
+        [cx - 18, cy + 48, 2.4],
+        [cx + 52, cy + 6, 2.0],
+        [cx - 52, cy - 8, 2.2],
+      ];
+      for (const [sx, sy, sr] of sparks) {
+        ellipse(ctx, sx, sy, sr, sr, "#ffe480");
+        ellipse(ctx, sx, sy, sr * 0.5, sr * 0.5, "#ffffff");
+      }
+    };
+
+    const drawFxMeteor1 = (ctx) => {
+      const cx = 64;
+      const cy = 64;
+
+      // Expanding charred shockwave rim
+      ctx.strokeStyle = "rgba(255, 120, 20, 0.4)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 54, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 200, 80, 0.75)";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 54, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Outer smoke & fireball tendrils
+      const numTendrils = 10;
+      for (let i = 0; i < numTendrils; i += 1) {
+        const a = (i / numTendrils) * Math.PI * 2 + 0.15;
+        const tx = cx + Math.cos(a) * 44;
+        const ty = cy + Math.sin(a) * 44;
+        ellipse(
+          ctx,
+          tx,
+          ty,
+          15,
+          13,
+          radGrad(ctx, tx, ty, 1, 15, [
+            [0, "#ffa030"],
+            [0.5, "#b02008"],
+            [0.85, "#4a1008"],
+            [1, "rgba(40, 6, 2, 0)"],
+          ])
+        );
+      }
+
+      // Ragged radiating blast spikes
+      for (let i = 0; i < 8; i += 1) {
+        const angle = (i / 8) * Math.PI * 2 + 0.35;
+        const tipX = cx + Math.cos(angle) * 60;
+        const tipY = cy + Math.sin(angle) * 60;
+        const pX = -Math.sin(angle) * 6;
+        const pY = Math.cos(angle) * 6;
+        poly(
+          ctx,
+          [[cx + Math.cos(angle) * 26 + pX, cy + Math.sin(angle) * 26 + pY], [tipX, tipY], [cx + Math.cos(angle) * 26 - pX, cy + Math.sin(angle) * 26 - pY]],
+          linGrad(ctx, cx, cy, tipX, tipY, [[0, "#ff8c1a"], [0.6, "#aa1a00"], [1, "#280400"]]),
+          "#200000",
+          1
+        );
+      }
+
+      // Molten crater crust with glowing magma fissures
+      ellipse(ctx, cx, cy, 32, 32, linGrad(ctx, 32, 32, 96, 96, [[0, "#3a1810"], [0.5, "#220c06"], [1, "#120402"]]), "#1a0400", 2);
+
+      // Magma cracks branching outward
+      ctx.strokeStyle = "#ff3300";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, cy - 8); ctx.lineTo(cx, cy); ctx.lineTo(cx + 18, cy - 12);
+      ctx.moveTo(cx, cy); ctx.lineTo(cx - 8, cy + 18); ctx.lineTo(cx - 20, cy + 22);
+      ctx.moveTo(cx, cy); ctx.lineTo(cx + 14, cy + 14); ctx.lineTo(cx + 24, cy + 20);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffe860";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(cx - 15, cy - 8); ctx.lineTo(cx, cy); ctx.lineTo(cx + 17, cy - 12);
+      ctx.moveTo(cx, cy); ctx.lineTo(cx - 8, cy + 17);
+      ctx.moveTo(cx, cy); ctx.lineTo(cx + 13, cy + 14);
+      ctx.stroke();
+
+      // Glowing molten core center
+      ellipse(ctx, cx, cy, 14, 14, radGrad(ctx, cx, cy, 0, 14, [[0, "#ffffff"], [0.4, "#fff080"], [0.8, "#ff6010"], [1, "#b01000"]]));
+
+      // Dispersed ember sparkles
+      speckles(ctx, 16, 16, 96, 96, 20, "#ffea80", 1.8);
+    };
+
+    const drawFxIce0 = (ctx) => {
+      const cx = 64;
+      const cy = 64;
+
+      // Sub-zero atmospheric mist aura
+      const mist = radGrad(ctx, cx, cy, 8, 62, [
+        [0, "rgba(210, 245, 255, 0.55)"],
+        [0.45, "rgba(130, 215, 255, 0.3)"],
+        [0.8, "rgba(50, 130, 220, 0.12)"],
+        [1, "rgba(20, 60, 140, 0)"],
+      ]);
+      ellipse(ctx, cx, cy, 60, 60, mist);
+
+      // Concentric frost rune circle
+      ctx.strokeStyle = "rgba(180, 235, 255, 0.6)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 8 Primary Glacial Diamond Spires (Cardinal + Diagonal)
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI * 2;
+        const isCardinal = i % 2 === 0;
+        const len = isCardinal ? 58 : 44;
+        const w = isCardinal ? 8.5 : 6;
+        const tipX = cx + Math.cos(a) * len;
+        const tipY = cy + Math.sin(a) * len;
+        const perpX = -Math.sin(a) * w;
+        const perpY = Math.cos(a) * w;
+        const midLen = len * 0.45;
+        const midX = cx + Math.cos(a) * midLen;
+        const midY = cy + Math.sin(a) * midLen;
+
+        // Left facet (Light ice)
+        poly(
+          ctx,
+          [[cx, cy], [midX + perpX, midY + perpY], [tipX, tipY]],
+          linGrad(ctx, cx, cy, tipX, tipY, [[0, "#ffffff"], [0.4, "#b0f0ff"], [1, "#54b8f0"]]),
+          "#0e3050",
+          1.2
+        );
+        // Right facet (Deep shadow crystal)
+        poly(
+          ctx,
+          [[cx, cy], [tipX, tipY], [midX - perpX, midY - perpY]],
+          linGrad(ctx, cx, cy, tipX, tipY, [[0, "#d8f8ff"], [0.4, "#489cd8"], [1, "#184e80"]]),
+          "#0e3050",
+          1.2
+        );
+
+        // Center spine glint line
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 10, cy + Math.sin(a) * 10);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+      }
+
+      // Secondary floating crystal diamonds between spires
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        const dist = 28;
+        const dx = cx + Math.cos(a) * dist;
+        const dy = cy + Math.sin(a) * dist;
+        poly(
+          ctx,
+          [[dx, dy - 8], [dx + 4.5, dy], [dx, dy + 8], [dx - 4.5, dy]],
+          linGrad(ctx, dx - 4, dy - 8, dx + 4, dy + 8, [[0, "#ffffff"], [0.5, "#80dcff"], [1, "#2868a8"]]),
+          "#0e3050",
+          1
+        );
+      }
+
+      // Hexagonal central frost gem cluster
+      poly(
+        ctx,
+        [
+          [cx, cy - 18],
+          [cx + 15, cy - 9],
+          [cx + 15, cy + 9],
+          [cx, cy + 18],
+          [cx - 15, cy + 9],
+          [cx - 15, cy - 9],
+        ],
+        linGrad(ctx, cx - 15, cy - 18, cx + 15, cy + 18, [
+          [0, "#ffffff"],
+          [0.35, "#cbf4ff"],
+          [0.7, "#6ad0f8"],
+          [1, "#2068a0"],
+        ]),
+        "#0c2844",
+        1.6
+      );
+
+      // Brilliant diamond core star
+      poly(
+        ctx,
+        [
+          [cx, cy - 12],
+          [cx + 3, cy - 3],
+          [cx + 12, cy],
+          [cx + 3, cy + 3],
+          [cx, cy + 12],
+          [cx - 3, cy + 3],
+          [cx - 12, cy],
+          [cx - 3, cy - 3],
+        ],
+        "#ffffff"
+      );
+
+      // Frost sparkle stars
+      const glints = [
+        [cx + 36, cy - 38],
+        [cx - 38, cy - 34],
+        [cx + 40, cy + 32],
+        [cx - 36, cy + 38],
+        [cx, cy - 54],
+        [cx, cy + 54],
+      ];
+      for (const [gx, gy] of glints) {
+        ellipse(ctx, gx, gy, 2.5, 2.5, "#ffffff");
+        ellipse(ctx, gx, gy, 4, 1, "rgba(220,245,255,0.9)");
+        ellipse(ctx, gx, gy, 1, 4, "rgba(220,245,255,0.9)");
+      }
+    };
+
+    const drawFxIce1 = (ctx) => {
+      const cx = 64;
+      const cy = 64;
+
+      // Expanding crystalline shockwave ring (12-sided faceted ring)
+      const ringPts = [];
+      for (let i = 0; i < 12; i += 1) {
+        const a = (i / 12) * Math.PI * 2;
+        ringPts.push([cx + Math.cos(a) * 52, cy + Math.sin(a) * 52]);
+      }
+      poly(ctx, ringPts, null, "rgba(160, 230, 255, 0.75)", 2.5);
+
+      // Radiating frost fracture lines extending outward
+      ctx.strokeStyle = "#80d8ff";
+      ctx.lineWidth = 1.6;
+      for (let i = 0; i < 12; i += 1) {
+        const a = (i / 12) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 24, cy + Math.sin(a) * 24);
+        ctx.lineTo(cx + Math.cos(a) * 58, cy + Math.sin(a) * 58);
+        ctx.stroke();
+      }
+
+      // Shattered ice shards drifting in radial burst
+      const shardOffsets = [
+        [0, 48, 12, 5],
+        [Math.PI * 0.25, 52, 10, 4],
+        [Math.PI * 0.5, 46, 13, 6],
+        [Math.PI * 0.75, 54, 9, 4],
+        [Math.PI, 48, 12, 5],
+        [Math.PI * 1.25, 52, 11, 4.5],
+        [Math.PI * 1.5, 47, 13, 5.5],
+        [Math.PI * 1.75, 53, 10, 4],
+      ];
+
+      for (const [a, dist, slen, sw] of shardOffsets) {
+        const sx = cx + Math.cos(a) * dist;
+        const sy = cy + Math.sin(a) * dist;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(a + 0.4);
+        poly(
+          ctx,
+          [[0, -slen / 2], [sw / 2, 0], [0, slen / 2], [-sw / 2, 0]],
+          linGrad(ctx, -sw / 2, -slen / 2, sw / 2, slen / 2, [[0, "#ffffff"], [0.5, "#90e0ff"], [1, "#2878b8"]]),
+          "#0e3050",
+          1
+        );
+        ctx.restore();
+      }
+
+      // Frost snowflake filigree in center
+      const hexGrad = radGrad(ctx, cx, cy, 2, 28, [
+        [0, "#ffffff"],
+        [0.4, "#b0efff"],
+        [0.75, "#58bcf0"],
+        [1, "rgba(20, 80, 150, 0.1)"],
+      ]);
+      ellipse(ctx, cx, cy, 26, 26, hexGrad);
+
+      // 6-arm snowflake center star
+      for (let i = 0; i < 6; i += 1) {
+        const a = (i / 6) * Math.PI * 2;
+        const armX = cx + Math.cos(a) * 22;
+        const armY = cy + Math.sin(a) * 22;
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(armX, armY);
+        // Branching barbs
+        const bx1 = cx + Math.cos(a) * 14;
+        const by1 = cy + Math.sin(a) * 14;
+        const pX = -Math.sin(a) * 5;
+        const pY = Math.cos(a) * 5;
+        ctx.moveTo(bx1 + pX, by1 + pY);
+        ctx.lineTo(bx1, by1);
+        ctx.lineTo(bx1 - pX, by1 - pY);
+        ctx.stroke();
+      }
+
+      // Glowing ice glints
+      ellipse(ctx, cx, cy, 4, 4, "#ffffff");
+      speckles(ctx, 16, 16, 96, 96, 18, "rgba(200, 245, 255, 0.8)", 1.5);
+    };
+
+    const drawFxRally0 = (ctx) => {
+      const cx = 64;
+      const cy = 64;
+
+      // Radiant solar gold aura
+      const aura = radGrad(ctx, cx, cy, 8, 62, [
+        [0, "rgba(255, 240, 150, 0.55)"],
+        [0.45, "rgba(255, 200, 50, 0.3)"],
+        [0.8, "rgba(200, 130, 20, 0.12)"],
+        [1, "rgba(100, 50, 5, 0)"],
+      ]);
+      ellipse(ctx, cx, cy, 60, 60, aura);
+
+      // 12-point Golden Heraldic Sunburst Rays (Alternating lengths)
+      const numRays = 12;
+      for (let i = 0; i < numRays; i += 1) {
+        const a = (i / numRays) * Math.PI * 2;
+        const isLong = i % 2 === 0;
+        const len = isLong ? 58 : 42;
+        const w = isLong ? 7 : 5;
+        const tipX = cx + Math.cos(a) * len;
+        const tipY = cy + Math.sin(a) * len;
+        const perpX = -Math.sin(a) * w;
+        const perpY = Math.cos(a) * w;
+
+        poly(
+          ctx,
+          [[cx + Math.cos(a) * 14 + perpX, cy + Math.sin(a) * 14 + perpY], [tipX, tipY], [cx + Math.cos(a) * 14 - perpX, cy + Math.sin(a) * 14 - perpY]],
+          linGrad(ctx, cx, cy, tipX, tipY, [
+            [0, "#ffffff"],
+            [0.35, "#ffe570"],
+            [0.7, "#e5aa20"],
+            [1, "#7c4808"],
+          ]),
+          "#3a1c04",
+          1.2
+        );
+
+        // Core ray highlight
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 14, cy + Math.sin(a) * 14);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+      }
+
+      // Golden laurel wreath / wings arching upward
+      // Left wing
+      poly(
+        ctx,
+        [[cx - 8, cy + 18], [cx - 28, cy + 16], [cx - 36, cy], [cx - 28, cy - 20], [cx - 16, cy - 24], [cx - 20, cy - 10], [cx - 18, cy + 8]],
+        linGrad(ctx, cx - 36, cy - 24, cx - 8, cy + 18, [[0, "#fff5a0"], [0.5, "#e5b030"], [1, "#8a5010"]]),
+        "#3a1c04",
+        1.4
+      );
+      // Right wing
+      poly(
+        ctx,
+        [[cx + 8, cy + 18], [cx + 28, cy + 16], [cx + 36, cy], [cx + 28, cy - 20], [cx + 16, cy - 24], [cx + 20, cy - 10], [cx + 18, cy + 8]],
+        linGrad(ctx, cx + 36, cy - 24, cx + 8, cy + 18, [[0, "#fff5a0"], [0.5, "#e5b030"], [1, "#8a5010"]]),
+        "#3a1c04",
+        1.4
+      );
+
+      // Central Valor Shield Seal
+      poly(
+        ctx,
+        [[cx, cy - 22], [cx + 18, cy - 14], [cx + 14, cy + 12], [cx, cy + 24], [cx - 14, cy + 12], [cx - 18, cy - 14]],
+        linGrad(ctx, cx - 18, cy - 22, cx + 18, cy + 24, [
+          [0, "#ffffff"],
+          [0.35, "#ffea84"],
+          [0.7, "#d49a20"],
+          [1, "#6a3e08"],
+        ]),
+        "#341a04",
+        1.8
+      );
+
+      // Inner royal chevron emblem
+      poly(
+        ctx,
+        [[cx, cy - 14], [cx + 9, cy - 6], [cx, cy + 14], [cx - 9, cy - 6]],
+        linGrad(ctx, cx - 9, cy - 14, cx + 9, cy + 14, [[0, "#3e64a4"], [0.5, "#204278"], [1, "#0c1a32"]]),
+        "#0c1828",
+        1
+      );
+
+      // Golden Valor Crown / Star atop shield
+      poly(
+        ctx,
+        [[cx, cy - 10], [cx + 3, cy - 2], [cx + 8, cy], [cx + 3, cy + 2], [cx, cy + 8], [cx - 3, cy + 2], [cx - 8, cy], [cx - 3, cy - 2]],
+        linGrad(ctx, cx - 8, cy - 10, cx + 8, cy + 8, [[0, "#ffffff"], [0.5, "#fff0a0"], [1, "#d09820"]]),
+        "#4a2808",
+        0.8
+      );
+      ellipse(ctx, cx, cy - 1, 2.5, 2.5, "#ffffff");
+
+      // Sparkling valor stars
+      const glints = [
+        [cx + 36, cy - 36],
+        [cx - 36, cy - 36],
+        [cx + 42, cy + 28],
+        [cx - 42, cy + 28],
+        [cx, cy - 54],
+        [cx, cy + 54],
+      ];
+      for (const [gx, gy] of glints) {
+        ellipse(ctx, gx, gy, 2.5, 2.5, "#ffffff");
+        ellipse(ctx, gx, gy, 4.5, 1.2, "rgba(255,245,180,0.9)");
+        ellipse(ctx, gx, gy, 1.2, 4.5, "rgba(255,245,180,0.9)");
+      }
+    };
+
+    const drawFxRally1 = (ctx) => {
+      const cx = 64;
+      const cy = 64;
+
+      // Expanding valor banner seal ring
+      ctx.strokeStyle = "rgba(255, 220, 100, 0.5)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffd440";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 4 Cardinal Banner Pennant Chevron Points (North, South, East, West)
+      for (let i = 0; i < 4; i += 1) {
+        const a = (i / 4) * Math.PI * 2;
+        const tipX = cx + Math.cos(a) * 60;
+        const tipY = cy + Math.sin(a) * 60;
+        const pX = -Math.sin(a) * 9;
+        const pY = Math.cos(a) * 9;
+        const b1X = cx + Math.cos(a) * 44 + pX;
+        const b1Y = cy + Math.sin(a) * 44 + pY;
+        const b2X = cx + Math.cos(a) * 44 - pX;
+        const b2Y = cy + Math.sin(a) * 44 - pY;
+
+        poly(
+          ctx,
+          [[b1X, b1Y], [tipX, tipY], [b2X, b2Y]],
+          linGrad(ctx, cx, cy, tipX, tipY, [[0, "#ffffff"], [0.4, "#ffd040"], [1, "#8a5410"]]),
+          "#3a1c04",
+          1.2
+        );
+      }
+
+      // Radiating valor light rays
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        ctx.strokeStyle = "rgba(255, 240, 160, 0.65)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 20, cy + Math.sin(a) * 20);
+        ctx.lineTo(cx + Math.cos(a) * 54, cy + Math.sin(a) * 54);
+        ctx.stroke();
+      }
+
+      // Inner ornate rune ring
+      ctx.strokeStyle = "#f0c840";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Glowing central sun medallion
+      const sunGrad = radGrad(ctx, cx, cy, 0, 24, [
+        [0, "#ffffff"],
+        [0.35, "#fff490"],
+        [0.7, "#f0b830"],
+        [1, "#804808"],
+      ]);
+      ellipse(ctx, cx, cy, 24, 24, sunGrad, "#3a1c04", 1.8);
+
+      // Central 8-point cross star
+      poly(
+        ctx,
+        [
+          [cx, cy - 16],
+          [cx + 4, cy - 4],
+          [cx + 16, cy],
+          [cx + 4, cy + 4],
+          [cx, cy + 16],
+          [cx - 4, cy + 4],
+          [cx - 16, cy],
+          [cx - 4, cy - 4],
+        ],
+        "#ffffff"
+      );
+      ellipse(ctx, cx, cy, 3.5, 3.5, "#fff8b0", "#8a5010", 1);
+
+      // Courage particles
+      speckles(ctx, 16, 16, 96, 96, 20, "rgba(255, 235, 140, 0.85)", 1.6);
+    };
+
+    make("fx_meteor", 128, 128, drawFxMeteor0);
+    make("fx_meteor_0", 128, 128, drawFxMeteor0);
+    make("fx_meteor_1", 128, 128, drawFxMeteor1);
+    make("fx_ice", 128, 128, drawFxIce0);
+    make("fx_ice_0", 128, 128, drawFxIce0);
+    make("fx_ice_1", 128, 128, drawFxIce1);
+    make("fx_rally", 128, 128, drawFxRally0);
+    make("fx_rally_0", 128, 128, drawFxRally0);
+    make("fx_rally_1", 128, 128, drawFxRally1);
+
     // —— Units ——
     const drawSoldierGuardWalk = (ctx, frame = 0) => {
       const f = frame % 4;

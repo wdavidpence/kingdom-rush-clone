@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.71";
+  const KRC_VERSION = "1.0.72";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -5725,8 +5725,12 @@ const bannerY = 98;
           return;
         }
         if (this.settings?.reducedMotion) {
-          const flash = this.add.circle(target.x, target.y, 8, 0xfff8c0, 0.9).setDepth(56);
-          this.tweens.add({ targets: flash, alpha: 0, scale: 4, duration: 200, onComplete: () => flash.destroy() });
+          // reducedMotion: static stamp + fade
+          const stamp = this.add.image(target.x, target.y, this.textures.exists("fx_meteor") ? "fx_meteor" : "fx_meteor_0")
+            .setScale(0.85)
+            .setAlpha(0.95)
+            .setDepth(57);
+          this.tweens.add({ targets: stamp, alpha: 0, duration: 280, ease: "Quad.easeOut", onComplete: () => stamp.destroy() });
         } else {
           // Dashed / crosshair targeting reticle at target
           const reticle = this.add.graphics().setDepth(57);
@@ -5762,15 +5766,36 @@ const bannerY = 98;
             this.effects.push({ obj: trail, life: 0.4 + Math.random() * 0.3, vx: (Math.random() - 0.5) * 20, vy: Math.random() * 30 });
           }
 
-          // Fire bloom impact set-piece
-          const bloomOuter = this.add.circle(target.x, target.y, 16, 0xff3300, 0.75).setStrokeStyle(3, 0xffaa00, 0.95).setDepth(56);
-          this.tweens.add({ targets: bloomOuter, alpha: 0, scale: 5.5, duration: 360, ease: "Quad.easeOut", onComplete: () => bloomOuter.destroy() });
+          // Authored meteor impact burst (Frame 0 core detonation -> Frame 1 expanding magma shockwave)
+          const burst0 = this.add.image(target.x, target.y, this.textures.exists("fx_meteor_0") ? "fx_meteor_0" : "fx_meteor")
+            .setScale(0.35)
+            .setAlpha(0.95)
+            .setDepth(58);
+          this.tweens.add({
+            targets: burst0,
+            scale: { from: 0.35, to: 1.15 },
+            alpha: { from: 1.0, to: 0 },
+            duration: 380,
+            ease: "Quad.easeOut",
+            onComplete: () => burst0.destroy()
+          });
 
-          const bloomInner = this.add.circle(target.x, target.y, 10, 0xffb733, 0.9).setDepth(56.5);
-          this.tweens.add({ targets: bloomInner, alpha: 0, scale: 4.5, duration: 260, ease: "Quad.easeOut", onComplete: () => bloomInner.destroy() });
-
-          const flash = this.add.circle(target.x, target.y, 8, 0xfff8c0, 0.95).setDepth(57);
-          this.tweens.add({ targets: flash, alpha: 0, scale: 3, duration: 180, ease: "Quad.easeOut", onComplete: () => flash.destroy() });
+          if (this.textures.exists("fx_meteor_1")) {
+            const burst1 = this.add.image(target.x, target.y, "fx_meteor_1")
+              .setScale(0.6)
+              .setAlpha(0)
+              .setRotation((Math.random() - 0.5) * 0.4)
+              .setDepth(57.5);
+            this.tweens.add({
+              targets: burst1,
+              scale: { from: 0.6, to: 1.45 },
+              alpha: { from: 0.9, to: 0 },
+              delay: 70,
+              duration: 440,
+              ease: "Cubic.easeOut",
+              onComplete: () => burst1.destroy()
+            });
+          }
 
           for (let i = 0; i < 12; i += 1) {
             const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.2;
@@ -5800,8 +5825,12 @@ const bannerY = 98;
           enemy.slow = Math.max(enemy.slow, [4.2, 5.0, 5.8][this.spellRank() - 1]);
         }
         if (this.settings?.reducedMotion) {
-          const flash = this.add.circle(W / 2, H / 2, 10, 0xaee9ff, 0.8).setDepth(56);
-          this.tweens.add({ targets: flash, alpha: 0, scale: 5, duration: 200, onComplete: () => flash.destroy() });
+          // reducedMotion: static stamp + fade
+          const stamp = this.add.image(W / 2, H / 2, this.textures.exists("fx_ice") ? "fx_ice" : "fx_ice_0")
+            .setScale(1.0)
+            .setAlpha(0.92)
+            .setDepth(57);
+          this.tweens.add({ targets: stamp, alpha: 0, duration: 280, ease: "Quad.easeOut", onComplete: () => stamp.destroy() });
         } else {
           // Ice reticle / ground mark
           const cx = W / 2;
@@ -5828,15 +5857,56 @@ const bannerY = 98;
             onComplete: () => iceMark.destroy()
           });
 
-          // Frost sparkles on each enemy
-          for (const enemy of this.enemies) {
-            const frost = this.add.circle(enemy.x, enemy.y - 10, 3.5, 0xaee9ff, 0.85).setDepth(72);
-            this.tweens.add({ targets: frost, alpha: 0, y: enemy.y - 32, duration: 400, onComplete: () => frost.destroy() });
+          // Authored Frost Burst sprite (Frame 0 crystal star -> Frame 1 expanding frost nova)
+          const iceBurst0 = this.add.image(cx, cy, this.textures.exists("fx_ice_0") ? "fx_ice_0" : "fx_ice")
+            .setScale(0.4)
+            .setAlpha(0.95)
+            .setDepth(58);
+          this.tweens.add({
+            targets: iceBurst0,
+            scale: { from: 0.4, to: 1.3 },
+            rotation: 0.3,
+            alpha: { from: 1.0, to: 0 },
+            duration: 420,
+            ease: "Quad.easeOut",
+            onComplete: () => iceBurst0.destroy()
+          });
+
+          if (this.textures.exists("fx_ice_1")) {
+            const iceBurst1 = this.add.image(cx, cy, "fx_ice_1")
+              .setScale(0.7)
+              .setAlpha(0)
+              .setDepth(57.5);
+            this.tweens.add({
+              targets: iceBurst1,
+              scale: { from: 0.7, to: 1.6 },
+              rotation: -0.25,
+              alpha: { from: 0.9, to: 0 },
+              delay: 80,
+              duration: 500,
+              ease: "Cubic.easeOut",
+              onComplete: () => iceBurst1.destroy()
+            });
           }
 
-          // Frost wave expanding from center
-          const wave = this.add.circle(cx, cy, 10, 0xaee9ff, 0.35).setStrokeStyle(3, 0xd0f0ff, 0.9).setDepth(55);
-          this.tweens.add({ targets: wave, alpha: 0, scale: 13, duration: 500, onComplete: () => wave.destroy() });
+          // Frost sparkles & mini frost stamps on each enemy
+          for (const enemy of this.enemies) {
+            if (this.textures.exists("fx_ice")) {
+              const enemyIce = this.add.image(enemy.x, enemy.y - 6, "fx_ice").setScale(0.28).setAlpha(0.85).setDepth(73);
+              this.tweens.add({
+                targets: enemyIce,
+                scale: 0.38,
+                alpha: 0,
+                y: enemy.y - 20,
+                duration: 450,
+                ease: "Quad.easeOut",
+                onComplete: () => enemyIce.destroy()
+              });
+            } else {
+              const frost = this.add.circle(enemy.x, enemy.y - 10, 3.5, 0xaee9ff, 0.85).setDepth(72);
+              this.tweens.add({ targets: frost, alpha: 0, y: enemy.y - 32, duration: 400, onComplete: () => frost.destroy() });
+            }
+          }
 
           // Crystal shards
           const shardCount = 14;
@@ -5880,8 +5950,12 @@ const bannerY = 98;
       if (id === "rally") {
         this.rallyTime = [7, 8.5, 10][this.spellRank() - 1];
         if (this.settings?.reducedMotion) {
-          const flash = this.add.circle(W / 2, H / 2, 10, 0xf5d76e, 0.8).setDepth(56);
-          this.tweens.add({ targets: flash, alpha: 0, scale: 5, duration: 200, onComplete: () => flash.destroy() });
+          // reducedMotion: static stamp + fade
+          const stamp = this.add.image(W / 2, H / 2, this.textures.exists("fx_rally") ? "fx_rally" : "fx_rally_0")
+            .setScale(1.0)
+            .setAlpha(0.92)
+            .setDepth(57);
+          this.tweens.add({ targets: stamp, alpha: 0, duration: 280, ease: "Quad.easeOut", onComplete: () => stamp.destroy() });
         } else {
           // Banner-style ring
           const cx = W / 2;
@@ -5922,9 +5996,38 @@ const bannerY = 98;
             onComplete: () => bannerRing.destroy()
           });
 
-          // Golden aura pulse from center
-          const aura = this.add.circle(cx, cy, 10, 0xf5d76e, 0.4).setStrokeStyle(3, 0xfff2ba, 0.9).setDepth(55);
-          this.tweens.add({ targets: aura, alpha: 0, scale: 10, duration: 600, onComplete: () => aura.destroy() });
+          // Authored Rally Burst sprite (Frame 0 sunburst crest -> Frame 1 expanding valor seal)
+          const rallyBurst0 = this.add.image(cx, cy, this.textures.exists("fx_rally_0") ? "fx_rally_0" : "fx_rally")
+            .setScale(0.4)
+            .setAlpha(0.95)
+            .setDepth(58);
+          this.tweens.add({
+            targets: rallyBurst0,
+            scale: { from: 0.4, to: 1.3 },
+            rotation: 0.2,
+            alpha: { from: 1.0, to: 0 },
+            duration: 440,
+            ease: "Quad.easeOut",
+            onComplete: () => rallyBurst0.destroy()
+          });
+
+          if (this.textures.exists("fx_rally_1")) {
+            const rallyBurst1 = this.add.image(cx, cy, "fx_rally_1")
+              .setScale(0.7)
+              .setAlpha(0)
+              .setDepth(57.5);
+            this.tweens.add({
+              targets: rallyBurst1,
+              scale: { from: 0.7, to: 1.55 },
+              rotation: -0.15,
+              alpha: { from: 0.9, to: 0 },
+              delay: 80,
+              duration: 520,
+              ease: "Cubic.easeOut",
+              onComplete: () => rallyBurst1.destroy()
+            });
+          }
+
           // Golden particles spreading outward
           for (let i = 0; i < 20; i += 1) {
             const angle = (i / 20) * Math.PI * 2;

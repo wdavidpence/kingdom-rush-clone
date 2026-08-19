@@ -108,6 +108,15 @@ const requiredKeys = [
   "enemy_titan_w3",
   "enemy_titan_enrage",
   "enemy_titan_dead",
+  "fx_meteor",
+  "fx_meteor_0",
+  "fx_meteor_1",
+  "fx_ice",
+  "fx_ice_0",
+  "fx_ice_1",
+  "fx_rally",
+  "fx_rally_0",
+  "fx_rally_1",
 ];
 
 for (const key of requiredKeys) {
