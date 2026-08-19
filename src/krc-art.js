@@ -144,22 +144,23 @@
 
     // —— Build pad ——
     make("pad_empty", 72, 48, (ctx) => {
-      shadow(ctx, 36, 36, 28, 8, 0.35);
-      ellipse(ctx, 36, 30, 28, 14, linGrad(ctx, 10, 18, 60, 42, [[0, "#6a5a40"], [0.5, "#4a3c2a"], [1, "#2c2218"]]), "#1a140e", 2.5);
-      ellipse(ctx, 36, 28, 22, 10, linGrad(ctx, 18, 20, 54, 36, [[0, "#8a7860"], [1, "#524434"]]), "#2a2016", 1.5);
-      // stone ring
-      ctx.strokeStyle = "#d4b56a";
-      ctx.lineWidth = 2.5;
+      shadow(ctx, 36, 38, 30, 8, 0.42);
+      ellipse(ctx, 36, 31, 30, 15, linGrad(ctx, 8, 16, 62, 44, [[0, "#7a6848"], [0.5, "#4a3a26"], [1, "#24180e"]]), "#120c08", 2.6);
+      ellipse(ctx, 36, 29, 23, 11, linGrad(ctx, 16, 20, 56, 38, [[0, "#c4a878"], [0.45, "#8a6e48"], [1, "#4a3824"]]), "#2a1c10", 1.8);
+      ctx.strokeStyle = "#f0d080";
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
-      ctx.ellipse(36, 28, 18, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(36, 29, 18, 8, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.strokeStyle = "rgba(255,236,170,.55)";
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = "rgba(255,240,190,.7)";
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.ellipse(36, 28, 14, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(36, 28, 13, 5.5, 0, 0, Math.PI * 2);
       ctx.stroke();
-      // plus gem
-      poly(ctx, [[36, 20], [40, 28], [36, 36], [32, 28]], linGrad(ctx, 32, 20, 40, 36, [[0, "#fff2a8"], [1, "#c9a040"]]), "#5a4018", 1.2);
+      for (const [sx, sy] of [[22, 28], [50, 28], [36, 22], [36, 36]]) {
+        ellipse(ctx, sx, sy, 2.2, 1.4, "#d8b868", "#3a2810", 0.8);
+      }
+      poly(ctx, [[36, 20], [41, 29], [36, 38], [31, 29]], linGrad(ctx, 31, 20, 41, 38, [[0, "#fff6c0"], [1, "#b88628"]]), "#4a3010", 1.4);
     });
 
     // —— Towers (96×96 for detail) ——
@@ -3972,6 +3973,18 @@
       // Warm cheek flush / blush
       ellipse(ctx, cx - 7, cy + 2, 2.2, 1.4, "rgba(220, 90, 60, 0.16)");
       ellipse(ctx, cx + 7, cy + 2, 2.2, 1.4, "rgba(220, 90, 60, 0.16)");
+
+      // Mouth
+      ctx.strokeStyle = "#5a2818";
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.arc(cx, cy + 5.2, 3.4, 0.18, Math.PI - 0.18);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255, 210, 180, 0.35)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.arc(cx, cy + 4.8, 2.6, 0.3, Math.PI - 0.3);
+      ctx.stroke();
 
       // Cheek highlight
       ctx.strokeStyle = "rgba(255,255,255,.3)";
@@ -8369,43 +8382,42 @@
 
     // —— Props ——
     make("tree_pine", 56, 72, (ctx) => {
-      shadow(ctx, 28, 64, 18, 5, 0.28);
-      // trunk
-      rounded(ctx, 24, 44, 10, 20, 2, linGrad(ctx, 24, 44, 34, 64, [[0, "#8a6038"], [1, "#3a2410"]]), "#1a1008", 1.2);
-      // bark lines
-      ctx.strokeStyle = "rgba(40,20,10,.4)";
-      ctx.lineWidth = 1;
+      shadow(ctx, 28, 66, 20, 6, 0.36);
+      rounded(ctx, 23, 42, 11, 24, 2, linGrad(ctx, 23, 42, 34, 66, [[0, "#8a6038"], [1, "#2a1808"]]), "#120c06", 1.8);
+      ctx.strokeStyle = "rgba(40,20,10,.5)";
+      ctx.lineWidth = 1.1;
       ctx.beginPath();
-      ctx.moveTo(27, 48);
-      ctx.lineTo(26, 60);
-      ctx.moveTo(31, 50);
-      ctx.lineTo(32, 62);
+      ctx.moveTo(26, 46);
+      ctx.lineTo(25, 62);
+      ctx.moveTo(31, 48);
+      ctx.lineTo(32, 64);
       ctx.stroke();
-      // layered foliage
       const layers = [
-        [[28, 8], [8, 32], [20, 28], [6, 46], [50, 46], [36, 28], [48, 32]],
-        [[28, 18], [12, 40], [22, 36], [10, 52], [46, 52], [34, 36], [44, 40]],
+        { pts: [[28, 4], [6, 28], [18, 24], [4, 44], [52, 44], [38, 24], [50, 28]], hi: "#9ed068", mid: "#3a6a28", lo: "#142810" },
+        { pts: [[28, 14], [10, 36], [20, 32], [8, 50], [48, 50], [36, 32], [46, 36]], hi: "#86b858", mid: "#2e5820", lo: "#102010" },
+        { pts: [[28, 24], [14, 42], [22, 40], [12, 56], [44, 56], [34, 40], [42, 42]], hi: "#6e9848", mid: "#244818", lo: "#0c180c" },
       ];
-      for (const pts of layers) {
-        poly(ctx, pts, linGrad(ctx, 10, 8, 48, 52, [[0, "#8ec060"], [0.5, "#3a6a30"], [1, "#1a3818"]]), "#0e2010", 1.5);
+      for (const layer of layers) {
+        poly(ctx, layer.pts, linGrad(ctx, 8, 6, 50, 56, [[0, layer.hi], [0.5, layer.mid], [1, layer.lo]]), "#0a1408", 2.1);
       }
-      // snow/highlight tips
-      ctx.strokeStyle = "rgba(220,245,180,.35)";
+      ctx.strokeStyle = "rgba(230,255,190,.4)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(24, 16);
-      ctx.lineTo(18, 28);
-      ctx.moveTo(34, 22);
-      ctx.lineTo(40, 34);
+      ctx.moveTo(24, 12);
+      ctx.lineTo(16, 26);
+      ctx.moveTo(34, 18);
+      ctx.lineTo(42, 32);
       ctx.stroke();
     });
 
     make("tree_oak", 64, 64, (ctx) => {
-      shadow(ctx, 32, 56, 20, 5, 0.28);
-      rounded(ctx, 28, 34, 10, 22, 2, linGrad(ctx, 28, 34, 38, 56, [[0, "#a07040"], [1, "#4a2810"]]), "#1a1008", 1.2);
-      ellipse(ctx, 32, 26, 24, 20, linGrad(ctx, 12, 10, 52, 42, [[0, "#90c050"], [0.5, "#4a8030"], [1, "#204018"]]), "#142810", 2);
-      ellipse(ctx, 22, 22, 10, 8, "rgba(160,220,100,.35)");
-      ellipse(ctx, 40, 18, 8, 6, "rgba(200,240,140,.25)");
+      shadow(ctx, 32, 58, 22, 6, 0.36);
+      rounded(ctx, 27, 32, 11, 26, 2, linGrad(ctx, 27, 32, 38, 58, [[0, "#a07040"], [1, "#3a200c"]]), "#120c06", 1.8);
+      ellipse(ctx, 32, 26, 26, 22, linGrad(ctx, 10, 8, 54, 44, [[0, "#a8d868"], [0.45, "#4a8828"], [1, "#183818"]]), "#102010", 2.3);
+      ellipse(ctx, 20, 22, 12, 10, linGrad(ctx, 12, 14, 30, 30, [[0, "#b8e878"], [1, "#3a6820"]]), "#142810", 1.4);
+      ellipse(ctx, 44, 20, 11, 9, linGrad(ctx, 36, 12, 54, 28, [[0, "#c8f090"], [1, "#3a6820"]]), "#142810", 1.4);
+      ellipse(ctx, 22, 20, 7, 5, "rgba(200,240,140,.35)");
+      ellipse(ctx, 42, 16, 6, 4, "rgba(220,255,170,.28)");
     });
 
     make("rock_moss", 40, 28, (ctx) => {
@@ -9181,44 +9193,46 @@
 
       // Painted Regions on the parchment:
       // 1. Forest Gate region (bottom-left)
-      ellipse(ctx, 95, 235, 85, 55, radGrad(ctx, 95, 235, 10, 85, [
-        [0, "rgba(86, 128, 70, 0.45)"],
-        [0.7, "rgba(60, 96, 48, 0.3)"],
-        [1, "rgba(60, 96, 48, 0)"]
+      ellipse(ctx, 95, 235, 92, 62, radGrad(ctx, 95, 235, 8, 92, [
+        [0, "rgba(70, 140, 62, 0.72)"],
+        [0.55, "rgba(48, 96, 42, 0.5)"],
+        [1, "rgba(40, 70, 32, 0)"]
       ]));
-      for (const [tx, ty, r] of [[45, 240, 9], [65, 220, 11], [75, 255, 10], [120, 245, 12], [140, 225, 9]]) {
-        ellipse(ctx, tx, ty, r, r * 0.9, "#486838", "#24381b", 0.8);
+      for (const [tx, ty, r] of [[42, 242, 11], [62, 218, 14], [78, 258, 12], [118, 248, 15], [142, 222, 11], [98, 210, 10]]) {
+        ellipse(ctx, tx, ty, r, r * 1.15, linGrad(ctx, tx, ty - r, tx, ty + r, [[0, "#6a9a48"], [1, "#243818"]]), "#1a2810", 1.1);
       }
+      rounded(ctx, 70, 250, 18, 8, 3, "#3a5a28");
 
       // 2. Stone Pass region (middle)
-      ellipse(ctx, 195, 160, 90, 60, radGrad(ctx, 195, 160, 10, 90, [
-        [0, "rgba(100, 115, 130, 0.4)"],
-        [0.7, "rgba(70, 82, 94, 0.25)"],
+      ellipse(ctx, 195, 160, 96, 66, radGrad(ctx, 195, 160, 8, 96, [
+        [0, "rgba(120, 132, 148, 0.62)"],
+        [0.6, "rgba(70, 82, 94, 0.38)"],
         [1, "rgba(70, 82, 94, 0)"]
       ]));
-      poly(ctx, [[140, 160], [165, 125], [190, 160]], "#62707c", "#2c343c", 1);
-      poly(ctx, [[175, 155], [200, 115], [225, 155]], "#748492", "#2c343c", 1);
-      poly(ctx, [[210, 165], [235, 130], [260, 165]], "#586470", "#2c343c", 1);
-      poly(ctx, [[192, 128], [200, 115], [208, 128]], "#e8f0f8");
+      poly(ctx, [[138, 168], [168, 118], [196, 168]], linGrad(ctx, 168, 118, 168, 168, [[0, "#d8e0e8"], [1, "#4a545c"]]), "#1c2428", 1.4);
+      poly(ctx, [[172, 162], [202, 108], [230, 162]], linGrad(ctx, 202, 108, 202, 162, [[0, "#e8f0f8"], [1, "#586470"]]), "#1c2428", 1.4);
+      poly(ctx, [[208, 170], [238, 124], [266, 170]], linGrad(ctx, 238, 124, 238, 170, [[0, "#c8d0d8"], [1, "#3a444c"]]), "#1c2428", 1.4);
+      poly(ctx, [[194, 122], [202, 108], [210, 122]], "#f4f8fc");
 
       // 3. Ember Marsh region (top-right)
-      ellipse(ctx, 285, 95, 75, 55, radGrad(ctx, 285, 95, 10, 75, [
-        [0, "rgba(140, 50, 30, 0.45)"],
-        [0.7, "rgba(90, 32, 18, 0.25)"],
+      ellipse(ctx, 285, 95, 80, 58, radGrad(ctx, 285, 95, 8, 80, [
+        [0, "rgba(180, 56, 28, 0.7)"],
+        [0.55, "rgba(110, 32, 16, 0.4)"],
         [1, "rgba(90, 32, 18, 0)"]
       ]));
-      ctx.strokeStyle = "#e85820";
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#ff6a18";
+      ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.moveTo(250, 110);
-      ctx.quadraticCurveTo(280, 85, 320, 100);
+      ctx.moveTo(248, 112);
+      ctx.quadraticCurveTo(280, 82, 324, 102);
       ctx.stroke();
-      ctx.strokeStyle = "#ffc030";
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = "#ffe060";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(250, 110);
-      ctx.quadraticCurveTo(280, 85, 320, 100);
+      ctx.moveTo(248, 112);
+      ctx.quadraticCurveTo(280, 82, 324, 102);
       ctx.stroke();
+      ellipse(ctx, 292, 88, 6, 4, "rgba(255, 200, 80, 0.55)");
 
       // Winding road connecting regions
       ctx.strokeStyle = "rgba(160, 125, 80, 0.5)";
