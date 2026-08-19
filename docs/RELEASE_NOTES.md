@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.76 — Shop portraits
+- HUD shop uses tower portraits. Worker: antigrav.
+
+
 ## KRC 1.0.75 — Gate set-piece
 - Painted door + leak overlay on the gate. Worker: antigrav.
 

@@ -129,6 +129,10 @@ const requiredKeys = [
   "tile_ember",
   "gate_arch",
   "gate_leak",
+  "portrait_archer",
+  "portrait_mage",
+  "portrait_artillery",
+  "portrait_barracks",
 ];
 
 for (const key of requiredKeys) {

@@ -3201,6 +3201,736 @@
     make("tower_barracks_l3", 128, 128, drawBarracksL3);
     make("tower_barracks_fire", 128, 128, drawBarracksFire);
 
+    // —— HUD Shop Portraits (72×72 Cropped Tower Portraits) ——
+    const drawPortraitArcher = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Framed Badge Background & Beveled Rim
+      const bgGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#22421c"],
+        [0.45, "#12260f"],
+        [1, "#071206"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, bgGrad, "#050d04", 2.2);
+
+      // Outer burnished woodland bronze & gold frame
+      const rimGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#d8b054"],
+        [0.35, "#966e2c"],
+        [0.75, "#5a3a14"],
+        [1, "#2e1c08"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, null, rimGrad, 2.2);
+
+      // Top/left inner rim highlight
+      ctx.strokeStyle = "rgba(255, 240, 180, 0.35)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(9, 5);
+      ctx.lineTo(63, 5);
+      ctx.stroke();
+
+      // Ambient forest canopy glow behind tower
+      const forestGlow = radGrad(ctx, 36, 34, 4, 30, [
+        [0, "rgba(110, 195, 75, 0.3)"],
+        [0.55, "rgba(40, 95, 30, 0.12)"],
+        [1, "rgba(10, 25, 10, 0)"],
+      ]);
+      ellipse(ctx, 36, 34, 28, 28, forestGlow);
+
+      // 2. Stone Masonry Plinth & Corbel Struts (Y=52 to 66)
+      rounded(ctx, 16, 52, 40, 15, 3, linGrad(ctx, 16, 52, 56, 67, [[0, "#828c70"], [0.4, "#5a644c"], [1, "#283020"]]), "#161c10", 1.6);
+      ctx.strokeStyle = "#161c10";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(18, 59); ctx.lineTo(54, 59);
+      ctx.moveTo(32, 52); ctx.lineTo(32, 59);
+      ctx.moveTo(44, 59); ctx.lineTo(44, 66);
+      ctx.stroke();
+
+      // Cantilever timber corbel struts
+      poly(ctx, [[20, 58], [24, 60], [18, 52], [14, 52]], "#7a4a1e", "#1a0c04", 1.2);
+      poly(ctx, [[52, 58], [48, 60], [54, 52], [58, 52]], "#6c3e16", "#1a0c04", 1.2);
+
+      // 3. Timber Watch Platform Beam (Y=46 to 53)
+      rounded(ctx, 12, 46, 48, 7, 2, linGrad(ctx, 12, 46, 60, 53, [[0, "#c68c48"], [0.35, "#966028"], [1, "#44220c"]]), "#1e0c04", 1.6);
+      ctx.strokeStyle = "rgba(255, 235, 175, 0.4)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(14, 47.5); ctx.lineTo(58, 47.5);
+      ctx.stroke();
+
+      for (const sx of [17, 29, 43, 55]) {
+        ellipse(ctx, sx, 49.5, 1.1, 1.1, "#2c2018", "#120a06", 0.8);
+        ellipse(ctx, sx - 0.2, 49.2, 0.4, 0.4, "#ffd860");
+      }
+
+      // 4. Watchtower Timber Cabin Walls & Embrasure (Y=24 to 47)
+      // Cabin body
+      rounded(ctx, 18, 24, 36, 23, 2, linGrad(ctx, 18, 24, 54, 47, [[0, "#a06830"], [0.4, "#7a481c"], [1, "#3c1e08"]]), "#1a0c04", 1.5);
+      // Vertical timber grain lines
+      ctx.strokeStyle = "#1a0c04";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(26, 24); ctx.lineTo(26, 46);
+      ctx.moveTo(46, 24); ctx.lineTo(46, 46);
+      ctx.stroke();
+
+      // Embrasure opening (window)
+      rounded(ctx, 24, 25, 24, 19, 2.5, linGrad(ctx, 24, 25, 48, 44, [[0, "#100804"], [0.5, "#1e1008"], [1, "#0a0402"]]), "#140802", 1.4);
+      ellipse(ctx, 36, 33, 10, 6, "rgba(240, 180, 80, 0.14)");
+
+      // Windowsill breastwork
+      rounded(ctx, 23, 40, 26, 6, 1.5, linGrad(ctx, 23, 40, 49, 46, [[0, "#b88242"], [1, "#502a0e"]]), "#1e0e04", 1.2);
+      ctx.strokeStyle = "rgba(255, 235, 175, 0.35)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(24, 41); ctx.lineTo(48, 41);
+      ctx.stroke();
+
+      // 5. Hunter / Ranger in Embrasure
+      // Quiver behind shoulder
+      poly(ctx, [[28, 27], [32, 25], [34, 34], [30, 35]], "#6e3e1c", "#200e04", 1);
+      for (let i = 0; i < 3; i += 1) {
+        const ax = 29 + i * 1.8;
+        const ay = 24 - i * 1.1;
+        ctx.strokeStyle = "#d49a52";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay + 3); ctx.lineTo(ax, ay);
+        ctx.stroke();
+        poly(ctx, [[ax, ay], [ax - 1.1, ay + 2], [ax + 1.1, ay + 2]], i === 1 ? "#ea3424" : "#f6f2e4", "#1a0a04", 0.6);
+      }
+
+      // Torso & Hunter Cloak
+      poly(ctx, [[30, 32], [42, 32], [43, 41], [29, 41]], linGrad(ctx, 30, 32, 42, 41, [[0, "#366834"], [0.4, "#244a22"], [1, "#122810"]]), "#0c1a0a", 1);
+
+      // Hooded Head & Face
+      rounded(ctx, 32.5, 26, 8, 9, 3.5, linGrad(ctx, 32.5, 26, 40.5, 35, [[0, "#3a7036"], [0.5, "#265024"], [1, "#142c12"]]), "#0c1a0a", 1);
+      ellipse(ctx, 36.5, 30.5, 2.8, 3, "#f6d5ae", "#3a2214", 0.8);
+      ctx.fillStyle = "rgba(18, 36, 16, 0.7)";
+      ctx.fillRect(34, 28, 5.5, 1.8);
+      ctx.fillStyle = "#22140a";
+      ctx.fillRect(35.5, 30.2, 1.2, 1);
+      ctx.fillRect(37.8, 30.2, 1.2, 1);
+
+      // Crimson & Gold Ranger Cap Feather
+      poly(ctx, [[34, 26.5], [26, 22.5], [30, 28]], linGrad(ctx, 34, 26.5, 26, 22.5, [[0, "#ea3824"], [1, "#b81c0e"]]), "#4a0804", 0.8);
+      ctx.strokeStyle = "#ffd248";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(33.5, 26.5); ctx.lineTo(27, 23.5);
+      ctx.stroke();
+
+      // Recurve Yew Longbow
+      ctx.strokeStyle = "#241004";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(43, 23);
+      ctx.quadraticCurveTo(46, 32, 43, 41);
+      ctx.stroke();
+
+      ctx.strokeStyle = linGrad(ctx, 43, 23, 46, 41, [[0, "#d89646"], [0.5, "#b07230"], [1, "#744214"]]);
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(43, 23);
+      ctx.quadraticCurveTo(46, 32, 43, 41);
+      ctx.stroke();
+
+      ellipse(ctx, 43, 23, 0.9, 0.9, "#ffe268");
+      ellipse(ctx, 43, 41, 0.9, 0.9, "#ffe268");
+
+      // Bowstring
+      ctx.strokeStyle = "rgba(255, 255, 240, 0.85)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(43, 23.5); ctx.lineTo(43, 40.5);
+      ctx.stroke();
+
+      // Archer Hands
+      ellipse(ctx, 44, 32, 1.3, 1.3, "#543014", "#1a0c04", 0.6);
+      rounded(ctx, 31, 39.5, 3, 2.2, 0.8, "#f6d5ae", "#3a2214", 0.6);
+
+      // 6. Thatched Eave & Roof Apex (Y=6 to 26)
+      // Lower Thatched Eave
+      const eavePoly = [
+        [8, 25],
+        [36, 10],
+        [64, 25],
+        [60, 27],
+        [36, 13],
+        [12, 27],
+      ];
+      poly(ctx, eavePoly, linGrad(ctx, 36, 10, 36, 27, [[0, "#f4dc7c"], [0.35, "#d4aa44"], [0.75, "#8e641c"], [1, "#4a320a"]]), "#1e1004", 1.6);
+
+      ctx.strokeStyle = "rgba(60, 36, 8, 0.55)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      for (let i = 0; i < 7; i += 1) {
+        const sx = 14 + i * 6.8;
+        const sy = 26 - Math.abs(sx - 36) * 0.45;
+        ctx.arc(sx, sy, 3.2, 0.1, Math.PI * 0.95);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 246, 180, 0.7)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(14, 24); ctx.lineTo(36, 11); ctx.lineTo(58, 24);
+      ctx.stroke();
+
+      // Upper Thatched Tier & Peak Cap (Y=5 to 17)
+      const upperPoly = [
+        [18, 17],
+        [36, 5],
+        [54, 17],
+        [50, 19],
+        [36, 8],
+        [22, 19],
+      ];
+      poly(ctx, upperPoly, linGrad(ctx, 36, 5, 36, 19, [[0, "#fff49e"], [0.4, "#dfb84c"], [1, "#52380c"]]), "#1e1004", 1.4);
+
+      // Crossed ridge timbers & finial
+      poly(ctx, [[33, 8], [39, 2], [41, 4], [35, 10]], linGrad(ctx, 33, 2, 41, 10, [[0, "#aa723a"], [1, "#542e0e"]]), "#200e04", 1.0);
+      poly(ctx, [[39, 8], [33, 2], [31, 4], [37, 10]], linGrad(ctx, 31, 2, 39, 10, [[0, "#905a28"], [1, "#442006"]]), "#200e04", 1.0);
+      poly(ctx, [[36, 1], [38, 4], [36, 5], [34, 4]], linGrad(ctx, 34, 1, 38, 5, [[0, "#ffd860"], [1, "#643810"]]), "#200e04", 0.9);
+
+      // 7. Ivy Vines & Heraldic Banner
+      // Ivy vine on left
+      ctx.strokeStyle = "#16280e";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(12, 64);
+      ctx.bezierCurveTo(10, 52, 18, 46, 16, 36);
+      ctx.stroke();
+
+      const leaves = [
+        [12, 62, 2.5, 2.2],
+        [10, 54, 2.8, 2.4],
+        [16, 48, 3.0, 2.6],
+        [13, 42, 2.6, 2.3],
+        [18, 36, 2.5, 2.2],
+      ];
+      for (const [lx, ly, rx, ry] of leaves) {
+        ellipse(ctx, lx, ly, rx, ry, linGrad(ctx, lx - rx, ly - ry, lx + rx, ly + ry, [[0, "#7ec83a"], [0.5, "#428220"], [1, "#1a3e10"]]), "#0e200a", 0.8);
+      }
+
+      // Small ranger banner on right platform
+      poly(ctx, [[48, 48], [58, 48], [58, 64], [53, 60], [48, 64]], linGrad(ctx, 48, 48, 58, 64, [[0, "#2c5e32"], [0.5, "#1c4422"], [1, "#0e2614"]]), "#08180a", 1.0);
+      ctx.strokeStyle = "#ffd854";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(49.5, 49); ctx.lineTo(49.5, 62); ctx.lineTo(53, 59); ctx.lineTo(56.5, 62); ctx.lineTo(56.5, 49);
+      ctx.stroke();
+      ellipse(ctx, 53, 54, 1.8, 1.8, "#ffd854", "#705410", 0.6);
+
+      // Corner rivets on badge
+      for (const [cx, cy] of [[7, 7], [65, 7], [7, 65], [65, 65]]) {
+        ellipse(ctx, cx, cy, 1.6, 1.6, "#ffd854", "#6a4a12", 0.8);
+        ellipse(ctx, cx - 0.4, cy - 0.4, 0.5, 0.5, "#ffffff");
+      }
+    };
+
+    const drawPortraitMage = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Framed Badge Background & Beveled Rim
+      const bgGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#2c1a4e"],
+        [0.45, "#160a30"],
+        [1, "#080316"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, bgGrad, "#060210", 2.2);
+
+      // Outer burnished celestial gold & violet frame
+      const rimGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#ffd864"],
+        [0.35, "#b47cff"],
+        [0.75, "#6832a8"],
+        [1, "#280a48"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, null, rimGrad, 2.2);
+
+      // Inner highlight bevel line
+      ctx.strokeStyle = "rgba(240, 220, 255, 0.35)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(9, 5); ctx.lineTo(63, 5);
+      ctx.stroke();
+
+      // Ambient radial arcane nebula glow behind crystal
+      const manaGlow = radGrad(ctx, 36, 25, 3, 30, [
+        [0, "rgba(220, 180, 255, 0.55)"],
+        [0.4, "rgba(150, 70, 240, 0.28)"],
+        [0.8, "rgba(70, 20, 160, 0.1)"],
+        [1, "rgba(20, 5, 60, 0)"],
+      ]);
+      ellipse(ctx, 36, 25, 28, 28, manaGlow);
+
+      // 2. Obsidian & Violet Spire Shaft & Plinth (Y=46 to 66)
+      // Plinth dais
+      rounded(ctx, 15, 54, 42, 13, 3, linGrad(ctx, 15, 54, 57, 67, [[0, "#8272b2"], [0.4, "#50407a"], [1, "#221444"]]), "#100624", 1.8);
+      ctx.strokeStyle = "rgba(220, 200, 255, 0.3)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(17, 55.5); ctx.lineTo(55, 55.5);
+      ctx.stroke();
+
+      // Dais runic gold band
+      ctx.strokeStyle = "#ffd452";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(18, 59); ctx.lineTo(54, 59);
+      ctx.stroke();
+      for (const gx of [22, 31, 41, 50]) {
+        ellipse(ctx, gx, 59, 1.0, 1.0, "#a6e4ff", "#1c3854", 0.6);
+      }
+
+      // Spire shaft tapered body (Y=36 to 55)
+      poly(ctx, [[21, 55], [25, 36], [47, 36], [51, 55]], linGrad(ctx, 21, 36, 51, 55, [[0, "#7a6aa8"], [0.35, "#524480"], [1, "#1c103c"]]), "#100624", 1.8);
+      // Shaft facet bevel lines
+      ctx.strokeStyle = "rgba(220, 205, 255, 0.3)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(31, 37); ctx.lineTo(29, 54);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(20, 10, 40, 0.45)";
+      ctx.beginPath();
+      ctx.moveTo(41, 37); ctx.lineTo(43, 54);
+      ctx.stroke();
+
+      // Sanctum archway vault with glowing mana vortex
+      rounded(ctx, 29, 42, 14, 13, 6, "#0e061c", "#16082e", 1.5);
+      ellipse(ctx, 36, 49, 5.5, 4.5, radGrad(ctx, 36, 49, 0.5, 5.5, [[0, "#ffffff"], [0.4, "#a878ff"], [0.8, "#5028aa"], [1, "rgba(20,6,50,0)"]]));
+      ctx.strokeStyle = "#ffd854";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(36, 46, 4, Math.PI, Math.PI * 2);
+      ctx.moveTo(36, 46); ctx.lineTo(36, 54);
+      ctx.stroke();
+      ellipse(ctx, 36, 46, 1.0, 1.0, "#6fe4ff");
+
+      // Engraved glowing runes on shaft
+      ctx.strokeStyle = "rgba(180, 225, 255, 0.75)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(25, 44); ctx.lineTo(27, 47); ctx.lineTo(25, 48);
+      ctx.moveTo(47, 44); ctx.lineTo(45, 47); ctx.lineTo(47, 48);
+      ctx.stroke();
+
+      // 3. Flanking Pylon Brackets & Cradle Collar (Y=30 to 38)
+      // Left pylon & crystal shard
+      poly(ctx, [[17, 46], [22, 46], [25, 34], [20, 31]], linGrad(ctx, 17, 31, 25, 46, [[0, "#8e7ebc"], [1, "#261652"]]), "#12082c", 1.2);
+      poly(ctx, [[20, 31], [23, 27], [26, 31], [25, 34]], "#ffd860", "#3a2406", 1.0);
+      ellipse(ctx, 23, 28, 1.3, 1.8, "#6fe4ff", "#123c52", 0.6);
+
+      // Right pylon & crystal shard
+      poly(ctx, [[55, 46], [50, 46], [47, 34], [52, 31]], linGrad(ctx, 47, 31, 55, 46, [[0, "#7c6ca8"], [1, "#1e0e44"]]), "#12082c", 1.2);
+      poly(ctx, [[52, 31], [49, 27], [46, 31], [47, 34]], "#ffd860", "#3a2406", 1.0);
+      ellipse(ctx, 49, 28, 1.3, 1.8, "#6fe4ff", "#123c52", 0.6);
+
+      // Golden Cradle Collar Ring
+      rounded(ctx, 26, 33, 20, 5, 2, linGrad(ctx, 26, 33, 46, 38, [[0, "#ffd868"], [0.5, "#d49a2a"], [1, "#744c0c"]]), "#2a1604", 1.2);
+      for (const cx of [28, 33, 38, 43]) {
+        ellipse(ctx, cx, 35.5, 0.9, 0.9, "#8ae8ff", "#123c52", 0.6);
+      }
+
+      // 4. Levitating Prismatic Power Crystal (Center Y=8 to 32)
+      // Facets
+      // Back left shadow facet
+      poly(ctx, [[36, 8], [24, 21], [28, 32], [36, 33]], linGrad(ctx, 24, 8, 36, 33, [[0, "#9872e8"], [0.5, "#582cb4"], [1, "#280e6e"]]), "#140436", 1.4);
+      // Back right facet
+      poly(ctx, [[36, 8], [48, 21], [44, 32], [36, 33]], linGrad(ctx, 36, 8, 48, 33, [[0, "#c0a0ff"], [0.5, "#7a46e0"], [1, "#3c168c"]]), "#140436", 1.4);
+      // Center front-left prism facet
+      poly(ctx, [[36, 8], [24, 21], [36, 23]], linGrad(ctx, 24, 8, 36, 23, [[0, "#d8c4ff"], [0.45, "#8e5ef0"], [1, "#4e24b4"]]), "#140436", 1.1);
+      // Center front-right illuminated facet
+      poly(ctx, [[36, 8], [48, 21], [36, 23]], linGrad(ctx, 36, 8, 48, 23, [[0, "#ffffff"], [0.35, "#c8b0ff"], [0.75, "#9062f4"], [1, "#5a2ac8"]]), "#140436", 1.1);
+      // Lower center-left facet
+      poly(ctx, [[24, 21], [36, 23], [36, 33], [28, 32]], linGrad(ctx, 24, 21, 36, 33, [[0, "#703ec4"], [1, "#2c0e6c"]]), "#140436", 1.1);
+      // Lower center-right facet
+      poly(ctx, [[48, 21], [36, 23], [36, 33], [44, 32]], linGrad(ctx, 36, 21, 48, 33, [[0, "#9462f4"], [1, "#42168e"]]), "#140436", 1.1);
+
+      // Glowing Mana Core inside crystal
+      ellipse(ctx, 36, 21.5, 4.5, 4.5, radGrad(ctx, 35, 20.5, 0.5, 4.5, [[0, "#ffffff"], [0.5, "#d6beff"], [1, "rgba(140,80,240,0.3)"]]), "#ffffff", 0.9);
+      ellipse(ctx, 36, 21.5, 1.8, 1.8, "#ffffff");
+
+      // Specular vertex and ridge highlights
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(36, 8); ctx.lineTo(36, 23); ctx.lineTo(36, 33);
+      ctx.moveTo(36, 8); ctx.lineTo(48, 21);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(160, 235, 255, 0.85)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(36, 23); ctx.lineTo(24, 21);
+      ctx.moveTo(36, 23); ctx.lineTo(48, 21);
+      ctx.stroke();
+      ellipse(ctx, 36, 8.5, 1.2, 1.2, "#ffffff");
+
+      // Concentric Tilted Rune Rings
+      // Upper Ring
+      ctx.strokeStyle = "rgba(160, 225, 255, 0.85)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.ellipse(36, 20, 16, 5, -0.08, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Lower Ring
+      ctx.strokeStyle = "rgba(215, 170, 255, 0.75)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(36, 28, 19, 6, 0.05, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Orbiting energy sparkles
+      for (const [sx, sy, sr, sc] of [
+        [19, 16, 1.8, "#ffffff"],
+        [53, 17, 1.5, "#70f0ff"],
+        [50, 31, 1.3, "#f5d76e"],
+        [22, 30, 1.2, "#e9d5ff"],
+      ]) {
+        ellipse(ctx, sx, sy, sr, sr, sc);
+      }
+
+      // Corner rivets on badge
+      for (const [cx, cy] of [[7, 7], [65, 7], [7, 65], [65, 65]]) {
+        ellipse(ctx, cx, cy, 1.6, 1.6, "#70f0ff", "#183248", 0.8);
+        ellipse(ctx, cx - 0.4, cy - 0.4, 0.5, 0.5, "#ffffff");
+      }
+    };
+
+    const drawPortraitArtillery = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Framed Badge Background & Beveled Rim
+      const bgGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#3e1c0c"],
+        [0.45, "#200c04"],
+        [1, "#0d0402"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, bgGrad, "#080201", 2.2);
+
+      // Outer heavy riveted iron & bronze frame
+      const rimGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#f5d76e"],
+        [0.35, "#9ea8b2"],
+        [0.75, "#525a62"],
+        [1, "#281408"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, null, rimGrad, 2.2);
+
+      // Inner highlight bevel line
+      ctx.strokeStyle = "rgba(255, 220, 160, 0.32)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(9, 5); ctx.lineTo(63, 5);
+      ctx.stroke();
+
+      // Ambient radial furnace heat glow behind cannon
+      const furnaceGlow = radGrad(ctx, 30, 36, 3, 28, [
+        [0, "rgba(255, 120, 20, 0.4)"],
+        [0.45, "rgba(180, 50, 10, 0.18)"],
+        [1, "rgba(40, 10, 0, 0)"],
+      ]);
+      ellipse(ctx, 30, 36, 26, 26, furnaceGlow);
+
+      // 2. Quarry Stone Plinth & Timber Firing Platform (Y=48 to 66)
+      rounded(ctx, 14, 54, 44, 13, 3, linGrad(ctx, 14, 54, 58, 67, [[0, "#a88054"], [0.4, "#744e2e"], [1, "#361c0c"]]), "#180c04", 1.8);
+      ctx.strokeStyle = "#180c04";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(16, 60); ctx.lineTo(56, 60);
+      ctx.moveTo(28, 54); ctx.lineTo(28, 60);
+      ctx.moveTo(42, 60); ctx.lineTo(42, 67);
+      ctx.stroke();
+
+      // Heavy reinforced timber platform
+      rounded(ctx, 10, 48, 52, 8, 2, linGrad(ctx, 10, 48, 62, 56, [[0, "#c48846"], [0.35, "#96602c"], [1, "#40200a"]]), "#1e0c02", 1.6);
+      ctx.strokeStyle = "rgba(255, 235, 175, 0.35)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(12, 49.5); ctx.lineTo(60, 49.5);
+      ctx.stroke();
+
+      for (const sx of [14, 25, 36, 47, 58]) {
+        ellipse(ctx, sx, 52, 1.1, 1.1, "#2a2622", "#0c0806", 0.8);
+        ellipse(ctx, sx - 0.2, 51.7, 0.4, 0.4, "#ffd452");
+      }
+
+      // Heavy cast-iron swivel turntable base
+      ellipse(ctx, 34, 47, 16, 4.5, linGrad(ctx, 18, 42, 50, 51, [[0, "#4e4844"], [0.5, "#2e2a26"], [1, "#161412"]]), "#0c0a08", 1.4);
+
+      // 3. Munitions: Powder Keg & Cannonball Stack
+      // Oak powder keg on left
+      rounded(ctx, 12, 38, 9, 12, 2, linGrad(ctx, 12, 38, 21, 50, [[0, "#8a502c"], [0.5, "#5a3014"], [1, "#2e1406"]]), "#140602", 1.1);
+      ctx.strokeStyle = "#383430";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(12, 41); ctx.lineTo(21, 41);
+      ctx.moveTo(12, 47); ctx.lineTo(21, 47);
+      ctx.stroke();
+      ellipse(ctx, 16.5, 39, 1.2, 1.2, "#ffd452", "#503808", 0.6);
+
+      // Cast-iron cannonball stack on right
+      for (const [bx, by] of [[49, 46], [55, 46], [52, 41]]) {
+        ellipse(ctx, bx, by, 3.2, 3.2, linGrad(ctx, bx - 2, by - 2, bx + 3, by + 3, [[0, "#525a62"], [0.4, "#282c32"], [1, "#101214"]]), "#0c0e10", 1.0);
+        ellipse(ctx, bx - 0.9, by - 0.9, 0.8, 0.8, "#ffffff");
+      }
+
+      // 4. Massive Cast-Iron Mortar Cannon (Focal Center)
+      ctx.save();
+      ctx.translate(34, 38);
+      ctx.rotate(-0.52);
+
+      // Barrel casing
+      const ironGrad = linGrad(ctx, -10, -12, 24, 12, [
+        [0, "#9ea8b2"],
+        [0.35, "#525a62"],
+        [0.7, "#282c32"],
+        [1, "#141618"],
+      ]);
+      rounded(ctx, -9, -11, 33, 22, 4, ironGrad, "#0e1012", 1.8);
+
+      // Polished bronze muzzle collar ring
+      const bronzeGrad = linGrad(ctx, 20, -13, 27, 13, [
+        [0, "#f5d76e"],
+        [0.5, "#b88c28"],
+        [1, "#664810"],
+      ]);
+      rounded(ctx, 20, -13, 7, 26, 3, bronzeGrad, "#3d2a08", 1.3);
+
+      // Cannon bore with hot interior glow
+      ellipse(ctx, 27, 0, 2.5, 9, "#180400", "#f5c85a", 0.9);
+      ellipse(ctx, 27, 0, 1.4, 6.5, "#801200");
+
+      // Mid-barrel reinforcing rib band & rivets
+      ctx.strokeStyle = "#f5c85a";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(5, -11); ctx.lineTo(5, 11);
+      ctx.stroke();
+      ellipse(ctx, 5, -6.5, 0.9, 0.9, "#ffffff");
+      ellipse(ctx, 5, 6.5, 0.9, 0.9, "#ffffff");
+
+      // Fuse line & touchhole
+      ctx.strokeStyle = "#d0a070";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-5, -11);
+      ctx.quadraticCurveTo(-11, -17, -17, -14);
+      ctx.stroke();
+
+      // Sparking fuse starburst
+      ellipse(ctx, -17, -14, 3.2, 3.2, "#ffaa00");
+      ellipse(ctx, -17, -14, 1.4, 1.4, "#ffffff");
+
+      ctx.restore();
+
+      // Sparks & embers drifting in air
+      for (const [sx, sy, sr, sc] of [
+        [18, 18, 1.4, "#ffcc00"],
+        [24, 12, 1.1, "#ff6600"],
+        [15, 24, 1.0, "#ffffff"],
+        [50, 18, 1.3, "#ffaa00"],
+        [58, 28, 1.0, "#ff6600"],
+      ]) {
+        ellipse(ctx, sx, sy, sr, sr, sc);
+      }
+
+      // Small Red Pennant at upper left
+      poly(ctx, [[14, 12], [24, 12], [26, 24], [20, 20], [14, 25]], linGrad(ctx, 14, 12, 26, 25, [[0, "#b82414"], [0.5, "#801206"], [1, "#400402"]]), "#1a0200", 1.0);
+      ctx.strokeStyle = "#ffd452";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(15, 13); ctx.lineTo(15, 23); ctx.lineTo(20, 19); ctx.lineTo(25, 22); ctx.lineTo(25, 13);
+      ctx.stroke();
+
+      // Corner rivets on badge
+      for (const [cx, cy] of [[7, 7], [65, 7], [7, 65], [65, 65]]) {
+        ellipse(ctx, cx, cy, 1.6, 1.6, "#ffd452", "#5a3a0e", 0.8);
+        ellipse(ctx, cx - 0.4, cy - 0.4, 0.5, 0.5, "#ffffff");
+      }
+    };
+
+    const drawPortraitBarracks = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Framed Badge Background & Beveled Rim
+      const bgGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#1e2c3e"],
+        [0.45, "#101a26"],
+        [1, "#080c14"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, bgGrad, "#04080e", 2.2);
+
+      // Outer burnished knightly gold & steel frame
+      const rimGrad = linGrad(ctx, 3, 3, 69, 69, [
+        [0, "#ffd700"],
+        [0.35, "#c89a28"],
+        [0.75, "#60748c"],
+        [1, "#283444"],
+      ]);
+      rounded(ctx, 3, 3, 66, 66, 8, null, rimGrad, 2.2);
+
+      // Inner highlight bevel line
+      ctx.strokeStyle = "rgba(255, 245, 200, 0.35)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(9, 5); ctx.lineTo(63, 5);
+      ctx.stroke();
+
+      // Ambient radial warm torchlight glow behind keep
+      const torchGlow = radGrad(ctx, 36, 36, 4, 30, [
+        [0, "rgba(255, 200, 90, 0.25)"],
+        [0.5, "rgba(180, 130, 40, 0.1)"],
+        [1, "rgba(20, 35, 50, 0)"],
+      ]);
+      ellipse(ctx, 36, 36, 28, 28, torchGlow);
+
+      // 2. Solid Stone Fortress Keep Tower Body (Y=12 to 58)
+      rounded(ctx, 14, 16, 44, 46, 3, linGrad(ctx, 14, 16, 58, 62, [[0, "#dac890"], [0.35, "#a8945c"], [0.75, "#705e34"], [1, "#3c2e16"]]), "#1a1206", 1.8);
+
+      // Corner stone quoins
+      for (const [qx, qy, qw, qh] of [
+        [14, 18, 5, 5], [14, 25, 7, 5], [14, 32, 5, 5], [14, 39, 7, 5],
+        [53, 18, 5, 5], [51, 25, 7, 5], [53, 32, 5, 5], [51, 39, 7, 5],
+      ]) {
+        rounded(ctx, qx, qy, qw, qh, 1, linGrad(ctx, qx, qy, qx + qw, qy + qh, [[0, "#eedcaa"], [1, "#867240"]]), "#221808", 0.7);
+      }
+
+      // Parapet machicolation corbels (Y=14 to 20)
+      for (let i = 0; i < 4; i += 1) {
+        const cx = 19 + i * 11;
+        poly(ctx, [[cx - 2.5, 20], [cx + 2.5, 20], [cx + 3.5, 14], [cx - 3.5, 14]], linGrad(ctx, cx - 3, 14, cx + 3, 20, [[0, "#eedcaa"], [1, "#7c6838"]]), "#1e1406", 0.9);
+      }
+      rounded(ctx, 12, 13, 48, 5, 1.5, linGrad(ctx, 12, 13, 60, 18, [[0, "#f0deaa"], [0.4, "#beaa70"], [1, "#66542a"]]), "#1e1406", 1.2);
+
+      // Crenellated Merlons (3 teeth across top, Y=6 to 15)
+      for (let i = 0; i < 3; i += 1) {
+        const mx = 15 + i * 15;
+        rounded(ctx, mx, 7, 12, 8, 1.5, linGrad(ctx, mx, 7, mx + 12, 15, [[0, "#faeab6"], [0.4, "#c8b478"], [1, "#746234"]]), "#1e1406", 1.2);
+        rounded(ctx, mx - 0.5, 5.5, 13, 2.5, 1, "#fff2c8", "#2c1e08", 0.8);
+        rounded(ctx, mx + 4.5, 9, 2.5, 4.5, 0.8, "#1c1004");
+      }
+
+      // 3. Arched Portal & Oak Doors (Y=38 to 64)
+      poly(
+        ctx,
+        [[23, 62], [23, 46], [36, 36], [49, 46], [49, 62], [46, 62], [46, 48], [36, 39], [26, 48], [26, 62]],
+        linGrad(ctx, 23, 36, 49, 62, [[0, "#fae6b4"], [0.5, "#b8a064"], [1, "#5c4a24"]]),
+        "#1e1406",
+        1.4
+      );
+      // Keystone
+      poly(ctx, [[33, 39], [39, 39], [40, 34], [32, 34]], "#fff4c8", "#2c1e08", 0.9);
+
+      // Oak double doors
+      rounded(ctx, 26, 43, 20, 19, 2, linGrad(ctx, 26, 43, 46, 62, [[0, "#4a2a14"], [0.5, "#321a0a"], [1, "#1c0e04"]]), "#0e0602", 1.0);
+      ctx.strokeStyle = "#100602";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(36, 44); ctx.lineTo(36, 61);
+      ctx.stroke();
+
+      // Wrought-iron strap hinges
+      for (const hy of [48, 56]) {
+        ctx.strokeStyle = "#282420";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(27, hy); ctx.lineTo(34, hy);
+        ctx.moveTo(38, hy); ctx.lineTo(45, hy);
+        ctx.stroke();
+        ellipse(ctx, 29, hy, 0.7, 0.7, "#ffd452");
+        ellipse(ctx, 43, hy, 0.7, 0.7, "#ffd452");
+      }
+
+      // 4. Crossed Forged Steel Blades & Heraldic Guard Shield
+      // Crossed swords behind shield
+      ctx.strokeStyle = "#e2eafd";
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(18, 24); ctx.lineTo(54, 56);
+      ctx.moveTo(54, 24); ctx.lineTo(18, 56);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#404c5a";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(18, 24); ctx.lineTo(54, 56);
+      ctx.moveTo(54, 24); ctx.lineTo(18, 56);
+      ctx.stroke();
+
+      // Gold crossguards & pommels
+      ctx.strokeStyle = "#f5c85a";
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(15, 27); ctx.lineTo(23, 21);
+      ctx.moveTo(57, 27); ctx.lineTo(49, 21);
+      ctx.stroke();
+      ellipse(ctx, 16, 22, 1.8, 1.8, "#ffd700", "#8a6010", 0.7);
+      ellipse(ctx, 56, 22, 1.8, 1.8, "#ffd700", "#8a6010", 0.7);
+
+      // Heater Shield (Foreground center)
+      const shieldGrad = linGrad(ctx, 22, 28, 50, 58, [
+        [0, "#2a5482"],
+        [0.5, "#183454"],
+        [1, "#0c1a2e"],
+      ]);
+      ctx.beginPath();
+      ctx.moveTo(23, 30);
+      ctx.lineTo(49, 30);
+      ctx.quadraticCurveTo(51, 45, 36, 59);
+      ctx.quadraticCurveTo(21, 45, 23, 30);
+      ctx.closePath();
+      ctx.fillStyle = shieldGrad;
+      ctx.fill();
+
+      const shieldRim = linGrad(ctx, 22, 28, 50, 58, [
+        [0, "#f5d76e"],
+        [0.5, "#c89a28"],
+        [1, "#78540c"],
+      ]);
+      ctx.strokeStyle = shieldRim;
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      // Shield rim rivets
+      for (const [rx, ry] of [[25, 32], [47, 32], [36, 55], [25, 43], [47, 43]]) {
+        ellipse(ctx, rx, ry, 1.1, 1.1, "#e0e8f0", "#303840", 0.6);
+      }
+
+      // Heraldic Cross Insignia on shield
+      ctx.fillStyle = "#f5c85a";
+      ctx.fillRect(34, 33, 4, 18);
+      ctx.fillRect(28, 38, 16, 4);
+      ctx.strokeStyle = "#8a5810";
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(34, 33, 4, 18);
+      ctx.strokeRect(28, 38, 16, 4);
+
+      // Ruby gem in center of cross
+      ellipse(ctx, 36, 40, 2.8, 2.8, "#e04838", "#80180c", 0.8);
+      ellipse(ctx, 35, 39, 0.8, 0.8, "#ffffff");
+
+      // Corner rivets on badge
+      for (const [cx, cy] of [[7, 7], [65, 7], [7, 65], [65, 65]]) {
+        ellipse(ctx, cx, cy, 1.6, 1.6, "#ffd700", "#6a5010", 0.8);
+        ellipse(ctx, cx - 0.4, cy - 0.4, 0.5, 0.5, "#ffffff");
+      }
+    };
+
+    make("portrait_archer", 72, 72, drawPortraitArcher);
+    make("portrait_mage", 72, 72, drawPortraitMage);
+    make("portrait_artillery", 72, 72, drawPortraitArtillery);
+    make("portrait_barracks", 72, 72, drawPortraitBarracks);
+
     // —— Enemies ——
     const face = (ctx, cx, cy, eye = "#f6f0c2", pupil = "#101008", angry = false) => {
       // Eye sclera
