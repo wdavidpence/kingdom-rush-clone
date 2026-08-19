@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.65";
+  const KRC_VERSION = "1.0.66";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2856,6 +2856,26 @@ const bannerY = 98;
       this.updateUpgradeLabel();
     }
 
+    getTowerScale(typeOrTower, level = 0) {
+      const type = typeof typeOrTower === "string" ? typeOrTower : typeOrTower?.type;
+      const lvl = typeof typeOrTower === "object" ? (typeOrTower?.level || 0) : level;
+      if (type === "archer") {
+        return 0.465 + lvl * 0.03;
+      }
+      return 0.62 + lvl * 0.04;
+    }
+
+    getTowerSpawnScale(type) {
+      return type === "archer" ? 0.2625 : 0.35;
+    }
+
+    getTowerBounceScale(type, level = 0) {
+      if (type === "archer") {
+        return 0.585 + level * 0.03;
+      }
+      return 0.78 + level * 0.04;
+    }
+
     buildTower(pad, type) {
       const cfg = TOWERS[type];
       if (this.gold < cfg.cost) {
@@ -2884,7 +2904,8 @@ const bannerY = 98;
         tower.rallySegment = rally.segment;
       }
       pad.tower = tower;
-      tower.sprite = this.add.image(pad.x, pad.y - 8, `tower_${type}`).setScale(0.62).setDepth(30);
+      const baseScale = this.getTowerScale(type, 0);
+      tower.sprite = this.add.image(pad.x, pad.y - 8, `tower_${type}`).setScale(baseScale).setDepth(30);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.makeRangeDecal(pad.x, pad.y, cfg.range[0], cfg.color);
       if (type === "barracks") {
@@ -2917,11 +2938,11 @@ const bannerY = 98;
       }
       this.towers.push(tower);
       if (!this.settings?.reducedMotion) {
-        tower.sprite.setPosition(pad.x, pad.y + 6).setScale(0.35);
+        tower.sprite.setPosition(pad.x, pad.y + 6).setScale(this.getTowerSpawnScale(type));
         this.tweens.add({
           targets: tower.sprite,
           y: pad.y - 8,
-          scale: 0.62,
+          scale: baseScale,
           duration: 240,
           ease: "Cubic.out",
         });
@@ -3086,7 +3107,7 @@ const bannerY = 98;
       const idleKeyPath = this.textures.exists(`tower_${tower.type}_idle`) ? `tower_${tower.type}_idle` : `tower_${tower.type}`;
       if (tower.sprite) {
         tower.sprite.setTexture(idleKeyPath);
-        tower.sprite.setScale(0.62 + tower.level * 0.04);
+        tower.sprite.setScale(this.getTowerScale(tower));
       }
       tower.label.setText(
         ["I", "II", "III", "IV", "V"][tower.level] + (chosen.tag || "")
@@ -3132,7 +3153,7 @@ const bannerY = 98;
       if (tower.sprite) tower.sprite.setTexture(idleKeyUp);
       // Upgrade visual: scale bounce + scaffold morph + stronger glow burst
       if (tower.sprite && !this.settings?.reducedMotion) {
-        this.tweens.add({ targets: tower.sprite, scale: 0.78 + tower.level * 0.04, duration: 120, yoyo: true, repeat: 1 });
+        this.tweens.add({ targets: tower.sprite, scale: this.getTowerBounceScale(tower.type, tower.level), duration: 120, yoyo: true, repeat: 1 });
         const isMax = tower.level >= cfg.upgrades.length;
         let ringColor = 0xcd7f32; // Bronze for L2
         let strokeColor = 0xdf9b52;
@@ -3180,7 +3201,7 @@ const bannerY = 98;
         }
         this.cameras.main.flash(40, 255, 250, 220, false);
       }
-      tower.sprite.setScale(0.62 + tower.level * 0.04);
+      tower.sprite.setScale(this.getTowerScale(tower));
       const pathTag = this.familyPaths(tower.type)?.find((p) => p.id === tower.path)?.tag || "";
       tower.label.setText(
         ["I", "II", "III", "IV", "V"][tower.level] + pathTag

@@ -180,127 +180,591 @@
       }
     };
 
-    const archerCfg = {
-      stoneHi: "#9aab7a",
-      stone: "#6a8050",
-      stoneLo: "#3a4a2c",
-      woodHi: "#c4a060",
-      woodLo: "#6a4828",
+    // —— Rangers Tower (128×128 detailed rebuild) ——
+    const drawArcherIvy128 = (ctx) => {
+      // Left stone and timber ivy
+      ctx.strokeStyle = "#1a3010";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(26, 112);
+      ctx.bezierCurveTo(24, 98, 32, 88, 30, 76);
+      ctx.bezierCurveTo(28, 68, 36, 62, 34, 54);
+      ctx.stroke();
+
+      const leftLeaves = [
+        [26, 110, 3.5, 3.2],
+        [23, 102, 4.0, 3.5],
+        [28, 95, 4.2, 3.8],
+        [25, 87, 3.8, 3.4],
+        [32, 82, 4.5, 4.0],
+        [28, 74, 4.0, 3.6],
+        [34, 68, 4.2, 3.8],
+        [30, 60, 3.5, 3.2],
+        [36, 54, 3.2, 3.0],
+      ];
+      for (const [lx, ly, rx, ry] of leftLeaves) {
+        ellipse(ctx, lx, ly, rx, ry, linGrad(ctx, lx - rx, ly - ry, lx + rx, ly + ry, [[0, "#7ec83a"], [0.5, "#428220"], [1, "#1e4812"]]), "#10260a", 1);
+        ctx.strokeStyle = "rgba(180, 255, 110, 0.65)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly - ry + 1);
+        ctx.lineTo(lx, ly + ry - 1);
+        ctx.stroke();
+      }
+
+      // Right corner ivy shoot
+      ctx.strokeStyle = "#1a3010";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(98, 110);
+      ctx.bezierCurveTo(102, 98, 94, 88, 96, 78);
+      ctx.stroke();
+
+      const rightLeaves = [
+        [98, 107, 3.2, 2.8],
+        [101, 98, 3.8, 3.4],
+        [95, 90, 4.0, 3.5],
+        [97, 81, 3.5, 3.0],
+      ];
+      for (const [lx, ly, rx, ry] of rightLeaves) {
+        ellipse(ctx, lx, ly, rx, ry, linGrad(ctx, lx - rx, ly - ry, lx + rx, ly + ry, [[0, "#7ec83a"], [0.5, "#428220"], [1, "#1e4812"]]), "#10260a", 1);
+        ctx.strokeStyle = "rgba(180, 255, 110, 0.65)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly - ry + 1);
+        ctx.lineTo(lx, ly + ry - 1);
+        ctx.stroke();
+      }
+    };
+
+    const drawArcherTowerBody128 = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Ground Contact Shadow & Base Earth Mound
+      shadow(ctx, 64, 116, 48, 11, 0.42);
+      shadow(ctx, 64, 117, 36, 6, 0.55);
+
+      // Earthen mound
+      ellipse(ctx, 64, 110, 46, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#546a32"], [0.4, "#3c4d22"], [1, "#1c2610"]]), "#141c0a", 2);
+      ctx.strokeStyle = "rgba(145, 205, 75, 0.45)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(64, 108, 42, 10, 0, Math.PI * 0.85, Math.PI * 2.15);
+      ctx.stroke();
+
+      // Foundation stones embedded in earth
+      ellipse(ctx, 28, 114, 4.5, 2.5, "#686e60", "#2c3028", 1);
+      ellipse(ctx, 40, 118, 5, 3, "#545a4c", "#2c3028", 1);
+      ellipse(ctx, 88, 116, 4.5, 3, "#606658", "#2c3028", 1);
+      ellipse(ctx, 98, 113, 3.5, 2.2, "#747a6c", "#2c3028", 1);
+
+      // 2. Stone Masonry Plinth (Foundation Y=80 to 110)
+      rounded(ctx, 32, 80, 64, 30, 4, linGrad(ctx, 32, 80, 96, 110, [[0, "#98a284"], [0.35, "#707a60"], [0.75, "#4c543e"], [1, "#2a3020"]]), "#1a2012", 2.2);
+
+      // Stone block mortar lines (3 courses)
+      ctx.strokeStyle = "#161c10";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(34, 90);
+      ctx.lineTo(94, 90);
+      ctx.moveTo(34, 100);
+      ctx.lineTo(94, 100);
+      ctx.stroke();
+
+      // Stone block top bevel highlights
+      ctx.strokeStyle = "rgba(255, 255, 220, 0.35)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(34, 91.5);
+      ctx.lineTo(94, 91.5);
+      ctx.moveTo(34, 101.5);
+      ctx.lineTo(94, 101.5);
+      ctx.stroke();
+
+      // Vertical mortar joints
+      ctx.strokeStyle = "#161c10";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(52, 81); ctx.lineTo(52, 90);
+      ctx.moveTo(76, 81); ctx.lineTo(76, 90);
+      ctx.moveTo(44, 90); ctx.lineTo(44, 100);
+      ctx.moveTo(64, 90); ctx.lineTo(64, 100);
+      ctx.moveTo(84, 90); ctx.lineTo(84, 100);
+      ctx.moveTo(54, 100); ctx.lineTo(54, 109);
+      ctx.moveTo(74, 100); ctx.lineTo(74, 109);
+      ctx.stroke();
+
+      // Masonry speckling & texture
+      speckles(ctx, 34, 82, 60, 26, 24, "rgba(0,0,0,0.16)", 1.2);
+      speckles(ctx, 34, 82, 60, 26, 16, "rgba(255,250,210,0.2)", 1.0);
+
+      // Iron corner anchor plates
+      rounded(ctx, 32, 92, 5, 12, 1.5, "#302a24", "#120e0a", 1);
+      rounded(ctx, 91, 92, 5, 12, 1.5, "#302a24", "#120e0a", 1);
+      ellipse(ctx, 34.5, 95, 1, 1, "#ffd060");
+      ellipse(ctx, 34.5, 101, 1, 1, "#ffd060");
+      ellipse(ctx, 93.5, 95, 1, 1, "#ffd060");
+      ellipse(ctx, 93.5, 101, 1, 1, "#ffd060");
+
+      // 3. Cantilevered Timber Corbel Struts
+      poly(ctx, [[40, 92], [46, 94], [34, 80], [28, 80]], linGrad(ctx, 28, 80, 46, 94, [[0, "#a06830"], [1, "#44240c"]]), "#201004", 1.5);
+      poly(ctx, [[88, 92], [82, 94], [94, 80], [100, 80]], linGrad(ctx, 82, 80, 100, 94, [[0, "#8a5424"], [1, "#361a06"]]), "#201004", 1.5);
+      poly(ctx, [[58, 90], [70, 90], [72, 80], [56, 80]], linGrad(ctx, 56, 80, 72, 90, [[0, "#9c622c"], [1, "#3c1e0a"]]), "#201004", 1.5);
+
+      // 4. Main Timber Platform Rim Beam (Y=72 to 82)
+      rounded(ctx, 22, 72, 84, 10, 3, linGrad(ctx, 22, 72, 106, 82, [[0, "#c68c48"], [0.25, "#9c642c"], [0.75, "#683c14"], [1, "#3c1e08"]]), "#221004", 2);
+
+      // Horizontal wood grain fibers & sunlight highlight
+      ctx.strokeStyle = "rgba(50, 22, 6, 0.45)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(24, 75); ctx.lineTo(104, 75);
+      ctx.moveTo(26, 78); ctx.lineTo(102, 78);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 235, 175, 0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(24, 73.5); ctx.lineTo(104, 73.5);
+      ctx.stroke();
+
+      // End-grain caps & iron studs
+      ellipse(ctx, 25, 77, 2, 3, "#542e10", "#221004", 1);
+      ellipse(ctx, 103, 77, 2, 3, "#42220a", "#221004", 1);
+      for (const sx of [30, 46, 64, 82, 98]) {
+        ellipse(ctx, sx, 77, 1.4, 1.4, "#2c221c", "#120c08", 1);
+        ellipse(ctx, sx - 0.3, 76.7, 0.5, 0.5, "#ffebaa");
+      }
+
+      // 5. Watchtower Timber Cabin Walls (Y=42 to 74)
+      rounded(ctx, 34, 42, 60, 32, 3, linGrad(ctx, 34, 42, 94, 74, [[0, "#a8723a"], [0.3, "#825022"], [0.7, "#583010"], [1, "#341806"]]), "#1e0e04", 2);
+
+      // Vertical timber planks with individual tones and grain
+      const planks = [
+        [34, 12, "#9e6832", "#6e4018"],
+        [46, 12, "#b07a3e", "#7e4c20"],
+        [58, 12, "#a46e34", "#74441c"],
+        [70, 12, "#98622c", "#683a16"],
+        [82, 12, "#885422", "#582c0e"],
+      ];
+      for (const [px, pw, c0, c1] of planks) {
+        rounded(ctx, px + 0.5, 43, pw - 1, 30, 1.5, linGrad(ctx, px, 43, px + pw, 73, [[0, c0], [1, c1]]));
+        ctx.strokeStyle = "#1a0c04";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(px, 43); ctx.lineTo(px, 73);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255, 235, 180, 0.22)";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(px + 1.5, 44); ctx.lineTo(px + 1.5, 72);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(42, 18, 4, 0.28)";
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(px + pw * 0.4, 45);
+        ctx.quadraticCurveTo(px + pw * 0.6, 58, px + pw * 0.4, 71);
+        ctx.stroke();
+
+        ellipse(ctx, px + pw * 0.5, 45, 0.9, 0.9, "#281e18");
+        ellipse(ctx, px + pw * 0.5, 71, 0.9, 0.9, "#281e18");
+      }
+
+      // Corner heavy timber posts
+      rounded(ctx, 32, 40, 6, 34, 2, linGrad(ctx, 32, 40, 38, 74, [[0, "#8e5826"], [1, "#462208"]]), "#1a0c04", 1.5);
+      rounded(ctx, 90, 40, 6, 34, 2, linGrad(ctx, 90, 40, 96, 74, [[0, "#724018"], [1, "#341604"]]), "#1a0c04", 1.5);
+
+      // Side diagonal cross-braces
+      poly(ctx, [[34, 44], [44, 72], [41, 72], [34, 52]], "#6c3e18", "#1c0a02", 1);
+      poly(ctx, [[94, 44], [84, 72], [87, 72], [94, 52]], "#5a3010", "#1c0a02", 1);
+
+      // 6. Watch Opening / Embrasure (Y=44 to 68)
+      rounded(ctx, 46, 44, 36, 24, 3, linGrad(ctx, 46, 44, 82, 68, [[0, "#140c06"], [0.5, "#22140a"], [1, "#0c0602"]]), "#160a02", 1.8);
+      ellipse(ctx, 64, 54, 15, 8, "rgba(240, 180, 90, 0.12)");
+
+      // 7. Timber Windowsill / Parapet Breastwork (Y=64 to 72)
+      rounded(ctx, 44, 64, 40, 8, 2, linGrad(ctx, 44, 64, 84, 72, [[0, "#ba8444"], [0.4, "#8a5424"], [1, "#4c280c"]]), "#200e04", 1.6);
+      ctx.strokeStyle = "rgba(255, 235, 175, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(45, 65); ctx.lineTo(83, 65);
+      ctx.stroke();
+
+      rounded(ctx, 62, 64, 4, 6, 1, "#1c0e04", "#2a1408", 0.8);
+    };
+
+    const drawThatchRoof128 = (ctx) => {
+      shadow(ctx, 64, 45, 38, 6, 0.55);
+
+      // Tier 1: Lower Flared Thatched Eave (Y=20 to 56)
+      const eavePoly = [
+        [14, 52],
+        [64, 20],
+        [114, 52],
+        [108, 56],
+        [64, 28],
+        [20, 56],
+      ];
+      poly(ctx, eavePoly, linGrad(ctx, 64, 20, 64, 56, [[0, "#f4dc7c"], [0.35, "#d4aa44"], [0.75, "#8e641c"], [1, "#4a320a"]]), "#241604", 2.2);
+
+      rounded(ctx, 18, 53, 5, 4, 1, "#583212", "#201004", 1);
+      rounded(ctx, 105, 53, 5, 4, 1, "#46240a", "#201004", 1);
+
+      ctx.strokeStyle = "rgba(60, 36, 8, 0.55)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      for (let i = 0; i < 9; i += 1) {
+        const sx = 22 + i * 9.5;
+        const sy = 54 - Math.abs(sx - 64) * 0.45;
+        ctx.arc(sx, sy, 5, 0.1, Math.PI * 0.95);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < 7; i += 1) {
+        const sx = 32 + i * 9.5;
+        const sy = 46 - Math.abs(sx - 64) * 0.48;
+        ctx.arc(sx, sy, 4.5, 0.1, Math.PI * 0.95);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(65, 38, 8, 0.35)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 14; i += 1) {
+        const rx0 = 24 + i * 5.8;
+        const ry0 = 50 - Math.abs(rx0 - 64) * 0.55;
+        ctx.beginPath();
+        ctx.moveTo(rx0, ry0);
+        ctx.lineTo(rx0 + (rx0 < 64 ? -1.5 : 1.5), ry0 + 5);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(255, 246, 180, 0.75)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(22, 51); ctx.lineTo(64, 22); ctx.lineTo(106, 51);
+      ctx.stroke();
+
+      // Tier 2: Upper Thatched Tier / Stepped Apex Cap (Y=10 to 36)
+      const upperPoly = [
+        [30, 32],
+        [64, 10],
+        [98, 32],
+        [92, 36],
+        [64, 17],
+        [36, 36],
+      ];
+      poly(ctx, upperPoly, linGrad(ctx, 64, 10, 64, 36, [[0, "#fff49e"], [0.35, "#e0ba50"], [0.75, "#9c7020"], [1, "#52380c"]]), "#241604", 2.0);
+
+      ctx.strokeStyle = "rgba(60, 36, 8, 0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i += 1) {
+        const sx = 38 + i * 9.5;
+        const sy = 34 - Math.abs(sx - 64) * 0.5;
+        ctx.arc(sx, sy, 4.5, 0.1, Math.PI * 0.95);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 248, 190, 0.85)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(34, 31); ctx.lineTo(64, 11); ctx.lineTo(94, 31);
+      ctx.stroke();
+
+      // Tier 3: Crossed Ridge Timbers & Peak Finial (Y=2 to 20)
+      poly(ctx, [[58, 16], [70, 4], [74, 8], [62, 20]], linGrad(ctx, 58, 4, 74, 20, [[0, "#aa723a"], [1, "#542e0e"]]), "#261204", 1.4);
+      poly(ctx, [[70, 16], [58, 4], [54, 8], [66, 20]], linGrad(ctx, 54, 4, 70, 20, [[0, "#905a28"], [1, "#442006"]]), "#261204", 1.4);
+
+      rounded(ctx, 61, 9, 6, 7, 2, "#e2d6a4", "#48381c", 1.2);
+      ctx.strokeStyle = "#7c683c";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(61, 11); ctx.lineTo(67, 11);
+      ctx.moveTo(61, 14); ctx.lineTo(67, 14);
+      ctx.stroke();
+
+      poly(ctx, [[64, 2], [67, 7], [64, 9], [61, 7]], linGrad(ctx, 61, 2, 67, 9, [[0, "#ffd860"], [0.4, "#b87e40"], [1, "#643810"]]), "#261204", 1.2);
+    };
+
+    const drawArcherBanner128 = (ctx, isFire = false) => {
+      ellipse(ctx, 41, 73.5, 1.8, 1.8, "#2c2420", "#100c0a", 1);
+      ellipse(ctx, 51, 73.5, 1.8, 1.8, "#2c2420", "#100c0a", 1);
+
+      if (!isFire) {
+        const bannerPoints = [
+          [38, 75],
+          [54, 75],
+          [54, 102],
+          [46, 95],
+          [38, 102],
+        ];
+        poly(ctx, bannerPoints, linGrad(ctx, 38, 75, 54, 102, [[0, "#2c5e32"], [0.45, "#1e4624"], [1, "#102c16"]]), "#0a1c0e", 1.2);
+
+        ctx.strokeStyle = "#ffd854";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(39.5, 76);
+        ctx.lineTo(39.5, 100);
+        ctx.lineTo(46, 94);
+        ctx.lineTo(52.5, 100);
+        ctx.lineTo(52.5, 76);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#ffe26a";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(46, 85, 4.5, -1.2, 1.2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(43, 85); ctx.lineTo(49, 85);
+        ctx.stroke();
+        poly(ctx, [[49, 85], [47, 83.5], [47, 86.5]], "#ffffff");
+
+        ellipse(ctx, 38, 102.5, 1.4, 1.4, "#ffd854", "#705410", 0.8);
+        ellipse(ctx, 54, 102.5, 1.4, 1.4, "#ffd854", "#705410", 0.8);
+      } else {
+        const bannerPoints = [
+          [38, 75],
+          [54, 75],
+          [60, 103],
+          [51, 96],
+          [41, 105],
+        ];
+        poly(ctx, bannerPoints, linGrad(ctx, 38, 75, 60, 104, [[0, "#326838"], [0.4, "#224e28"], [1, "#102c16"]]), "#0a1c0e", 1.2);
+
+        ctx.strokeStyle = "rgba(120, 220, 130, 0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(44, 76);
+        ctx.quadraticCurveTo(49, 90, 48, 98);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#ffd854";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(39.5, 76);
+        ctx.lineTo(42.5, 103);
+        ctx.lineTo(51, 95);
+        ctx.lineTo(58.5, 101);
+        ctx.lineTo(52.5, 76);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#ffe26a";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(48, 86, 4.5, -1.0, 1.4);
+        ctx.stroke();
+
+        ellipse(ctx, 41, 105.5, 1.4, 1.4, "#ffd854", "#705410", 0.8);
+        ellipse(ctx, 60, 103.5, 1.4, 1.4, "#ffd854", "#705410", 0.8);
+      }
     };
 
     const drawArcherIdle = (ctx) => {
-      towerBase(ctx, archerCfg);
-      // watchtower cabin
-      rounded(ctx, 30, 22, 36, 28, 4, linGrad(ctx, 30, 22, 66, 50, [[0, "#8fbe62"], [0.5, "#5a8a3e"], [1, "#2e4e24"]]), "#1e2a14", 2.2);
-      // window slit
-      rounded(ctx, 42, 30, 12, 14, 2, "#1a140c", "rgba(255,230,150,.3)", 1);
-      // archer silhouette
-      ellipse(ctx, 48, 26, 5, 5, "#f0d0a0", "#3a2818", 1);
-      ctx.strokeStyle = "#e8d090";
-      ctx.lineWidth = 2;
+      drawArcherTowerBody128(ctx);
+
+      // Quiver slung over left shoulder
+      poly(ctx, [[51, 44], [56, 41], [58, 54], [53, 55]], "#6e3e1c", "#241206", 1.2);
+      for (let i = 0; i < 3; i += 1) {
+        const ax = 52 + i * 2.2;
+        const ay = 40 - i * 1.5;
+        ctx.strokeStyle = "#d49a52";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay + 4); ctx.lineTo(ax, ay);
+        ctx.stroke();
+        poly(ctx, [[ax, ay], [ax - 1.5, ay + 2.5], [ax + 1.5, ay + 2.5]], i === 1 ? "#ea3424" : "#f6f2e4", "#201008", 0.8);
+      }
+
+      // Torso & Hunter Cloak
+      poly(ctx, [[54, 52], [74, 52], [76, 65], [52, 65]], linGrad(ctx, 54, 52, 74, 65, [[0, "#366834"], [0.4, "#244a22"], [1, "#142a12"]]), "#0e1e0c", 1.2);
+      ctx.strokeStyle = "#542e12";
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.arc(48, 28, 8, -1.2, 1.2);
+      ctx.moveTo(57, 53); ctx.lineTo(69, 64);
       ctx.stroke();
-      // peaked thatch roof
-      roofTiles(ctx, [[18, 28], [48, 4], [78, 28]], "#d8e070", "#6a9038", "#243018");
-      // leaf trim
-      ctx.strokeStyle = "#f5f0a0";
-      ctx.lineWidth = 2.5;
+      ellipse(ctx, 63, 58.5, 1.2, 1.2, "#ffd248", "#5a3a0e", 0.8);
+
+      // Archer Head & Ranger Cowl
+      rounded(ctx, 58, 43, 12, 13, 5, linGrad(ctx, 58, 43, 70, 56, [[0, "#3a7036"], [0.5, "#285226"], [1, "#163014"]]), "#0e1e0c", 1.2);
+      ellipse(ctx, 64, 49, 4, 4.5, "#f6d5ae", "#3a2214", 1);
+      ctx.fillStyle = "rgba(18, 36, 16, 0.7)";
+      ctx.fillRect(60, 46, 8, 2.5);
+      ctx.fillStyle = "#22140a";
+      ctx.fillRect(62, 49, 1.6, 1.2);
+      ctx.fillRect(65, 49, 1.6, 1.2);
+
+      // Crimson & Gold Ranger Cap Feather
+      poly(ctx, [[60, 44], [49, 39], [55, 46]], linGrad(ctx, 60, 44, 49, 39, [[0, "#ea3824"], [1, "#b81c0e"]]), "#500a04", 1);
+      ctx.strokeStyle = "#ffd248";
+      ctx.lineWidth = 0.9;
       ctx.beginPath();
-      ctx.moveTo(24, 27);
-      ctx.lineTo(48, 8);
-      ctx.lineTo(72, 27);
+      ctx.moveTo(59, 44); ctx.lineTo(50, 40);
       ctx.stroke();
-      // hanging banner
-      poly(ctx, [[28, 50], [28, 66], [34, 62], [40, 66], [40, 50]], "#4a8038", "#1a3018", 1);
-      // ivy
-      ctx.strokeStyle = "rgba(120,200,80,.55)";
-      ctx.lineWidth = 2;
+
+      // Curved Yew Longbow (Resting against parapet)
+      ctx.strokeStyle = "#2a1406";
+      ctx.lineWidth = 3.2;
       ctx.beginPath();
-      ctx.moveTo(26, 55);
-      ctx.quadraticCurveTo(20, 62, 28, 72);
+      ctx.moveTo(74, 38);
+      ctx.quadraticCurveTo(78, 52, 74, 66);
       ctx.stroke();
+
+      ctx.strokeStyle = linGrad(ctx, 74, 38, 78, 66, [[0, "#d89646"], [0.5, "#b07230"], [1, "#7c4818"]]);
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(74, 38);
+      ctx.quadraticCurveTo(78, 52, 74, 66);
+      ctx.stroke();
+
+      ellipse(ctx, 74, 38, 1.2, 1.2, "#ffe268");
+      ellipse(ctx, 74, 66, 1.2, 1.2, "#ffe268");
+
+      rounded(ctx, 75.5, 50, 2.5, 5, 1, "#30180a", "#120804", 0.8);
+
+      ctx.strokeStyle = "rgba(255, 255, 235, 0.85)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(74, 39); ctx.lineTo(74, 65);
+      ctx.stroke();
+
+      // Archer Hands
+      ellipse(ctx, 76, 52, 1.8, 1.8, "#543014", "#201006", 0.8);
+      ellipse(ctx, 75.5, 52, 1.0, 1.0, "#f6d5ae");
+      rounded(ctx, 56, 63.5, 4, 3, 1, "#f6d5ae", "#3a2214", 0.8);
+
+      // Structure overlays
+      drawThatchRoof128(ctx);
+      drawArcherBanner128(ctx, false);
+      drawArcherIvy128(ctx);
     };
 
     const drawArcherFire = (ctx) => {
-      towerBase(ctx, archerCfg);
-      // watchtower cabin
-      rounded(ctx, 30, 22, 36, 28, 4, linGrad(ctx, 30, 22, 66, 50, [[0, "#8fbe62"], [0.5, "#5a8a3e"], [1, "#2e4e24"]]), "#1e2a14", 2.2);
-      // widened window with archer leaning out
-      rounded(ctx, 40, 28, 16, 16, 2, "#1a140c", "rgba(255,230,150,.35)", 1);
-      // archer torso leaning forward
-      poly(ctx, [[45, 34], [55, 30], [53, 38], [43, 38]], "#3a5e2a", "#1a2a14", 1.2);
-      // archer head leaning forward
-      ellipse(ctx, 52, 25, 5, 5, "#f0d0a0", "#3a2818", 1);
-      // archer feather
-      poly(ctx, [[48, 22], [42, 17], [46, 23]], "#e85038", "#5a140a", 1);
-      // drawing arm & thrusting bow arm
-      ctx.strokeStyle = "#f0d0a0";
-      ctx.lineWidth = 2.2;
+      drawArcherTowerBody128(ctx);
+
+      // Quiver slung over back
+      poly(ctx, [[46, 47], [51, 44], [54, 56], [49, 57]], "#6e3e1c", "#241206", 1.2);
+      for (let i = 0; i < 2; i += 1) {
+        const ax = 48 + i * 2.4;
+        const ay = 43 - i * 1.5;
+        ctx.strokeStyle = "#d49a52";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(ax, ay + 4); ctx.lineTo(ax, ay);
+        ctx.stroke();
+        poly(ctx, [[ax, ay], [ax - 1.5, ay + 2.5], [ax + 1.5, ay + 2.5]], "#f6f2e4", "#201008", 0.8);
+      }
+
+      // Trailing Cloak & Torso Angled Forward
+      poly(ctx, [[48, 54], [58, 49], [75, 48], [76, 65], [50, 65]], linGrad(ctx, 48, 49, 76, 65, [[0, "#3a7036"], [0.4, "#244a22"], [1, "#122610"]]), "#0e1e0c", 1.4);
+
+      // Archer Head & Hood Leaning Forward
+      ellipse(ctx, 68, 45, 5.5, 6, linGrad(ctx, 63, 40, 73, 51, [[0, "#3a7036"], [0.5, "#285226"], [1, "#142c12"]]), "#0e1e0c", 1.2);
+      ellipse(ctx, 71, 46, 4, 4.5, "#f6d5ae", "#3a2214", 1);
+      ctx.fillStyle = "rgba(18, 36, 16, 0.75)";
+      ctx.fillRect(68, 43, 6, 2.5);
+      ctx.fillStyle = "#22140a";
+      ctx.fillRect(72, 46, 1.8, 1.2);
+
+      // Crimson Feather Whipping Back in Wind
+      poly(ctx, [[65, 43], [51, 40], [57, 45]], linGrad(ctx, 65, 43, 51, 40, [[0, "#ea3824"], [1, "#b81c0e"]]), "#500a04", 1);
+      ctx.strokeStyle = "#ffd248";
+      ctx.lineWidth = 0.9;
       ctx.beginPath();
-      ctx.moveTo(44, 28);
-      ctx.lineTo(48, 27);
-      ctx.lineTo(58, 25);
+      ctx.moveTo(64, 43); ctx.lineTo(52, 41);
       ctx.stroke();
-      // drawn curved longbow
-      ctx.strokeStyle = "#e8b850";
+
+      // Right Drawing Arm (Back to cheek)
+      ctx.strokeStyle = "#326230";
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(63, 51); ctx.lineTo(55, 52); ctx.lineTo(65, 47);
+      ctx.stroke();
+      ellipse(ctx, 65, 47, 2, 2, "#f6d5ae", "#3a2214", 0.8);
+
+      // Left Bow Arm (Thrust forward holding bow)
+      ctx.strokeStyle = "#326230";
+      ctx.lineWidth = 3.4;
+      ctx.beginPath();
+      ctx.moveTo(72, 49); ctx.lineTo(80, 48); ctx.lineTo(88, 47);
+      ctx.stroke();
+      rounded(ctx, 77, 46.5, 6, 3.5, 1, "#583014", "#201006", 0.8);
+      ellipse(ctx, 88, 47, 2, 2, "#f6d5ae", "#3a2214", 0.8);
+
+      // Fully Drawn / Snapping Recurve Longbow
+      ctx.strokeStyle = "#281204";
+      ctx.lineWidth = 3.4;
+      ctx.beginPath();
+      ctx.moveTo(88, 47);
+      ctx.bezierCurveTo(93, 38, 93, 30, 90, 26);
+      ctx.moveTo(88, 47);
+      ctx.bezierCurveTo(93, 56, 93, 64, 90, 68);
+      ctx.stroke();
+
+      ctx.strokeStyle = linGrad(ctx, 88, 26, 94, 68, [[0, "#e2a048"], [0.5, "#b47632"], [1, "#7c4818"]]);
       ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.arc(60, 25, 11, -1.5, 1.5);
+      ctx.moveTo(88, 47);
+      ctx.bezierCurveTo(93, 38, 93, 30, 90, 26);
+      ctx.moveTo(88, 47);
+      ctx.bezierCurveTo(93, 56, 93, 64, 90, 68);
       ctx.stroke();
-      // bow tips
-      ellipse(ctx, 60 + Math.cos(-1.5) * 11, 25 + Math.sin(-1.5) * 11, 1.8, 1.8, "#fff0b0");
-      ellipse(ctx, 60 + Math.cos(1.5) * 11, 25 + Math.sin(1.5) * 11, 1.8, 1.8, "#fff0b0");
-      // drawn bowstring taut / snapping
-      ctx.strokeStyle = "rgba(255,255,230,.95)";
-      ctx.lineWidth = 1.2;
+
+      ellipse(ctx, 90, 26, 1.4, 1.4, "#ffe474", "#6e480e", 0.8);
+      ellipse(ctx, 90, 68, 1.4, 1.4, "#ffe474", "#6e480e", 0.8);
+
+      // Taut Snapping Bowstring (V-Shape from tips to release point)
+      ctx.strokeStyle = "rgba(255, 255, 245, 0.95)";
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(60 + Math.cos(-1.5) * 11, 25 + Math.sin(-1.5) * 11);
-      ctx.lineTo(48, 27);
-      ctx.lineTo(60 + Math.cos(1.5) * 11, 25 + Math.sin(1.5) * 11);
+      ctx.moveTo(90, 26);
+      ctx.lineTo(66, 47);
+      ctx.lineTo(90, 68);
       ctx.stroke();
-      // loosed arrow projecting past tower rim
-      ctx.strokeStyle = "#fff4c0";
-      ctx.lineWidth = 2;
+
+      // Loosed Bodkin Arrow Projecting Forward-Right
+      ctx.strokeStyle = "#fff6cc";
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(50, 26);
-      ctx.lineTo(82, 19);
+      ctx.moveTo(70, 47.5);
+      ctx.lineTo(118, 42);
       ctx.stroke();
-      // arrowhead gleam diamond
-      poly(ctx, [[82, 19], [86, 18], [82, 17], [78, 18]], "#ffffff", "#e8b850", 1);
-      // loose spark starburst at arrow release
-      ctx.strokeStyle = "rgba(255,240,150,.85)";
-      ctx.lineWidth = 1.5;
+
+      poly(ctx, [[70, 47.5], [64, 45], [67, 47.5], [64, 50]], "#ea3424", "#4a0a04", 0.8);
+      poly(ctx, [[118, 42], [124, 41.5], [118, 41], [114, 41.5]], "#ffffff", "#88b2d8", 1);
+      ellipse(ctx, 122, 41.5, 1.5, 1.5, "#ffffff");
+
+      // Kinetic Arrow Release Starburst & Spark VFX
+      ctx.strokeStyle = "rgba(255, 245, 160, 0.95)";
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.moveTo(60, 20);
-      ctx.lineTo(60, 30);
-      ctx.moveTo(55, 25);
-      ctx.lineTo(65, 25);
+      ctx.moveTo(88, 41); ctx.lineTo(88, 53);
+      ctx.moveTo(82, 47); ctx.lineTo(94, 47);
+      ctx.moveTo(84, 43); ctx.lineTo(92, 51);
+      ctx.moveTo(84, 51); ctx.lineTo(92, 43);
       ctx.stroke();
-      // peaked thatch roof
-      roofTiles(ctx, [[18, 28], [48, 4], [78, 28]], "#d8e070", "#6a9038", "#243018");
-      // leaf trim
-      ctx.strokeStyle = "#f5f0a0";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(24, 27);
-      ctx.lineTo(48, 8);
-      ctx.lineTo(72, 27);
-      ctx.stroke();
-      // banner flapping in wind
-      poly(ctx, [[28, 50], [25, 68], [33, 63], [43, 70], [40, 50]], "#4a8038", "#1a3018", 1);
-      // ivy
-      ctx.strokeStyle = "rgba(120,200,80,.55)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(26, 55);
-      ctx.quadraticCurveTo(20, 62, 28, 72);
-      ctx.stroke();
+
+      ellipse(ctx, 94, 42, 1.2, 1.2, "#ffffff", "#ffd850", 0.8);
+      ellipse(ctx, 96, 52, 1.1, 1.1, "#ffffff", "#ffd850", 0.8);
+      ellipse(ctx, 82, 42, 1.0, 1.0, "#ffffff", "#ffd850", 0.8);
+      ellipse(ctx, 106, 43, 1.4, 0.8, "rgba(255, 248, 200, 0.75)");
+
+      // Structure overlays
+      drawThatchRoof128(ctx);
+      drawArcherBanner128(ctx, true);
+      drawArcherIvy128(ctx);
     };
 
-    make("tower_archer_idle", 96, 96, drawArcherIdle);
-    make("tower_archer", 96, 96, drawArcherIdle);
-    make("tower_archer_fire", 96, 96, drawArcherFire);
+    make("tower_archer_idle", 128, 128, drawArcherIdle);
+    make("tower_archer", 128, 128, drawArcherIdle);
+    make("tower_archer_fire", 128, 128, drawArcherFire);
 
     const mageCfg = {
       stoneHi: "#9a8fd0",
