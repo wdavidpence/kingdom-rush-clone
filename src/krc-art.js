@@ -766,326 +766,1019 @@
     make("tower_archer", 128, 128, drawArcherIdle);
     make("tower_archer_fire", 128, 128, drawArcherFire);
 
-    const mageCfg = {
-      stoneHi: "#9a8fd0",
-      stone: "#5a5098",
-      stoneLo: "#2e2860",
-      woodHi: "#b0a0e0",
-      woodLo: "#4a3a80",
+    // —— Runes / Mage Spire (128×128 detailed rebuild) ——
+    const drawMageSpireBody128 = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Ground Contact Shadow & Arcane Earthen Mound
+      shadow(ctx, 64, 116, 48, 11, 0.45);
+      shadow(ctx, 64, 117, 36, 6, 0.58);
+
+      // Arcane-tinged earthen mound
+      ellipse(ctx, 64, 110, 46, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#3e3a6a"], [0.4, "#28224c"], [1, "#120e28"]]), "#0c081e", 2);
+      ctx.strokeStyle = "rgba(180, 150, 255, 0.4)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(64, 108, 42, 10, 0, Math.PI * 0.85, Math.PI * 2.15);
+      ctx.stroke();
+
+      // Arcane foundation stones embedded in earth
+      ellipse(ctx, 28, 114, 4.5, 2.5, "#524874", "#1e1832", 1);
+      ellipse(ctx, 40, 118, 5, 3, "#423862", "#1e1832", 1);
+      ellipse(ctx, 88, 116, 4.5, 3, "#483e6a", "#1e1832", 1);
+      ellipse(ctx, 98, 113, 3.5, 2.2, "#584e7a", "#1e1832", 1);
+
+      // 2. Mystic Obsidian & Violet Slate Stone Plinth (Y=80 to 110)
+      rounded(ctx, 32, 80, 64, 30, 4, linGrad(ctx, 32, 80, 96, 110, [[0, "#8272b2"], [0.35, "#584888"], [0.75, "#382864"], [1, "#201440"]]), "#12082a", 2.2);
+
+      // Stone block mortar lines (3 courses)
+      ctx.strokeStyle = "#120826";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(34, 90); ctx.lineTo(94, 90);
+      ctx.moveTo(34, 100); ctx.lineTo(94, 100);
+      ctx.stroke();
+
+      // Stone block top bevel highlights
+      ctx.strokeStyle = "rgba(230, 210, 255, 0.35)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(34, 91.5); ctx.lineTo(94, 91.5);
+      ctx.moveTo(34, 101.5); ctx.lineTo(94, 101.5);
+      ctx.stroke();
+
+      // Vertical mortar joints
+      ctx.strokeStyle = "#120826";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(50, 81); ctx.lineTo(50, 90);
+      ctx.moveTo(78, 81); ctx.lineTo(78, 90);
+      ctx.moveTo(42, 90); ctx.lineTo(42, 100);
+      ctx.moveTo(64, 90); ctx.lineTo(64, 100);
+      ctx.moveTo(86, 90); ctx.lineTo(86, 100);
+      ctx.moveTo(52, 100); ctx.lineTo(52, 109);
+      ctx.moveTo(76, 100); ctx.lineTo(76, 109);
+      ctx.stroke();
+
+      // Stone texture speckles
+      speckles(ctx, 34, 82, 60, 26, 22, "rgba(0,0,0,0.2)", 1.2);
+      speckles(ctx, 34, 82, 60, 26, 16, "rgba(220,200,255,0.22)", 1.0);
+
+      // Engraved glowing runes on plinth stones
+      ctx.strokeStyle = "rgba(180, 225, 255, 0.75)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      // Left rune glyph
+      ctx.moveTo(44, 93); ctx.lineTo(47, 97); ctx.lineTo(44, 98);
+      ctx.moveTo(43, 95); ctx.lineTo(48, 95);
+      // Center rune glyph
+      ctx.moveTo(64, 83); ctx.lineTo(64, 88); ctx.moveTo(61, 85); ctx.lineTo(67, 85);
+      ctx.moveTo(62, 83); ctx.lineTo(66, 88);
+      // Right rune glyph
+      ctx.moveTo(83, 93); ctx.lineTo(85, 95); ctx.lineTo(83, 98);
+      ctx.moveTo(86, 93); ctx.lineTo(84, 98);
+      ctx.stroke();
+
+      // Gold anchor brackets with amethyst jewels on plinth corners
+      rounded(ctx, 31, 91, 5, 13, 1.5, "#d4aa44", "#4a3408", 1);
+      rounded(ctx, 92, 91, 5, 13, 1.5, "#d4aa44", "#4a3408", 1);
+      ellipse(ctx, 33.5, 97.5, 1.5, 2, "#e090ff", "#2a084a", 0.8);
+      ellipse(ctx, 94.5, 97.5, 1.5, 2, "#e090ff", "#2a084a", 0.8);
+
+      // 3. Cantilevered Corbel Supports & Dais Rim (Y=70 to 82)
+      poly(ctx, [[38, 90], [44, 92], [32, 78], [26, 78]], linGrad(ctx, 26, 78, 44, 92, [[0, "#7462a4"], [1, "#281850"]]), "#140a30", 1.5);
+      poly(ctx, [[90, 90], [84, 92], [96, 78], [102, 78]], linGrad(ctx, 84, 78, 102, 92, [[0, "#665496"], [1, "#201244"]]), "#140a30", 1.5);
+
+      // Main Dais Rim Platform
+      rounded(ctx, 24, 72, 80, 10, 3, linGrad(ctx, 24, 72, 104, 82, [[0, "#9e8cd4"], [0.3, "#705ca6"], [0.7, "#463478"], [1, "#281a52"]]), "#160a34", 2);
+      ctx.strokeStyle = "rgba(240, 225, 255, 0.4)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(26, 73.5); ctx.lineTo(102, 73.5);
+      ctx.stroke();
+
+      // Gilded runic band along dais rim
+      ctx.strokeStyle = "#ffd452";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(28, 77); ctx.lineTo(100, 77);
+      ctx.stroke();
+      for (const gx of [32, 48, 64, 80, 96]) {
+        ellipse(ctx, gx, 77, 1.3, 1.3, "#a6e4ff", "#1c3854", 0.8);
+      }
+
+      // 4. Arcane Spire Tower Shaft & Flanking Pylons (Y=38 to 74)
+      // Main central tapered spire shaft
+      const shaftPoly = [
+        [38, 72],
+        [44, 40],
+        [84, 40],
+        [90, 72],
+      ];
+      poly(ctx, shaftPoly, linGrad(ctx, 38, 40, 90, 72, [[0, "#7a6aa8"], [0.3, "#544682"], [0.7, "#362660"], [1, "#1c103c"]]), "#100624", 2.2);
+
+      // Vertical shaft bevels (hexagonal / octagonal facet planes)
+      ctx.strokeStyle = "rgba(220, 205, 255, 0.3)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(52, 41); ctx.lineTo(48, 72);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(20, 10, 40, 0.45)";
+      ctx.beginPath();
+      ctx.moveTo(76, 41); ctx.lineTo(80, 72);
+      ctx.stroke();
+
+      // Flanking Crystal-Cradle Buttress Pylons (Left & Right pylon brackets)
+      // Left pylon
+      poly(ctx, [[28, 72], [36, 72], [42, 44], [34, 38], [28, 48]], linGrad(ctx, 28, 38, 42, 72, [[0, "#8e7ebc"], [0.5, "#58488a"], [1, "#261652"]]), "#12082c", 1.6);
+      poly(ctx, [[34, 38], [39, 32], [43, 38], [42, 44]], linGrad(ctx, 34, 32, 43, 44, [[0, "#ffd860"], [1, "#966818"]]), "#3a2406", 1.2);
+      ellipse(ctx, 38.5, 34, 2, 2.5, "#6fe4ff", "#123c52", 0.8);
+
+      // Right pylon
+      poly(ctx, [[100, 72], [92, 72], [86, 44], [94, 38], [100, 48]], linGrad(ctx, 86, 38, 100, 72, [[0, "#7c6ca8"], [0.5, "#483a78"], [1, "#1e0e44"]]), "#12082c", 1.6);
+      poly(ctx, [[94, 38], [89, 32], [85, 38], [86, 44]], linGrad(ctx, 85, 32, 94, 44, [[0, "#ffd860"], [1, "#966818"]]), "#3a2406", 1.2);
+      ellipse(ctx, 89.5, 34, 2, 2.5, "#6fe4ff", "#123c52", 0.8);
+
+      // 5. Sanctum Vault / Mystic Archway (Embrasure Y=48 to 68)
+      rounded(ctx, 52, 48, 24, 20, 10, "#0e061c", "#16082e", 2);
+      // Inner glowing arcane vortex
+      ellipse(ctx, 64, 59, 9, 7, radGrad(ctx, 64, 59, 1, 9, [[0, "#ffffff"], [0.4, "#a878ff"], [0.8, "#5028aa"], [1, "rgba(20,6,50,0)"]]));
+      // Astral Tracery
+      ctx.strokeStyle = "#ffd854";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(64, 54, 7, Math.PI, Math.PI * 2);
+      ctx.moveTo(64, 54); ctx.lineTo(64, 68);
+      ctx.stroke();
+      ellipse(ctx, 64, 54, 1.5, 1.5, "#6fe4ff");
+
+      // 6. Gold Runic Conduit Veins running from sanctum up to crystal cradle
+      ctx.strokeStyle = "#ffd248";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(56, 48); ctx.lineTo(52, 40); ctx.lineTo(58, 36);
+      ctx.moveTo(72, 48); ctx.lineTo(76, 40); ctx.lineTo(70, 36);
+      ctx.stroke();
+
+      // Top Crystal Cradle Collar Ring (Y=34 to 42)
+      rounded(ctx, 46, 36, 36, 7, 3, linGrad(ctx, 46, 36, 82, 43, [[0, "#ffd868"], [0.5, "#d49a2a"], [1, "#744c0c"]]), "#2a1604", 1.5);
+      for (const cx of [50, 57, 64, 71, 78]) {
+        ellipse(ctx, cx, 39.5, 1.2, 1.2, "#8ae8ff", "#123c52", 0.8);
+      }
+    };
+
+    const drawMageCrystal128 = (ctx, isFire = false) => {
+      // Levitating secondary crystal shards
+      const sideCrystals = [
+        [36, 26, 5, 14, "#8ae8ff", "#5028c0"],
+        [92, 26, 5, 14, "#b48aff", "#3a1890"],
+      ];
+      for (const [cx, cy, cw, ch, col0, col1] of sideCrystals) {
+        poly(ctx, [[cx, cy - ch / 2], [cx + cw / 2, cy], [cx, cy + ch / 2], [cx - cw / 2, cy]], linGrad(ctx, cx - cw / 2, cy - ch / 2, cx + cw / 2, cy + ch / 2, [[0, col0], [1, col1]]), "#120830", 1.2);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - ch / 2); ctx.lineTo(cx, cy + ch / 2);
+        ctx.stroke();
+      }
+
+      if (!isFire) {
+        // Ambient crystal glow aura
+        ellipse(ctx, 64, 22, 26, 24, radGrad(ctx, 64, 22, 2, 26, [[0, "rgba(220, 200, 255, 0.45)"], [0.5, "rgba(140, 90, 240, 0.2)"], [1, "rgba(60, 20, 150, 0)"]]));
+
+        // Main Arcane Crystal Multi-Faceted Volume (Apex at Y=6, Base at Y=40, Width from X=46 to 82)
+        // 1. Facet: Back / Left side shadow facet
+        poly(ctx, [[64, 6], [48, 22], [54, 38], [64, 40]], linGrad(ctx, 48, 6, 64, 40, [[0, "#9872e8"], [0.5, "#582cb4"], [1, "#280e6e"]]), "#16063e", 1.8);
+
+        // 2. Facet: Back / Right side facet
+        poly(ctx, [[64, 6], [80, 22], [74, 38], [64, 40]], linGrad(ctx, 64, 6, 80, 40, [[0, "#c0a0ff"], [0.5, "#7a46e0"], [1, "#3c168c"]]), "#16063e", 1.8);
+
+        // 3. Facet: Center Front Left prism facet
+        poly(ctx, [[64, 6], [48, 22], [64, 25]], linGrad(ctx, 48, 6, 64, 25, [[0, "#d8c4ff"], [0.45, "#8e5ef0"], [1, "#4e24b4"]]), "#16063e", 1.4);
+
+        // 4. Facet: Center Front Right illuminated facet (Sunlight & power gleam)
+        poly(ctx, [[64, 6], [80, 22], [64, 25]], linGrad(ctx, 64, 6, 80, 25, [[0, "#ffffff"], [0.35, "#c8b0ff"], [0.75, "#9062f4"], [1, "#5a2ac8"]]), "#16063e", 1.4);
+
+        // 5. Facet: Lower Center Left facet
+        poly(ctx, [[48, 22], [64, 25], [64, 40], [54, 38]], linGrad(ctx, 48, 22, 64, 40, [[0, "#703ec4"], [1, "#2c0e6c"]]), "#16063e", 1.4);
+
+        // 6. Facet: Lower Center Right facet
+        poly(ctx, [[80, 22], [64, 25], [64, 40], [74, 38]], linGrad(ctx, 64, 22, 80, 40, [[0, "#9462f4"], [1, "#42168e"]]), "#16063e", 1.4);
+
+        // Internal Glowing Mana Core
+        ellipse(ctx, 64, 23, 7, 7, radGrad(ctx, 62, 21, 1, 7, [[0, "#ffffff"], [0.5, "#d6beff"], [1, "rgba(140,80,240,0.3)"]]), "#ffffff", 1.2);
+        ellipse(ctx, 64, 23, 3, 3, "#ffffff");
+
+        // Specular Vertex & Ridge Highlights
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(64, 6); ctx.lineTo(64, 25); ctx.lineTo(64, 40);
+        ctx.moveTo(64, 6); ctx.lineTo(80, 22);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(160, 235, 255, 0.85)";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(64, 25); ctx.lineTo(48, 22);
+        ctx.moveTo(64, 25); ctx.lineTo(80, 22);
+        ctx.stroke();
+
+        ellipse(ctx, 64, 6.5, 1.8, 1.8, "#ffffff");
+
+        // Concentric 3D Tilted Rune Rings
+        // Upper Ring
+        ctx.strokeStyle = "rgba(160, 225, 255, 0.85)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.ellipse(64, 20, 22, 7, -0.08, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Lower Ring
+        ctx.strokeStyle = "rgba(215, 170, 255, 0.75)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.ellipse(64, 32, 26, 8, 0.05, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Floating Rune Nodes on rings
+        for (const [rx, ry] of [[44, 20], [84, 19], [40, 32], [88, 33], [64, 39]]) {
+          ellipse(ctx, rx, ry, 1.8, 1.8, "#ffffff", "#70d4ff", 0.8);
+        }
+
+        // Drifting Spark Motes
+        for (const [sx, sy, r] of [[24, 18, 1.8], [104, 20, 1.8], [48, 8, 1.4], [80, 10, 1.5], [32, 38, 1.2], [96, 36, 1.4]]) {
+          ellipse(ctx, sx, sy, r, r, "#ffffff", "#b894ff", 0.8);
+        }
+      } else {
+        // —— FIRE STATE: Overcharged Crystalline Mana Nova ——
+        // Massive outer radiant aura
+        ellipse(ctx, 64, 22, 38, 36, radGrad(ctx, 64, 22, 3, 38, [[0, "#ffffff"], [0.25, "rgba(225,200,255,0.95)"], [0.55, "rgba(150,90,255,0.55)"], [0.85, "rgba(80,210,255,0.25)"], [1, "rgba(40,10,140,0)"]]));
+
+        // 8-Point Arcane Starburst Ray Flares
+        const rays = [
+          [[64, 22], [64, -6]],
+          [[64, 22], [64, 50]],
+          [[64, 22], [22, 22]],
+          [[64, 22], [106, 22]],
+          [[64, 22], [32, -2]],
+          [[64, 22], [96, -2]],
+          [[64, 22], [32, 46]],
+          [[64, 22], [96, 46]],
+        ];
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.lineWidth = 3.2;
+        for (const [r0, r1] of rays) {
+          ctx.beginPath();
+          ctx.moveTo(r0[0], r0[1]); ctx.lineTo(r1[0], r1[1]);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = "#8ae8ff";
+        ctx.lineWidth = 1.6;
+        for (const [r0, r1] of rays) {
+          ctx.beginPath();
+          ctx.moveTo(r0[0], r0[1]); ctx.lineTo(r1[0], r1[1]);
+          ctx.stroke();
+        }
+
+        // Blazing Crystal Body in supercharged state
+        poly(ctx, [[64, 4], [46, 22], [54, 38], [64, 41], [74, 38], [82, 22]], linGrad(ctx, 46, 4, 82, 41, [[0, "#ffffff"], [0.3, "#e2d2ff"], [0.7, "#a878ff"], [1, "#5424c8"]]), "#2a0a64", 2.2);
+
+        // Blinding Incandescent Core
+        ellipse(ctx, 64, 22, 16, 16, radGrad(ctx, 62, 18, 2, 16, [[0, "#ffffff"], [0.5, "#e6dcff"], [1, "#9c6eff"]]), "#ffffff", 2.5);
+        ellipse(ctx, 64, 22, 8, 8, "#ffffff");
+
+        // Lightning Fractures crackling down crystal
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(64, 6); ctx.lineTo(60, 16); ctx.lineTo(67, 24); ctx.lineTo(62, 33); ctx.lineTo(64, 40);
+        ctx.moveTo(60, 16); ctx.lineTo(50, 22);
+        ctx.moveTo(67, 24); ctx.lineTo(78, 22);
+        ctx.stroke();
+
+        // Hyper-Charged Glowing Rune Rings
+        ctx.strokeStyle = "rgba(140, 235, 255, 0.95)";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(64, 20, 24, 8, -0.08, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(235, 185, 255, 0.95)";
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.ellipse(64, 32, 28, 9, 0.05, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // High-energy spark burst
+        for (const [sx, sy, r] of [
+          [16, 12, 2.5], [112, 14, 2.5], [26, 32, 2.2], [102, 34, 2.2],
+          [44, -2, 2.0], [84, -2, 2.0], [38, 48, 2.2], [90, 48, 2.2],
+          [64, -8, 2.5], [14, 24, 2.0], [114, 24, 2.0], [64, 52, 2.2]
+        ]) {
+          ellipse(ctx, sx, sy, r, r, "#ffffff", "#8ae8ff", 1);
+        }
+      }
+    };
+
+    const drawMagePennant128 = (ctx, isFire = false) => {
+      // Golden banner rod on left/right battlement
+      rounded(ctx, 84, 52, 28, 3, 1, "#ffd452", "#523808", 0.8);
+      ellipse(ctx, 112, 53.5, 2, 2, "#ffd452", "#523808", 0.8);
+
+      if (!isFire) {
+        const p = [
+          [86, 54],
+          [108, 54],
+          [104, 76],
+          [96, 70],
+          [88, 78],
+        ];
+        poly(ctx, p, linGrad(ctx, 86, 54, 108, 78, [[0, "#845ed8"], [0.45, "#5a34b0"], [1, "#2e126c"]]), "#120436", 1.2);
+        ctx.strokeStyle = "#ffd452";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(88, 55); ctx.lineTo(89, 75); ctx.lineTo(96, 69); ctx.lineTo(103, 73); ctx.lineTo(106, 55);
+        ctx.stroke();
+        // Golden eye / runic sigil on banner
+        ellipse(ctx, 96, 62, 3, 2, "#ffe074", "#4a2c06", 0.8);
+        ellipse(ctx, 96, 62, 1.2, 1.2, "#401888");
+      } else {
+        // Flapping violently in mana wind
+        const p = [
+          [86, 54],
+          [116, 48],
+          [110, 64],
+          [120, 74],
+          [88, 62],
+        ];
+        poly(ctx, p, linGrad(ctx, 86, 48, 120, 74, [[0, "#a074ff"], [0.45, "#7040d8"], [1, "#3c168c"]]), "#120436", 1.2);
+        ctx.strokeStyle = "#ffe468";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(88, 55); ctx.lineTo(114, 49); ctx.lineTo(109, 63); ctx.lineTo(118, 72);
+        ctx.stroke();
+      }
     };
 
     const drawMageIdle = (ctx) => {
-      towerBase(ctx, mageCfg);
-      // crystal shaft
-      poly(
-        ctx,
-        [[38, 70], [32, 28], [48, 10], [64, 28], [58, 70]],
-        linGrad(ctx, 32, 10, 64, 70, [[0, "#e8e0ff"], [0.35, "#8a78e8"], [1, "#3a2a78"]]),
-        "#1e1848",
-        2.4
-      );
-      // glowing orb
-      ellipse(ctx, 48, 22, 12, 12, radGrad(ctx, 44, 18, 2, 14, [[0, "#ffffff"], [0.4, "#c8b8ff"], [1, "rgba(80,60,180,.2)"]]), "#f0e8ff", 2);
-      ellipse(ctx, 48, 22, 5, 5, "#ffffff");
-      // rune rings
-      ctx.strokeStyle = "rgba(230,210,255,.7)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.ellipse(48, 40, 10, 4, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(48, 52, 12, 5, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      // floating sparks
-      for (const [sx, sy] of [[28, 24], [68, 30], [36, 14], [60, 16]]) {
-        ellipse(ctx, sx, sy, 2.2, 2.2, "rgba(220,200,255,.85)");
-      }
-      // purple pennant
-      poly(ctx, [[62, 48], [78, 44], [74, 52], [78, 58], [62, 54]], "#a080ff", "#302060", 1);
+      drawMageSpireBody128(ctx);
+      drawMagePennant128(ctx, false);
+      drawMageCrystal128(ctx, false);
     };
 
     const drawMageFire = (ctx) => {
-      towerBase(ctx, mageCfg);
-      // glowing crystal shaft with internal power surge
-      poly(
-        ctx,
-        [[38, 70], [32, 28], [48, 10], [64, 28], [58, 70]],
-        linGrad(ctx, 32, 10, 64, 70, [[0, "#ffffff"], [0.25, "#c2b4ff"], [0.6, "#8870f0"], [1, "#422880"]]),
-        "#241858",
-        2.4
-      );
-      // glowing shaft fracture energy lines
-      ctx.strokeStyle = "rgba(255,255,255,.8)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(48, 12);
-      ctx.lineTo(46, 35);
-      ctx.lineTo(51, 48);
-      ctx.lineTo(48, 68);
-      ctx.stroke();
-      // massive crystal flare radiating outward
-      ellipse(ctx, 48, 20, 26, 24, radGrad(ctx, 48, 20, 3, 26, [[0, "#ffffff"], [0.3, "rgba(215,190,255,.85)"], [0.65, "rgba(130,80,255,.35)"], [1, "rgba(80,30,180,0)"]]));
-      // 8-point arcane starburst rays
-      const rays = [
-        [[48, 20], [48, -2]],
-        [[48, 20], [48, 42]],
-        [[48, 20], [16, 20]],
-        [[48, 20], [80, 20]],
-        [[48, 20], [25, 3]],
-        [[48, 20], [71, 3]],
-        [[48, 20], [25, 37]],
-        [[48, 20], [71, 37]],
-      ];
-      ctx.strokeStyle = "rgba(255,255,255,.9)";
-      ctx.lineWidth = 2.5;
-      for (const [r0, r1] of rays) {
-        ctx.beginPath();
-        ctx.moveTo(r0[0], r0[1]);
-        ctx.lineTo(r1[0], r1[1]);
-        ctx.stroke();
-      }
-      ctx.strokeStyle = "#9fe7ff";
-      ctx.lineWidth = 1.2;
-      for (const [r0, r1] of rays) {
-        ctx.beginPath();
-        ctx.moveTo(r0[0], r0[1]);
-        ctx.lineTo(r1[0], r1[1]);
-        ctx.stroke();
-      }
-      // blazing orb core
-      ellipse(ctx, 48, 20, 15, 15, radGrad(ctx, 45, 16, 2, 16, [[0, "#ffffff"], [0.5, "#d0c0ff"], [1, "#7c5ae8"]]), "#ffffff", 2.5);
-      ellipse(ctx, 48, 20, 7, 7, "#ffffff");
-      // bright rune rings
-      ctx.strokeStyle = "rgba(159,231,255,.95)";
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.ellipse(48, 40, 13, 5, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(48, 52, 15, 6, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      // glowing rune sparks & motes
-      for (const [sx, sy, r] of [
-        [22, 18, 3], [74, 18, 3], [32, 6, 2.5], [64, 6, 2.5],
-        [18, 32, 2], [78, 32, 2], [48, 58, 2.5], [30, 48, 2]
-      ]) {
-        ellipse(ctx, sx, sy, r, r, "#ffffff", "#a080ff", 1);
-      }
-      // dynamic pennant flapping high
-      poly(ctx, [[62, 46], [88, 38], [82, 50], [90, 60], [62, 56]], "#b894ff", "#302060", 1.2);
+      drawMageSpireBody128(ctx);
+      drawMagePennant128(ctx, true);
+      drawMageCrystal128(ctx, true);
     };
 
-    make("tower_mage_idle", 96, 96, drawMageIdle);
-    make("tower_mage", 96, 96, drawMageIdle);
-    make("tower_mage_fire", 96, 96, drawMageFire);
+    make("tower_mage_idle", 128, 128, drawMageIdle);
+    make("tower_mage", 128, 128, drawMageIdle);
+    make("tower_mage_fire", 128, 128, drawMageFire);
 
-    const artilleryCfg = {
-      stoneHi: "#c09058",
-      stone: "#8a6038",
-      stoneLo: "#4a3018",
-      woodHi: "#e0b068",
-      woodLo: "#7a4820",
+    // —— Iron Mortar / Artillery Redoubt (128×128 detailed rebuild) ——
+    const drawArtilleryRedoubt128 = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Ground Contact Shadow & Scorched Berm
+      shadow(ctx, 64, 116, 50, 12, 0.45);
+      shadow(ctx, 64, 117, 38, 7, 0.6);
+
+      // Scorched quarry earth mound
+      ellipse(ctx, 64, 110, 48, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#5e4c34"], [0.4, "#3e301e"], [1, "#1c140a"]]), "#120c04", 2);
+      ctx.strokeStyle = "rgba(180, 140, 75, 0.35)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(64, 108, 44, 10, 0, Math.PI * 0.85, Math.PI * 2.15);
+      ctx.stroke();
+
+      // Heavy granite foundation boulders
+      ellipse(ctx, 26, 114, 5, 3, "#645648", "#241c14", 1);
+      ellipse(ctx, 38, 118, 5.5, 3.2, "#524638", "#241c14", 1);
+      ellipse(ctx, 90, 116, 5, 3.2, "#584a3c", "#241c14", 1);
+      ellipse(ctx, 100, 113, 4, 2.5, "#685848", "#241c14", 1);
+
+      // 2. Heavy Dressed Quarry Stone Plinth (Foundation Y=80 to 110)
+      rounded(ctx, 30, 80, 68, 30, 4, linGrad(ctx, 30, 80, 98, 110, [[0, "#b89064"], [0.35, "#886240"], [0.75, "#583a22"], [1, "#321e10"]]), "#1a0e06", 2.2);
+
+      // Stone block mortar lines (3 courses)
+      ctx.strokeStyle = "#1a0e06";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(32, 90); ctx.lineTo(96, 90);
+      ctx.moveTo(32, 100); ctx.lineTo(96, 100);
+      ctx.stroke();
+
+      // Stone block top bevel highlights
+      ctx.strokeStyle = "rgba(255, 235, 190, 0.35)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(32, 91.5); ctx.lineTo(96, 91.5);
+      ctx.moveTo(32, 101.5); ctx.lineTo(96, 101.5);
+      ctx.stroke();
+
+      // Vertical mortar joints
+      ctx.strokeStyle = "#1a0e06";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(48, 81); ctx.lineTo(48, 90);
+      ctx.moveTo(76, 81); ctx.lineTo(76, 90);
+      ctx.moveTo(40, 90); ctx.lineTo(40, 100);
+      ctx.moveTo(64, 90); ctx.lineTo(64, 100);
+      ctx.moveTo(88, 90); ctx.lineTo(88, 100);
+      ctx.moveTo(52, 100); ctx.lineTo(52, 109);
+      ctx.moveTo(78, 100); ctx.lineTo(78, 109);
+      ctx.stroke();
+
+      // Masonry texture speckles & gunpowder soot
+      speckles(ctx, 32, 82, 64, 26, 26, "rgba(0,0,0,0.22)", 1.2);
+      speckles(ctx, 32, 82, 64, 26, 14, "rgba(255,230,170,0.18)", 1.0);
+
+      // Heavy Iron corner plates with square bolts
+      rounded(ctx, 29, 90, 6, 14, 1.5, "#34302c", "#100c0a", 1);
+      rounded(ctx, 93, 90, 6, 14, 1.5, "#34302c", "#100c0a", 1);
+      ellipse(ctx, 32, 94, 1.2, 1.2, "#ffd452");
+      ellipse(ctx, 32, 100, 1.2, 1.2, "#ffd452");
+      ellipse(ctx, 96, 94, 1.2, 1.2, "#ffd452");
+      ellipse(ctx, 96, 100, 1.2, 1.2, "#ffd452");
+
+      // 3. Cantilevered Timber Corbel Struts
+      poly(ctx, [[38, 92], [45, 94], [32, 80], [24, 80]], linGrad(ctx, 24, 80, 45, 94, [[0, "#a46c34"], [1, "#44240c"]]), "#1a0c04", 1.5);
+      poly(ctx, [[90, 92], [83, 94], [96, 80], [104, 80]], linGrad(ctx, 83, 80, 104, 92, [[0, "#8c5624"], [1, "#361a06"]]), "#1a0c04", 1.5);
+      poly(ctx, [[58, 90], [70, 90], [72, 80], [56, 80]], linGrad(ctx, 56, 80, 72, 90, [[0, "#9c642e"], [1, "#3e1e0a"]]), "#1a0c04", 1.5);
+
+      // 4. Heavy Reinforced Timber Firing Platform (Y=68 to 82)
+      rounded(ctx, 18, 68, 92, 14, 3, linGrad(ctx, 18, 68, 110, 82, [[0, "#c48846"], [0.25, "#96602c"], [0.75, "#623812"], [1, "#3a1e08"]]), "#1e0c02", 2);
+
+      // Woodgrain fibers
+      ctx.strokeStyle = "rgba(45, 20, 6, 0.45)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(20, 72); ctx.lineTo(108, 72);
+      ctx.moveTo(22, 76); ctx.lineTo(106, 76);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 235, 175, 0.4)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(20, 69.5); ctx.lineTo(108, 69.5);
+      ctx.stroke();
+
+      // Platform iron edge studs
+      for (const sx of [24, 40, 56, 72, 88, 104]) {
+        ellipse(ctx, sx, 75, 1.4, 1.4, "#2a2622", "#0c0806", 1);
+        ellipse(ctx, sx - 0.3, 74.7, 0.5, 0.5, "#ffd452");
+      }
+
+      // 5. Heavy Cast-Iron Turntable Carriage Base (Y=62 to 70)
+      ellipse(ctx, 64, 66, 26, 7, linGrad(ctx, 38, 59, 90, 73, [[0, "#4e4844"], [0.5, "#2e2a26"], [1, "#161412"]]), "#0c0a08", 1.8);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(64, 65, 23, 5.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      for (const tx of [44, 54, 64, 74, 84]) {
+        ellipse(ctx, tx, 66, 1.2, 1.2, "#d4aa44", "#4a3408", 0.8);
+      }
+    };
+
+    const drawArtilleryProps128 = (ctx) => {
+      // 1. Munitions on Platform
+      // Black Powder Kegs on Left Platform (X=22, Y=52..67)
+      rounded(ctx, 22, 52, 12, 15, 3, linGrad(ctx, 22, 52, 34, 67, [[0, "#8a502c"], [0.5, "#5a3014"], [1, "#2e1406"]]), "#160802", 1.4);
+      // Iron Hoops on Keg
+      ctx.strokeStyle = "#383430";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(22, 55); ctx.lineTo(34, 55);
+      ctx.moveTo(22, 63); ctx.lineTo(34, 63);
+      ctx.stroke();
+      ctx.strokeStyle = "#e8b850";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(23, 56); ctx.lineTo(33, 56);
+      ctx.stroke();
+
+      // Second smaller powder keg behind
+      rounded(ctx, 32, 48, 10, 13, 2.5, linGrad(ctx, 32, 48, 42, 61, [[0, "#7c4424"], [1, "#261004"]]), "#160802", 1.2);
+      ctx.strokeStyle = "#383430";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(32, 51); ctx.lineTo(42, 51);
+      ctx.moveTo(32, 58); ctx.lineTo(42, 58);
+      ctx.stroke();
+
+      // Pyramid Stack of Heavy Cast-Iron Cannonballs on Right Platform (X=86 to 102, Y=56 to 68)
+      // Bottom row: 2 cannonballs
+      ellipse(ctx, 88, 64, 4.5, 4.5, linGrad(ctx, 85, 60, 92, 68, [[0, "#56504a"], [0.4, "#2c2824"], [1, "#100e0c"]]), "#0c0a08", 1.2);
+      ellipse(ctx, 86.5, 62.5, 1.2, 1.2, "#ffffff");
+      ellipse(ctx, 97, 64, 4.5, 4.5, linGrad(ctx, 94, 60, 101, 68, [[0, "#56504a"], [0.4, "#2c2824"], [1, "#100e0c"]]), "#0c0a08", 1.2);
+      ellipse(ctx, 95.5, 62.5, 1.2, 1.2, "#ffffff");
+      // Top cannonball
+      ellipse(ctx, 92.5, 57, 4.5, 4.5, linGrad(ctx, 89.5, 53, 96.5, 61, [[0, "#625a54"], [0.4, "#34302c"], [1, "#12100e"]]), "#0c0a08", 1.2);
+      ellipse(ctx, 91, 55.5, 1.3, 1.3, "#ffffff");
+
+      // 2. Left Timber Shelter Canopy (Over powder kegs, Y=16 to 50)
+      // Timber support post
+      rounded(ctx, 20, 28, 5, 40, 1.5, linGrad(ctx, 20, 28, 25, 68, [[0, "#9c6834"], [1, "#44240a"]]), "#1a0c02", 1.4);
+      // Diagonal support brace
+      poly(ctx, [[24, 38], [34, 28], [31, 28], [24, 44]], "#74461c", "#1a0c02", 1);
+
+      // Awning Roof Tiles (Terracotta & Cedar shingles)
+      const awningPoly = [
+        [12, 34],
+        [36, 16],
+        [60, 32],
+        [54, 37],
+        [36, 23],
+        [16, 39],
+      ];
+      poly(ctx, awningPoly, linGrad(ctx, 36, 16, 36, 39, [[0, "#e88c3a"], [0.4, "#b45a1c"], [1, "#54240a"]]), "#200a02", 2.0);
+
+      // Shingle tile ridges & edge highlights
+      ctx.strokeStyle = "rgba(255, 230, 180, 0.5)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(14, 34); ctx.lineTo(36, 17); ctx.lineTo(58, 32);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(40, 12, 4, 0.4)";
+      ctx.lineWidth = 1.0;
+      for (let i = 0; i < 4; i += 1) {
+        const sx = 20 + i * 9;
+        const sy = 33 - Math.abs(sx - 36) * 0.65;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy); ctx.lineTo(sx + (sx < 36 ? -2 : 2), sy + 4);
+        ctx.stroke();
+      }
+    };
+
+    const drawArtilleryMortar128 = (ctx, isFire = false) => {
+      if (!isFire) {
+        // —— IDLE STATE: Iron Mortar Primed at 45° ——
+        // Lazy wisp of fuse smoke from vent
+        ellipse(ctx, 42, 36, 4.5, 3.5, "rgba(210,200,185,0.4)");
+        ellipse(ctx, 38, 30, 6, 5, "rgba(210,200,185,0.3)");
+        ellipse(ctx, 34, 23, 7, 5.5, "rgba(210,200,185,0.2)");
+
+        // Trunnion Cheek Brackets (Holding the axle)
+        poly(ctx, [[46, 64], [58, 64], [56, 46], [48, 46]], linGrad(ctx, 46, 46, 58, 64, [[0, "#56504a"], [1, "#1c1814"]]), "#0e0c0a", 1.6);
+        poly(ctx, [[70, 64], [82, 64], [80, 46], [72, 46]], linGrad(ctx, 70, 46, 82, 64, [[0, "#48423c"], [1, "#141210"]]), "#0e0c0a", 1.6);
+
+        // Heavy Cast-Iron Mortar Barrel (Angled from breech at 44,52 to muzzle at 76,28)
+        const barrelPoly = [
+          [38, 48],
+          [48, 36],
+          [74, 22],
+          [84, 34],
+          [58, 58],
+          [44, 58],
+        ];
+        poly(ctx, barrelPoly, linGrad(ctx, 38, 22, 84, 58, [[0, "#6e665e"], [0.25, "#4e4842"], [0.65, "#2a2622"], [1, "#12100e"]]), "#0a0806", 2.4);
+
+        // Spherical Breech Cascabell
+        ellipse(ctx, 43, 53, 9, 8, linGrad(ctx, 36, 46, 50, 60, [[0, "#6e665e"], [0.5, "#3c3630"], [1, "#12100e"]]), "#0a0806", 1.8);
+        ellipse(ctx, 36, 55, 3, 3, "#342e28", "#0a0806", 1.2);
+
+        // Metallic Longitudinal Specular Sheen
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(46, 40); ctx.lineTo(76, 25);
+        ctx.stroke();
+
+        // Bronze Reinforce Hoops / Rings
+        // Breech hoop
+        ctx.strokeStyle = linGrad(ctx, 42, 44, 52, 54, [[0, "#ffd868"], [0.5, "#c49232"], [1, "#60400c"]]);
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(42, 43); ctx.lineTo(51, 54);
+        ctx.stroke();
+
+        // Mid-trunnion hoop
+        ctx.strokeStyle = linGrad(ctx, 54, 34, 66, 46, [[0, "#ffd868"], [0.5, "#c49232"], [1, "#60400c"]]);
+        ctx.lineWidth = 3.4;
+        ctx.beginPath();
+        ctx.moveTo(55, 33); ctx.lineTo(65, 45);
+        ctx.stroke();
+
+        // Trunnion axle bolt
+        ellipse(ctx, 60, 48, 3.5, 3.5, "#d4a438", "#442e08", 1.2);
+        ellipse(ctx, 59, 47, 1.2, 1.2, "#fff0a0");
+
+        // Flared Muzzle Ring & Dark Bore
+        ellipse(ctx, 79, 28, 8, 10, linGrad(ctx, 72, 18, 86, 38, [[0, "#f8d06c"], [0.5, "#b88428"], [1, "#54340a"]]), "#1a1004", 2);
+        // Inner Dark Rifled Bore Opening
+        ellipse(ctx, 79, 28, 5.5, 7.5, linGrad(ctx, 74, 21, 84, 35, [[0, "#080604"], [1, "#1c140e"]]), "#000000", 1.5);
+        ellipse(ctx, 80, 27, 3, 4, "#060402");
+      } else {
+        // —— FIRE STATE: Violent Recoil & Massive Volumetric Muzzle Flash ——
+        // Recoil Vibration / Dust at base
+        ctx.strokeStyle = "rgba(220, 180, 110, 0.7)";
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(20, 70); ctx.lineTo(14, 76);
+        ctx.moveTo(106, 70); ctx.lineTo(112, 76);
+        ctx.stroke();
+
+        // Recoiled Kicked-Back Barrel (Pitched up steeply, breech rammed down-left)
+        const barrelPoly = [
+          [28, 54],
+          [40, 36],
+          [62, 18],
+          [74, 28],
+          [52, 60],
+          [36, 62],
+        ];
+        poly(ctx, barrelPoly, linGrad(ctx, 28, 18, 74, 62, [[0, "#7a7066"], [0.25, "#524a42"], [0.65, "#2e2822"], [1, "#14100c"]]), "#0a0806", 2.4);
+
+        // Breech cascabell kicked down
+        ellipse(ctx, 32, 58, 9, 8, linGrad(ctx, 25, 51, 39, 65, [[0, "#7a7066"], [0.5, "#403830"], [1, "#14100c"]]), "#0a0806", 1.8);
+
+        // Glowing red-hot bronze bands
+        ctx.strokeStyle = "#ffb040";
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(33, 47); ctx.lineTo(44, 58);
+        ctx.moveTo(46, 34); ctx.lineTo(58, 47);
+        ctx.stroke();
+
+        // Recoil Breech Shockwave Arcs
+        ctx.strokeStyle = "rgba(255, 190, 80, 0.85)";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(26, 56, 12, 2.1, 4.2);
+        ctx.stroke();
+
+        // Red-Hot Glowing Muzzle Lip
+        ellipse(ctx, 68, 23, 9, 11, linGrad(ctx, 60, 12, 76, 34, [[0, "#fff0a0"], [0.4, "#ff8c20"], [1, "#941800"]]), "#400600", 2.2);
+        ellipse(ctx, 68, 23, 5, 7, "#ff3800");
+
+        // MASSIVE VOLUMETRIC MUZZLE FIREBALL (Expanding forward and up)
+        // Layer 1: Outer Roaring Crimson / Orange Flame Lobes
+        const flamePoly = [
+          [68, 23],
+          [82, 8],
+          [98, 2],
+          [116, 8],
+          [126, 20],
+          [122, 34],
+          [106, 44],
+          [88, 40],
+          [76, 32],
+        ];
+        poly(ctx, flamePoly, linGrad(ctx, 68, 23, 126, 20, [[0, "#ffffff"], [0.2, "#ffe850"], [0.55, "#ff5500"], [0.85, "#cc1200"], [1, "#640400"]]), "#3a0200", 2);
+
+        // Layer 2: Inner Incandescent Golden Core
+        const corePoly = [
+          [68, 23],
+          [84, 13],
+          [102, 10],
+          [112, 20],
+          [104, 30],
+          [82, 28],
+        ];
+        poly(ctx, corePoly, linGrad(ctx, 68, 23, 112, 20, [[0, "#ffffff"], [0.45, "#fff280"], [1, "#ff8810"]]));
+
+        // Layer 3: Blinding White Ignition Heart
+        ellipse(ctx, 74, 22, 7, 7, "#ffffff");
+
+        // Flying Burning Shrapnel Sparks & Embers
+        for (const [bx, by, br] of [
+          [120, 6, 2.4], [126, 14, 2.2], [124, 38, 2.0], [110, 48, 1.8],
+          [96, 48, 1.6], [104, -2, 2.0], [114, 28, 2.2], [88, 2, 1.8]
+        ]) {
+          ellipse(ctx, bx, by, br, br, "#ffffff", "#ff8800", 1);
+        }
+
+        // Billowing Heavy Volumetric Gunpowder Smoke Clouds Curling Over Canopy
+        ellipse(ctx, 84, 8, 12, 10, "rgba(70,62,54,0.85)", "#1a1612", 1.2);
+        ellipse(ctx, 98, 2, 10, 8, "rgba(95,85,75,0.75)");
+        ellipse(ctx, 66, 6, 11, 8, "rgba(80,72,64,0.8)");
+        ellipse(ctx, 48, 10, 9, 7, "rgba(110,100,90,0.65)");
+      }
     };
 
     const drawArtilleryIdle = (ctx) => {
-      towerBase(ctx, artilleryCfg);
-      // timber frame
-      woodPlank(ctx, 26, 24, 44, 30, "#c89858", "#6a4018");
-      // mortar barrel
-      rounded(ctx, 34, 18, 40, 16, 7, linGrad(ctx, 34, 18, 74, 34, [[0, "#6a5848"], [0.5, "#3a2c20"], [1, "#1a120c"]]), "#0e0a08", 2);
-      ellipse(ctx, 74, 24, 7, 7, "#1a120c", "#f0c060", 2);
-      ellipse(ctx, 74, 24, 3, 3, "#402818");
-      // iron bands
-      ctx.strokeStyle = "#d0a050";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(42, 20);
-      ctx.lineTo(42, 32);
-      ctx.moveTo(56, 19);
-      ctx.lineTo(56, 33);
-      ctx.stroke();
-      // powder keg
-      ellipse(ctx, 30, 42, 8, 10, linGrad(ctx, 24, 34, 36, 52, [[0, "#8a5030"], [1, "#3a2010"]]), "#1a1008", 1.5);
-      // smoke puff
-      ellipse(ctx, 80, 14, 6, 5, "rgba(200,190,170,.45)");
-      ellipse(ctx, 86, 10, 4, 4, "rgba(200,190,170,.35)");
-      // roof awning
-      roofTiles(ctx, [[20, 30], [48, 12], [76, 30]], "#f0b050", "#a06028", "#3a2010");
+      drawArtilleryRedoubt128(ctx);
+      drawArtilleryProps128(ctx);
+      drawArtilleryMortar128(ctx, false);
     };
 
     const drawArtilleryFire = (ctx) => {
-      towerBase(ctx, artilleryCfg);
-      // timber frame
-      woodPlank(ctx, 26, 24, 44, 30, "#c89858", "#6a4018");
-      // recoil dust / vibration lines at frame base
-      ctx.strokeStyle = "rgba(180,140,80,.6)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(22, 54);
-      ctx.lineTo(18, 58);
-      ctx.moveTo(74, 54);
-      ctx.lineTo(78, 58);
-      ctx.stroke();
-      // mortar barrel kicked back to the left and pitched up
-      rounded(ctx, 26, 14, 38, 18, 7, linGrad(ctx, 26, 14, 64, 32, [[0, "#7a6250"], [0.5, "#423224"], [1, "#1c140e"]]), "#0e0a08", 2.2);
-      // iron bands on kicked barrel
-      ctx.strokeStyle = "#f0c060";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(34, 16);
-      ctx.lineTo(34, 30);
-      ctx.moveTo(48, 15);
-      ctx.lineTo(48, 31);
-      ctx.stroke();
-      // kicked barrel breech shock waves
-      ctx.strokeStyle = "rgba(255,200,100,.75)";
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.arc(24, 23, 8, 2.2, 4.1);
-      ctx.stroke();
-      // mortar muzzle red hot ring
-      ellipse(ctx, 64, 20, 8, 8, "#2a1008", "#ff8020", 2.5);
-      ellipse(ctx, 64, 20, 4, 4, "#ff4000");
-      // massive muzzle blast fireball protruding forward & up
-      poly(
-        ctx,
-        [[64, 20], [78, 8], [88, 4], [96, 14], [94, 26], [86, 34], [74, 32]],
-        linGrad(ctx, 64, 20, 96, 20, [[0, "#ffffff"], [0.25, "#ffe650"], [0.65, "#ff6010"], [1, "#aa1800"]]),
-        "#500c00",
-        1.5
-      );
-      // inner fireball core
-      poly(ctx, [[64, 20], [76, 13], [84, 20], [76, 27]], "#ffffff");
-      // flying blast sparks / burning embers
-      for (const [bx, by, br] of [[94, 4, 2], [98, 18, 2.2], [92, 34, 1.8], [82, 40, 1.5]]) {
-        ellipse(ctx, bx, by, br, br, "#fff080", "#ff4000", 1);
-      }
-      // billowing heavy smoke plume curling up over roof
-      ellipse(ctx, 74, 6, 10, 8, "rgba(90,80,70,.8)", "#201812", 1);
-      ellipse(ctx, 84, 0, 8, 7, "rgba(110,100,90,.7)");
-      ellipse(ctx, 60, 6, 8, 6, "rgba(100,90,80,.65)");
-      // powder keg
-      ellipse(ctx, 28, 42, 8, 10, linGrad(ctx, 22, 34, 34, 52, [[0, "#8a5030"], [1, "#3a2010"]]), "#1a1008", 1.5);
-      // roof awning
-      roofTiles(ctx, [[20, 30], [48, 12], [76, 30]], "#f0b050", "#a06028", "#3a2010");
+      drawArtilleryRedoubt128(ctx);
+      drawArtilleryProps128(ctx);
+      drawArtilleryMortar128(ctx, true);
     };
 
-    make("tower_artillery_idle", 96, 96, drawArtilleryIdle);
-    make("tower_artillery", 96, 96, drawArtilleryIdle);
-    make("tower_artillery_fire", 96, 96, drawArtilleryFire);
+    make("tower_artillery_idle", 128, 128, drawArtilleryIdle);
+    make("tower_artillery", 128, 128, drawArtilleryIdle);
+    make("tower_artillery_fire", 128, 128, drawArtilleryFire);
 
-    const barracksCfg = {
-      stoneHi: "#c0a868",
-      stone: "#8a7440",
-      stoneLo: "#4a3c22",
-      woodHi: "#e8d080",
-      woodLo: "#8a6828",
+    // —— Fort Keep / Barracks (128×128 detailed rebuild) ——
+    const drawBarracksKeep128 = (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Ground Contact Shadow & Grassy Rampart Berm
+      shadow(ctx, 64, 116, 50, 12, 0.42);
+      shadow(ctx, 64, 117, 38, 7, 0.55);
+
+      // Fortified earthen berm
+      ellipse(ctx, 64, 110, 48, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#5a7036"], [0.4, "#3e4f24"], [1, "#1c2610"]]), "#121a0a", 2);
+      ctx.strokeStyle = "rgba(160, 215, 80, 0.4)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(64, 108, 44, 10, 0, Math.PI * 0.85, Math.PI * 2.15);
+      ctx.stroke();
+
+      // Foundation boulders embedded in turf
+      ellipse(ctx, 26, 114, 5, 3, "#686a5a", "#262a20", 1);
+      ellipse(ctx, 38, 118, 5.5, 3.2, "#585a4a", "#262a20", 1);
+      ellipse(ctx, 90, 116, 5, 3.2, "#5c5e4e", "#262a20", 1);
+      ellipse(ctx, 100, 113, 4, 2.5, "#6c6e5e", "#262a20", 1);
+
+      // 2. Heavy Dressed Fortress Stone Plinth (Foundation Y=82 to 112)
+      rounded(ctx, 30, 82, 68, 30, 4, linGrad(ctx, 30, 82, 98, 112, [[0, "#c6b480"], [0.35, "#988452"], [0.75, "#66542e"], [1, "#3c2e16"]]), "#1a1206", 2.2);
+
+      // Stone block mortar courses
+      ctx.strokeStyle = "#1a1206";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(32, 92); ctx.lineTo(96, 92);
+      ctx.moveTo(32, 102); ctx.lineTo(96, 102);
+      ctx.stroke();
+
+      // Stone block top bevel highlights
+      ctx.strokeStyle = "rgba(255, 245, 205, 0.35)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(32, 93.5); ctx.lineTo(96, 93.5);
+      ctx.moveTo(32, 103.5); ctx.lineTo(96, 103.5);
+      ctx.stroke();
+
+      // Vertical mortar joints
+      ctx.strokeStyle = "#1a1206";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(46, 83); ctx.lineTo(46, 92);
+      ctx.moveTo(80, 83); ctx.lineTo(80, 92);
+      ctx.moveTo(38, 92); ctx.lineTo(38, 102);
+      ctx.moveTo(64, 92); ctx.lineTo(64, 102);
+      ctx.moveTo(90, 92); ctx.lineTo(90, 102);
+      ctx.moveTo(50, 102); ctx.lineTo(50, 111);
+      ctx.moveTo(76, 102); ctx.lineTo(76, 111);
+      ctx.stroke();
+
+      speckles(ctx, 32, 84, 64, 26, 24, "rgba(0,0,0,0.18)", 1.2);
+      speckles(ctx, 32, 84, 64, 26, 14, "rgba(255,245,210,0.2)", 1.0);
+
+      // 3. Solid Stone Keep Tower Body (Y=42 to 86)
+      rounded(ctx, 28, 42, 72, 44, 4, linGrad(ctx, 28, 42, 100, 86, [[0, "#dac890"], [0.3, "#ac965e"], [0.7, "#766236"], [1, "#44361a"]]), "#1e1406", 2.4);
+
+      // Corner stone quoins (interlocking corner blocks)
+      const quoins = [
+        [28, 44, 8, 7], [28, 53, 11, 7], [28, 62, 8, 7], [28, 71, 11, 7],
+        [92, 44, 8, 7], [89, 53, 11, 7], [92, 62, 8, 7], [89, 71, 11, 7],
+      ];
+      for (const [qx, qy, qw, qh] of quoins) {
+        rounded(ctx, qx, qy, qw, qh, 1.5, linGrad(ctx, qx, qy, qx + qw, qy + qh, [[0, "#eedcaa"], [1, "#867240"]]), "#221808", 1.0);
+      }
+
+      // Arrow loops / crosslet embrasures on flank walls
+      // Left arrow loop
+      rounded(ctx, 38, 54, 4, 12, 1.5, "#140c04", "#241608", 1);
+      rounded(ctx, 35, 58, 10, 3, 1, "#140c04", "#241608", 1);
+      // Right arrow loop
+      rounded(ctx, 86, 54, 4, 12, 1.5, "#140c04", "#241608", 1);
+      rounded(ctx, 83, 58, 10, 3, 1, "#140c04", "#241608", 1);
+
+      // 4. Machicolations / Corbel Course (Y=34 to 44)
+      for (let i = 0; i < 5; i += 1) {
+        const cx = 32 + i * 16;
+        poly(ctx, [[cx - 4, 44], [cx + 4, 44], [cx + 6, 36], [cx - 6, 36]], linGrad(ctx, cx - 6, 36, cx + 6, 44, [[0, "#eedcaa"], [1, "#7c6838"]]), "#1e1406", 1.2);
+      }
+
+      // Parapet Base Stringcourse Beam
+      rounded(ctx, 22, 34, 84, 8, 2, linGrad(ctx, 22, 34, 106, 42, [[0, "#f0deaa"], [0.35, "#beaa70"], [1, "#66542a"]]), "#1e1406", 1.8);
+
+      // 5. Crenellated Merlons (5 Battlement teeth, Y=18 to 36)
+      for (let i = 0; i < 5; i += 1) {
+        const mx = 24 + i * 16.5;
+        // Merlon block
+        rounded(ctx, mx, 20, 13, 16, 2, linGrad(ctx, mx, 20, mx + 13, 36, [[0, "#faeab6"], [0.4, "#c8b478"], [1, "#746234"]]), "#1e1406", 1.6);
+        // Merlon capstone coping
+        rounded(ctx, mx - 1, 18, 15, 4, 1.5, "#fff2c8", "#2c1e08", 1.0);
+        // Merlon center arrow slit
+        rounded(ctx, mx + 5, 23, 3, 7, 1, "#1c1004");
+      }
+    };
+
+    const drawBarracksGate128 = (ctx, isFire = false) => {
+      // Grand Arched Stone Portal (Center 64, Y=56 to 92)
+      // Dressed Stone Portal Frame
+      poly(
+        ctx,
+        [[44, 90], [44, 68], [64, 54], [84, 68], [84, 90], [80, 90], [80, 70], [64, 58], [48, 70], [48, 90]],
+        linGrad(ctx, 44, 54, 84, 90, [[0, "#fae6b4"], [0.5, "#b8a064"], [1, "#5c4a24"]]),
+        "#1e1406",
+        1.8
+      );
+
+      // Stone Keystone at apex
+      poly(ctx, [[60, 58], [68, 58], [70, 51], [58, 51]], "#fff4c8", "#2c1e08", 1.2);
+
+      // Stone threshold step
+      rounded(ctx, 44, 89, 40, 5, 1.5, "#685834", "#1a1004", 1.2);
+
+      if (!isFire) {
+        // —— IDLE GATE: Fortified Oak Double Doors Closed ——
+        // Doorway shadow recess
+        rounded(ctx, 48, 60, 32, 30, 4, "#140c04");
+
+        // Left Oak Door Leaf
+        rounded(ctx, 49, 62, 14.5, 27, 2, linGrad(ctx, 49, 62, 63.5, 89, [[0, "#4a2a14"], [0.5, "#321a0a"], [1, "#1c0e04"]]), "#0e0602", 1.2);
+        // Right Oak Door Leaf
+        rounded(ctx, 64.5, 62, 14.5, 27, 2, linGrad(ctx, 64.5, 62, 79, 89, [[0, "#422410"], [0.5, "#2a1408"], [1, "#140802"]]), "#0e0602", 1.2);
+
+        // Vertical timber plank lines
+        ctx.strokeStyle = "#100602";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(56, 63); ctx.lineTo(56, 88);
+        ctx.moveTo(71.5, 63); ctx.lineTo(71.5, 88);
+        ctx.stroke();
+
+        // Heavy Wrought-Iron Strap Hinges across both leaves
+        for (const hy of [67, 81]) {
+          poly(ctx, [[49, hy], [61, hy], [62, hy + 2], [49, hy + 2]], "#282420", "#080604", 0.8);
+          poly(ctx, [[79, hy], [67, hy], [66, hy + 2], [79, hy + 2]], "#282420", "#080604", 0.8);
+          ellipse(ctx, 52, hy + 1, 0.9, 0.9, "#ffd452");
+          ellipse(ctx, 59, hy + 1, 0.9, 0.9, "#ffd452");
+          ellipse(ctx, 69, hy + 1, 0.9, 0.9, "#ffd452");
+          ellipse(ctx, 76, hy + 1, 0.9, 0.9, "#ffd452");
+        }
+
+        // Iron Ring Pull Handles & Center Lock Plate
+        ellipse(ctx, 61.5, 75, 2, 2.5, "#24201c", "#080604", 1);
+        ellipse(ctx, 66.5, 75, 2, 2.5, "#24201c", "#080604", 1);
+        ellipse(ctx, 64, 75, 1.2, 1.2, "#ffd452");
+
+        // Portcullis Grille in arch transom
+        ctx.strokeStyle = "#201c18";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(54, 58); ctx.lineTo(54, 63);
+        ctx.moveTo(64, 55); ctx.lineTo(64, 63);
+        ctx.moveTo(74, 58); ctx.lineTo(74, 63);
+        ctx.moveTo(50, 60); ctx.lineTo(78, 60);
+        ctx.stroke();
+      } else {
+        // —— FIRE STATE: Gate Swung Wide & Golden Muster Light Surge ——
+        // Open door portal glowing with blazing muster radiance
+        rounded(ctx, 48, 60, 32, 30, 4, linGrad(ctx, 48, 60, 80, 90, [[0, "#ffffff"], [0.35, "#ffea74"], [0.75, "#ff9418"], [1, "#8a3406"]]), "#1a0800", 1.8);
+        ellipse(ctx, 64, 76, 12, 16, radGrad(ctx, 64, 74, 2, 16, [[0, "#ffffff"], [0.5, "#fff0a0"], [1, "rgba(255,140,20,0)"]]));
+
+        // Golden light spilled onto threshold
+        ellipse(ctx, 64, 91, 16, 5, "rgba(255, 235, 120, 0.7)");
+
+        // Left open door leaf angled inward
+        poly(ctx, [[48, 63], [54, 65], [54, 88], [48, 86]], "#2c160a", "#0c0400", 1.2);
+        // Right open door leaf angled inward
+        poly(ctx, [[80, 63], [74, 65], [74, 88], [80, 86]], "#241006", "#0c0400", 1.2);
+      }
+    };
+
+    const drawBarracksProps128 = (ctx, isFire = false) => {
+      // 1. Knightly Heraldic Heater Shield mounted above gate (Center 64, Y=42 to 58)
+      const shieldPoly = [
+        [54, 42],
+        [74, 42],
+        [72, 52],
+        [64, 59],
+        [56, 52],
+      ];
+      poly(ctx, shieldPoly, linGrad(ctx, 54, 42, 74, 59, [[0, "#ffffff"], [0.3, "#f4d060"], [1, "#9c7018"]]), "#2a1a06", 1.8);
+
+      // Heraldic Field: Royal Crimson & Azure Quartered or Crimson with Gold Chevron
+      poly(ctx, [[56, 44], [72, 44], [70, 51], [64, 56], [58, 51]], "#c42418");
+      // Golden Chevron & Cross
+      ctx.strokeStyle = "#ffe670";
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(58, 46); ctx.lineTo(64, 52); ctx.lineTo(70, 46);
+      ctx.moveTo(64, 44); ctx.lineTo(64, 55);
+      ctx.stroke();
+      ellipse(ctx, 64, 48, 1.5, 1.5, "#ffffff");
+
+      if (isFire) {
+        // Divine Valor Aura around Shield
+        ellipse(ctx, 64, 50, 16, 14, radGrad(ctx, 64, 50, 2, 16, [[0, "rgba(255,255,255,0.8)"], [0.5, "rgba(255,220,90,0.5)"], [1, "rgba(255,180,30,0)"]]));
+      }
+
+      // 2. Torch Sconces on Flanking Walls
+      // Left Torch (X=33, Y=56..72)
+      rounded(ctx, 31, 62, 3.5, 12, 1, "#36302a", "#100c08", 0.8);
+      // Right Torch (X=93, Y=56..72)
+      rounded(ctx, 93.5, 62, 3.5, 12, 1, "#36302a", "#100c08", 0.8);
+
+      if (!isFire) {
+        // Idle Torches
+        ellipse(ctx, 33, 58, 4.5, 6, radGrad(ctx, 33, 57, 1, 6, [[0, "#ffffff"], [0.4, "#ffa820"], [1, "rgba(200,40,0,0)"]]));
+        ellipse(ctx, 95, 58, 4.5, 6, radGrad(ctx, 95, 57, 1, 6, [[0, "#ffffff"], [0.4, "#ffa820"], [1, "rgba(200,40,0,0)"]]));
+
+        // Idle Flagpole & Pennant on Left Battlement (X=36, Y=4 to 22)
+        ctx.strokeStyle = "#4a3418";
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(36, 22); ctx.lineTo(36, 4);
+        ctx.stroke();
+        poly(ctx, [[36, 2], [38, 6], [36, 5], [34, 6]], "#ffd860", "#4a3408", 0.8);
+
+        // Small swallowtail pennant
+        poly(ctx, [[36, 6], [54, 9], [48, 15], [54, 21], [36, 18]], linGrad(ctx, 36, 6, 54, 21, [[0, "#d83424"], [0.6, "#9e1810"], [1, "#540804"]]), "#200402", 1.0);
+        ctx.strokeStyle = "#ffd854";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(38, 12); ctx.lineTo(46, 12);
+        ctx.stroke();
+      } else {
+        // —— FIRE STATE: War Horn Sounding, Massive War Banner, Roaring Torches ——
+        // Roaring high flame bursts
+        ellipse(ctx, 33, 55, 7, 10, radGrad(ctx, 33, 53, 1, 9, [[0, "#ffffff"], [0.35, "#fff0a0"], [0.7, "#ff7818"], [1, "rgba(200,20,0,0)"]]));
+        ellipse(ctx, 95, 55, 7, 10, radGrad(ctx, 95, 53, 1, 9, [[0, "#ffffff"], [0.35, "#fff0a0"], [0.7, "#ff7818"], [1, "rgba(200,20,0,0)"]]));
+        ellipse(ctx, 31, 46, 1.5, 1.5, "#fff0a0");
+        ellipse(ctx, 97, 46, 1.5, 1.5, "#fff0a0");
+
+        // Tall Iron Flagpole with Gold Spearhead Finial (X=34, Y=-6 to 24)
+        ctx.strokeStyle = "#2a2218";
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(34, 24); ctx.lineTo(34, -4);
+        ctx.stroke();
+        poly(ctx, [[34, -8], [37, -2], [34, -4], [31, -2]], "#fff080", "#5a3a10", 1.0);
+
+        // Grand Billowing Crimson & Gold War Standard (X=34 to 76, Y=-4 to 26)
+        const bannerPoly = [
+          [34, -3],
+          [74, -5],
+          [64, 8],
+          [76, 22],
+          [34, 15],
+        ];
+        poly(ctx, bannerPoly, linGrad(ctx, 34, -5, 76, 22, [[0, "#ea3826"], [0.45, "#b81c10"], [1, "#640a06"]]), "#220402", 1.6);
+
+        // Golden Embroidered Chevron Crest on War Standard
+        ctx.strokeStyle = "#ffe868";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(42, 0); ctx.lineTo(54, 8); ctx.lineTo(42, 14);
+        ctx.stroke();
+        ellipse(ctx, 54, 8, 2, 2, "#ffffff", "#ffd452", 0.8);
+
+        // Sounding Brass War Horn at Right Battlement (X=78 to 102, Y=6 to 20)
+        poly(ctx, [[76, 18], [84, 13], [98, 7], [101, 12], [86, 18], [76, 21]], linGrad(ctx, 76, 7, 101, 21, [[0, "#fff090"], [0.5, "#e0b034"], [1, "#805814"]]), "#2c1c04", 1.4);
+        ellipse(ctx, 100, 9.5, 3.5, 6, "#3c2008", "#fff2a0", 1.5);
+
+        // Concentric Expanding Acoustic Rally Shockwaves
+        ctx.strokeStyle = "#ffe880";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(100, 9.5, 9, -0.85, 0.85);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255, 230, 120, 0.75)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(100, 9.5, 16, -0.85, 0.85);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255, 210, 90, 0.45)";
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(100, 9.5, 23, -0.85, 0.85);
+        ctx.stroke();
+      }
     };
 
     const drawBarracksIdle = (ctx) => {
-      towerBase(ctx, barracksCfg);
-      // fort keep
-      rounded(ctx, 26, 20, 44, 34, 4, linGrad(ctx, 26, 20, 70, 54, [[0, "#e0c878"], [0.45, "#a88840"], [1, "#5a4820"]]), "#2a1e10", 2.2);
-      // door
-      rounded(ctx, 40, 36, 16, 18, 3, "#2a1a10", "#d0b060", 1.5);
-      ellipse(ctx, 52, 46, 1.5, 1.5, "#f0d070");
-      // crenellations
-      for (let i = 0; i < 4; i += 1) {
-        rounded(ctx, 28 + i * 11, 12, 8, 12, 2, linGrad(ctx, 0, 12, 0, 24, [[0, "#f0e0a0"], [1, "#8a7030"]]), "#2a1e10", 1.2);
-      }
-      // crest shield
-      poly(ctx, [[48, 22], [58, 28], [54, 40], [48, 44], [42, 40], [38, 28]], linGrad(ctx, 38, 22, 58, 44, [[0, "#fff0b0"], [1, "#c09030"]]), "#3a2810", 1.5);
-      ctx.strokeStyle = "#5a3818";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(48, 26);
-      ctx.lineTo(48, 40);
-      ctx.moveTo(42, 32);
-      ctx.lineTo(54, 32);
-      ctx.stroke();
-      // torch
-      rounded(ctx, 70, 34, 4, 14, 1, "#4a3018");
-      ellipse(ctx, 72, 30, 5, 7, radGrad(ctx, 72, 28, 1, 7, [[0, "#fff8c0"], [0.4, "#ff9020"], [1, "rgba(180,40,0,.1)"]]));
+      drawBarracksKeep128(ctx);
+      drawBarracksGate128(ctx, false);
+      drawBarracksProps128(ctx, false);
     };
 
     const drawBarracksFire = (ctx) => {
-      towerBase(ctx, barracksCfg);
-      // fort keep
-      rounded(ctx, 26, 20, 44, 34, 4, linGrad(ctx, 26, 20, 70, 54, [[0, "#e0c878"], [0.45, "#a88840"], [1, "#5a4820"]]), "#2a1e10", 2.2);
-      // glowing muster door (guards surging forth)
-      rounded(ctx, 40, 36, 16, 18, 3, linGrad(ctx, 40, 36, 56, 54, [[0, "#fff2a0"], [0.6, "#f0a820"], [1, "#8a4810"]]), "#2a1a10", 1.8);
-      ellipse(ctx, 48, 44, 3, 5, "#ffffff");
-      // crenellations
-      for (let i = 0; i < 4; i += 1) {
-        rounded(ctx, 28 + i * 11, 12, 8, 12, 2, linGrad(ctx, 0, 12, 0, 24, [[0, "#f0e0a0"], [1, "#8a7030"]]), "#2a1e10", 1.2);
-      }
-      // crest shield with gold glow
-      poly(ctx, [[48, 22], [58, 28], [54, 40], [48, 44], [42, 40], [38, 28]], linGrad(ctx, 38, 22, 58, 44, [[0, "#ffffff"], [0.5, "#ffd760"], [1, "#c09030"]]), "#3a2810", 1.8);
-      ctx.strokeStyle = "#5a3818";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(48, 26);
-      ctx.lineTo(48, 40);
-      ctx.moveTo(42, 32);
-      ctx.lineTo(54, 32);
-      ctx.stroke();
-
-      // tall flagpole rising from the keep
-      ctx.strokeStyle = "#5a3a18";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(30, 24);
-      ctx.lineTo(30, 0);
-      ctx.stroke();
-      // gold spearhead finial on top of flagpole
-      poly(ctx, [[30, -2], [33, 4], [30, 2], [27, 4]], "#fff080", "#5a3a10", 1);
-      // large billowing crimson war banner
-      poly(
-        ctx,
-        [[30, 2], [62, 0], [54, 11], [64, 22], [30, 16]],
-        linGrad(ctx, 30, 0, 64, 22, [[0, "#e83c2a"], [0.5, "#b82014"], [1, "#701208"]]),
-        "#2a0604",
-        1.5
-      );
-      // golden chevron emblem on banner
-      ctx.strokeStyle = "#ffea70";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(36, 5);
-      ctx.lineTo(45, 11);
-      ctx.lineTo(36, 15);
-      ctx.stroke();
-
-      // sounding brass war horn raised at right battlement
-      poly(ctx, [[58, 14], [64, 10], [74, 4], [76, 8], [65, 14], [58, 16]], "#ffd750", "#5a3810", 1.2);
-      ellipse(ctx, 75, 6, 3, 5, "#3a2008", "#fff2a0", 1.5);
-      // acoustic rally sound wave arcs propagating outward
-      ctx.strokeStyle = "#ffe880";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(75, 6, 8, -0.85, 0.85);
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(255,230,120,.7)";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.arc(75, 6, 14, -0.85, 0.85);
-      ctx.stroke();
-      ctx.strokeStyle = "rgba(255,210,90,.45)";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.arc(75, 6, 20, -0.85, 0.85);
-      ctx.stroke();
-
-      // blazing torch with high flame burst & sparks
-      rounded(ctx, 70, 34, 4, 14, 1, "#4a3018");
-      ellipse(ctx, 72, 26, 7, 10, radGrad(ctx, 72, 24, 1, 9, [[0, "#ffffff"], [0.35, "#fff0a0"], [0.7, "#ff7818"], [1, "rgba(200,20,0,0)"]]));
-      ellipse(ctx, 70, 18, 1.5, 1.5, "#fff0a0");
-      ellipse(ctx, 74, 14, 1.2, 1.2, "#ff9020");
+      drawBarracksKeep128(ctx);
+      drawBarracksGate128(ctx, true);
+      drawBarracksProps128(ctx, true);
     };
 
-    make("tower_barracks_idle", 96, 96, drawBarracksIdle);
-    make("tower_barracks", 96, 96, drawBarracksIdle);
-    make("tower_barracks_fire", 96, 96, drawBarracksFire);
+    make("tower_barracks_idle", 128, 128, drawBarracksIdle);
+    make("tower_barracks", 128, 128, drawBarracksIdle);
+    make("tower_barracks_fire", 128, 128, drawBarracksFire);
 
     // —— Enemies ——
     const limbs = (ctx, skin, outline, y = 42) => {
