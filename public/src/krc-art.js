@@ -4576,109 +4576,224 @@
     make("enemy_hexer_dead", 80, 72, (ctx) => drawHexerDead(ctx));
 
     const drawTitan = (ctx, frame = 0) => {
-      shadow(ctx, 44, 70, 30, 8);
+      shadow(ctx, 44, 70, 32, 8);
       const f = frame % 4;
 
       const bodyX = f === 0 ? 21 : f === 2 ? 23 : 22;
-      const bodyY = (f === 1 || f === 3) ? 23 : 25;
+      const bodyY = (f === 1 || f === 3) ? 22 : 24;
       const headX = f === 0 ? 43 : f === 2 ? 45 : 44;
-      const headY = (f === 1 || f === 3) ? 17 : 19;
+      const headY = (f === 1 || f === 3) ? 16 : 18;
 
-      const stoneLight = "#b0a898";
-      const stoneDark = "#4a4038";
-      const outline = "#2a241e";
+      const stoneLight = "#b8b0a0";
+      const stoneMid = "#787068";
+      const stoneDark = "#3c342e";
+      const outline = "#221c16";
 
-      // Heavy stomp legs
+      // Heavy stomp legs & feet
       if (f === 0) {
-        // Left forward stomp
-        rounded(ctx, 24, 46, 15, 22, 5, linGrad(ctx, 24, 46, 39, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
-        rounded(ctx, 19, 63, 20, 7.5, 3, "#3a342c", outline, 1.5);
+        // Left forward heavy slam stomp
+        rounded(ctx, 23, 44, 16, 24, 5, linGrad(ctx, 23, 44, 39, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 16, 62, 24, 8.5, 3.5, "#2e2822", outline, 1.8);
         // Stomp shockwave dust under left foot
-        ctx.strokeStyle = "rgba(220,200,170,0.55)";
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(230,210,180,0.65)";
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.arc(28, 68, 9, Math.PI * 0.8, Math.PI * 2.2);
+        ctx.arc(28, 68, 10, Math.PI * 0.75, Math.PI * 2.25);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(200,180,150,0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(28, 68, 14, Math.PI * 0.8, Math.PI * 2.2);
         ctx.stroke();
 
         // Right trailing back
-        rounded(ctx, 52, 45, 14, 20, 4, linGrad(ctx, 52, 45, 66, 65, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
-        rounded(ctx, 50, 60, 16, 6.5, 3, "#2a241e", outline, 1.5);
+        rounded(ctx, 52, 45, 14, 20, 4, linGrad(ctx, 52, 45, 66, 65, [[0, "#8e867a"], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 50, 60, 16, 6.5, 3, "#26201a", outline, 1.5);
       } else if (f === 1) {
         // Left planted straight
         rounded(ctx, 27, 44, 15, 24, 5, linGrad(ctx, 27, 44, 42, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
-        rounded(ctx, 25, 63, 19, 7.5, 3, "#3a342c", outline, 1.5);
+        rounded(ctx, 24, 63, 20, 7.5, 3, "#322c24", outline, 1.6);
         // Right high knee lift stomp prep
-        rounded(ctx, 49, 39, 15, 18, 4, linGrad(ctx, 49, 39, 64, 57, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
-        rounded(ctx, 48, 52, 17, 7, 3, "#2a241e", outline, 1.5);
+        rounded(ctx, 49, 38, 16, 18, 5, linGrad(ctx, 49, 38, 65, 56, [[0, "#989082"], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 48, 50, 18, 7.5, 3, "#26201a", outline, 1.6);
       } else if (f === 2) {
         // Left trailing back
-        rounded(ctx, 22, 45, 14, 20, 4, linGrad(ctx, 22, 45, 36, 65, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
-        rounded(ctx, 20, 60, 16, 6.5, 3, "#2a241e", outline, 1.5);
-        // Right forward stomp
-        rounded(ctx, 49, 46, 15, 22, 5, linGrad(ctx, 49, 46, 64, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
-        rounded(ctx, 49, 63, 20, 7.5, 3, "#3a342c", outline, 1.5);
+        rounded(ctx, 21, 45, 14, 20, 4, linGrad(ctx, 21, 45, 35, 65, [[0, "#8e867a"], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 19, 60, 16, 6.5, 3, "#26201a", outline, 1.5);
+        // Right forward heavy slam stomp
+        rounded(ctx, 48, 44, 16, 24, 5, linGrad(ctx, 48, 44, 64, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 47, 62, 24, 8.5, 3.5, "#2e2822", outline, 1.8);
         // Stomp shockwave dust under right foot
-        ctx.strokeStyle = "rgba(220,200,170,0.55)";
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(230,210,180,0.65)";
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.arc(60, 68, 9, Math.PI * 0.8, Math.PI * 2.2);
+        ctx.arc(59, 68, 10, Math.PI * 0.75, Math.PI * 2.25);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(200,180,150,0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(59, 68, 14, Math.PI * 0.8, Math.PI * 2.2);
         ctx.stroke();
       } else {
         // Left high knee lift stomp prep
-        rounded(ctx, 24, 39, 15, 18, 4, linGrad(ctx, 24, 39, 39, 57, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
-        rounded(ctx, 23, 52, 17, 7, 3, "#2a241e", outline, 1.5);
+        rounded(ctx, 23, 38, 16, 18, 5, linGrad(ctx, 23, 38, 39, 56, [[0, "#989082"], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 22, 50, 18, 7.5, 3, "#26201a", outline, 1.6);
         // Right planted straight
         rounded(ctx, 46, 44, 15, 24, 5, linGrad(ctx, 46, 44, 61, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
-        rounded(ctx, 44, 63, 19, 7.5, 3, "#3a342c", outline, 1.5);
+        rounded(ctx, 43, 63, 20, 7.5, 3, "#322c24", outline, 1.6);
       }
 
-      // Torso
-      rounded(ctx, bodyX, bodyY, 44, 32, 8, linGrad(ctx, bodyX, bodyY, bodyX + 44, bodyY + 32, [[0, "#d0c8b8"], [0.5, "#888078"], [1, "#403830"]]), outline, 2.4);
+      // Spiked stone shoulder crags
+      poly(ctx, [[bodyX - 2, bodyY + 6], [bodyX - 6, bodyY - 2], [bodyX + 6, bodyY + 2]], stoneMid, outline, 1.5);
+      poly(ctx, [[bodyX + 46, bodyY + 6], [bodyX + 50, bodyY - 2], [bodyX + 38, bodyY + 2]], stoneMid, outline, 1.5);
 
-      // Stone cracks
-      ctx.strokeStyle = "rgba(30,24,18,.55)";
-      ctx.lineWidth = 1.5;
+      // Torso granite slab
+      rounded(ctx, bodyX, bodyY, 44, 32, 8, linGrad(ctx, bodyX, bodyY, bodyX + 44, bodyY + 32, [[0, "#d8d0c0"], [0.5, "#888078"], [1, "#3c342c"]]), outline, 2.4);
+
+      // Deep fissure cracks with glowing veins
+      ctx.strokeStyle = "rgba(28,20,14,.75)";
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.moveTo(bodyX + 14, bodyY + 4);
-      ctx.lineTo(bodyX + 18, bodyY + 20);
-      ctx.lineTo(bodyX + 26, bodyY + 14);
-      ctx.moveTo(bodyX + 30, bodyY + 6);
-      ctx.lineTo(bodyX + 34, bodyY + 24);
+      ctx.moveTo(bodyX + 13, bodyY + 4);
+      ctx.lineTo(bodyX + 18, bodyY + 18);
+      ctx.lineTo(bodyX + 26, bodyY + 13);
+      ctx.moveTo(bodyX + 29, bodyY + 5);
+      ctx.lineTo(bodyX + 33, bodyY + 22);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255,190,80,.45)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 14, bodyY + 5);
+      ctx.lineTo(bodyX + 18, bodyY + 18);
+      ctx.lineTo(bodyX + 25, bodyY + 13);
       ctx.stroke();
 
       // Moss patches
-      ellipse(ctx, bodyX + 8, bodyY + 12, 6, 3, "rgba(100,160,70,.45)");
-      ellipse(ctx, bodyX + 36, bodyY + 18, 5, 3, "rgba(100,160,70,.4)");
+      ellipse(ctx, bodyX + 8, bodyY + 12, 6, 3, "rgba(90,160,60,.5)");
+      ellipse(ctx, bodyX + 36, bodyY + 18, 5, 3, "rgba(90,160,60,.45)");
 
       // Head
-      ellipse(ctx, headX, headY, 16, 14, linGrad(ctx, headX - 14, headY - 10, headX + 14, headY + 12, [[0, "#e0d8c8"], [1, "#686058"]]), outline, 2);
+      ellipse(ctx, headX, headY, 16, 14, linGrad(ctx, headX - 14, headY - 10, headX + 14, headY + 12, [[0, "#e4dcd0"], [1, "#605850"]]), outline, 2);
 
-      // Glowing eyes
-      ellipse(ctx, headX - 6, headY, 3, 3.5, "#ffe060");
-      ellipse(ctx, headX + 6, headY, 3, 3.5, "#ffe060");
-      ellipse(ctx, headX - 6, headY, 1.4, 1.8, "#402008");
-      ellipse(ctx, headX + 6, headY, 1.4, 1.8, "#402008");
+      // Glowing amber eyes
+      ellipse(ctx, headX - 6, headY, 3.2, 3.8, "#ffea60");
+      ellipse(ctx, headX + 6, headY, 3.2, 3.8, "#ffea60");
+      ellipse(ctx, headX - 6, headY, 1.4, 1.8, "#502808");
+      ellipse(ctx, headX + 6, headY, 1.4, 1.8, "#502808");
+      ellipse(ctx, headX - 5.5, headY - 0.8, 0.8, 0.8, "#ffffff");
+      ellipse(ctx, headX + 6.5, headY - 0.8, 0.8, 0.8, "#ffffff");
 
-      // Brow ridge
-      rounded(ctx, headX - 14, headY - 8, 28, 6, 2, "#585048", outline, 1);
+      // Chiseled brow ridge
+      rounded(ctx, headX - 14, headY - 8, 28, 6, 2, "#504840", outline, 1.2);
 
       // Massive stone fists
       let lFistX, lFistY, rFistX, rFistY;
       if (f === 0) {
-        lFistX = bodyX - 7; lFistY = bodyY + 17; rFistX = bodyX + 50; rFistY = bodyY + 23;
+        lFistX = bodyX - 8; lFistY = bodyY + 23; rFistX = bodyX + 51; rFistY = bodyY + 17;
       } else if (f === 1) {
-        lFistX = bodyX - 5; lFistY = bodyY + 20; rFistX = bodyX + 48; rFistY = bodyY + 20;
+        lFistX = bodyX - 6; lFistY = bodyY + 20; rFistX = bodyX + 50; rFistY = bodyY + 10;
       } else if (f === 2) {
-        lFistX = bodyX - 5; lFistY = bodyY + 23; rFistX = bodyX + 52; rFistY = bodyY + 17;
+        lFistX = bodyX - 6; lFistY = bodyY + 17; rFistX = bodyX + 53; rFistY = bodyY + 23;
       } else {
-        lFistX = bodyX - 3; lFistY = bodyY + 20; rFistX = bodyX + 46; rFistY = bodyY + 20;
+        lFistX = bodyX - 6; lFistY = bodyY + 10; rFistX = bodyX + 48; rFistY = bodyY + 20;
       }
 
-      ellipse(ctx, lFistX, lFistY, 10, 10, "#888078", outline, 2);
-      ellipse(ctx, rFistX, rFistY, 10, 10, "#888078", outline, 2);
-      // Knuckle details
-      speckles(ctx, lFistX - 5, lFistY - 5, 10, 10, 3, "rgba(255,255,255,0.2)", 1.2);
-      speckles(ctx, rFistX - 5, rFistY - 5, 10, 10, 3, "rgba(255,255,255,0.2)", 1.2);
+      ellipse(ctx, lFistX, lFistY, 11, 11, linGrad(ctx, lFistX - 10, lFistY - 10, lFistX + 10, lFistY + 10, [[0, "#9e968c"], [1, stoneDark]]), outline, 2.2);
+      ellipse(ctx, rFistX, rFistY, 11, 11, linGrad(ctx, rFistX - 10, rFistY - 10, rFistX + 10, rFistY + 10, [[0, "#9e968c"], [1, stoneDark]]), outline, 2.2);
+      // Knuckle ridges
+      speckles(ctx, lFistX - 6, lFistY - 6, 12, 12, 4, "rgba(255,255,255,0.25)", 1.4);
+      speckles(ctx, rFistX - 6, rFistY - 6, 12, 12, 4, "rgba(255,255,255,0.25)", 1.4);
+    };
+
+    const drawTitanEnrage = (ctx) => {
+      shadow(ctx, 44, 70, 36, 9, 0.5);
+      const outline = "#221c16";
+      const bodyX = 22;
+      const bodyY = 24;
+      const headX = 44;
+      const headY = 16;
+
+      // Planted wide power stomp legs
+      rounded(ctx, 18, 44, 18, 24, 5, linGrad(ctx, 18, 44, 36, 68, [[0, "#b8b0a0"], [1, "#3c342e"]]), outline, 2.2);
+      rounded(ctx, 12, 62, 26, 9, 3.5, "#2e2822", outline, 2);
+      rounded(ctx, 52, 44, 18, 24, 5, linGrad(ctx, 52, 44, 70, 68, [[0, "#b8b0a0"], [1, "#3c342e"]]), outline, 2.2);
+      rounded(ctx, 50, 62, 26, 9, 3.5, "#2e2822", outline, 2);
+
+      // Ground shockwaves on both sides
+      ctx.strokeStyle = "rgba(255,140,40,0.7)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(24, 68, 12, Math.PI * 0.7, Math.PI * 2.3);
+      ctx.arc(63, 68, 12, Math.PI * 0.7, Math.PI * 2.3);
+      ctx.stroke();
+
+      // Jagged erupting granite shoulder spikes
+      poly(ctx, [[bodyX - 4, bodyY + 4], [bodyX - 10, bodyY - 6], [bodyX + 4, bodyY]], "#685848", outline, 1.8);
+      poly(ctx, [[bodyX + 48, bodyY + 4], [bodyX + 54, bodyY - 6], [bodyX + 40, bodyY]], "#685848", outline, 1.8);
+
+      // Torso with molten core
+      rounded(ctx, bodyX, bodyY, 44, 32, 8, linGrad(ctx, bodyX, bodyY, bodyX + 44, bodyY + 32, [[0, "#d8c8b4"], [0.5, "#786858"], [1, "#342418"]]), outline, 2.5);
+
+      // Molten magma fissure cracks
+      ctx.strokeStyle = "#ff4400";
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 10, bodyY + 6);
+      ctx.lineTo(bodyX + 18, bodyY + 18);
+      ctx.lineTo(bodyX + 28, bodyY + 14);
+      ctx.moveTo(bodyX + 34, bodyY + 6);
+      ctx.lineTo(bodyX + 30, bodyY + 22);
+      ctx.lineTo(bodyX + 22, bodyY + 28);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffe860";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 11, bodyY + 7);
+      ctx.lineTo(bodyX + 18, bodyY + 18);
+      ctx.lineTo(bodyX + 27, bodyY + 14);
+      ctx.moveTo(bodyX + 33, bodyY + 7);
+      ctx.lineTo(bodyX + 30, bodyY + 22);
+      ctx.stroke();
+
+      // Head roaring upward
+      ellipse(ctx, headX, headY, 16, 14, linGrad(ctx, headX - 14, headY - 10, headX + 14, headY + 12, [[0, "#e8d0c0"], [1, "#584030"]]), outline, 2.2);
+
+      // Blazing red-orange eyes
+      ellipse(ctx, headX - 6, headY - 1, 3.6, 4, "#ff2200");
+      ellipse(ctx, headX + 6, headY - 1, 3.6, 4, "#ff2200");
+      ellipse(ctx, headX - 6, headY - 1, 2, 2.4, "#fff060");
+      ellipse(ctx, headX + 6, headY - 1, 2, 2.4, "#fff060");
+
+      // Roaring stone maw
+      rounded(ctx, headX - 6, headY + 5, 12, 6, 2, "#180c06", "#ff5500", 1.4);
+      ellipse(ctx, headX, headY + 7, 3, 1.8, "#ffaa00");
+
+      // Brow ridge angled in rage
+      rounded(ctx, headX - 14, headY - 9, 28, 6, 2, "#4a3c30", outline, 1.4);
+
+      // BOTH FISTS RAISED HIGH OVERHEAD in rage slam!
+      const lFistX = bodyX - 4;
+      const lFistY = bodyY + 2;
+      const rFistX = bodyX + 48;
+      const rFistY = bodyY + 2;
+
+      ellipse(ctx, lFistX, lFistY, 12, 12, linGrad(ctx, lFistX - 10, lFistY - 10, lFistX + 10, lFistY + 10, [[0, "#b0a090"], [1, "#403024"]]), outline, 2.4);
+      ellipse(ctx, rFistX, rFistY, 12, 12, linGrad(ctx, rFistX - 10, rFistY - 10, rFistX + 10, rFistY + 10, [[0, "#b0a090"], [1, "#403024"]]), outline, 2.4);
+
+      // Magma veins on raised knuckles
+      ctx.strokeStyle = "#ff6600";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(lFistX, lFistY, 7, Math.PI * 1.1, Math.PI * 1.8);
+      ctx.arc(rFistX, rFistY, 7, Math.PI * 1.2, Math.PI * 1.9);
+      ctx.stroke();
+
+      // Rage spark embers
+      for (const [ex, ey] of [[lFistX - 4, lFistY - 8], [lFistX + 5, lFistY - 10], [rFistX - 2, rFistY - 9], [rFistX + 7, rFistY - 7], [headX, headY - 10]]) {
+        ellipse(ctx, ex, ey, 1.8, 1.8, "#ffe060");
+      }
     };
 
     const drawTitanDead = (ctx) => {
@@ -4737,6 +4852,7 @@
     make("enemy_titan_w1", 88, 80, (ctx) => drawTitan(ctx, 1));
     make("enemy_titan_w2", 88, 80, (ctx) => drawTitan(ctx, 2));
     make("enemy_titan_w3", 88, 80, (ctx) => drawTitan(ctx, 3));
+    make("enemy_titan_enrage", 88, 80, (ctx) => drawTitanEnrage(ctx));
     make("enemy_titan_dead", 88, 80, (ctx) => drawTitanDead(ctx));
 
     const drawBossDead = (ctx) => {
@@ -4778,42 +4894,326 @@
       ellipse(ctx, 80, 55, 6, 6, "rgba(220,120,255,.5)", "#c060e0", 1.5);
     };
 
-    make("enemy_boss", 96, 88, (ctx) => {
-      shadow(ctx, 48, 76, 34, 9);
-      // cape
+    const drawBossIdle = (ctx) => {
+      shadow(ctx, 48, 76, 36, 9, 0.45);
+
+      // Royal flowing amethyst cape
       poly(
         ctx,
-        [[20, 30], [76, 30], [88, 70], [48, 78], [8, 70]],
-        linGrad(ctx, 20, 30, 76, 78, [[0, "#e0a0f0"], [0.5, "#8030a0"], [1, "#301048"]]),
-        "#1a0828",
+        [[18, 28], [78, 28], [90, 72], [48, 80], [6, 72]],
+        linGrad(ctx, 18, 28, 78, 80, [[0, "#e8b0f8"], [0.45, "#8a30aa"], [1, "#280838"]]),
+        "#1a0428",
         2.2
       );
-      // body armor
-      rounded(ctx, 28, 28, 40, 36, 8, linGrad(ctx, 28, 28, 68, 64, [[0, "#f0b0ff"], [0.45, "#a040c0"], [1, "#501868"]]), "#200830", 2.4);
-      // pauldrons
-      ellipse(ctx, 26, 34, 12, 10, "#c070e0", "#200830", 2);
-      ellipse(ctx, 70, 34, 12, 10, "#c070e0", "#200830", 2);
-      // head
-      ellipse(ctx, 48, 22, 16, 15, linGrad(ctx, 34, 10, 62, 36, [[0, "#f8d0ff"], [1, "#9030b0"]]), "#200830", 2);
+      // Gold hem trim on cape
+      ctx.strokeStyle = "#d4af37";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(8, 70);
+      ctx.lineTo(48, 78);
+      ctx.lineTo(88, 70);
+      ctx.stroke();
+
+      // Body armor
+      rounded(ctx, 28, 28, 40, 36, 8, linGrad(ctx, 28, 28, 68, 64, [[0, "#f2b8ff"], [0.45, "#9c38be"], [1, "#441258"]]), "#1a0428", 2.4);
+
+      // Ornate chest chevron & runic gem
+      poly(ctx, [[48, 36], [54, 46], [48, 54], [42, 46]], linGrad(ctx, 42, 36, 54, 54, [[0, "#ffe880"], [1, "#a87818"]]), "#3a2008", 1.2);
+      ellipse(ctx, 48, 45, 3.2, 3.2, "#ff40c0", "#500030", 1);
+
+      // Curved royal pauldrons
+      ellipse(ctx, 24, 34, 13, 11, linGrad(ctx, 14, 26, 34, 42, [[0, "#d880f0"], [1, "#601880"]]), "#1a0428", 2);
+      ellipse(ctx, 72, 34, 13, 11, linGrad(ctx, 62, 26, 82, 42, [[0, "#d880f0"], [1, "#601880"]]), "#1a0428", 2);
+      ctx.strokeStyle = "#d4af37";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(24, 34, 8, Math.PI * 0.8, Math.PI * 1.8);
+      ctx.arc(72, 34, 8, Math.PI * 1.2, Math.PI * 2.2);
+      ctx.stroke();
+
+      // Head
+      ellipse(ctx, 48, 22, 16, 15, linGrad(ctx, 34, 10, 62, 36, [[0, "#f8d8ff"], [1, "#8e28ad"]]), "#1a0428", 2);
       face(ctx, 48, 22, "#ffe8ff", "#200820", true);
-      // crown
-      poly(ctx, [[30, 14], [34, 4], [40, 12], [48, 2], [56, 12], [62, 4], [66, 14]], linGrad(ctx, 30, 2, 66, 14, [[0, "#fff0c0"], [1, "#c09030"]]), "#4a3010", 1.5);
-      ellipse(ctx, 48, 8, 4, 4, "#ff60e0", "#600840", 1);
-      // orb staff
-      ctx.strokeStyle = "#d0a040";
+
+      // 5-spire royal crown
+      poly(
+        ctx,
+        [[28, 14], [32, 3], [38, 11], [48, 1], [58, 11], [64, 3], [68, 14]],
+        linGrad(ctx, 28, 1, 68, 14, [[0, "#fff0c0"], [0.5, "#f0c840"], [1, "#a07018"]]),
+        "#4a3010",
+        1.5
+      );
+      ellipse(ctx, 48, 7.5, 4.5, 4.5, "#ff30b0", "#600030", 1.2);
+      ellipse(ctx, 48, 7, 1.2, 1.2, "#ffffff");
+
+      // Golden orb staff at side
+      ctx.strokeStyle = "#d8a838";
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(72, 70);
-      ctx.lineTo(82, 18);
+      ctx.lineTo(82, 16);
       ctx.stroke();
-      ellipse(ctx, 82, 16, 10, 10, radGrad(ctx, 80, 14, 1, 10, [[0, "#fff"], [0.35, "#f080ff"], [1, "rgba(100,20,140,.15)"]]), "#f0c0ff", 2);
-      // aura ring
-      ctx.strokeStyle = "rgba(240,160,255,.45)";
+
+      // Gold prongs grasping orb
+      poly(ctx, [[78, 18], [82, 23], [86, 18]], "#f5d060", "#5a4010", 1.2);
+      // Radiant arcane orb
+      ellipse(
+        ctx,
+        82,
+        14,
+        11,
+        11,
+        radGrad(ctx, 80, 12, 1, 11, [[0, "#ffffff"], [0.35, "#f090ff"], [0.75, "#b030e0"], [1, "rgba(100,20,140,0.1)"]]),
+        "#f0c0ff",
+        1.8
+      );
+
+      // Arcane aura ring at feet
+      ctx.strokeStyle = "rgba(230,160,255,.45)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(48, 48, 36, 12, 0, 0, Math.PI * 2);
+      ctx.ellipse(48, 50, 36, 12, 0, 0, Math.PI * 2);
       ctx.stroke();
-    });
+    };
+
+    const drawBossShield = (ctx) => {
+      shadow(ctx, 48, 76, 38, 9, 0.48);
+
+      // Defensive swept-back cape
+      poly(
+        ctx,
+        [[24, 30], [78, 30], [88, 72], [54, 76], [22, 70]],
+        linGrad(ctx, 24, 30, 88, 76, [[0, "#c8a0f8"], [0.5, "#6828a0"], [1, "#200838"]]),
+        "#140420",
+        2.2
+      );
+
+      // Braced armored torso
+      rounded(ctx, 32, 30, 38, 34, 7, linGrad(ctx, 32, 30, 70, 64, [[0, "#e8b8ff"], [0.5, "#8e30b8"], [1, "#3e1050"]]), "#1a0424", 2.4);
+
+      // Right pauldron raised, left pauldron thrust forward supporting shield
+      ellipse(ctx, 74, 34, 12, 10, "#b060d8", "#1a0424", 2);
+
+      // Head braced behind barrier
+      ellipse(ctx, 50, 24, 15, 14, linGrad(ctx, 36, 12, 64, 38, [[0, "#f4d0ff"], [1, "#8020a0"]]), "#1a0424", 2);
+      face(ctx, 50, 24, "#d8e8ff", "#101038", true);
+
+      // Crown gleaming with barrier power
+      poly(
+        ctx,
+        [[32, 16], [36, 6], [42, 13], [50, 4], [58, 13], [64, 6], [68, 16]],
+        linGrad(ctx, 32, 4, 68, 16, [[0, "#fff4d0"], [1, "#a87820"]]),
+        "#4a3010",
+        1.5
+      );
+      ellipse(ctx, 50, 9.5, 4, 4, "#9060ff", "#301060", 1);
+
+      // Staff upright on right side channeling into shield
+      ctx.strokeStyle = "#d8a838";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(74, 70);
+      ctx.lineTo(80, 16);
+      ctx.stroke();
+
+      // Blazing channeled orb
+      ellipse(
+        ctx,
+        80,
+        14,
+        10,
+        10,
+        radGrad(ctx, 78, 12, 1, 10, [[0, "#ffffff"], [0.4, "#d0a0ff"], [1, "rgba(120,40,200,0.15)"]]),
+        "#e8c0ff",
+        2
+      );
+
+      // Arcane channel beam from orb to shield crest
+      ctx.strokeStyle = "rgba(240, 210, 255, 0.85)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(76, 16);
+      ctx.bezierCurveTo(62, 18, 48, 30, 36, 42);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(180, 110, 255, 0.45)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(76, 16);
+      ctx.bezierCurveTo(62, 18, 48, 30, 36, 42);
+      ctx.stroke();
+
+      // —— MASSIVE CRYSTAL AEGIS SHIELD (Left/Center Foreground) ——
+      const shieldPts = [[10, 22], [42, 16], [46, 50], [32, 74], [8, 54]];
+      // Outer barrier glow
+      poly(ctx, [[8, 20], [44, 14], [48, 50], [33, 76], [6, 55]], "rgba(190, 130, 255, 0.25)");
+      // Main translucent crystal shield plate
+      poly(
+        ctx,
+        shieldPts,
+        linGrad(ctx, 8, 16, 46, 74, [
+          [0, "rgba(245, 230, 255, 0.92)"],
+          [0.35, "rgba(190, 120, 250, 0.82)"],
+          [0.7, "rgba(110, 45, 190, 0.75)"],
+          [1, "rgba(45, 12, 95, 0.65)"]
+        ]),
+        "#ffffff",
+        2.5
+      );
+      // Shield faceted energy ribs
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(10, 22); ctx.lineTo(30, 44); ctx.lineTo(42, 16);
+      ctx.moveTo(8, 54); ctx.lineTo(30, 44); ctx.lineTo(46, 50);
+      ctx.moveTo(30, 44); ctx.lineTo(32, 74);
+      ctx.stroke();
+
+      // Ornate golden runic crest in center of shield
+      poly(
+        ctx,
+        [[30, 34], [37, 44], [30, 54], [23, 44]],
+        linGrad(ctx, 23, 34, 37, 54, [[0, "#ffffff"], [0.4, "#f8e080"], [1, "#a07018"]]),
+        "#4a2808",
+        1.5
+      );
+      ellipse(ctx, 30, 44, 3, 3, "#ffffff", "#8030d0", 1.2);
+
+      // Barrier rune circle surrounding the shield
+      ctx.strokeStyle = "rgba(220, 180, 255, 0.6)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(28, 44, 25, -Math.PI * 0.45, Math.PI * 0.75);
+      ctx.stroke();
+
+      // Base protective ward ring
+      ctx.strokeStyle = "rgba(200, 150, 255, 0.55)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(48, 50, 38, 13, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    };
+
+    const drawBossRage = (ctx) => {
+      shadow(ctx, 48, 76, 42, 10, 0.5);
+
+      // Flared ragged crimson/fiery fury cape
+      poly(
+        ctx,
+        [[10, 24], [48, 26], [86, 24], [94, 62], [80, 74], [62, 68], [48, 76], [32, 68], [16, 74], [2, 62]],
+        linGrad(ctx, 10, 24, 86, 76, [[0, "#ff4060"], [0.4, "#b01848"], [0.75, "#580620"], [1, "#1c000c"]]),
+        "#240008",
+        2.2
+      );
+      // Fiery ember spark specks along torn hem
+      speckles(ctx, 6, 60, 84, 16, 12, "rgba(255,180,60,0.75)", 1.6);
+
+      // Surging fiery chest armor
+      rounded(ctx, 28, 28, 40, 36, 8, linGrad(ctx, 28, 28, 68, 64, [[0, "#ff8098"], [0.45, "#c82050"], [1, "#4e0818"]]), "#240008", 2.4);
+
+      // Glowing magma fissures on chest
+      ctx.strokeStyle = "#ff2244";
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.moveTo(34, 34); ctx.lineTo(44, 46); ctx.lineTo(38, 56);
+      ctx.moveTo(60, 34); ctx.lineTo(52, 46); ctx.lineTo(56, 56);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffe880";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(35, 35); ctx.lineTo(44, 46); ctx.lineTo(39, 55);
+      ctx.moveTo(59, 35); ctx.lineTo(52, 46); ctx.lineTo(55, 55);
+      ctx.stroke();
+
+      // Overloaded glowing crimson heart gem
+      ellipse(ctx, 48, 45, 4.5, 4.5, "#ffffff", "#ff1030", 1.5);
+
+      // Spiked aggressive pauldrons with glowing rubies
+      ellipse(ctx, 22, 32, 13, 11, linGrad(ctx, 12, 22, 32, 42, [[0, "#ff6080"], [1, "#800828"]]), "#200008", 2);
+      ellipse(ctx, 74, 32, 13, 11, linGrad(ctx, 64, 22, 84, 42, [[0, "#ff6080"], [1, "#800828"]]), "#200008", 2);
+      poly(ctx, [[14, 26], [8, 18], [20, 24]], "#ff4060", "#300008", 1.2);
+      poly(ctx, [[82, 26], [88, 18], [76, 24]], "#ff4060", "#300008", 1.2);
+
+      // Head & enraged roaring expression
+      ellipse(ctx, 48, 20, 16, 15, linGrad(ctx, 34, 8, 62, 34, [[0, "#ffd8e0"], [1, "#b81840"]]), "#200008", 2);
+
+      // Blazing fiery crimson eyes with white core
+      ellipse(ctx, 43, 19, 3.5, 3.8, "#ff0033");
+      ellipse(ctx, 53, 19, 3.5, 3.8, "#ff0033");
+      ellipse(ctx, 43, 19, 1.8, 2.0, "#ffffff");
+      ellipse(ctx, 53, 19, 1.8, 2.0, "#ffffff");
+
+      // Roaring snarl
+      rounded(ctx, 44, 25, 8, 4, 1.5, "#200008", "#ff3060", 1.2);
+      ctx.strokeStyle = "#ffe0a0"; ctx.lineWidth = 1; ctx.strokeRect(45, 25, 6, 1.5);
+
+      // Furious brow
+      ctx.strokeStyle = "#300008"; ctx.lineWidth = 2.0; ctx.beginPath();
+      ctx.moveTo(38, 14); ctx.lineTo(46, 18);
+      ctx.moveTo(58, 14); ctx.lineTo(50, 18);
+      ctx.stroke();
+
+      // Blazing crown with fire horns
+      poly(
+        ctx,
+        [[28, 12], [30, 0], [38, 9], [48, -2], [58, 9], [66, 0], [68, 12]],
+        linGrad(ctx, 28, -2, 68, 12, [[0, "#ffe080"], [0.5, "#ff3050"], [1, "#800818"]]),
+        "#400008",
+        1.5
+      );
+      ellipse(ctx, 48, 6, 4.5, 4.5, "#ffffff", "#ff1040", 1.4);
+
+      // RAISED HIGH OVERHEAD STAFF WITH BLAZING PLASMA CORONA
+      ctx.strokeStyle = "#e0a030";
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(66, 68);
+      ctx.lineTo(84, 10);
+      ctx.stroke();
+
+      // Massive blazing plasma sun orb (84, 8)
+      ellipse(
+        ctx,
+        84,
+        8,
+        14,
+        14,
+        radGrad(ctx, 84, 8, 2, 14, [[0, "#ffffff"], [0.35, "#ff6080"], [0.7, "#d01040"], [1, "rgba(160,0,40,0)"]]),
+        null
+      );
+      // Plasma flare rays
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI * 2;
+        ctx.strokeStyle = "rgba(255, 120, 160, 0.85)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(84 + Math.cos(a) * 8, 8 + Math.sin(a) * 8);
+        ctx.lineTo(84 + Math.cos(a) * 16, 8 + Math.sin(a) * 16);
+        ctx.stroke();
+      }
+
+      // Crackling crimson lightning bolts arcing down from the orb
+      ctx.strokeStyle = "#ffea80";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(80, 14); ctx.lineTo(74, 24); ctx.lineTo(76, 28); ctx.lineTo(70, 36);
+      ctx.stroke();
+
+      // Left gauntlet clawed open crackling with spark
+      ellipse(ctx, 22, 46, 8, 8, "#b02040", "#240008", 1.8);
+      ellipse(ctx, 18, 44, 2.5, 2.5, "#ffe860");
+
+      // Ground rage shockwave ring
+      ctx.strokeStyle = "rgba(255, 40, 70, 0.75)";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(48, 52, 40, 14, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    };
+
+    make("enemy_boss", 96, 88, (ctx) => drawBossIdle(ctx));
+    make("enemy_boss_idle", 96, 88, (ctx) => drawBossIdle(ctx));
+    make("enemy_boss_shield", 96, 88, (ctx) => drawBossShield(ctx));
+    make("enemy_boss_rage", 96, 88, (ctx) => drawBossRage(ctx));
     make("enemy_boss_dead", 96, 88, (ctx) => drawBossDead(ctx));
 
     // —— Projectiles ——

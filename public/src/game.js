@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.70";
+  const KRC_VERSION = "1.0.71";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -317,6 +317,10 @@
           }
           make(`enemy_${k}_dead`, 32, 32, (ctx) => { ctx.fillStyle = "#808080"; ctx.fillRect(4, 16, 24, 10); });
         });
+        make("enemy_boss_idle", 32, 32, (ctx) => { ctx.fillStyle = "#a040c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+        make("enemy_boss_shield", 32, 32, (ctx) => { ctx.fillStyle = "#8060d0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+        make("enemy_boss_rage", 32, 32, (ctx) => { ctx.fillStyle = "#d03060"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+        make("enemy_titan_enrage", 32, 32, (ctx) => { ctx.fillStyle = "#705040"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
         make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
         make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
@@ -3849,7 +3853,9 @@ const bannerY = 98;
         }
       }
       if (enemy.phase === 2 && enemy.phaseTimer > 0) {
-        enemy.sprite.setTint(0xd8c2ff);
+        enemy.sprite?.setTint(0xd8c2ff);
+      } else if (enemy.phase === 3 && enemy.phaseTimer > 0) {
+        enemy.sprite?.setTint(0xffb0c8);
       } else if (enemy.sprite) {
         enemy.sprite.clearTint();
       }
@@ -3904,7 +3910,7 @@ const bannerY = 98;
       }
 
       const isAnimated = ["scout", "brute", "shield", "ember", "brood", "flyer", "hexer", "titan"].includes(enemy.type);
-      if (isAnimated) {
+      if (isAnimated || enemy.type === "boss") {
         enemy.sprite.setFlipX(!!enemy.facingLeft);
       }
 
@@ -3914,9 +3920,14 @@ const bannerY = 98;
           if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
             enemy.sprite.setTexture(texKey);
           }
+        } else if (enemy.type === "boss") {
+          const texKey = this.textures.exists("enemy_boss_idle") ? "enemy_boss_idle" : "enemy_boss";
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
         }
         enemy.sprite.setScale(baseScale);
-        enemy.sprite.rotation = isAnimated ? 0 : pathAngle;
+        enemy.sprite.rotation = (isAnimated || enemy.type === "boss") ? 0 : pathAngle;
       } else {
         const isFlyer = enemy.type === "flyer" || enemy.base?.flying;
         if (enemy.type === "scout") {
@@ -4031,6 +4042,24 @@ const bannerY = 98;
             enemy.sprite.rotation = 0;
             enemy.sprite.setScale(baseScale);
           }
+        } else if (enemy.type === "boss") {
+          const phase = enemy.phase || 1;
+          const phaseKey = phase === 3 ? "enemy_boss_rage" : phase === 2 ? "enemy_boss_shield" : "enemy_boss_idle";
+          const fallbackKey = "enemy_boss";
+          const targetKey = this.textures.exists(phaseKey) ? phaseKey : fallbackKey;
+          if (enemy.sprite.texture.key !== targetKey && this.textures.exists(targetKey)) {
+            enemy.sprite.setTexture(targetKey);
+          }
+          const bob = Math.sin(this.time.now * 0.006 + enemy.wobble);
+          enemy.sprite.y += bob * (enemy.blockedBy ? 0.5 : 1.0);
+          if (enemy.blockedBy) {
+            enemy.sprite.rotation = Math.sin(this.time.now * 0.02 + enemy.wobble) * 0.08;
+            const squash = Math.sin(this.time.now * 0.012 + enemy.wobble) * 0.03;
+            enemy.sprite.setScale(baseScale * (1 + squash), baseScale * (1 - squash));
+          } else {
+            enemy.sprite.rotation = 0;
+            enemy.sprite.setScale(baseScale);
+          }
         } else {
           const bob = Math.sin(this.time.now * 0.008 + enemy.wobble);
           enemy.sprite.y += bob * (enemy.blockedBy ? 0.6 : 1.2);
@@ -4043,10 +4072,22 @@ const bannerY = 98;
           }
         }
       }
-      if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
-      else if (!enemy.base.phases) {
-        if (enemy.type === "mage" || enemy.type === "wizard") enemy.sprite.setTint(0xc8b0ff);
-        else enemy.sprite.clearTint();
+      if (enemy.type === "boss") {
+        if (enemy.slow > 0) {
+          enemy.sprite.setTint(0xaaddff);
+        } else if (enemy.phase === 2 && enemy.phaseTimer > 0) {
+          enemy.sprite.setTint(0xd8c2ff);
+        } else if (enemy.phase === 3 && enemy.phaseTimer > 0) {
+          enemy.sprite.setTint(0xffb0c8);
+        } else {
+          enemy.sprite.clearTint();
+        }
+      } else {
+        if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
+        else if (!enemy.base.phases) {
+          if (enemy.type === "mage" || enemy.type === "wizard") enemy.sprite.setTint(0xc8b0ff);
+          else enemy.sprite.clearTint();
+        }
       }
       // Slow visual: blue tint + ice crystal particles
       if (enemy.slow > 0) {

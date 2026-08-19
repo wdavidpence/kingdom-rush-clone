@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.71 — Warden / Titan phase art
+- Boss idle/shield/rage poses. Titan enrage slam. Worker: antigrav.
+
+
 ## KRC 1.0.70 — Death poses
 - Per-family corpse textures; fade after pose. Worker: antigrav.
 
