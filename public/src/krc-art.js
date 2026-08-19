@@ -7185,6 +7185,376 @@
       rounded(ctx, 4, 5, 16, 6, 2, "rgba(180,150,100,.35)");
     });
 
+    // —— Path and terrain tile sprites ——
+    make("tile_dirt", 54, 48, (ctx) => {
+      // Base earthen bed
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      rounded(ctx, 0, 0, 54, 48, 2, linGrad(ctx, 0, 0, 0, 48, [
+        [0, "#3a2616"],
+        [0.15, "#5c3d22"],
+        [0.5, "#7e5732"],
+        [0.85, "#54371e"],
+        [1, "#321e10"]
+      ]));
+
+      // Fine horizontal soil grain and layer lines
+      ctx.strokeStyle = "rgba(42, 24, 12, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 8); ctx.lineTo(54, 8);
+      ctx.moveTo(0, 24); ctx.lineTo(54, 24);
+      ctx.moveTo(0, 40); ctx.lineTo(54, 40);
+      ctx.stroke();
+
+      // Top wagon rut depression (Y=12 to 19)
+      rounded(ctx, 0, 12, 54, 7, 2, linGrad(ctx, 0, 12, 0, 19, [
+        [0, "#22140a"],
+        [0.5, "#301c0e"],
+        [1, "#482c16"]
+      ]));
+      ctx.strokeStyle = "#1a0e06";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(0, 15.5); ctx.lineTo(54, 15.5);
+      ctx.stroke();
+      // Sunlit rim bevel on bottom of top rut
+      ctx.strokeStyle = "rgba(225, 185, 125, 0.45)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(0, 19.5); ctx.lineTo(54, 19.5);
+      ctx.stroke();
+
+      // Bottom wagon rut depression (Y=29 to 36)
+      rounded(ctx, 0, 29, 54, 7, 2, linGrad(ctx, 0, 29, 0, 36, [
+        [0, "#22140a"],
+        [0.5, "#301c0e"],
+        [1, "#482c16"]
+      ]));
+      ctx.strokeStyle = "#1a0e06";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(0, 32.5); ctx.lineTo(54, 32.5);
+      ctx.stroke();
+      // Sunlit rim bevel on bottom of bottom rut
+      ctx.strokeStyle = "rgba(225, 185, 125, 0.45)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(0, 36.5); ctx.lineTo(54, 36.5);
+      ctx.stroke();
+
+      // Center raised dirt hump / ridge (Y=20 to 28)
+      rounded(ctx, 0, 20.5, 54, 8, 2, linGrad(ctx, 0, 20.5, 0, 28.5, [
+        [0, "#8c6238"],
+        [0.45, "#9c7042"],
+        [1, "#764e28"]
+      ]));
+      ctx.strokeStyle = "rgba(255, 235, 180, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 21.5); ctx.lineTo(54, 21.5);
+      ctx.stroke();
+
+      // Embedded gravel, pebbles, and cobblestones
+      const pebbles = [
+        [8, 10, 3, 2, "#82786a", "#383228"],
+        [24, 7, 2.5, 1.8, "#968a78", "#40382e"],
+        [44, 11, 3.2, 2.2, "#7a7062", "#342e24"],
+        [14, 24, 2.2, 1.6, "#a49884", "#483e32"],
+        [36, 25, 2.8, 1.8, "#8e8472", "#3c342a"],
+        [6, 39, 2.5, 1.8, "#948876", "#423a30"],
+        [28, 41, 3.5, 2.2, "#7e7464", "#363026"],
+        [48, 38, 2.8, 1.8, "#8a8070", "#3a3228"],
+      ];
+      for (const [px, py, prx, pry, fillC, strokeC] of pebbles) {
+        ellipse(ctx, px, py, prx, pry, fillC, strokeC, 0.8);
+        ellipse(ctx, px - 0.5, py - 0.5, prx * 0.45, pry * 0.45, "rgba(255,255,240,0.5)");
+      }
+
+      // Trampled grass/moss flecks on borders and center ridge
+      const grassFlecks = [
+        [4, 4, 3, 2], [18, 3, 4, 2], [34, 4, 3.5, 2], [48, 3, 4, 2],
+        [10, 23, 2.5, 1.5], [30, 26, 3, 1.5], [50, 23, 2.5, 1.5],
+        [6, 45, 3.5, 2], [22, 44, 4, 2.2], [40, 45, 3.5, 2],
+      ];
+      for (const [gx, gy, grx, gry] of grassFlecks) {
+        ellipse(ctx, gx, gy, grx, gry, linGrad(ctx, gx - grx, gy - gry, gx + grx, gy + gry, [
+          [0, "#74a838"],
+          [1, "#365c1a"]
+        ]), "#1a300c", 0.7);
+      }
+
+      // Fine dirt specks and loam granules
+      speckles(ctx, 1, 2, 52, 44, 26, "rgba(0, 0, 0, 0.2)", 1.2);
+      speckles(ctx, 1, 2, 52, 44, 18, "rgba(255, 235, 175, 0.22)", 1.0);
+    });
+
+    make("tile_stone", 54, 48, (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // Dark mountain bedrock and gravel substrate
+      rounded(ctx, 0, 0, 54, 48, 2, linGrad(ctx, 0, 0, 0, 48, [
+        [0, "#1c2024"],
+        [0.5, "#2a3036"],
+        [1, "#161a1e"]
+      ]));
+
+      // 3 courses of heavy interlocking chiseled flagstone pavers
+      const flagstones = [
+        // Row 1 (top, Y=2..16)
+        { pts: [[1, 3], [16, 2], [17, 15], [2, 16]], c0: "#828f9c", c1: "#505c68", c2: "#323a42" },
+        { pts: [[18, 2], [36, 3], [35, 16], [19, 15]], c0: "#929fae", c1: "#5e6c7a", c2: "#3a444e" },
+        { pts: [[38, 3], [53, 2], [53, 16], [37, 16]], c0: "#788694", c1: "#4a5662", c2: "#2e363e" },
+
+        // Row 2 (middle, Y=16..32)
+        { pts: [[1, 18], [24, 17], [23, 31], [1, 32]], c0: "#96a4b2", c1: "#62707e", c2: "#3e4854" },
+        { pts: [[26, 17], [43, 18], [42, 32], [25, 31]], c0: "#808e9c", c1: "#525e6c", c2: "#343c46" },
+        { pts: [[45, 18], [53, 17], [53, 31], [44, 32]], c0: "#8c9aa8", c1: "#5a6876", c2: "#38424c" },
+
+        // Row 3 (bottom, Y=32..46)
+        { pts: [[1, 34], [18, 33], [17, 46], [2, 46]], c0: "#7a8896", c1: "#4c5864", c2: "#303840" },
+        { pts: [[20, 33], [37, 34], [36, 46], [19, 46]], c0: "#94a2b0", c1: "#606e7c", c2: "#3c4650" },
+        { pts: [[39, 34], [53, 33], [53, 46], [38, 46]], c0: "#8492a0", c1: "#54606e", c2: "#363e48" },
+      ];
+
+      for (const stone of flagstones) {
+        // Drop shadow in mortar bed
+        poly(ctx, stone.pts.map(([x, y]) => [x + 1, y + 1]), "rgba(10, 14, 18, 0.6)");
+        // Flagstone body
+        const [x0, y0] = stone.pts[0];
+        const [x2, y2] = stone.pts[2];
+        poly(ctx, stone.pts, linGrad(ctx, x0, y0, x2, y2, [
+          [0, stone.c0],
+          [0.5, stone.c1],
+          [1, stone.c2]
+        ]), "#14181c", 1.4);
+
+        // Top/left bevel sunlit highlights
+        ctx.strokeStyle = "rgba(235, 245, 255, 0.45)";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(stone.pts[3][0] + 1, stone.pts[3][1] - 1);
+        ctx.lineTo(stone.pts[0][0] + 1, stone.pts[0][1] + 1);
+        ctx.lineTo(stone.pts[1][0] - 1, stone.pts[1][1] + 1);
+        ctx.stroke();
+
+        // Chiseled surface fracture
+        const midX = (stone.pts[0][0] + stone.pts[1][0]) / 2;
+        const midY = (stone.pts[0][1] + stone.pts[2][1]) / 2;
+        ctx.strokeStyle = "rgba(18, 24, 30, 0.35)";
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(midX - 3, midY - 2);
+        ctx.lineTo(midX + 2, midY + 1);
+        ctx.stroke();
+      }
+
+      // Mountain crevice moss & lichen
+      const mossClumps = [
+        [17, 16, 3, 2], [36, 17, 3.5, 2], [24, 32, 3, 2], [43, 33, 3.5, 2],
+        [8, 2, 2.5, 1.5], [46, 2, 2.5, 1.5], [10, 46, 3, 1.8], [45, 46, 3, 1.8],
+      ];
+      for (const [mx, my, mrx, mry] of mossClumps) {
+        ellipse(ctx, mx, my, mrx, mry, linGrad(ctx, mx - mrx, my - mry, mx + mrx, my + mry, [
+          [0, "#688452"],
+          [1, "#2c4020"]
+        ]), "#162210", 0.6);
+      }
+
+      // Stone texture speckles
+      speckles(ctx, 1, 1, 52, 46, 28, "rgba(0, 0, 0, 0.22)", 1.1);
+      speckles(ctx, 1, 1, 52, 46, 18, "rgba(240, 250, 255, 0.24)", 0.9);
+    });
+
+    make("tile_ember", 54, 48, (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // 1. Subterranean glowing magma underbed
+      rounded(ctx, 0, 0, 54, 48, 2, linGrad(ctx, 0, 0, 54, 48, [
+        [0, "#4a0a00"],
+        [0.25, "#8e1e00"],
+        [0.5, "#d44000"],
+        [0.75, "#962000"],
+        [1, "#440800"]
+      ]));
+
+      // Magma river bright core veins
+      ctx.strokeStyle = "rgba(255, 80, 0, 0.6)";
+      ctx.lineWidth = 5.0;
+      ctx.beginPath();
+      ctx.moveTo(0, 16); ctx.lineTo(22, 22); ctx.lineTo(34, 14); ctx.lineTo(54, 18);
+      ctx.moveTo(22, 22); ctx.lineTo(26, 36); ctx.lineTo(54, 38);
+      ctx.moveTo(0, 34); ctx.lineTo(26, 36);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ff7700";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(0, 16); ctx.lineTo(22, 22); ctx.lineTo(34, 14); ctx.lineTo(54, 18);
+      ctx.moveTo(22, 22); ctx.lineTo(26, 36); ctx.lineTo(54, 38);
+      ctx.moveTo(0, 34); ctx.lineTo(26, 36);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#fff2a8";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(0, 16); ctx.lineTo(22, 22); ctx.lineTo(34, 14); ctx.lineTo(54, 18);
+      ctx.moveTo(22, 22); ctx.lineTo(26, 36); ctx.lineTo(54, 38);
+      ctx.moveTo(0, 34); ctx.lineTo(26, 36);
+      ctx.stroke();
+
+      // 2. Basaltic obsidian crust plates (floating over magma)
+      const basaltPlates = [
+        // Upper left plate
+        { pts: [[2, 3], [20, 2], [18, 17], [2, 14]], c0: "#44302c", c1: "#261a18", c2: "#140c0a" },
+        // Upper right plate
+        { pts: [[25, 2], [52, 3], [51, 16], [36, 12], [24, 18]], c0: "#483430", c1: "#2a1e1c", c2: "#160e0c" },
+        // Center-bottom left plate
+        { pts: [[2, 17], [18, 20], [22, 34], [1, 32]], c0: "#3e2c28", c1: "#241816", c2: "#120a08" },
+        // Lower left plate
+        { pts: [[2, 36], [23, 38], [21, 46], [2, 46]], c0: "#422e2a", c1: "#261a18", c2: "#140c0a" },
+        // Lower right plate
+        { pts: [[28, 38], [52, 36], [52, 46], [27, 46]], c0: "#46322e", c1: "#281c1a", c2: "#160e0c" },
+        // Center right plate
+        { pts: [[26, 21], [37, 16], [52, 20], [51, 33], [29, 34]], c0: "#4a3632", c1: "#2c201e", c2: "#18100e" },
+      ];
+
+      for (const plate of basaltPlates) {
+        const [x0, y0] = plate.pts[0];
+        const [x2, y2] = plate.pts[2];
+        poly(ctx, plate.pts, linGrad(ctx, x0, y0, x2, y2, [
+          [0, plate.c0],
+          [0.45, plate.c1],
+          [1, plate.c2]
+        ]), "#080404", 1.4);
+
+        // Crust top cooling rim highlight
+        ctx.strokeStyle = "rgba(200, 160, 150, 0.3)";
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(plate.pts[3][0] + 1, plate.pts[3][1] - 1);
+        ctx.lineTo(plate.pts[0][0] + 1, plate.pts[0][1] + 1);
+        ctx.lineTo(plate.pts[1][0] - 1, plate.pts[1][1] + 1);
+        ctx.stroke();
+
+        // Thermal stress micro-cracks
+        const cx = (plate.pts[0][0] + plate.pts[2][0]) / 2;
+        const cy = (plate.pts[0][1] + plate.pts[2][1]) / 2;
+        ctx.strokeStyle = "rgba(255, 120, 20, 0.45)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx - 2, cy - 2); ctx.lineTo(cx + 2, cy + 1);
+        ctx.stroke();
+      }
+
+      // 3. Glowing cinder motes, embers, and sulfur crust deposits
+      const embers = [
+        [22, 22, 1.6, "#fff490"],
+        [34, 14, 1.4, "#ffd040"],
+        [26, 36, 1.8, "#ffaa20"],
+        [10, 18, 1.2, "#ff6600"],
+        [44, 26, 1.4, "#ff8800"],
+        [48, 17, 1.2, "#ff5500"],
+      ];
+      for (const [ex, ey, er, ec] of embers) {
+        ellipse(ctx, ex, ey, er * 2.2, er * 2.2, "rgba(255, 80, 0, 0.35)");
+        ellipse(ctx, ex, ey, er, er, ec);
+      }
+
+      // Sulfur crust along plate cracks
+      const sulfurDeposits = [
+        [21, 19, 2.5, 1.2], [36, 15, 2.5, 1.2], [27, 34, 3, 1.4],
+        [19, 36, 2.2, 1.2], [42, 35, 2.5, 1.2],
+      ];
+      for (const [sx, sy, srx, sry] of sulfurDeposits) {
+        ellipse(ctx, sx, sy, srx, sry, "rgba(220, 175, 45, 0.65)");
+      }
+
+      // Charred soot speckling
+      speckles(ctx, 1, 1, 52, 46, 30, "rgba(0, 0, 0, 0.32)", 1.2);
+      speckles(ctx, 1, 1, 52, 46, 14, "rgba(255, 150, 40, 0.28)", 1.0);
+    });
+
+    make("tile_dirt_edge", 54, 16, (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      // Broken turf embankment
+      rounded(ctx, 0, 0, 54, 16, 2, linGrad(ctx, 0, 0, 0, 16, [
+        [0, "#2c4018"],
+        [0.4, "#48301a"],
+        [1, "#26160a"]
+      ]));
+      // Overhanging grass blades & moss tufts
+      for (let i = 0; i < 9; i += 1) {
+        const gx = 3 + i * 5.8;
+        const gh = 4 + (i % 3) * 2.5;
+        poly(ctx, [[gx - 2, 0], [gx + 2, 0], [gx + 0.5, gh]], "#649830", "#1e340c", 0.6);
+      }
+      // Loam crumbs & gravel
+      ellipse(ctx, 14, 10, 2.5, 1.6, "#7c7264", "#2e2820", 0.6);
+      ellipse(ctx, 38, 9, 2.2, 1.4, "#8a7e6e", "#342c22", 0.6);
+      speckles(ctx, 1, 1, 52, 14, 12, "rgba(0, 0, 0, 0.22)", 1.0);
+    });
+
+    make("tile_stone_edge", 54, 16, (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      // Mountain slate curb border
+      rounded(ctx, 0, 0, 54, 16, 2, linGrad(ctx, 0, 0, 0, 16, [
+        [0, "#1e2226"],
+        [0.5, "#3a424a"],
+        [1, "#181c20"]
+      ]));
+      // Small chiseled curb stones
+      for (let i = 0; i < 4; i += 1) {
+        const sx = 2 + i * 13;
+        rounded(ctx, sx, 2, 11, 12, 1.5, linGrad(ctx, sx, 2, sx + 11, 14, [
+          [0, "#748290"],
+          [1, "#363e46"]
+        ]), "#12161a", 1.0);
+        ctx.strokeStyle = "rgba(235, 245, 255, 0.35)";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(sx + 1, 3); ctx.lineTo(sx + 10, 3);
+        ctx.stroke();
+      }
+      // Alpine moss in crevices
+      ellipse(ctx, 13, 8, 2, 2, "#506840");
+      ellipse(ctx, 39, 8, 2, 2, "#506840");
+      speckles(ctx, 1, 1, 52, 14, 12, "rgba(0, 0, 0, 0.2)", 1.0);
+    });
+
+    make("tile_ember_edge", 54, 16, (ctx) => {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      // Charred basalt rim with glowing thermal leakage
+      rounded(ctx, 0, 0, 54, 16, 2, linGrad(ctx, 0, 0, 0, 16, [
+        [0, "#1e1412"],
+        [0.45, "#481608"],
+        [1, "#140a08"]
+      ]));
+      // Glowing lava rim fissure
+      ctx.strokeStyle = "rgba(255, 90, 0, 0.55)";
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.moveTo(0, 8); ctx.lineTo(18, 11); ctx.lineTo(36, 6); ctx.lineTo(54, 9);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffa020";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, 8); ctx.lineTo(18, 11); ctx.lineTo(36, 6); ctx.lineTo(54, 9);
+      ctx.stroke();
+      // Jagged basalt slag teeth
+      for (let i = 0; i < 4; i += 1) {
+        const bx = 3 + i * 13;
+        poly(ctx, [[bx, 2], [bx + 10, 3], [bx + 8, 13], [bx + 1, 12]], "#2c1c18", "#080404", 0.9);
+      }
+      ellipse(ctx, 24, 9, 1.4, 1.4, "#fff090");
+      speckles(ctx, 1, 1, 52, 14, 14, "rgba(0, 0, 0, 0.3)", 1.1);
+    });
+
     // UI chip icons for shop
     make("icon_gold", 24, 24, (ctx) => {
       ellipse(ctx, 12, 12, 10, 10, linGrad(ctx, 4, 4, 20, 20, [[0, "#fff0a0"], [0.5, "#e0a830"], [1, "#8a6010"]]), "#5a4010", 1.5);

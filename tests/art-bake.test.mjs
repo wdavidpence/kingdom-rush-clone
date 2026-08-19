@@ -124,6 +124,9 @@ const requiredKeys = [
   "fx_trail_magic",
   "fx_trail_bomb",
   "fx_trail_smoke",
+  "tile_dirt",
+  "tile_stone",
+  "tile_ember",
 ];
 
 for (const key of requiredKeys) {
