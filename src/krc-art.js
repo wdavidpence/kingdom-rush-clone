@@ -1781,20 +1781,18 @@
     make("tower_barracks_fire", 128, 128, drawBarracksFire);
 
     // —— Enemies ——
-    const limbs = (ctx, skin, outline, y = 42) => {
-      // legs
-      rounded(ctx, 28, y, 7, 14, 3, skin, outline, 1.4);
-      rounded(ctx, 41, y, 7, 14, 3, skin, outline, 1.4);
-      // boots
-      rounded(ctx, 26, y + 11, 10, 5, 2, "#3a2818", outline, 1);
-      rounded(ctx, 40, y + 11, 10, 5, 2, "#3a2818", outline, 1);
-    };
-
     const face = (ctx, cx, cy, eye = "#f6f0c2", pupil = "#101008", angry = false) => {
+      // Eye sclera
       ellipse(ctx, cx - 5, cy, 2.4, 2.8, eye);
       ellipse(ctx, cx + 5, cy, 2.4, 2.8, eye);
+      // Pupils
       ellipse(ctx, cx - 4.5, cy + 0.3, 1.2, 1.5, pupil);
       ellipse(ctx, cx + 5.5, cy + 0.3, 1.2, 1.5, pupil);
+      // Eye glint highlights
+      ellipse(ctx, cx - 5.2, cy - 0.7, 0.6, 0.6, "#ffffff");
+      ellipse(ctx, cx + 4.8, cy - 0.7, 0.6, 0.6, "#ffffff");
+
+      // Eyebrows
       ctx.strokeStyle = "#1a120c";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -1810,8 +1808,22 @@
         ctx.lineTo(cx + 3, cy - 2);
       }
       ctx.stroke();
-      // cheek highlight
-      ctx.strokeStyle = "rgba(255,255,255,.25)";
+
+      // Nose bridge / tip subtle shading
+      ctx.strokeStyle = "rgba(40, 20, 10, 0.28)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 1);
+      ctx.lineTo(cx - 1, cy + 2.5);
+      ctx.lineTo(cx + 1, cy + 2.5);
+      ctx.stroke();
+
+      // Warm cheek flush / blush
+      ellipse(ctx, cx - 7, cy + 2, 2.2, 1.4, "rgba(220, 90, 60, 0.16)");
+      ellipse(ctx, cx + 7, cy + 2, 2.2, 1.4, "rgba(220, 90, 60, 0.16)");
+
+      // Cheek highlight
+      ctx.strokeStyle = "rgba(255,255,255,.3)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(cx - 6, cy - 4, 5, Math.PI, Math.PI * 1.5);
@@ -1819,80 +1831,133 @@
     };
 
     const drawScout = (ctx, frame = 0) => {
-      shadow(ctx, 40, 62, 20, 6);
+      shadow(ctx, 40, 62, 20, 6, 0.4);
       const f = frame % 4;
       const bodyY = (f === 1 || f === 3) ? 26 : 28;
       const headY = (f === 1 || f === 3) ? 20 : 22;
       const earY = (f === 1 || f === 3) ? -2 : 0;
 
-      const skin = "#6a9038";
-      const skinDark = "#4f6e28";
       const outline = "#2a4018";
-      const boot = "#3a2818";
+
+      // 2-3 stop warm goblin hide / skin gradients
+      const skinLit = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#d8f26a"], [0.45, "#88bc3c"], [1, "#446820"]]);
+      const skinShaded = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#769c34"], [0.5, "#4c6e22"], [1, "#263e12"]]);
+      const bootGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#5a422a"], [0.5, "#3a2818"], [1, "#1e140c"]]);
+
+      // Contact AO under feet
+      if (f === 0) {
+        ellipse(ctx, 23, 54.5, 6, 1.8, "rgba(10, 16, 8, 0.7)");
+        ellipse(ctx, 51, 53.5, 5, 1.6, "rgba(10, 16, 8, 0.55)");
+      } else if (f === 1) {
+        ellipse(ctx, 32, 55.5, 6.5, 2, "rgba(10, 16, 8, 0.75)");
+        ellipse(ctx, 48, 48, 4, 1.4, "rgba(10, 16, 8, 0.3)");
+      } else if (f === 2) {
+        ellipse(ctx, 20, 53.5, 5, 1.6, "rgba(10, 16, 8, 0.55)");
+        ellipse(ctx, 50, 54.5, 6, 1.8, "rgba(10, 16, 8, 0.7)");
+      } else {
+        ellipse(ctx, 33, 48, 4, 1.4, "rgba(10, 16, 8, 0.3)");
+        ellipse(ctx, 44, 55.5, 6.5, 2, "rgba(10, 16, 8, 0.75)");
+      }
 
       // Far/back arm (drawn behind torso)
-      if (f === 0) {
-        rounded(ctx, 20, bodyY + 6, 8, 5, 2.5, skinDark, outline, 1.2);
-      } else if (f === 1) {
-        rounded(ctx, 22, bodyY + 7, 8, 5, 2.5, skinDark, outline, 1.2);
-      } else if (f === 2) {
-        rounded(ctx, 25, bodyY + 8, 9, 5, 2.5, skinDark, outline, 1.2);
-      } else {
-        rounded(ctx, 22, bodyY + 7, 8, 5, 2.5, skinDark, outline, 1.2);
-      }
+      let bArmX, bArmY, bArmW, bArmH;
+      if (f === 0) { bArmX = 20; bArmY = bodyY + 6; bArmW = 8; bArmH = 5; }
+      else if (f === 1) { bArmX = 22; bArmY = bodyY + 7; bArmW = 8; bArmH = 5; }
+      else if (f === 2) { bArmX = 25; bArmY = bodyY + 8; bArmW = 9; bArmH = 5; }
+      else { bArmX = 22; bArmY = bodyY + 7; bArmW = 8; bArmH = 5; }
+      rounded(ctx, bArmX, bArmY, bArmW, bArmH, 2.5, skinShaded(bArmX, bArmY, bArmX + bArmW, bArmY + bArmH), outline, 1.2);
 
-      // Legs: stride contact vs passing
+      // Legs: stride contact vs passing with 3-stop skin/hide volume
       if (f === 0) {
         // Left forward contact
-        poly(ctx, [[28, 43], [34, 43], [27, 54], [21, 54]], skin, outline, 1.4);
-        rounded(ctx, 18, 52, 11, 5, 2, boot, outline, 1);
+        poly(ctx, [[28, 43], [34, 43], [27, 54], [21, 54]], skinLit(28, 43, 21, 54), outline, 1.4);
+        rounded(ctx, 18, 52, 11, 5, 2, bootGrad(18, 52, 18, 57), outline, 1);
+        // Cool rim on left forward leg
+        ctx.strokeStyle = "rgba(205, 245, 255, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(28, 44);
+        ctx.lineTo(21, 54);
+        ctx.stroke();
         // Right back trailing
-        poly(ctx, [[42, 43], [48, 43], [54, 52], [48, 53]], skinDark, outline, 1.4);
-        rounded(ctx, 47, 51, 9, 5, 2, boot, outline, 1);
+        poly(ctx, [[42, 43], [48, 43], [54, 52], [48, 53]], skinShaded(42, 43, 54, 52), outline, 1.4);
+        rounded(ctx, 47, 51, 9, 5, 2, bootGrad(47, 51, 47, 56), outline, 1);
       } else if (f === 1) {
         // Left planted straight
-        rounded(ctx, 29, 41, 7, 14, 3, skin, outline, 1.4);
-        rounded(ctx, 27, 53, 11, 5, 2, boot, outline, 1);
+        rounded(ctx, 29, 41, 7, 14, 3, skinLit(29, 41, 36, 55), outline, 1.4);
+        rounded(ctx, 27, 53, 11, 5, 2, bootGrad(27, 53, 27, 58), outline, 1);
+        // Cool rim on left leg
+        ctx.strokeStyle = "rgba(205, 245, 255, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(29, 42);
+        ctx.lineTo(29, 53);
+        ctx.stroke();
         // Right lifted passing knee
-        poly(ctx, [[42, 40], [48, 40], [50, 47], [44, 48]], skinDark, outline, 1.4);
-        rounded(ctx, 44, 45, 9, 5, 2, boot, outline, 1);
+        poly(ctx, [[42, 40], [48, 40], [50, 47], [44, 48]], skinShaded(42, 40, 50, 47), outline, 1.4);
+        rounded(ctx, 44, 45, 9, 5, 2, bootGrad(44, 45, 44, 50), outline, 1);
       } else if (f === 2) {
         // Left back trailing
-        poly(ctx, [[28, 43], [34, 43], [23, 53], [17, 52]], skinDark, outline, 1.4);
-        rounded(ctx, 16, 51, 9, 5, 2, boot, outline, 1);
+        poly(ctx, [[28, 43], [34, 43], [23, 53], [17, 52]], skinShaded(28, 43, 23, 53), outline, 1.4);
+        rounded(ctx, 16, 51, 9, 5, 2, bootGrad(16, 51, 16, 56), outline, 1);
         // Right forward contact
-        poly(ctx, [[42, 43], [48, 43], [53, 54], [47, 54]], skin, outline, 1.4);
-        rounded(ctx, 45, 52, 11, 5, 2, boot, outline, 1);
+        poly(ctx, [[42, 43], [48, 43], [53, 54], [47, 54]], skinLit(42, 43, 53, 54), outline, 1.4);
+        rounded(ctx, 45, 52, 11, 5, 2, bootGrad(45, 52, 45, 57), outline, 1);
       } else {
         // Left lifted passing knee
-        poly(ctx, [[28, 40], [34, 40], [36, 47], [30, 48]], skinDark, outline, 1.4);
-        rounded(ctx, 29, 45, 9, 5, 2, boot, outline, 1);
+        poly(ctx, [[28, 40], [34, 40], [36, 47], [30, 48]], skinShaded(28, 40, 36, 47), outline, 1.4);
+        rounded(ctx, 29, 45, 9, 5, 2, bootGrad(29, 45, 29, 50), outline, 1);
         // Right planted straight
-        rounded(ctx, 41, 41, 7, 14, 3, skin, outline, 1.4);
-        rounded(ctx, 39, 53, 11, 5, 2, boot, outline, 1);
+        rounded(ctx, 41, 41, 7, 14, 3, skinLit(41, 41, 48, 55), outline, 1.4);
+        rounded(ctx, 39, 53, 11, 5, 2, bootGrad(39, 53, 39, 58), outline, 1);
       }
 
-      // Body tunic
-      rounded(ctx, 26, bodyY, 28, 22, 8, linGrad(ctx, 26, bodyY, 54, bodyY + 22, [[0, "#d8f080"], [0.5, "#8aba48"], [1, "#3a6020"]]), outline, 2);
-      // Belt and buckle
-      ctx.fillStyle = "#3a2818";
-      ctx.fillRect(27, bodyY + 14, 26, 3.5);
-      rounded(ctx, 38, bodyY + 13.5, 5, 4.5, 1, "#d4af37", "#2a1e10", 0.8);
+      // Contact AO under tunic skirt over legs
+      ellipse(ctx, 40, bodyY + 22, 13, 3, "rgba(16, 26, 8, 0.48)");
 
-      // Head
-      ellipse(ctx, 40, headY, 13, 13, linGrad(ctx, 30, headY - 10, 50, headY + 12, [[0, "#e0f890"], [1, "#6a9030"]]), outline, 2);
-      // Specular rim light on head
-      ctx.strokeStyle = "rgba(255,255,255,.32)";
-      ctx.lineWidth = 1.2;
+      // Body tunic
+      rounded(ctx, 26, bodyY, 28, 22, 8, linGrad(ctx, 26, bodyY, 54, bodyY + 22, [[0, "#e4f88c"], [0.42, "#90c24a"], [1, "#365c1c"]]), outline, 2);
+      // Cool rim on upper-left tunic edge
+      ctx.strokeStyle = "rgba(205, 245, 255, 0.45)";
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.arc(40, headY, 11, -Math.PI * 0.85, -Math.PI * 0.15);
+      ctx.moveTo(27, bodyY + 14);
+      ctx.lineTo(27, bodyY + 6);
+      ctx.arcTo(27, bodyY, 34, bodyY, 6);
       ctx.stroke();
 
+      // Belt and buckle
+      rounded(ctx, 27, bodyY + 14, 26, 3.5, 1, linGrad(ctx, 27, bodyY + 14, 27, bodyY + 18, [[0, "#4e3620"], [1, "#26180c"]]));
+      rounded(ctx, 38, bodyY + 13.5, 5, 4.5, 1, linGrad(ctx, 38, bodyY + 13.5, 43, bodyY + 18, [[0, "#ffea78"], [0.5, "#d4af37"], [1, "#7c5c18"]]), "#2a1e10", 0.8);
+
+      // Contact AO under chin / jaw onto tunic
+      ellipse(ctx, 40, headY + 11, 10.5, 3.2, "rgba(16, 28, 8, 0.55)");
+
+      // Head with 3-stop warm goblin gradient
+      ellipse(ctx, 40, headY, 13, 13, linGrad(ctx, 30, headY - 11, 50, headY + 12, [[0, "#e8ff9a"], [0.42, "#96c840"], [1, "#507822"]]), outline, 2);
+
+      // Cool rim light on upper-left edge of head
+      ctx.strokeStyle = "rgba(205, 245, 255, 0.55)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(40, headY, 11.5, -Math.PI * 0.95, -Math.PI * 0.35);
+      ctx.stroke();
+
+      // Forehead warm specular glint
+      ellipse(ctx, 36, headY - 5, 3.5, 2, "rgba(255, 255, 255, 0.28)");
+
       // Ears
-      poly(ctx, [[26, headY - 4], [18, headY - 12 + earY], [28, headY]], "#8aba48", outline, 1.2);
-      poly(ctx, [[54, headY - 4], [62, headY - 12 + earY], [52, headY]], "#8aba48", outline, 1.2);
-      poly(ctx, [[26, headY - 4], [20, headY - 10 + earY], [27, headY - 1]], "rgba(230,250,160,.4)");
-      poly(ctx, [[54, headY - 4], [60, headY - 10 + earY], [53, headY - 1]], "rgba(230,250,160,.4)");
+      poly(ctx, [[26, headY - 4], [18, headY - 12 + earY], [28, headY]], linGrad(ctx, 18, headY - 12, 28, headY, [[0, "#d8f26a"], [0.5, "#8aba48"], [1, "#507822"]]), outline, 1.2);
+      poly(ctx, [[54, headY - 4], [62, headY - 12 + earY], [52, headY]], linGrad(ctx, 52, headY - 12, 62, headY, [[0, "#d8f26a"], [0.5, "#8aba48"], [1, "#507822"]]), outline, 1.2);
+      poly(ctx, [[26, headY - 4], [20, headY - 10 + earY], [27, headY - 1]], "rgba(240, 175, 135, 0.45)");
+      poly(ctx, [[54, headY - 4], [60, headY - 10 + earY], [53, headY - 1]], "rgba(240, 175, 135, 0.45)");
+      // Cool rim on left ear
+      ctx.strokeStyle = "rgba(205, 245, 255, 0.5)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(26, headY - 4);
+      ctx.lineTo(18, headY - 12 + earY);
+      ctx.stroke();
 
       // Face
       face(ctx, 40, headY);
@@ -1930,15 +1995,25 @@
         [tX, tY],
         [sx1 + perpX, sy1 + perpY],
         [sx1 - perpX, sy1 - perpY]
-      ], linGrad(ctx, sx1 - 4, sy1 - 4, tX, tY, [[0, "#d0d8e0"], [0.6, "#ffffff"], [1, "#9aa8b8"]]), "#3a4048", 1);
+      ], linGrad(ctx, sx1 - 4, sy1 - 4, tX, tY, [[0, "#d8e2eb"], [0.6, "#ffffff"], [1, "#8a98a8"]]), "#3a4048", 1);
       ellipse(ctx, tX - 1, tY - 1, 1.5, 1.5, "#ffffff");
+
+      // Contact AO behind front arm joint
+      ellipse(ctx, armX, armY + armH / 2 + 1, 3.5, 2.2, "rgba(16, 28, 8, 0.45)");
 
       // Front arm
       ctx.save();
       ctx.translate(armX + armW / 2, armY + armH / 2);
       ctx.rotate(armRot);
-      rounded(ctx, -armW / 2, -armH / 2, armW, armH, 3, skin, outline, 1.2);
-      ellipse(ctx, armW / 2 - 2, 0, 3, 3, skin, outline, 1);
+      rounded(ctx, -armW / 2, -armH / 2, armW, armH, 3, skinLit(-armW / 2, -armH / 2, armW / 2, armH / 2), outline, 1.2);
+      // Cool rim on front arm top edge
+      ctx.strokeStyle = "rgba(205, 245, 255, 0.45)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(-armW / 2 + 2, -armH / 2 + 0.8);
+      ctx.lineTo(armW / 2 - 2, -armH / 2 + 0.8);
+      ctx.stroke();
+      ellipse(ctx, armW / 2 - 2, 0, 3, 3, skinLit(armW / 2 - 4, -2, armW / 2, 2), outline, 1);
       ctx.restore();
     };
 
@@ -1949,7 +2024,7 @@
     make("enemy_scout_w3", 80, 72, (ctx) => drawScout(ctx, 3));
 
     const drawBrute = (ctx, frame = 0) => {
-      shadow(ctx, 40, 62, 24, 7);
+      shadow(ctx, 40, 62, 24, 7, 0.42);
       const f = frame % 4;
 
       const bodyX = f === 0 ? 21 : f === 2 ? 23 : 22;
@@ -1958,58 +2033,100 @@
       const headY = (f === 1 || f === 3) ? 16 : 18;
       const headTilt = f === 0 ? -0.05 : f === 2 ? 0.05 : 0;
 
-      const skin = "#8a5030";
-      const skinDark = "#603018";
       const outline = "#3a2010";
-      const boot = "#3a2010";
+
+      // 3-stop warm orc / brute hide gradients
+      const bruteSkinLit = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#f8d2a6"], [0.45, "#c4763e"], [1, "#662e14"]]);
+      const bruteSkinShaded = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#a4582a"], [0.5, "#6e3216"], [1, "#3c1608"]]);
+      const bruteBootGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#563018"], [0.5, "#361a0c"], [1, "#1c0c04"]]);
+
+      // Contact AO under heavy brute feet
+      if (f === 0) {
+        ellipse(ctx, 23.5, 55.5, 7.5, 2.2, "rgba(14, 8, 4, 0.75)");
+        ellipse(ctx, 56.5, 53.5, 6, 1.8, "rgba(14, 8, 4, 0.55)");
+      } else if (f === 1) {
+        ellipse(ctx, 30.5, 56.5, 7.5, 2.4, "rgba(14, 8, 4, 0.78)");
+        ellipse(ctx, 52.5, 48, 5, 1.6, "rgba(14, 8, 4, 0.35)");
+      } else if (f === 2) {
+        ellipse(ctx, 20.5, 53.5, 6, 1.8, "rgba(14, 8, 4, 0.55)");
+        ellipse(ctx, 54.5, 55.5, 7.5, 2.2, "rgba(14, 8, 4, 0.75)");
+      } else {
+        ellipse(ctx, 32.5, 48, 5, 1.6, "rgba(14, 8, 4, 0.35)");
+        ellipse(ctx, 48.5, 56.5, 7.5, 2.4, "rgba(14, 8, 4, 0.78)");
+      }
 
       // Far fist / arm (Left side)
-      if (f === 0) {
-        ellipse(ctx, 16, bodyY + 12, 7, 7, skin, outline, 1.4);
-      } else if (f === 1) {
-        ellipse(ctx, 18, bodyY + 10, 6.5, 6.5, skin, outline, 1.4);
-      } else if (f === 2) {
-        ellipse(ctx, 22, bodyY + 9, 6, 6, skinDark, outline, 1.4);
-      } else {
-        ellipse(ctx, 19, bodyY + 10, 6.5, 6.5, skin, outline, 1.4);
-      }
+      let fArmX, fArmY, fArmR;
+      if (f === 0) { fArmX = 16; fArmY = bodyY + 12; fArmR = 7; }
+      else if (f === 1) { fArmX = 18; fArmY = bodyY + 10; fArmR = 6.5; }
+      else if (f === 2) { fArmX = 22; fArmY = bodyY + 9; fArmR = 6; }
+      else { fArmX = 19; fArmY = bodyY + 10; fArmR = 6.5; }
+      ellipse(ctx, fArmX, fArmY, fArmR, fArmR, bruteSkinShaded(fArmX - fArmR, fArmY - fArmR, fArmX + fArmR, fArmY + fArmR), outline, 1.4);
+      // Contact AO behind far arm
+      ellipse(ctx, fArmX + 3, fArmY, 3, 4, "rgba(24, 10, 4, 0.5)");
 
-      // Legs: heavy stride vs passing
+      // Legs: heavy stride vs passing with 3-stop muscular shading
       if (f === 0) {
         // Left forward heavy plant
-        poly(ctx, [[25, 43], [34, 43], [28, 55], [19, 54]], skin, outline, 1.6);
-        rounded(ctx, 17, 52, 13, 6.5, 2.5, boot, outline, 1.2);
+        poly(ctx, [[25, 43], [34, 43], [28, 55], [19, 54]], bruteSkinLit(25, 43, 19, 55), outline, 1.6);
+        rounded(ctx, 17, 52, 13, 6.5, 2.5, bruteBootGrad(17, 52, 17, 58), outline, 1.2);
+        // Cool rim on left forward leg
+        ctx.strokeStyle = "rgba(205, 240, 255, 0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(25, 44);
+        ctx.lineTo(19, 54);
+        ctx.stroke();
         // Right trailing back
-        poly(ctx, [[46, 43], [54, 43], [59, 52], [52, 53]], skinDark, outline, 1.6);
-        rounded(ctx, 51, 50, 11, 6, 2.5, boot, outline, 1.2);
+        poly(ctx, [[46, 43], [54, 43], [59, 52], [52, 53]], bruteSkinShaded(46, 43, 59, 52), outline, 1.6);
+        rounded(ctx, 51, 50, 11, 6, 2.5, bruteBootGrad(51, 50, 51, 56), outline, 1.2);
       } else if (f === 1) {
         // Left planted straight
-        rounded(ctx, 26, 41, 9, 15, 4, skin, outline, 1.6);
-        rounded(ctx, 24, 53, 13, 6.5, 2.5, boot, outline, 1.2);
+        rounded(ctx, 26, 41, 9, 15, 4, bruteSkinLit(26, 41, 35, 56), outline, 1.6);
+        rounded(ctx, 24, 53, 13, 6.5, 2.5, bruteBootGrad(24, 53, 24, 59), outline, 1.2);
+        // Cool rim on left leg
+        ctx.strokeStyle = "rgba(205, 240, 255, 0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(26, 42);
+        ctx.lineTo(26, 53);
+        ctx.stroke();
         // Right lifted passing
-        poly(ctx, [[46, 41], [54, 41], [55, 47], [48, 48]], skinDark, outline, 1.6);
-        rounded(ctx, 47, 45, 11, 6, 2.5, boot, outline, 1.2);
+        poly(ctx, [[46, 41], [54, 41], [55, 47], [48, 48]], bruteSkinShaded(46, 41, 55, 47), outline, 1.6);
+        rounded(ctx, 47, 45, 11, 6, 2.5, bruteBootGrad(47, 45, 47, 51), outline, 1.2);
       } else if (f === 2) {
         // Left trailing back
-        poly(ctx, [[26, 43], [34, 43], [22, 52], [16, 51]], skinDark, outline, 1.6);
-        rounded(ctx, 15, 50, 11, 6, 2.5, boot, outline, 1.2);
+        poly(ctx, [[26, 43], [34, 43], [22, 52], [16, 51]], bruteSkinShaded(26, 43, 22, 52), outline, 1.6);
+        rounded(ctx, 15, 50, 11, 6, 2.5, bruteBootGrad(15, 50, 15, 56), outline, 1.2);
         // Right forward heavy plant
-        poly(ctx, [[45, 43], [54, 43], [58, 55], [49, 54]], skin, outline, 1.6);
-        rounded(ctx, 48, 52, 13, 6.5, 2.5, boot, outline, 1.2);
+        poly(ctx, [[45, 43], [54, 43], [58, 55], [49, 54]], bruteSkinLit(45, 43, 58, 55), outline, 1.6);
+        rounded(ctx, 48, 52, 13, 6.5, 2.5, bruteBootGrad(48, 52, 48, 58), outline, 1.2);
       } else {
         // Left lifted passing
-        poly(ctx, [[26, 41], [34, 41], [35, 47], [28, 48]], skinDark, outline, 1.6);
-        rounded(ctx, 27, 45, 11, 6, 2.5, boot, outline, 1.2);
+        poly(ctx, [[26, 41], [34, 41], [35, 47], [28, 48]], bruteSkinShaded(26, 41, 35, 47), outline, 1.6);
+        rounded(ctx, 27, 45, 11, 6, 2.5, bruteBootGrad(27, 45, 27, 51), outline, 1.2);
         // Right planted straight
-        rounded(ctx, 44, 41, 9, 15, 4, skin, outline, 1.6);
-        rounded(ctx, 42, 53, 13, 6.5, 2.5, boot, outline, 1.2);
+        rounded(ctx, 44, 41, 9, 15, 4, bruteSkinLit(44, 41, 53, 56), outline, 1.6);
+        rounded(ctx, 42, 53, 13, 6.5, 2.5, bruteBootGrad(42, 53, 42, 59), outline, 1.2);
       }
 
-      // Torso
-      rounded(ctx, bodyX, bodyY, 36, 26, 10, linGrad(ctx, bodyX, bodyY, bodyX + 36, bodyY + 26, [[0, "#f0c080"], [0.5, "#c07038"], [1, "#603018"]]), outline, 2.2);
-      // Chest muscle lines
-      ctx.strokeStyle = "rgba(60,20,10,.35)";
-      ctx.lineWidth = 1.5;
+      // Contact AO under groin / pelvis onto thighs
+      ellipse(ctx, bodyX + 18, bodyY + 26, 15, 3.5, "rgba(24, 10, 4, 0.55)");
+
+      // Torso with 3-stop muscular volume
+      rounded(ctx, bodyX, bodyY, 36, 26, 10, linGrad(ctx, bodyX, bodyY, bodyX + 36, bodyY + 26, [[0, "#fae0bc"], [0.42, "#c8783c"], [1, "#5e2810"]]), outline, 2.2);
+
+      // Cool rim on upper-left torso flank
+      ctx.strokeStyle = "rgba(205, 240, 255, 0.4)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 1, bodyY + 12);
+      ctx.lineTo(bodyX + 1, bodyY + 22);
+      ctx.stroke();
+
+      // Chest muscle lines with deep crease AO in sternum and under pecs
+      ctx.strokeStyle = "rgba(40, 14, 6, 0.48)";
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
       ctx.moveTo(bodyX + 18, bodyY + 6);
       ctx.lineTo(bodyX + 18, bodyY + 18);
@@ -2017,39 +2134,60 @@
       ctx.quadraticCurveTo(bodyX + 18, bodyY + 16, bodyX + 26, bodyY + 12);
       ctx.stroke();
 
-      // Shoulders with rim highlights
+      // Shoulders with spherical 3D volume
       const leftShX = bodyX + 2;
       const leftShY = bodyY + 6;
       const rightShX = bodyX + 34;
       const rightShY = bodyY + 6;
-      ellipse(ctx, leftShX, leftShY, 8.5, 8.5, "#a05828", outline, 1.5);
-      ellipse(ctx, rightShX, rightShY, 8.5, 8.5, "#a05828", outline, 1.5);
-      ctx.strokeStyle = "rgba(255,240,200,.3)";
-      ctx.lineWidth = 1.2;
+
+      // Shoulder attachment contact AO
+      ellipse(ctx, leftShX + 3, leftShY + 2, 4, 5, "rgba(24, 10, 4, 0.45)");
+      ellipse(ctx, rightShX - 3, rightShY + 2, 4, 5, "rgba(24, 10, 4, 0.45)");
+
+      ellipse(ctx, leftShX, leftShY, 8.5, 8.5, radGrad(ctx, leftShX - 2.5, leftShY - 2.5, 1, 9, [[0, "#fce4c4"], [0.45, "#c8783c"], [1, "#5e2810"]]), outline, 1.5);
+      ellipse(ctx, rightShX, rightShY, 8.5, 8.5, radGrad(ctx, rightShX - 2.5, rightShY - 2.5, 1, 9, [[0, "#fce4c4"], [0.45, "#c8783c"], [1, "#5e2810"]]), outline, 1.5);
+
+      // Cool rim light on left shoulder
+      ctx.strokeStyle = "rgba(205, 240, 255, 0.55)";
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.arc(leftShX, leftShY, 6.5, -Math.PI * 0.8, -Math.PI * 0.2);
+      ctx.arc(leftShX, leftShY, 7.5, -Math.PI * 0.9, -Math.PI * 0.25);
       ctx.stroke();
+
+      // Warm highlight on right shoulder
+      ctx.strokeStyle = "rgba(255, 240, 200, 0.35)";
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.arc(rightShX, rightShY, 6.5, -Math.PI * 0.8, -Math.PI * 0.2);
       ctx.stroke();
+
+      // Contact AO under massive jaw onto upper chest
+      ellipse(ctx, headX, headY + 13, 13.5, 4.2, "rgba(24, 10, 4, 0.65)");
 
       // Head
       ctx.save();
       ctx.translate(headX, headY);
       ctx.rotate(headTilt);
-      ellipse(ctx, 0, 0, 15, 14, linGrad(ctx, -12, -10, 12, 12, [[0, "#f8d0a0"], [1, "#a05828"]]), outline, 2);
+      ellipse(ctx, 0, 0, 15, 14, linGrad(ctx, -12, -11, 12, 13, [[0, "#fce4c4"], [0.45, "#cc7a3e"], [1, "#662e14"]]), outline, 2);
+
+      // Cool rim light on upper-left curve of head
+      ctx.strokeStyle = "rgba(205, 240, 255, 0.55)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, 13.5, -Math.PI * 0.95, -Math.PI * 0.35);
+      ctx.stroke();
 
       // Brow ridge highlight
-      ctx.strokeStyle = "rgba(255,245,210,.35)";
+      ctx.strokeStyle = "rgba(255, 245, 210, 0.38)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(-10, -6);
       ctx.lineTo(10, -6);
       ctx.stroke();
 
-      // Tusks / Horns
-      ellipse(ctx, -14, -8, 5, 7.5, "#e8d0a8", "#4a3018", 1.2);
-      ellipse(ctx, 14, -8, 5, 7.5, "#e8d0a8", "#4a3018", 1.2);
+      // Tusks / Horns with 3-stop ivory gradient
+      ellipse(ctx, -14, -8, 5, 7.5, linGrad(ctx, -17, -12, -11, -2, [[0, "#ffffff"], [0.5, "#faecc8"], [1, "#8c6c44"]]), "#4a3018", 1.2);
+      ellipse(ctx, 14, -8, 5, 7.5, linGrad(ctx, 11, -12, 17, -2, [[0, "#ffffff"], [0.5, "#faecc8"], [1, "#8c6c44"]]), "#4a3018", 1.2);
       ellipse(ctx, -14.5, -9, 2, 4, "#ffffff");
       ellipse(ctx, 13.5, -9, 2, 4, "#ffffff");
 
@@ -2072,18 +2210,24 @@
       ctx.translate(clubX, clubY);
       ctx.rotate(clubRot);
       // Shaft / handle
-      rounded(ctx, -4, 0, 8, 26, 3, linGrad(ctx, -4, 0, 4, 26, [[0, "#8a6040"], [1, "#3a2010"]]), "#1a1008", 1.5);
+      rounded(ctx, -4, 0, 8, 26, 3, linGrad(ctx, -4, 0, 4, 26, [[0, "#9c6e48"], [0.5, "#6a4022"], [1, "#2e1608"]]), "#1a1008", 1.5);
       // Club head
-      ellipse(ctx, 0, -2, 9.5, 8.5, "#6a4830", "#1a1008", 1.5);
+      ellipse(ctx, 0, -2, 9.5, 8.5, linGrad(ctx, -9, -9, 9, 6, [[0, "#8a5c3c"], [0.5, "#5c3820"], [1, "#26140a"]]), "#1a1008", 1.5);
       // Wood grain & speckles
       speckles(ctx, -6, -8, 12, 14, 7, "rgba(0,0,0,.35)", 1.4);
       speckles(ctx, -5, -7, 10, 12, 4, "rgba(255,230,180,.25)", 1.2);
+      // Cool rim on upper-left club curve
+      ctx.strokeStyle = "rgba(205, 240, 255, 0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(0, -2, 8.5, -Math.PI * 0.9, -Math.PI * 0.3);
+      ctx.stroke();
       // Iron studs on club
       for (const [ix, iy] of [[-6, -2], [6, -2], [0, -8], [0, 4]]) {
-        ellipse(ctx, ix, iy, 1.8, 1.8, "#d0a870", "#2a1808", 0.8);
+        ellipse(ctx, ix, iy, 1.8, 1.8, linGrad(ctx, ix - 1, iy - 1, ix + 1, iy + 1, [[0, "#fff0b0"], [0.5, "#d0a870"], [1, "#3a2010"]]), "#2a1808", 0.8);
       }
       // Right fist holding club handle
-      ellipse(ctx, 0, 10, 4.5, 4.5, skin, outline, 1.2);
+      ellipse(ctx, 0, 10, 4.5, 4.5, bruteSkinLit(-4, 8, 4, 14), outline, 1.2);
       ctx.restore();
     };
 
@@ -2816,57 +2960,118 @@
       const helmY = (f === 1 || f === 3) ? 5 : 7;
       const shY = bodyY + 2;
 
-      shadow(ctx, 28, 52, (f === 0 || f === 2) ? 19 : 17, 5);
+      shadow(ctx, 28, 52, (f === 0 || f === 2) ? 19 : 17, 5, 0.4);
+
+      // Contact AO under soldier feet
+      if (f === 0) {
+        ellipse(ctx, 15.5, 49.5, 6, 1.8, "rgba(10, 8, 6, 0.72)");
+        ellipse(ctx, 39.5, 48.5, 5, 1.6, "rgba(10, 8, 6, 0.55)");
+      } else if (f === 1) {
+        ellipse(ctx, 21.5, 49.5, 6.5, 2, "rgba(10, 8, 6, 0.75)");
+        ellipse(ctx, 37.5, 41.5, 4, 1.4, "rgba(10, 8, 6, 0.3)");
+      } else if (f === 2) {
+        ellipse(ctx, 11, 47.5, 5, 1.6, "rgba(10, 8, 6, 0.55)");
+        ellipse(ctx, 41.5, 49.5, 6, 1.8, "rgba(10, 8, 6, 0.72)");
+      } else {
+        ellipse(ctx, 24.5, 41.5, 4, 1.4, "rgba(10, 8, 6, 0.3)");
+        ellipse(ctx, 34.5, 49.5, 6.5, 2, "rgba(10, 8, 6, 0.75)");
+      }
+
+      // Leather / cloth leg gradients
+      const nearLegGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#846848"], [0.48, "#584028"], [1, "#2a1c10"]]);
+      const farLegGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#584028"], [0.5, "#382414"], [1, "#1a0e08"]]);
+      const bootGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#543c24"], [0.5, "#362414"], [1, "#1a0e06"]]);
 
       // Legs: stride vs passing
       if (f === 0) {
         // Far/right leg trailing back
-        poly(ctx, [[30, 36], [37, 36], [42, 47], [35, 48]], "#463624", "#24180c", 1.2);
-        rounded(ctx, 35, 46, 10, 5, 2, "#2c1e10", "#24180c", 1);
+        poly(ctx, [[30, 36], [37, 36], [42, 47], [35, 48]], farLegGrad(30, 36, 42, 48), "#24180c", 1.2);
+        rounded(ctx, 35, 46, 10, 5, 2, bootGrad(35, 46, 35, 51), "#24180c", 1);
         // Near/left leg stepping forward
-        poly(ctx, [[18, 36], [25, 36], [20, 48], [13, 48]], "#5c4832", "#2a1e10", 1.2);
-        rounded(ctx, 10, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+        poly(ctx, [[18, 36], [25, 36], [20, 48], [13, 48]], nearLegGrad(18, 36, 13, 48), "#2a1e10", 1.2);
+        rounded(ctx, 10, 47, 11, 5.5, 2, bootGrad(10, 47, 10, 52), "#2a1e10", 1);
+        // Cool rim on forward leg
+        ctx.strokeStyle = "rgba(210, 240, 255, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(18, 37);
+        ctx.lineTo(13, 48);
+        ctx.stroke();
       } else if (f === 1) {
         // Near/left leg planted straight
-        rounded(ctx, 18, 34, 8, 14, 3, "#5c4832", "#2a1e10", 1.2);
-        rounded(ctx, 16, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+        rounded(ctx, 18, 34, 8, 14, 3, nearLegGrad(18, 34, 26, 48), "#2a1e10", 1.2);
+        rounded(ctx, 16, 47, 11, 5.5, 2, bootGrad(16, 47, 16, 52), "#2a1e10", 1);
+        // Cool rim on left planted leg
+        ctx.strokeStyle = "rgba(210, 240, 255, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(18, 35);
+        ctx.lineTo(18, 47);
+        ctx.stroke();
         // Far/right leg lifting passing knee
-        poly(ctx, [[30, 34], [37, 34], [39, 41], [33, 42]], "#463624", "#24180c", 1.2);
-        rounded(ctx, 33, 39, 9, 5, 2, "#2c1e10", "#24180c", 1);
+        poly(ctx, [[30, 34], [37, 34], [39, 41], [33, 42]], farLegGrad(30, 34, 39, 42), "#24180c", 1.2);
+        rounded(ctx, 33, 39, 9, 5, 2, bootGrad(33, 39, 33, 44), "#24180c", 1);
       } else if (f === 2) {
         // Near/left leg trailing back
-        poly(ctx, [[18, 36], [25, 36], [14, 47], [8, 46]], "#463624", "#24180c", 1.2);
-        rounded(ctx, 6, 45, 10, 5, 2, "#2c1e10", "#24180c", 1);
+        poly(ctx, [[18, 36], [25, 36], [14, 47], [8, 46]], farLegGrad(18, 36, 14, 47), "#24180c", 1.2);
+        rounded(ctx, 6, 45, 10, 5, 2, bootGrad(6, 45, 6, 50), "#24180c", 1);
         // Far/right leg stepping forward
-        poly(ctx, [[30, 36], [37, 36], [42, 48], [35, 48]], "#5c4832", "#2a1e10", 1.2);
-        rounded(ctx, 36, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+        poly(ctx, [[30, 36], [37, 36], [42, 48], [35, 48]], nearLegGrad(30, 36, 42, 48), "#2a1e10", 1.2);
+        rounded(ctx, 36, 47, 11, 5.5, 2, bootGrad(36, 47, 36, 52), "#2a1e10", 1);
       } else {
         // Near/left leg lifting passing knee
-        poly(ctx, [[18, 34], [25, 34], [27, 41], [21, 42]], "#463624", "#24180c", 1.2);
-        rounded(ctx, 20, 39, 9, 5, 2, "#2c1e10", "#24180c", 1);
+        poly(ctx, [[18, 34], [25, 34], [27, 41], [21, 42]], farLegGrad(18, 34, 27, 41), "#24180c", 1.2);
+        rounded(ctx, 20, 39, 9, 5, 2, bootGrad(20, 39, 20, 44), "#24180c", 1);
         // Far/right leg planted straight
-        rounded(ctx, 30, 34, 8, 14, 3, "#5c4832", "#2a1e10", 1.2);
-        rounded(ctx, 29, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+        rounded(ctx, 30, 34, 8, 14, 3, nearLegGrad(30, 34, 38, 48), "#2a1e10", 1.2);
+        rounded(ctx, 29, 47, 11, 5.5, 2, bootGrad(29, 47, 29, 52), "#2a1e10", 1);
       }
 
-      // Torso body armor
-      rounded(ctx, 14, bodyY, 28, 20, 5, linGrad(ctx, 14, bodyY, 42, bodyY + 20, [[0, "#f2da8c"], [0.45, "#b59445"], [1, "#5e4320"]]), "#2a1e10", 1.8);
+      // Contact AO under armor fauld onto legs
+      ellipse(ctx, 28, bodyY + 19, 13, 2.8, "rgba(20, 12, 6, 0.52)");
+
+      // Torso body armor (3-stop golden bronze cuirass)
+      rounded(ctx, 14, bodyY, 28, 20, 5, linGrad(ctx, 14, bodyY, 42, bodyY + 20, [[0, "#fff0a4"], [0.42, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.8);
+      // Cool rim on upper-left cuirass
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(15, bodyY + 12);
+      ctx.lineTo(15, bodyY + 4);
+      ctx.arcTo(15, bodyY, 20, bodyY, 4);
+      ctx.stroke();
+
       // Armor center ridge & belt
-      ctx.strokeStyle = "rgba(255,245,190,0.4)";
+      ctx.strokeStyle = "rgba(255,245,190,0.5)";
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(28, bodyY + 2);
       ctx.lineTo(28, bodyY + 16);
       ctx.stroke();
-      rounded(ctx, 16, bodyY + 14, 24, 4, 1, "#3c2814", "#1c1208", 1);
-      rounded(ctx, 26, bodyY + 13.5, 4, 5, 1, "#d8b248", "#2a1e10", 0.8);
+      rounded(ctx, 16, bodyY + 14, 24, 4, 1, linGrad(ctx, 16, bodyY + 14, 40, bodyY + 18, [[0, "#48321c"], [1, "#20140a"]]), "#1c1208", 1);
+      rounded(ctx, 26, bodyY + 13.5, 4, 5, 1, linGrad(ctx, 26, bodyY + 13.5, 30, bodyY + 18.5, [[0, "#fff0a0"], [0.5, "#d8b248"], [1, "#7c5a1c"]]), "#2a1e10", 0.8);
 
-      // Head & Helmet
-      ellipse(ctx, 28, headY, 10, 10, linGrad(ctx, 20, headY - 8, 36, headY + 8, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
-      rounded(ctx, 18, helmY, 20, 10, 4, linGrad(ctx, 18, helmY, 38, helmY + 10, [[0, "#f8e29a"], [0.6, "#c29d44"], [1, "#6a4a1c"]]), "#3a2810", 1.4);
-      poly(ctx, [[28, helmY - 4], [25, helmY + 2], [31, helmY + 2]], "#d8b248", "#3a2810", 1);
+      // Contact AO under chin / helmet rim onto breastplate neck
+      ellipse(ctx, 28, headY + 8, 9, 2.5, "rgba(20, 12, 6, 0.58)");
+
+      // Head with 3-stop warm human skin gradient
+      ellipse(ctx, 28, headY, 10, 10, linGrad(ctx, 20, headY - 8, 36, headY + 8, [[0, "#fff2d6"], [0.45, "#e5b478"], [1, "#9e6630"]]), "#4a3018", 1.6);
+
+      // Helmet with 3-stop bronze gradient & cool rim
+      rounded(ctx, 18, helmY, 20, 10, 4, linGrad(ctx, 18, helmY, 38, helmY + 10, [[0, "#fff4b0"], [0.45, "#d4aa44"], [1, "#724e1c"]]), "#3a2810", 1.4);
+      poly(ctx, [[28, helmY - 4], [25, helmY + 2], [31, helmY + 2]], linGrad(ctx, 25, helmY - 4, 31, helmY + 2, [[0, "#fff4b0"], [1, "#b58e38"]]), "#3a2810", 1);
+
+      // Cool rim light on helmet upper-left
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(28, headY - 4, 9.5, -Math.PI * 0.95, -Math.PI * 0.35);
+      ctx.stroke();
+
       ellipse(ctx, 24, headY - 1, 1.6, 1.8, "#1a120c");
       ellipse(ctx, 32, headY - 1, 1.6, 1.8, "#1a120c");
+      ellipse(ctx, 23.6, headY - 1.4, 0.5, 0.5, "#ffffff");
+      ellipse(ctx, 31.6, headY - 1.4, 0.5, 0.5, "#ffffff");
 
       // Shield (Left arm)
       let shDx = 0, shDy = 0, shRot = 0;
@@ -2875,11 +3080,21 @@
       else if (f === 2) { shDx = 2; shDy = 0; shRot = 0.05; }
       else { shDx = 1; shDy = -1; shRot = -0.02; }
 
+      // Contact AO behind shield
+      ellipse(ctx, 18 + shDx, shY + 12 + shDy, 6, 7, "rgba(20, 12, 6, 0.45)");
+
       ctx.save();
       ctx.translate(16 + shDx, shY + 12 + shDy);
       ctx.rotate(shRot);
-      poly(ctx, [[-6, -11], [4, -13], [6, 6], [0, 12], [-8, 6]], linGrad(ctx, -8, -13, 6, 12, [[0, "#fff0b0"], [0.45, "#d4aa40"], [1, "#7c5618"]]), "#3a2810", 1.4);
-      poly(ctx, [[-3, -6], [1, -6], [0, 2], [-4, 2]], "#2a4878", "#0e1828", 0.8);
+      poly(ctx, [[-6, -11], [4, -13], [6, 6], [0, 12], [-8, 6]], linGrad(ctx, -8, -13, 6, 12, [[0, "#fff4be"], [0.45, "#d8b046"], [1, "#78541a"]]), "#3a2810", 1.4);
+      poly(ctx, [[-3, -6], [1, -6], [0, 2], [-4, 2]], linGrad(ctx, -4, -6, 1, 2, [[0, "#3e64a4"], [1, "#14223c"]]), "#0e1828", 0.8);
+      // Cool rim on upper-left shield edge
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-6, -11);
+      ctx.lineTo(4, -13);
+      ctx.stroke();
       ctx.restore();
 
       // Spear (Right arm)
@@ -2901,36 +3116,77 @@
       const tipY = sp1y + Math.sin(ang) * 9;
       const pX = -Math.sin(ang) * 4;
       const pY = Math.cos(ang) * 4;
-      poly(ctx, [[tipX, tipY], [sp1x + pX, sp1y + pY], [sp1x - pX, sp1y - pY]], linGrad(ctx, sp1x - 3, sp1y - 3, tipX, tipY, [[0, "#d8e0e8"], [0.6, "#ffffff"], [1, "#8090a0"]]), "#2a323c", 1);
+      poly(ctx, [[tipX, tipY], [sp1x + pX, sp1y + pY], [sp1x - pX, sp1y - pY]], linGrad(ctx, sp1x - 3, sp1y - 3, tipX, tipY, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1);
       ellipse(ctx, tipX - 0.5, tipY - 0.5, 1, 1, "#ffffff");
-      ellipse(ctx, (sp0x * 0.4 + sp1x * 0.6), (sp0y * 0.4 + sp1y * 0.6), 3, 3, "#b59445", "#2a1e10", 1);
+      ellipse(ctx, (sp0x * 0.4 + sp1x * 0.6), (sp0y * 0.4 + sp1y * 0.6), 3, 3, linGrad(ctx, 36, bodyY, 44, bodyY + 6, [[0, "#fff0a0"], [1, "#8a6820"]]), "#2a1e10", 1);
     };
 
     const drawSoldierGuardAttack = (ctx) => {
-      shadow(ctx, 30, 53, 22, 5.5);
+      shadow(ctx, 30, 53, 22, 5.5, 0.4);
+
+      // Contact AO under lunging feet
+      ellipse(ctx, 13, 50, 6.5, 2, "rgba(10, 8, 6, 0.75)");
+      ellipse(ctx, 47.5, 48.5, 6, 1.8, "rgba(10, 8, 6, 0.6)");
+
+      const nearLegGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#846848"], [0.48, "#584028"], [1, "#2a1c10"]]);
+      const farLegGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#584028"], [0.5, "#382414"], [1, "#1a0e08"]]);
+      const bootGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#543c24"], [0.5, "#362414"], [1, "#1a0e06"]]);
 
       // Legs lunging forward
-      poly(ctx, [[16, 36], [23, 36], [16, 49], [9, 49]], "#5c4832", "#2a1e10", 1.3);
-      rounded(ctx, 7, 47, 12, 6, 2, "#3c2a18", "#2a1e10", 1.1);
-      poly(ctx, [[29, 36], [36, 36], [46, 48], [39, 49]], "#463624", "#24180c", 1.3);
-      rounded(ctx, 42, 47, 11, 5.5, 2, "#2c1e10", "#24180c", 1.1);
+      poly(ctx, [[16, 36], [23, 36], [16, 49], [9, 49]], nearLegGrad(16, 36, 9, 49), "#2a1e10", 1.3);
+      rounded(ctx, 7, 47, 12, 6, 2, bootGrad(7, 47, 7, 53), "#2a1e10", 1.1);
+      // Cool rim on front lunge leg
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.4)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(16, 37);
+      ctx.lineTo(9, 49);
+      ctx.stroke();
+
+      poly(ctx, [[29, 36], [36, 36], [46, 48], [39, 49]], farLegGrad(29, 36, 46, 48), "#24180c", 1.3);
+      rounded(ctx, 42, 47, 11, 5.5, 2, bootGrad(42, 47, 42, 52), "#24180c", 1.1);
+
+      // Contact AO under armor fauld
+      ellipse(ctx, 31, 41, 13, 2.8, "rgba(20, 12, 6, 0.52)");
 
       // Torso leaned into thrust
-      rounded(ctx, 17, 23, 28, 19, 5, linGrad(ctx, 17, 23, 45, 42, [[0, "#f2da8c"], [0.45, "#b59445"], [1, "#5e4320"]]), "#2a1e10", 1.8);
-      ctx.strokeStyle = "rgba(255,245,190,0.4)";
+      rounded(ctx, 17, 23, 28, 19, 5, linGrad(ctx, 17, 23, 45, 42, [[0, "#fff0a4"], [0.42, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.8);
+      // Cool rim on torso upper-left
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(18, 33);
+      ctx.lineTo(18, 27);
+      ctx.arcTo(18, 23, 24, 23, 4);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255,245,190,0.5)";
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(31, 25);
       ctx.lineTo(31, 38);
       ctx.stroke();
-      rounded(ctx, 19, 37, 24, 4, 1, "#3c2814", "#1c1208", 1);
+      rounded(ctx, 19, 37, 24, 4, 1, linGrad(ctx, 19, 37, 43, 41, [[0, "#48321c"], [1, "#20140a"]]), "#1c1208", 1);
+
+      // Contact AO under chin / helmet
+      ellipse(ctx, 31, 24, 9, 2.5, "rgba(20, 12, 6, 0.58)");
 
       // Head & Helm forward
-      ellipse(ctx, 31, 16, 10, 10, linGrad(ctx, 23, 8, 39, 24, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
-      rounded(ctx, 21, 6, 20, 10, 4, linGrad(ctx, 21, 6, 41, 16, [[0, "#f8e29a"], [0.6, "#c29d44"], [1, "#6a4a1c"]]), "#3a2810", 1.4);
-      poly(ctx, [[32, 2], [29, 8], [35, 8]], "#d8b248", "#3a2810", 1);
+      ellipse(ctx, 31, 16, 10, 10, linGrad(ctx, 23, 8, 39, 24, [[0, "#fff2d6"], [0.45, "#e5b478"], [1, "#9e6630"]]), "#4a3018", 1.6);
+      rounded(ctx, 21, 6, 20, 10, 4, linGrad(ctx, 21, 6, 41, 16, [[0, "#fff4b0"], [0.45, "#d4aa44"], [1, "#724e1c"]]), "#3a2810", 1.4);
+      poly(ctx, [[32, 2], [29, 8], [35, 8]], linGrad(ctx, 29, 2, 35, 8, [[0, "#fff4b0"], [1, "#b58e38"]]), "#3a2810", 1);
+
+      // Cool rim light on helmet upper-left
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(31, 12, 9.5, -Math.PI * 0.95, -Math.PI * 0.35);
+      ctx.stroke();
+
       ellipse(ctx, 27, 15, 1.8, 1.8, "#1a120c");
       ellipse(ctx, 35, 15, 1.8, 1.8, "#1a120c");
+      ellipse(ctx, 26.6, 14.6, 0.5, 0.5, "#ffffff");
+      ellipse(ctx, 34.6, 14.6, 0.5, 0.5, "#ffffff");
       ctx.strokeStyle = "#1a120c";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
@@ -2940,9 +3196,17 @@
       ctx.lineTo(33, 14);
       ctx.stroke();
 
-      // Shield pulled back
-      poly(ctx, [[6, 25], [15, 23], [17, 41], [12, 46], [4, 41]], linGrad(ctx, 4, 23, 17, 46, [[0, "#fff0b0"], [0.45, "#d4aa40"], [1, "#7c5618"]]), "#3a2810", 1.4);
-      poly(ctx, [[9, 30], [13, 30], [12, 37], [8, 37]], "#2a4878", "#0e1828", 0.8);
+      // Shield pulled back with contact AO
+      ellipse(ctx, 11, 35, 6, 8, "rgba(20, 12, 6, 0.45)");
+      poly(ctx, [[6, 25], [15, 23], [17, 41], [12, 46], [4, 41]], linGrad(ctx, 4, 23, 17, 46, [[0, "#fff4be"], [0.45, "#d8b046"], [1, "#78541a"]]), "#3a2810", 1.4);
+      poly(ctx, [[9, 30], [13, 30], [12, 37], [8, 37]], linGrad(ctx, 8, 30, 13, 37, [[0, "#3e64a4"], [1, "#14223c"]]), "#0e1828", 0.8);
+      // Cool rim on shield
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.5)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(6, 25);
+      ctx.lineTo(15, 23);
+      ctx.stroke();
 
       // Spear Thrust with motion line
       ctx.strokeStyle = "rgba(255,245,180,0.55)";
@@ -2959,32 +3223,64 @@
       ctx.lineTo(46, 25);
       ctx.stroke();
 
-      rounded(ctx, 28, 26, 12, 6, 2.5, linGrad(ctx, 28, 26, 40, 32, [[0, "#f2da8c"], [1, "#7c5618"]]), "#2a1e10", 1.2);
-      ellipse(ctx, 39, 29, 3, 3, "#b59445", "#2a1e10", 1);
+      rounded(ctx, 28, 26, 12, 6, 2.5, linGrad(ctx, 28, 26, 40, 32, [[0, "#fff0a4"], [0.5, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.2);
+      ellipse(ctx, 39, 29, 3, 3, linGrad(ctx, 36, 26, 42, 32, [[0, "#fff0a0"], [1, "#8a6820"]]), "#2a1e10", 1);
 
-      poly(ctx, [[54, 23], [44, 19], [46, 24], [44, 29]], linGrad(ctx, 44, 19, 54, 24, [[0, "#d8e0e8"], [0.6, "#ffffff"], [1, "#8090a0"]]), "#2a323c", 1.2);
+      poly(ctx, [[54, 23], [44, 19], [46, 24], [44, 29]], linGrad(ctx, 44, 19, 54, 24, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1.2);
       ellipse(ctx, 54, 23, 2.5, 2.5, "rgba(255,255,255,0.95)");
       ellipse(ctx, 54, 23, 4, 4, "rgba(255,230,120,0.4)");
     };
 
     const drawSoldierGuardBlock = (ctx) => {
-      shadow(ctx, 28, 53, 21, 6);
+      shadow(ctx, 28, 53, 21, 6, 0.4);
+
+      // Contact AO under braced wide feet
+      ellipse(ctx, 12, 51, 6.5, 2, "rgba(10, 8, 6, 0.75)");
+      ellipse(ctx, 44, 51, 6.5, 2, "rgba(10, 8, 6, 0.75)");
+
+      const nearLegGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#846848"], [0.48, "#584028"], [1, "#2a1c10"]]);
+      const farLegGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#584028"], [0.5, "#382414"], [1, "#1a0e08"]]);
+      const bootGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#543c24"], [0.5, "#362414"], [1, "#1a0e06"]]);
 
       // Legs wide braced defensive stance
-      poly(ctx, [[14, 38], [21, 38], [15, 50], [8, 50]], "#5c4832", "#2a1e10", 1.3);
-      rounded(ctx, 6, 48, 12, 6, 2, "#3c2a18", "#2a1e10", 1.1);
-      poly(ctx, [[33, 38], [40, 38], [46, 50], [39, 50]], "#463624", "#24180c", 1.3);
-      rounded(ctx, 38, 48, 12, 6, 2, "#2c1e10", "#24180c", 1.1);
+      poly(ctx, [[14, 38], [21, 38], [15, 50], [8, 50]], nearLegGrad(14, 38, 8, 50), "#2a1e10", 1.3);
+      rounded(ctx, 6, 48, 12, 6, 2, bootGrad(6, 48, 6, 54), "#2a1e10", 1.1);
+      // Cool rim on left braced leg
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.4)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(14, 39);
+      ctx.lineTo(8, 50);
+      ctx.stroke();
+
+      poly(ctx, [[33, 38], [40, 38], [46, 50], [39, 50]], farLegGrad(33, 38, 46, 50), "#24180c", 1.3);
+      rounded(ctx, 38, 48, 12, 6, 2, bootGrad(38, 48, 38, 54), "#24180c", 1.1);
+
+      // Contact AO under torso
+      ellipse(ctx, 28, 43, 13, 2.8, "rgba(20, 12, 6, 0.52)");
 
       // Torso hunkered behind shield
-      rounded(ctx, 14, 24, 28, 20, 5, linGrad(ctx, 14, 24, 42, 44, [[0, "#f2da8c"], [0.45, "#b59445"], [1, "#5e4320"]]), "#2a1e10", 1.8);
+      rounded(ctx, 14, 24, 28, 20, 5, linGrad(ctx, 14, 24, 42, 44, [[0, "#fff0a4"], [0.42, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.8);
+
+      // Contact AO under chin peering over shield
+      ellipse(ctx, 28, 25, 9, 2.5, "rgba(20, 12, 6, 0.58)");
 
       // Head & Helm peering over shield
-      ellipse(ctx, 28, 17, 9.5, 9.5, linGrad(ctx, 20, 9, 36, 25, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
-      rounded(ctx, 18, 7, 20, 10, 4, linGrad(ctx, 18, 7, 38, 17, [[0, "#f8e29a"], [0.6, "#c29d44"], [1, "#6a4a1c"]]), "#3a2810", 1.4);
-      poly(ctx, [[28, 3], [25, 9], [31, 9]], "#d8b248", "#3a2810", 1);
+      ellipse(ctx, 28, 17, 9.5, 9.5, linGrad(ctx, 20, 9, 36, 25, [[0, "#fff2d6"], [0.45, "#e5b478"], [1, "#9e6630"]]), "#4a3018", 1.6);
+      rounded(ctx, 18, 7, 20, 10, 4, linGrad(ctx, 18, 7, 38, 17, [[0, "#fff4b0"], [0.45, "#d4aa44"], [1, "#724e1c"]]), "#3a2810", 1.4);
+      poly(ctx, [[28, 3], [25, 9], [31, 9]], linGrad(ctx, 25, 3, 31, 9, [[0, "#fff4b0"], [1, "#b58e38"]]), "#3a2810", 1);
+
+      // Cool rim light on helmet upper-left
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(28, 13, 9.5, -Math.PI * 0.95, -Math.PI * 0.35);
+      ctx.stroke();
+
       ellipse(ctx, 24, 16, 1.6, 1.8, "#1a120c");
       ellipse(ctx, 32, 16, 1.6, 1.8, "#1a120c");
+      ellipse(ctx, 23.6, 15.6, 0.5, 0.5, "#ffffff");
+      ellipse(ctx, 31.6, 15.6, 0.5, 0.5, "#ffffff");
       ctx.strokeStyle = "#1a120c";
       ctx.lineWidth = 1.3;
       ctx.beginPath();
@@ -3001,10 +3297,19 @@
       ctx.moveTo(39, 45);
       ctx.lineTo(44, 7);
       ctx.stroke();
-      poly(ctx, [[44, 3], [48, 11], [40, 9]], linGrad(ctx, 40, 3, 48, 11, [[0, "#d8e0e8"], [0.6, "#ffffff"], [1, "#8090a0"]]), "#2a323c", 1);
+      poly(ctx, [[44, 3], [48, 11], [40, 9]], linGrad(ctx, 40, 3, 48, 11, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1);
 
-      // Shield Prominent Forward Block
-      poly(ctx, [[14, 20], [36, 18], [39, 42], [25, 50], [11, 42]], linGrad(ctx, 11, 18, 39, 50, [[0, "#fff5c8"], [0.45, "#e0b848"], [1, "#8a621c"]]), "#2a1e10", 1.8);
+      // Shield Prominent Forward Block with contact AO behind it
+      ellipse(ctx, 25, 35, 14, 16, "rgba(18, 10, 4, 0.45)");
+      poly(ctx, [[14, 20], [36, 18], [39, 42], [25, 50], [11, 42]], linGrad(ctx, 11, 18, 39, 50, [[0, "#fff8d0"], [0.45, "#e0b848"], [1, "#8a621c"]]), "#2a1e10", 1.8);
+      // Cool rim on upper shield rim
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(14, 20);
+      ctx.lineTo(36, 18);
+      ctx.stroke();
+
       ctx.strokeStyle = "rgba(255,255,255,0.45)";
       ctx.lineWidth = 1.3;
       ctx.beginPath();
@@ -3016,8 +3321,8 @@
       ctx.closePath();
       ctx.stroke();
 
-      poly(ctx, [[25, 27], [30, 33], [25, 39], [20, 33]], "#244270", "#0e1828", 1.2);
-      ellipse(ctx, 25, 33, 2.5, 2.5, "#f0d060", "#3a2810", 0.8);
+      poly(ctx, [[25, 27], [30, 33], [25, 39], [20, 33]], linGrad(ctx, 20, 27, 30, 39, [[0, "#3e64a4"], [1, "#14223c"]]), "#0e1828", 1.2);
+      ellipse(ctx, 25, 33, 2.5, 2.5, linGrad(ctx, 23, 31, 27, 35, [[0, "#fff0a0"], [1, "#b58e38"]]), "#3a2810", 0.8);
       ellipse(ctx, 17, 24, 2, 2, "rgba(255,255,255,0.85)");
     };
 
@@ -3030,10 +3335,23 @@
     make("soldier_guard_block", 56, 60, drawSoldierGuardBlock);
 
     const drawHeroCaptainIdle = (ctx) => {
-      shadow(ctx, 32, 62, 22, 6, 0.4);
-      // cape
-      poly(ctx, [[18, 28], [46, 28], [52, 58], [32, 62], [12, 58]], linGrad(ctx, 18, 28, 46, 62, [[0, "#5a90d0"], [0.5, "#305888"], [1, "#183050"]]), "#0c1828", 1.8);
-      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      shadow(ctx, 32, 62, 22, 6, 0.42);
+
+      // Contact AO under hero armored boots
+      ellipse(ctx, 26, 57.5, 6, 2, "rgba(8, 12, 20, 0.75)");
+      ellipse(ctx, 38, 57.5, 6, 2, "rgba(8, 12, 20, 0.75)");
+
+      // Cape (3-stop rich royal blue velvet gradient)
+      poly(ctx, [[18, 28], [46, 28], [52, 58], [32, 62], [12, 58]], linGrad(ctx, 18, 28, 46, 62, [[0, "#6ea6ea"], [0.45, "#325c94"], [1, "#142848"]]), "#0c1828", 1.8);
+      // Cool rim on left cape edge
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(18, 30);
+      ctx.lineTo(12, 58);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(26, 32);
@@ -3041,39 +3359,86 @@
       ctx.moveTo(38, 32);
       ctx.lineTo(42, 56);
       ctx.stroke();
-      // legs
-      rounded(ctx, 22, 44, 8, 16, 3, linGrad(ctx, 22, 44, 30, 60, [[0, "#3a5880"], [1, "#182840"]]), "#101828", 1.2);
-      rounded(ctx, 34, 44, 8, 16, 3, linGrad(ctx, 34, 44, 42, 60, [[0, "#3a5880"], [1, "#182840"]]), "#101828", 1.2);
-      rounded(ctx, 21, 54, 10, 6, 2, "#182438", "#0e1828", 1);
-      rounded(ctx, 33, 54, 10, 6, 2, "#182438", "#0e1828", 1);
-      ellipse(ctx, 26, 46, 3, 2.5, "#e8c860", "#4a3010", 0.8);
-      ellipse(ctx, 38, 46, 3, 2.5, "#e8c860", "#4a3010", 0.8);
-      // armor torso
-      rounded(ctx, 18, 26, 28, 24, 6, linGrad(ctx, 18, 26, 46, 50, [[0, "#7aa8e8"], [0.5, "#3060a0"], [1, "#183050"]]), "#0c1828", 2);
-      // gold trim
+
+      // Legs (Plate armor with 3-stop gradient)
+      rounded(ctx, 22, 44, 8, 16, 3, linGrad(ctx, 22, 44, 30, 60, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#101828", 1.2);
+      rounded(ctx, 34, 44, 8, 16, 3, linGrad(ctx, 34, 44, 42, 60, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#101828", 1.2);
+      // Cool rim on left leg
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(22, 45);
+      ctx.lineTo(22, 54);
+      ctx.stroke();
+
+      rounded(ctx, 21, 54, 10, 6, 2, linGrad(ctx, 21, 54, 21, 60, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
+      rounded(ctx, 33, 54, 10, 6, 2, linGrad(ctx, 33, 54, 33, 60, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
+      ellipse(ctx, 26, 46, 3, 2.5, linGrad(ctx, 24, 44, 28, 48, [[0, "#fff2a0"], [1, "#9c6e20"]]), "#4a3010", 0.8);
+      ellipse(ctx, 38, 46, 3, 2.5, linGrad(ctx, 36, 44, 40, 48, [[0, "#fff2a0"], [1, "#9c6e20"]]), "#4a3010", 0.8);
+
+      // Contact AO under chestplate over belt / faulds
+      ellipse(ctx, 32, 46, 14, 2.5, "rgba(10, 16, 28, 0.6)");
+
+      // Armor torso (3-stop cobalt/steel plate armor gradient)
+      rounded(ctx, 18, 26, 28, 24, 6, linGrad(ctx, 18, 26, 46, 50, [[0, "#92beff"], [0.45, "#386cb0"], [1, "#163458"]]), "#0c1828", 2);
+      // Cool rim on left shoulder / torso
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(19, 36);
+      ctx.lineTo(19, 29);
+      ctx.arcTo(19, 26, 25, 26, 5);
+      ctx.stroke();
+
+      // Gold trim
       ctx.strokeStyle = "#e8c860";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(22, 30, 20, 14);
-      poly(ctx, [[32, 32], [35, 37], [32, 42], [29, 37]], "#f0d060", "#4a3010", 0.8);
-      rounded(ctx, 20, 46, 24, 4, 1, "#3a2414", "#120c06", 1);
-      rounded(ctx, 30, 45, 4, 6, 1, "#f0d060", "#4a3010", 0.8);
-      // head
-      ellipse(ctx, 32, 18, 11, 11, linGrad(ctx, 22, 8, 42, 28, [[0, "#ffe8b0"], [1, "#c09048"]]), "#4a3018", 1.6);
-      // crown helm
-      rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#f8e080"], [1, "#a87828"]]), "#4a3010", 1.4);
-      poly(ctx, [[32, 0], [26, 8], [38, 8]], "#f0d060", "#4a3010", 1);
-      ellipse(ctx, 32, 7, 2, 2.5, "#d02020");
+      poly(ctx, [[32, 32], [35, 37], [32, 42], [29, 37]], linGrad(ctx, 29, 32, 35, 42, [[0, "#fff6b8"], [0.5, "#f0d060"], [1, "#8c6018"]]), "#4a3010", 0.8);
+      rounded(ctx, 20, 46, 24, 4, 1, linGrad(ctx, 20, 46, 44, 50, [[0, "#4a301c"], [1, "#1c1008"]]), "#120c06", 1);
+      rounded(ctx, 30, 45, 4, 6, 1, linGrad(ctx, 30, 45, 34, 51, [[0, "#fff6b8"], [0.5, "#f0d060"], [1, "#8c6018"]]), "#4a3010", 0.8);
+
+      // Contact AO under chin onto gorget
+      ellipse(ctx, 32, 27, 10, 3, "rgba(12, 16, 28, 0.65)");
+
+      // Head (3-stop warm hero skin gradient)
+      ellipse(ctx, 32, 18, 11, 11, linGrad(ctx, 22, 8, 42, 28, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
+
+      // Crown helm with 3-stop radiant gold gradient & cool rim
+      rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#fff6ba"], [0.5, "#f0c842"], [1, "#9c6818"]]), "#4a3010", 1.4);
+      poly(ctx, [[32, 0], [26, 8], [38, 8]], linGrad(ctx, 26, 0, 38, 8, [[0, "#fff6ba"], [0.5, "#f0d060"], [1, "#9c6818"]]), "#4a3010", 1);
+      // Cool rim light on crown top
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.65)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(20, 9);
+      ctx.lineTo(20, 7);
+      ctx.lineTo(26, 8);
+      ctx.lineTo(32, 0);
+      ctx.stroke();
+
+      ellipse(ctx, 32, 7, 2, 2.5, linGrad(ctx, 30, 5, 34, 9, [[0, "#ff7070"], [0.5, "#d02020"], [1, "#600808"]]));
       face(ctx, 32, 18);
-      // shield
-      poly(ctx, [[10, 28], [22, 26], [24, 48], [16, 54], [8, 48]], linGrad(ctx, 8, 26, 24, 54, [[0, "#fff4c0"], [0.5, "#d8b048"], [1, "#a08030"]]), "#3a2810", 1.5);
-      poly(ctx, [[16, 33], [19, 38], [16, 43], [13, 38]], "#2a4878", "#0e1828", 1);
-      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+
+      // Shield with contact AO
+      ellipse(ctx, 16, 40, 7, 12, "rgba(12, 16, 28, 0.45)");
+      poly(ctx, [[10, 28], [22, 26], [24, 48], [16, 54], [8, 48]], linGrad(ctx, 8, 26, 24, 54, [[0, "#fff6c4"], [0.5, "#dcba4c"], [1, "#967024"]]), "#3a2810", 1.5);
+      poly(ctx, [[16, 33], [19, 38], [16, 43], [13, 38]], linGrad(ctx, 13, 33, 19, 43, [[0, "#3e68a8"], [1, "#14223c"]]), "#0e1828", 1);
+      ctx.strokeStyle = "rgba(255,255,255,0.45)";
       ctx.lineWidth = 1;
       ctx.strokeRect(11, 28, 10, 18);
-      // sword
-      rounded(ctx, 44, 46, 12, 5, 2, "#8a6030", "#2a1810", 1);
-      ellipse(ctx, 50, 52, 2.5, 2.5, "#e8c860", "#2a1810", 1);
-      ctx.strokeStyle = "#d0d8e8";
+      // Cool rim on shield upper-left
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(10, 28);
+      ctx.lineTo(22, 26);
+      ctx.stroke();
+
+      // Sword
+      rounded(ctx, 44, 46, 12, 5, 2, linGrad(ctx, 44, 46, 56, 51, [[0, "#a07038"], [1, "#4a2c14"]]), "#2a1810", 1);
+      ellipse(ctx, 50, 52, 2.5, 2.5, linGrad(ctx, 48, 50, 52, 54, [[0, "#fff0a0"], [1, "#9c6e20"]]), "#2a1810", 1);
+      ctx.strokeStyle = "#d0dcee";
       ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.moveTo(48, 48);
@@ -3085,15 +3450,29 @@
       ctx.moveTo(48, 47);
       ctx.lineTo(55, 15);
       ctx.stroke();
-      // blade tip glow
+      // Blade tip glow
       ellipse(ctx, 56, 12, 3, 3, "rgba(200,220,255,.7)");
     };
 
     const drawHeroCaptainAttack = (ctx) => {
-      shadow(ctx, 34, 63, 26, 6, 0.42);
-      // cape billowing leftwards
-      poly(ctx, [[16, 26], [42, 26], [32, 54], [12, 60], [2, 46]], linGrad(ctx, 2, 26, 42, 60, [[0, "#5a90d0"], [0.5, "#2a4870"], [1, "#101e30"]]), "#0c1828", 1.8);
-      ctx.strokeStyle = "rgba(255,255,255,0.2)";
+      shadow(ctx, 34, 63, 26, 6, 0.44);
+
+      // Contact AO under lunging hero boots
+      ellipse(ctx, 13.5, 59, 6.5, 2, "rgba(8, 12, 20, 0.75)");
+      ellipse(ctx, 44, 59, 7, 2, "rgba(8, 12, 20, 0.75)");
+
+      // Cape billowing leftwards (3-stop gradient)
+      poly(ctx, [[16, 26], [42, 26], [32, 54], [12, 60], [2, 46]], linGrad(ctx, 2, 26, 42, 60, [[0, "#6ea6ea"], [0.5, "#2a4870"], [1, "#101e30"]]), "#0c1828", 1.8);
+      // Cool rim on billowing cape edge
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(16, 26);
+      ctx.lineTo(2, 46);
+      ctx.lineTo(12, 60);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
       ctx.moveTo(18, 30);
@@ -3101,29 +3480,75 @@
       ctx.moveTo(28, 30);
       ctx.lineTo(16, 54);
       ctx.stroke();
-      // legs lunging forward
-      poly(ctx, [[18, 44], [25, 44], [16, 58], [9, 58]], linGrad(ctx, 9, 44, 25, 58, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
-      rounded(ctx, 7, 56, 11, 6, 2, "#182438", "#0e1828", 1);
-      poly(ctx, [[34, 44], [43, 44], [47, 57], [40, 58]], linGrad(ctx, 34, 44, 47, 58, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
-      rounded(ctx, 38, 56, 12, 6, 2, "#182438", "#0e1828", 1);
-      ellipse(ctx, 42, 48, 3, 2.5, "#e8c860", "#4a3010", 0.8);
-      // torso angled forward
-      rounded(ctx, 22, 27, 28, 23, 6, linGrad(ctx, 22, 27, 50, 50, [[0, "#7aa8e8"], [0.5, "#3060a0"], [1, "#183050"]]), "#0c1828", 2);
+
+      // Legs lunging forward
+      poly(ctx, [[18, 44], [25, 44], [16, 58], [9, 58]], linGrad(ctx, 9, 44, 25, 58, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#0e1828", 1.2);
+      rounded(ctx, 7, 56, 11, 6, 2, linGrad(ctx, 7, 56, 7, 62, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
+      // Cool rim on front lunge leg
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(18, 45);
+      ctx.lineTo(9, 58);
+      ctx.stroke();
+
+      poly(ctx, [[34, 44], [43, 44], [47, 57], [40, 58]], linGrad(ctx, 34, 44, 47, 58, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#0e1828", 1.2);
+      rounded(ctx, 38, 56, 12, 6, 2, linGrad(ctx, 38, 56, 38, 62, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
+      ellipse(ctx, 42, 48, 3, 2.5, linGrad(ctx, 40, 46, 44, 50, [[0, "#fff2a0"], [1, "#9c6e20"]]), "#4a3010", 0.8);
+
+      // Contact AO under chestplate
+      ellipse(ctx, 35, 46, 14, 2.5, "rgba(10, 16, 28, 0.6)");
+
+      // Torso angled forward
+      rounded(ctx, 22, 27, 28, 23, 6, linGrad(ctx, 22, 27, 50, 50, [[0, "#92beff"], [0.45, "#386cb0"], [1, "#163458"]]), "#0c1828", 2);
+      // Cool rim on torso upper-left
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(23, 37);
+      ctx.lineTo(23, 30);
+      ctx.arcTo(23, 27, 29, 27, 5);
+      ctx.stroke();
+
       ctx.strokeStyle = "#e8c860";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(26, 31, 18, 13);
-      poly(ctx, [[35, 33], [38, 37], [35, 41], [32, 37]], "#f0d060", "#4a3010", 0.8);
-      rounded(ctx, 24, 46, 23, 4, 1, "#3a2414", "#120c06", 1);
-      // head focused forward
-      ellipse(ctx, 35, 19, 11, 11, linGrad(ctx, 25, 9, 45, 29, [[0, "#ffe8b0"], [1, "#c09048"]]), "#4a3018", 1.6);
-      rounded(ctx, 23, 7, 24, 10, 3, linGrad(ctx, 23, 7, 47, 17, [[0, "#f8e080"], [1, "#a87828"]]), "#4a3010", 1.4);
-      poly(ctx, [[36, 1], [29, 9], [42, 9]], "#f0d060", "#4a3010", 1);
-      ellipse(ctx, 36, 8, 2, 2.5, "#d02020");
+      poly(ctx, [[35, 33], [38, 37], [35, 41], [32, 37]], linGrad(ctx, 32, 33, 38, 41, [[0, "#fff6b8"], [0.5, "#f0d060"], [1, "#8c6018"]]), "#4a3010", 0.8);
+      rounded(ctx, 24, 46, 23, 4, 1, linGrad(ctx, 24, 46, 47, 50, [[0, "#4a301c"], [1, "#1c1008"]]), "#120c06", 1);
+
+      // Contact AO under chin onto gorget
+      ellipse(ctx, 35, 28, 10, 3, "rgba(12, 16, 28, 0.65)");
+
+      // Head focused forward
+      ellipse(ctx, 35, 19, 11, 11, linGrad(ctx, 25, 9, 45, 29, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
+      rounded(ctx, 23, 7, 24, 10, 3, linGrad(ctx, 23, 7, 47, 17, [[0, "#fff6ba"], [0.5, "#f0c842"], [1, "#9c6818"]]), "#4a3010", 1.4);
+      poly(ctx, [[36, 1], [29, 9], [42, 9]], linGrad(ctx, 29, 1, 42, 9, [[0, "#fff6ba"], [0.5, "#f0d060"], [1, "#9c6818"]]), "#4a3010", 1);
+      // Cool rim on crown
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.65)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(23, 10);
+      ctx.lineTo(23, 8);
+      ctx.lineTo(29, 9);
+      ctx.lineTo(36, 1);
+      ctx.stroke();
+
+      ellipse(ctx, 36, 8, 2, 2.5, linGrad(ctx, 34, 6, 38, 10, [[0, "#ff7070"], [0.5, "#d02020"], [1, "#600808"]]));
       face(ctx, 35, 19, "#f6f0c2", "#101008", true);
-      // shield braced for impact
-      poly(ctx, [[6, 30], [18, 28], [21, 48], [14, 54], [5, 48]], linGrad(ctx, 5, 28, 21, 54, [[0, "#fff4c0"], [0.5, "#d8b048"], [1, "#8a6020"]]), "#3a2810", 1.5);
-      poly(ctx, [[11, 35], [14, 39], [11, 43], [8, 39]], "#2a4878", "#0e1828", 1);
-      // slash arc energy trail
+
+      // Shield braced for impact with contact AO
+      ellipse(ctx, 13, 41, 7, 12, "rgba(12, 16, 28, 0.45)");
+      poly(ctx, [[6, 30], [18, 28], [21, 48], [14, 54], [5, 48]], linGrad(ctx, 5, 28, 21, 54, [[0, "#fff6c4"], [0.5, "#dcba4c"], [1, "#967024"]]), "#3a2810", 1.5);
+      poly(ctx, [[11, 35], [14, 39], [11, 43], [8, 39]], linGrad(ctx, 8, 35, 14, 43, [[0, "#3e68a8"], [1, "#14223c"]]), "#0e1828", 1);
+      // Cool rim on shield
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(6, 30);
+      ctx.lineTo(18, 28);
+      ctx.stroke();
+
+      // Slash arc energy trail
       ctx.beginPath();
       ctx.arc(38, 36, 24, -Math.PI * 0.45, Math.PI * 0.16);
       ctx.strokeStyle = "rgba(180, 225, 255, 0.45)";
@@ -3134,10 +3559,11 @@
       ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
       ctx.lineWidth = 2.5;
       ctx.stroke();
-      // sword slashing committed
-      rounded(ctx, 42, 30, 12, 7, 3, linGrad(ctx, 42, 30, 54, 37, [[0, "#7aa8e8"], [1, "#183050"]]), "#0c1828", 1.5);
-      rounded(ctx, 46, 33, 6, 12, 2, "#8a6030", "#2a1810", 1);
-      ellipse(ctx, 44, 39, 2.5, 2.5, "#e8c860", "#2a1810", 1);
+
+      // Sword slashing committed
+      rounded(ctx, 42, 30, 12, 7, 3, linGrad(ctx, 42, 30, 54, 37, [[0, "#92beff"], [1, "#163458"]]), "#0c1828", 1.5);
+      rounded(ctx, 46, 33, 6, 12, 2, linGrad(ctx, 46, 33, 52, 45, [[0, "#a07038"], [1, "#4a2c14"]]), "#2a1810", 1);
+      ellipse(ctx, 44, 39, 2.5, 2.5, linGrad(ctx, 42, 37, 46, 41, [[0, "#fff0a0"], [1, "#9c6e20"]]), "#2a1810", 1);
       ctx.strokeStyle = "#e8f0ff";
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -3150,53 +3576,117 @@
       ctx.moveTo(50, 34);
       ctx.lineTo(63, 24);
       ctx.stroke();
-      // impact spark at strike point
+
+      // Impact spark at strike point
       poly(ctx, [[63, 20], [65, 24], [69, 24], [65, 26], [64, 30], [62, 26], [58, 24], [62, 23]], "#ffffff");
       ellipse(ctx, 63, 24, 3, 3, "rgba(255,240,160,0.85)");
     };
 
     const drawHeroCaptainAbility = (ctx) => {
       shadow(ctx, 32, 63, 24, 7, 0.45);
-      // radiant halo aura
+
+      // Radiant halo aura
       const auraGrad = radGrad(ctx, 32, 24, 8, 30, [[0, "rgba(255, 235, 140, 0.5)"], [0.6, "rgba(255, 200, 60, 0.2)"], [1, "rgba(255, 180, 40, 0)"]]);
       ellipse(ctx, 32, 24, 28, 22, auraGrad);
-      // cape billowing wide on both sides
-      poly(ctx, [[18, 28], [2, 38], [6, 58], [22, 54]], linGrad(ctx, 2, 28, 22, 58, [[0, "#5a90d0"], [1, "#142438"]]), "#0c1828", 1.8);
-      poly(ctx, [[46, 28], [62, 38], [58, 58], [42, 54]], linGrad(ctx, 42, 28, 62, 58, [[0, "#5a90d0"], [1, "#142438"]]), "#0c1828", 1.8);
-      poly(ctx, [[20, 28], [44, 28], [48, 60], [32, 64], [16, 60]], linGrad(ctx, 16, 28, 48, 64, [[0, "#5a90d0"], [1, "#101e30"]]), "#0c1828", 1.8);
-      // wide resolute stance
-      rounded(ctx, 19, 44, 9, 16, 3, linGrad(ctx, 19, 44, 28, 60, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
-      rounded(ctx, 36, 44, 9, 16, 3, linGrad(ctx, 36, 44, 45, 60, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
-      rounded(ctx, 17, 55, 11, 6, 2, "#182438", "#0e1828", 1);
-      rounded(ctx, 36, 55, 11, 6, 2, "#182438", "#0e1828", 1);
-      ellipse(ctx, 23, 46, 3.5, 3, "#f0d060", "#4a3010", 0.8);
-      ellipse(ctx, 41, 46, 3.5, 3, "#f0d060", "#4a3010", 0.8);
-      // torso proud with glowing trim
-      rounded(ctx, 18, 25, 28, 25, 6, linGrad(ctx, 18, 25, 46, 50, [[0, "#88b8f8"], [0.5, "#3870b8"], [1, "#183860"]]), "#0c1828", 2);
+
+      // Contact AO under resolute stance boots
+      ellipse(ctx, 22.5, 58, 6.5, 2, "rgba(8, 12, 20, 0.75)");
+      ellipse(ctx, 41.5, 58, 6.5, 2, "rgba(8, 12, 20, 0.75)");
+
+      // Cape billowing wide on both sides (3-stop gradients)
+      poly(ctx, [[18, 28], [2, 38], [6, 58], [22, 54]], linGrad(ctx, 2, 28, 22, 58, [[0, "#6ea6ea"], [0.5, "#325c94"], [1, "#142438"]]), "#0c1828", 1.8);
+      poly(ctx, [[46, 28], [62, 38], [58, 58], [42, 54]], linGrad(ctx, 42, 28, 62, 58, [[0, "#6ea6ea"], [0.5, "#325c94"], [1, "#142438"]]), "#0c1828", 1.8);
+      poly(ctx, [[20, 28], [44, 28], [48, 60], [32, 64], [16, 60]], linGrad(ctx, 16, 28, 48, 64, [[0, "#6ea6ea"], [0.5, "#2a4870"], [1, "#101e30"]]), "#0c1828", 1.8);
+
+      // Cool rim on left billowing cape
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.5)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(18, 28);
+      ctx.lineTo(2, 38);
+      ctx.lineTo(6, 58);
+      ctx.stroke();
+
+      // Wide resolute stance
+      rounded(ctx, 19, 44, 9, 16, 3, linGrad(ctx, 19, 44, 28, 60, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#0e1828", 1.2);
+      rounded(ctx, 36, 44, 9, 16, 3, linGrad(ctx, 36, 44, 45, 60, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#0e1828", 1.2);
+      // Cool rim on left leg
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(19, 45);
+      ctx.lineTo(19, 55);
+      ctx.stroke();
+
+      rounded(ctx, 17, 55, 11, 6, 2, linGrad(ctx, 17, 55, 17, 61, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
+      rounded(ctx, 36, 55, 11, 6, 2, linGrad(ctx, 36, 55, 36, 61, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
+      ellipse(ctx, 23, 46, 3.5, 3, linGrad(ctx, 20, 43, 26, 49, [[0, "#fff6b8"], [0.5, "#f0d060"], [1, "#8c6018"]]), "#4a3010", 0.8);
+      ellipse(ctx, 41, 46, 3.5, 3, linGrad(ctx, 38, 43, 44, 49, [[0, "#fff6b8"], [0.5, "#f0d060"], [1, "#8c6018"]]), "#4a3010", 0.8);
+
+      // Contact AO under chestplate
+      ellipse(ctx, 32, 46, 14, 2.5, "rgba(10, 16, 28, 0.6)");
+
+      // Torso proud with glowing trim
+      rounded(ctx, 18, 25, 28, 25, 6, linGrad(ctx, 18, 25, 46, 50, [[0, "#9ec8ff"], [0.5, "#3870b8"], [1, "#183860"]]), "#0c1828", 2);
+      // Cool rim on left torso
+      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(19, 36);
+      ctx.lineTo(19, 28);
+      ctx.arcTo(19, 25, 25, 25, 5);
+      ctx.stroke();
+
       ctx.strokeStyle = "#ffe070";
       ctx.lineWidth = 2;
       ctx.strokeRect(22, 29, 20, 14);
-      poly(ctx, [[32, 31], [36, 36], [32, 41], [28, 36]], "#fff280", "#4a3010", 1);
-      rounded(ctx, 20, 46, 24, 4, 1, "#3a2414", "#120c06", 1);
-      rounded(ctx, 30, 45, 4, 6, 1, "#ffe070", "#4a3010", 0.8);
-      // head & helm with crown crest
-      ellipse(ctx, 32, 17, 11, 11, linGrad(ctx, 22, 7, 42, 27, [[0, "#ffe8b0"], [1, "#c09048"]]), "#4a3018", 1.6);
-      rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#fff090"], [0.6, "#f0c840"], [1, "#a87828"]]), "#4a3010", 1.5);
-      poly(ctx, [[32, 0], [26, 7], [38, 7]], "#fff280", "#4a3010", 1);
-      poly(ctx, [[21, 3], [18, 8], [24, 8]], "#f8d860", "#4a3010", 0.8);
-      poly(ctx, [[43, 3], [40, 8], [46, 8]], "#f8d860", "#4a3010", 0.8);
+      poly(ctx, [[32, 31], [36, 36], [32, 41], [28, 36]], linGrad(ctx, 28, 31, 36, 41, [[0, "#ffffff"], [0.5, "#fff280"], [1, "#9c6818"]]), "#4a3010", 1);
+      rounded(ctx, 20, 46, 24, 4, 1, linGrad(ctx, 20, 46, 44, 50, [[0, "#4a301c"], [1, "#1c1008"]]), "#120c06", 1);
+      rounded(ctx, 30, 45, 4, 6, 1, linGrad(ctx, 30, 45, 34, 51, [[0, "#ffffff"], [0.5, "#ffe070"], [1, "#9c6818"]]), "#4a3010", 0.8);
+
+      // Contact AO under chin onto gorget
+      ellipse(ctx, 32, 26, 10, 3, "rgba(12, 16, 28, 0.65)");
+
+      // Head & helm with crown crest
+      ellipse(ctx, 32, 17, 11, 11, linGrad(ctx, 22, 7, 42, 27, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
+      rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#fff8b0"], [0.6, "#f0c840"], [1, "#a87828"]]), "#4a3010", 1.5);
+      poly(ctx, [[32, 0], [26, 7], [38, 7]], linGrad(ctx, 26, 0, 38, 7, [[0, "#ffffff"], [0.5, "#fff280"], [1, "#a87828"]]), "#4a3010", 1);
+      poly(ctx, [[21, 3], [18, 8], [24, 8]], linGrad(ctx, 18, 3, 24, 8, [[0, "#fff490"], [1, "#a87828"]]), "#4a3010", 0.8);
+      poly(ctx, [[43, 3], [40, 8], [46, 8]], linGrad(ctx, 40, 3, 46, 8, [[0, "#fff490"], [1, "#a87828"]]), "#4a3010", 0.8);
+
+      // Cool rim light on crown top & left peaks
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.65)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(18, 8);
+      ctx.lineTo(21, 3);
+      ctx.lineTo(24, 8);
+      ctx.lineTo(26, 7);
+      ctx.lineTo(32, 0);
+      ctx.stroke();
+
       face(ctx, 32, 17, "#fff8d0", "#101008", true);
       ellipse(ctx, 32, 22, 2.5, 2, "#4a1c14", "#2a0a06", 0.8);
-      // shield raised outward
+
+      // Shield raised outward with contact AO
+      ellipse(ctx, 11, 38, 7, 12, "rgba(12, 16, 28, 0.45)");
       poly(ctx, [[4, 26], [18, 23], [20, 46], [12, 53], [3, 46]], linGrad(ctx, 3, 23, 20, 53, [[0, "#fffde0"], [0.5, "#f0ca50"], [1, "#987020"]]), "#3a2810", 1.6);
-      poly(ctx, [[11, 32], [14, 36], [11, 40], [8, 36]], "#2a4878", "#0e1828", 1);
+      poly(ctx, [[11, 32], [14, 36], [11, 40], [8, 36]], linGrad(ctx, 8, 32, 14, 40, [[0, "#3e68a8"], [1, "#14223c"]]), "#0e1828", 1);
       ctx.strokeStyle = "rgba(255,255,255,0.7)";
       ctx.lineWidth = 1.2;
       ctx.strokeRect(6, 26, 11, 18);
-      // raised sword skyward
-      rounded(ctx, 42, 16, 8, 18, 3, linGrad(ctx, 42, 16, 50, 34, [[0, "#88b8f8"], [1, "#285088"]]), "#0c1828", 1.5);
-      rounded(ctx, 39, 14, 14, 5, 2, "#ffd866", "#3a2410", 1);
-      ellipse(ctx, 46, 21, 2.5, 2.5, "#ffd866", "#3a2410", 0.8);
+      // Cool rim on raised shield
+      ctx.strokeStyle = "rgba(215, 245, 255, 0.65)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(4, 26);
+      ctx.lineTo(18, 23);
+      ctx.stroke();
+
+      // Raised sword skyward
+      rounded(ctx, 42, 16, 8, 18, 3, linGrad(ctx, 42, 16, 50, 34, [[0, "#9ec8ff"], [1, "#285088"]]), "#0c1828", 1.5);
+      rounded(ctx, 39, 14, 14, 5, 2, linGrad(ctx, 39, 14, 53, 19, [[0, "#fff0a0"], [1, "#9c6e20"]]), "#3a2410", 1);
+      ellipse(ctx, 46, 21, 2.5, 2.5, linGrad(ctx, 44, 19, 48, 23, [[0, "#fff0a0"], [1, "#9c6e20"]]), "#3a2410", 0.8);
       ctx.strokeStyle = "#eef4ff";
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -3209,7 +3699,7 @@
       ctx.moveTo(46, 14);
       ctx.lineTo(46, 3);
       ctx.stroke();
-      // radiant star flare at blade tip
+      // Radiant star flare at blade tip
       poly(ctx, [[46, 0], [48, 3], [52, 3], [49, 6], [50, 10], [46, 7], [42, 10], [43, 6], [40, 3], [44, 3]], "#fffbbf", "#d4af37", 0.8);
       ellipse(ctx, 46, 4, 3.5, 3.5, "rgba(255,255,255,0.95)");
       ctx.strokeStyle = "rgba(255, 235, 120, 0.85)";
