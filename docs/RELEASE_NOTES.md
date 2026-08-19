@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.67 — 128px Runes / Mortar / Guard
+- Remaining tower families rebuilt at 128x128. Scale helpers keep footprint.
+- Worker: antigrav.
+
+
 ## KRC 1.0.66 — 128px Rangers rebuild
 - Rangers idle/fire rebuilt at 128x128. On-map scale preserved.
 - Worker: antigrav.

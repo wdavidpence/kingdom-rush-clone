@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.66";
+  const KRC_VERSION = "1.0.67";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2857,23 +2857,17 @@ const bannerY = 98;
     }
 
     getTowerScale(typeOrTower, level = 0) {
-      const type = typeof typeOrTower === "string" ? typeOrTower : typeOrTower?.type;
       const lvl = typeof typeOrTower === "object" ? (typeOrTower?.level || 0) : level;
-      if (type === "archer") {
-        return 0.465 + lvl * 0.03;
-      }
-      return 0.62 + lvl * 0.04;
+      return 0.465 + lvl * 0.03;
     }
 
     getTowerSpawnScale(type) {
-      return type === "archer" ? 0.2625 : 0.35;
+      return 0.2625;
     }
 
     getTowerBounceScale(type, level = 0) {
-      if (type === "archer") {
-        return 0.585 + level * 0.03;
-      }
-      return 0.78 + level * 0.04;
+      const lvl = typeof type === "object" ? (type?.level || 0) : level;
+      return 0.585 + lvl * 0.03;
     }
 
     buildTower(pad, type) {
@@ -4636,7 +4630,7 @@ const bannerY = 98;
           });
         } else if (tower.type === "mage") {
           // Scale pulse + violet glow, then settle
-          const baseScale = 0.62 + (tower.level || 0) * 0.04;
+          const baseScale = this.getTowerScale(tower);
           this.tweens.add({
             targets: tower.sprite,
             scaleX: baseScale * 1.2,
