@@ -4077,6 +4077,25 @@
       ctx.arcTo(27, bodyY, 34, bodyY, 6);
       ctx.stroke();
 
+      // Tunic cloth drapery folds and seam creases
+      ctx.strokeStyle = "rgba(18, 42, 10, 0.42)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(29, bodyY + 5); ctx.quadraticCurveTo(34, bodyY + 9, 31, bodyY + 14);
+      ctx.moveTo(49, bodyY + 5); ctx.quadraticCurveTo(45, bodyY + 9, 47, bodyY + 14);
+      ctx.moveTo(33, bodyY + 16); ctx.lineTo(31, bodyY + 22);
+      ctx.moveTo(46, bodyY + 16); ctx.lineTo(48, bodyY + 22);
+      ctx.stroke();
+      // Cloth fold highlight ridges
+      ctx.strokeStyle = "rgba(235, 255, 175, 0.32)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(30, bodyY + 5); ctx.quadraticCurveTo(35, bodyY + 9, 32, bodyY + 14);
+      ctx.stroke();
+      // Ragged tattered tunic hem notches
+      poly(ctx, [[28, bodyY + 21], [30, bodyY + 24], [33, bodyY + 21]], "#1e340c");
+      poly(ctx, [[45, bodyY + 21], [48, bodyY + 24], [51, bodyY + 21]], "#1e340c");
+
       // Belt and buckle
       rounded(ctx, 27, bodyY + 14, 26, 3.5, 1, linGrad(ctx, 27, bodyY + 14, 27, bodyY + 18, [[0, "#4e3620"], [1, "#26180c"]]));
       rounded(ctx, 38, bodyY + 13.5, 5, 4.5, 1, linGrad(ctx, 38, bodyY + 13.5, 43, bodyY + 18, [[0, "#ffea78"], [0.5, "#d4af37"], [1, "#7c5c18"]]), "#2a1e10", 0.8);
@@ -4096,6 +4115,18 @@
 
       // Forehead warm specular glint
       ellipse(ctx, 36, headY - 5, 3.5, 2, "rgba(255, 255, 255, 0.28)");
+
+      // Spiky goblin hair crest strands
+      poly(ctx, [[35, headY - 8], [33, headY - 15 + earY], [38, headY - 9]], "#203410", "#122008", 0.9);
+      poly(ctx, [[38, headY - 10], [40, headY - 18 + earY], [43, headY - 9]], "#2c4616", "#122008", 0.9);
+      poly(ctx, [[42, headY - 10], [46, headY - 16 + earY], [47, headY - 7]], "#203410", "#122008", 0.9);
+      // Hair strand highlight glints
+      ctx.strokeStyle = "rgba(195, 245, 95, 0.5)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(37, headY - 8); ctx.lineTo(40, headY - 17 + earY);
+      ctx.moveTo(43, headY - 8); ctx.lineTo(45, headY - 15 + earY);
+      ctx.stroke();
 
       // Ears
       poly(ctx, [[26, headY - 4], [18, headY - 12 + earY], [28, headY]], linGrad(ctx, 18, headY - 12, 28, headY, [[0, "#d8f26a"], [0.5, "#8aba48"], [1, "#507822"]]), outline, 1.2);
@@ -4149,6 +4180,32 @@
       ], linGrad(ctx, sx1 - 4, sy1 - 4, tX, tY, [[0, "#d8e2eb"], [0.6, "#ffffff"], [1, "#8a98a8"]]), "#3a4048", 1);
       ellipse(ctx, tX - 1, tY - 1, 1.5, 1.5, "#ffffff");
 
+      // Spearhead razor bevel & midrib edge highlight
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(sx1 + perpX * 0.95, sy1 + perpY * 0.95);
+      ctx.lineTo(tX, tY);
+      ctx.stroke();
+
+      // Spearhead central ridge midrib
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(sx1, sy1);
+      ctx.lineTo(tX - Math.cos(angle) * 1.5, tY - Math.sin(angle) * 1.5);
+      ctx.stroke();
+
+      // Sinew / leather cord binding at spear socket
+      ctx.strokeStyle = "#c8aa76";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(sx1 - perpX * 0.6, sy1 - perpY * 0.6);
+      ctx.lineTo(sx1 + perpX * 0.6, sy1 + perpY * 0.6);
+      ctx.moveTo(sx1 - perpX * 0.6 - Math.cos(angle) * 2.5, sy1 - perpY * 0.6 - Math.sin(angle) * 2.5);
+      ctx.lineTo(sx1 + perpX * 0.6 - Math.cos(angle) * 2.5, sy1 + perpY * 0.6 - Math.sin(angle) * 2.5);
+      ctx.stroke();
+
       // Contact AO behind front arm joint
       ellipse(ctx, armX, armY + armH / 2 + 1, 3.5, 2.2, "rgba(16, 28, 8, 0.45)");
 
@@ -4184,8 +4241,17 @@
       ctx.lineTo(66, 48);
       ctx.stroke();
 
+      // Broken spear splintered shaft ends & chipped spearhead razor edge
+      poly(ctx, [[32, 53], [34, 52], [33, 55]], "#6a4620");
+      poly(ctx, [[40, 54], [38, 55], [39, 52]], "#6a4620");
+
       // Spearhead
       poly(ctx, [[74, 46], [64, 42], [66, 52]], linGrad(ctx, 64, 42, 74, 52, [[0, "#d8e2eb"], [1, "#7a8898"]]), "#3a4048", 1);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(64, 42); ctx.lineTo(74, 46);
+      ctx.stroke();
 
       // Back leg & boot
       poly(ctx, [[26, 46], [16, 50], [14, 55], [24, 52]], skinShaded(14, 46, 26, 55), outline, 1.2);
@@ -4200,11 +4266,22 @@
 
       // Torso collapsed prone
       rounded(ctx, 25, 40, 26, 14, 6, linGrad(ctx, 25, 40, 51, 54, [[0, "#d8ec7c"], [0.5, "#80b03e"], [1, "#2c4c16"]]), outline, 1.8);
+      // Tattered cloth folds on collapsed tunic
+      ctx.strokeStyle = "rgba(18, 42, 10, 0.45)";
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(28, 44); ctx.lineTo(34, 49);
+      ctx.moveTo(38, 43); ctx.lineTo(44, 48);
+      ctx.stroke();
       rounded(ctx, 33, 40.5, 4, 13, 1, "#4e3620");
       rounded(ctx, 32, 45, 6, 4, 1, "#d4af37", "#2a1e10", 0.8);
 
       // Head resting on dirt
       ellipse(ctx, 52, 45, 11, 10, linGrad(ctx, 44, 37, 60, 53, [[0, "#d8f26a"], [0.5, "#88bc3c"], [1, "#446820"]]), outline, 1.8);
+
+      // Hair strands limp on ground
+      poly(ctx, [[43, 39], [37, 36], [42, 42]], "#203410", "#122008", 0.8);
+      poly(ctx, [[46, 37], [41, 33], [47, 40]], "#2c4616", "#122008", 0.8);
 
       // Limp ears flopped backward
       poly(ctx, [[54, 37], [68, 34], [58, 42]], skinShaded(54, 34, 68, 42), outline, 1.2);
@@ -4280,6 +4357,13 @@
       else if (f === 2) { fArmX = 22; fArmY = bodyY + 9; fArmR = 6; }
       else { fArmX = 19; fArmY = bodyY + 10; fArmR = 6.5; }
       ellipse(ctx, fArmX, fArmY, fArmR, fArmR, bruteSkinShaded(fArmX - fArmR, fArmY - fArmR, fArmX + fArmR, fArmY + fArmR), outline, 1.4);
+      // Arm hide wrap cross-straps
+      ctx.strokeStyle = "#4e2a14";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(fArmX - 4, fArmY + 2); ctx.lineTo(fArmX + 4, fArmY - 2);
+      ctx.moveTo(fArmX - 4, fArmY - 2); ctx.lineTo(fArmX + 4, fArmY + 2);
+      ctx.stroke();
       // Contact AO behind far arm
       ellipse(ctx, fArmX + 3, fArmY, 3, 4, "rgba(24, 10, 4, 0.5)");
 
@@ -4330,6 +4414,27 @@
 
       // Contact AO under groin / pelvis onto thighs
       ellipse(ctx, bodyX + 18, bodyY + 26, 15, 3.5, "rgba(24, 10, 4, 0.55)");
+
+      // Heavy leather war-kilt cloth & hide folds
+      poly(ctx, [[bodyX + 7, bodyY + 20], [bodyX + 29, bodyY + 20], [bodyX + 31, bodyY + 27], [bodyX + 5, bodyY + 27]], linGrad(ctx, bodyX + 5, bodyY + 20, bodyX + 31, bodyY + 27, [[0, "#5a341a"], [1, "#261208"]]), outline, 1.3);
+      // Vertical hide tension fold creases
+      ctx.strokeStyle = "rgba(18, 6, 2, 0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 13, bodyY + 20); ctx.lineTo(bodyX + 12, bodyY + 27);
+      ctx.moveTo(bodyX + 19, bodyY + 20); ctx.lineTo(bodyX + 19, bodyY + 27);
+      ctx.moveTo(bodyX + 24, bodyY + 20); ctx.lineTo(bodyX + 25, bodyY + 27);
+      ctx.stroke();
+      // Fold crest highlights
+      ctx.strokeStyle = "rgba(230, 180, 130, 0.35)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 14, bodyY + 20); ctx.lineTo(bodyX + 13, bodyY + 26);
+      ctx.moveTo(bodyX + 20, bodyY + 20); ctx.lineTo(bodyX + 20, bodyY + 26);
+      ctx.stroke();
+      // Frayed hide bottom cut notches
+      poly(ctx, [[bodyX + 10, bodyY + 26], [bodyX + 12, bodyY + 29], [bodyX + 14, bodyY + 26]], "#1c0c04");
+      poly(ctx, [[bodyX + 22, bodyY + 26], [bodyX + 24, bodyY + 29], [bodyX + 26, bodyY + 26]], "#1c0c04");
 
       // Torso with 3-stop muscular volume
       rounded(ctx, bodyX, bodyY, 36, 26, 10, linGrad(ctx, bodyX, bodyY, bodyX + 36, bodyY + 26, [[0, "#fae0bc"], [0.42, "#c8783c"], [1, "#5e2810"]]), outline, 2.2);
@@ -4386,6 +4491,20 @@
       ctx.save();
       ctx.translate(headX, headY);
       ctx.rotate(headTilt);
+
+      // Topknot & coarse orc hair crest strands
+      poly(ctx, [[-4, -13], [0, -22], [4, -13]], linGrad(ctx, -4, -22, 4, -13, [[0, "#2c1808"], [1, "#140a04"]]), outline, 1.0);
+      poly(ctx, [[0, -22], [-2, -26], [3, -22]], "#140a04");
+      // Leather cord wrapping on topknot
+      rounded(ctx, -3, -16, 6, 2.5, 1, "#b48a4c", "#3a2010", 0.6);
+      // Hair strand specular highlights
+      ctx.strokeStyle = "rgba(215, 165, 115, 0.45)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-1, -14); ctx.lineTo(-1, -24);
+      ctx.moveTo(1, -14); ctx.lineTo(2, -23);
+      ctx.stroke();
+
       ellipse(ctx, 0, 0, 15, 14, linGrad(ctx, -12, -11, 12, 13, [[0, "#fce4c4"], [0.45, "#cc7a3e"], [1, "#662e14"]]), outline, 2);
 
       // Cool rim light on upper-left curve of head
@@ -4401,6 +4520,15 @@
       ctx.beginPath();
       ctx.moveTo(-10, -6);
       ctx.lineTo(10, -6);
+      ctx.stroke();
+
+      // Brow & chin bristle tufts
+      ctx.strokeStyle = "rgba(24, 10, 4, 0.65)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(-4, 10); ctx.lineTo(-3, 13);
+      ctx.moveTo(0, 11); ctx.lineTo(0, 14);
+      ctx.moveTo(4, 10); ctx.lineTo(3, 13);
       ctx.stroke();
 
       // Tusks / Horns with 3-stop ivory gradient
@@ -4440,10 +4568,28 @@
       ctx.beginPath();
       ctx.arc(0, -2, 8.5, -Math.PI * 0.9, -Math.PI * 0.3);
       ctx.stroke();
+      // Chiseled wood club facet edges
+      ctx.strokeStyle = "rgba(255, 230, 180, 0.35)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(-6, -7); ctx.lineTo(0, -9); ctx.lineTo(6, -7);
+      ctx.stroke();
       // Iron studs on club
       for (const [ix, iy] of [[-6, -2], [6, -2], [0, -8], [0, 4]]) {
         ellipse(ctx, ix, iy, 1.8, 1.8, linGrad(ctx, ix - 1, iy - 1, ix + 1, iy + 1, [[0, "#fff0b0"], [0.5, "#d0a870"], [1, "#3a2010"]]), "#2a1808", 0.8);
       }
+      // Iron spikes with sharp gleaming edge highlights
+      poly(ctx, [[-11, -2], [-8, -4], [-8, 0]], "#e8edf2", "#2a1808", 0.7);
+      poly(ctx, [[11, -2], [8, -4], [8, 0]], "#e8edf2", "#2a1808", 0.7);
+      poly(ctx, [[0, -11], [-2, -8], [2, -8]], "#e8edf2", "#2a1808", 0.7);
+      // Spike razor edge gleams
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-8, -4); ctx.lineTo(-11, -2);
+      ctx.moveTo(8, -4); ctx.lineTo(11, -2);
+      ctx.moveTo(-2, -8); ctx.lineTo(0, -11);
+      ctx.stroke();
       // Right fist holding club handle
       ellipse(ctx, 0, 10, 4.5, 4.5, bruteSkinLit(-4, 8, 4, 14), outline, 1.2);
       ctx.restore();
@@ -4464,6 +4610,8 @@
       for (const [ix, iy] of [[20, -5], [28, -4], [24, 5]]) {
         ellipse(ctx, ix, iy, 1.5, 1.5, "#d0a870", "#2a1808", 0.7);
       }
+      poly(ctx, [[32, 0], [35, -2], [35, 2]], "#e8edf2", "#2a1808", 0.7);
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(35, -2); ctx.lineTo(32, 0); ctx.stroke();
       ctx.restore();
 
       // Back leg & boot
@@ -4476,6 +4624,10 @@
 
       // Heavy muscular torso collapsed forward
       rounded(ctx, 24, 38, 34, 20, 8, bruteSkinLit(24, 38, 58, 58), outline, 2.2);
+
+      // Collapsed hide war-kilt folds
+      poly(ctx, [[28, 48], [38, 48], [39, 54], [27, 54]], linGrad(ctx, 27, 48, 39, 54, [[0, "#5a341a"], [1, "#261208"]]), outline, 1.1);
+      ctx.strokeStyle = "rgba(18, 6, 2, 0.55)"; ctx.lineWidth = 1.0; ctx.beginPath(); ctx.moveTo(33, 48); ctx.lineTo(33, 54); ctx.stroke();
 
       // Muscle creases
       ctx.strokeStyle = "rgba(40, 14, 6, 0.45)";
@@ -4494,6 +4646,10 @@
 
       // Massive head slumped on dirt
       ellipse(ctx, 58, 44, 13, 12, bruteSkinLit(45, 32, 71, 56), outline, 2);
+
+      // Slumped topknot hair strands on dirt
+      poly(ctx, [[69, 44], [76, 47], [70, 49]], "#140a04", "#0a0402", 0.8);
+      ctx.strokeStyle = "rgba(215, 165, 115, 0.45)"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(69, 45); ctx.lineTo(75, 47); ctx.stroke();
 
       // Horns (one chipped)
       ellipse(ctx, 64, 35, 4, 6, "#faecc8", "#4a3018", 1.1);
@@ -7093,6 +7249,24 @@
       // Contact AO under armor fauld onto legs
       ellipse(ctx, 28, bodyY + 19, 13, 2.8, "rgba(20, 12, 6, 0.52)");
 
+      // Gambeson / tunic cloth folds under cuirass
+      poly(ctx, [[16, bodyY + 16], [40, bodyY + 16], [41, bodyY + 21], [15, bodyY + 21]], linGrad(ctx, 15, bodyY + 16, 41, bodyY + 21, [[0, "#6c5034"], [0.5, "#4a321c"], [1, "#2c1c0e"]]), "#1a1006", 1.0);
+      // Vertical pleat folds and shadow crease lines
+      ctx.strokeStyle = "rgba(18, 10, 4, 0.55)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(21, bodyY + 16); ctx.lineTo(20, bodyY + 21);
+      ctx.moveTo(27, bodyY + 16); ctx.lineTo(26, bodyY + 21);
+      ctx.moveTo(33, bodyY + 16); ctx.lineTo(34, bodyY + 21);
+      ctx.stroke();
+      // Fold highlight ridges
+      ctx.strokeStyle = "rgba(220, 190, 150, 0.35)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(22, bodyY + 16); ctx.lineTo(21, bodyY + 20);
+      ctx.moveTo(28, bodyY + 16); ctx.lineTo(27, bodyY + 20);
+      ctx.stroke();
+
       // Torso body armor (3-stop golden bronze cuirass)
       rounded(ctx, 14, bodyY, 28, 20, 5, linGrad(ctx, 14, bodyY, 42, bodyY + 20, [[0, "#fff0a4"], [0.42, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.8);
       // Cool rim on upper-left cuirass
@@ -7119,6 +7293,17 @@
 
       // Head with 3-stop warm human skin gradient
       ellipse(ctx, 28, headY, 10, 10, linGrad(ctx, 20, headY - 8, 36, headY + 8, [[0, "#fff2d6"], [0.45, "#e5b478"], [1, "#9e6630"]]), "#4a3018", 1.6);
+
+      // Hair tufts / strands under helmet sides
+      poly(ctx, [[19, headY - 1], [17, headY + 3], [20, headY + 2]], "#3a2414", "#1a0e08", 0.6);
+      poly(ctx, [[37, headY - 1], [39, headY + 3], [36, headY + 2]], "#3a2414", "#1a0e08", 0.6);
+      // Hair strand specular highlights
+      ctx.strokeStyle = "rgba(215, 170, 110, 0.45)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(19, headY); ctx.lineTo(18, headY + 3);
+      ctx.moveTo(37, headY); ctx.lineTo(38, headY + 3);
+      ctx.stroke();
 
       // Helmet with 3-stop bronze gradient & cool rim
       rounded(ctx, 18, helmY, 20, 10, 4, linGrad(ctx, 18, helmY, 38, helmY + 10, [[0, "#fff4b0"], [0.45, "#d4aa44"], [1, "#724e1c"]]), "#3a2810", 1.4);
@@ -7181,6 +7366,33 @@
       const pY = Math.cos(ang) * 4;
       poly(ctx, [[tipX, tipY], [sp1x + pX, sp1y + pY], [sp1x - pX, sp1y - pY]], linGrad(ctx, sp1x - 3, sp1y - 3, tipX, tipY, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1);
       ellipse(ctx, tipX - 0.5, tipY - 0.5, 1, 1, "#ffffff");
+
+      // Razor spearhead edge highlights and central midrib
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(sp1x + pX, sp1y + pY);
+      ctx.lineTo(tipX, tipY);
+      ctx.stroke();
+
+      // Midrib reflection
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(sp1x, sp1y);
+      ctx.lineTo(tipX - Math.cos(ang) * 1.5, tipY - Math.sin(ang) * 1.5);
+      ctx.stroke();
+
+      // Wire cord binding at spear socket
+      ctx.strokeStyle = "#dfc078";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sp1x - pX * 0.5, sp1y - pY * 0.5);
+      ctx.lineTo(sp1x + pX * 0.5, sp1y + pY * 0.5);
+      ctx.moveTo(sp1x - pX * 0.5 - Math.cos(ang) * 2, sp1y - pY * 0.5 - Math.sin(ang) * 2);
+      ctx.lineTo(sp1x + pX * 0.5 - Math.cos(ang) * 2, sp1y + pY * 0.5 - Math.sin(ang) * 2);
+      ctx.stroke();
+
       ellipse(ctx, (sp0x * 0.4 + sp1x * 0.6), (sp0y * 0.4 + sp1y * 0.6), 3, 3, linGrad(ctx, 36, bodyY, 44, bodyY + 6, [[0, "#fff0a0"], [1, "#8a6820"]]), "#2a1e10", 1);
     };
 
@@ -7212,6 +7424,16 @@
       // Contact AO under armor fauld
       ellipse(ctx, 31, 41, 13, 2.8, "rgba(20, 12, 6, 0.52)");
 
+      // Gambeson / tunic cloth folds under lunging cuirass
+      poly(ctx, [[19, 38], [43, 38], [44, 43], [18, 43]], linGrad(ctx, 18, 38, 44, 43, [[0, "#6c5034"], [0.5, "#4a321c"], [1, "#2c1c0e"]]), "#1a1006", 1.0);
+      ctx.strokeStyle = "rgba(18, 10, 4, 0.55)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(24, 38); ctx.lineTo(23, 43);
+      ctx.moveTo(31, 38); ctx.lineTo(30, 43);
+      ctx.moveTo(38, 38); ctx.lineTo(39, 43);
+      ctx.stroke();
+
       // Torso leaned into thrust
       rounded(ctx, 17, 23, 28, 19, 5, linGrad(ctx, 17, 23, 45, 42, [[0, "#fff0a4"], [0.42, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.8);
       // Cool rim on torso upper-left
@@ -7236,6 +7458,17 @@
 
       // Head & Helm forward
       ellipse(ctx, 31, 16, 10, 10, linGrad(ctx, 23, 8, 39, 24, [[0, "#fff2d6"], [0.45, "#e5b478"], [1, "#9e6630"]]), "#4a3018", 1.6);
+
+      // Hair tufts / strands under helmet sides
+      poly(ctx, [[22, 15], [20, 19], [23, 18]], "#3a2414", "#1a0e08", 0.6);
+      poly(ctx, [[40, 15], [42, 19], [39, 18]], "#3a2414", "#1a0e08", 0.6);
+      ctx.strokeStyle = "rgba(215, 170, 110, 0.45)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(22, 16); ctx.lineTo(21, 19);
+      ctx.moveTo(40, 16); ctx.lineTo(41, 19);
+      ctx.stroke();
+
       rounded(ctx, 21, 6, 20, 10, 4, linGrad(ctx, 21, 6, 41, 16, [[0, "#fff4b0"], [0.45, "#d4aa44"], [1, "#724e1c"]]), "#3a2810", 1.4);
       poly(ctx, [[32, 2], [29, 8], [35, 8]], linGrad(ctx, 29, 2, 35, 8, [[0, "#fff4b0"], [1, "#b58e38"]]), "#3a2810", 1);
 
@@ -7292,6 +7525,22 @@
       poly(ctx, [[54, 23], [44, 19], [46, 24], [44, 29]], linGrad(ctx, 44, 19, 54, 24, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1.2);
       ellipse(ctx, 54, 23, 2.5, 2.5, "rgba(255,255,255,0.95)");
       ellipse(ctx, 54, 23, 4, 4, "rgba(255,230,120,0.4)");
+
+      // Spearhead razor bevel & midrib edge highlight
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(44, 19); ctx.lineTo(54, 23);
+      ctx.moveTo(44, 29); ctx.lineTo(54, 23);
+      ctx.stroke();
+
+      // Wire binding at spear thrust socket
+      ctx.strokeStyle = "#dfc078";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(44, 21); ctx.lineTo(44, 27);
+      ctx.moveTo(42, 21.5); ctx.lineTo(42, 27.5);
+      ctx.stroke();
     };
 
     const drawSoldierGuardBlock = (ctx) => {
@@ -7322,6 +7571,16 @@
       // Contact AO under torso
       ellipse(ctx, 28, 43, 13, 2.8, "rgba(20, 12, 6, 0.52)");
 
+      // Gambeson / tunic cloth folds
+      poly(ctx, [[16, 40], [40, 40], [41, 45], [15, 45]], linGrad(ctx, 15, 40, 41, 45, [[0, "#6c5034"], [0.5, "#4a321c"], [1, "#2c1c0e"]]), "#1a1006", 1.0);
+      ctx.strokeStyle = "rgba(18, 10, 4, 0.55)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(21, 40); ctx.lineTo(20, 45);
+      ctx.moveTo(28, 40); ctx.lineTo(27, 45);
+      ctx.moveTo(35, 40); ctx.lineTo(36, 45);
+      ctx.stroke();
+
       // Torso hunkered behind shield
       rounded(ctx, 14, 24, 28, 20, 5, linGrad(ctx, 14, 24, 42, 44, [[0, "#fff0a4"], [0.42, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.8);
 
@@ -7330,6 +7589,17 @@
 
       // Head & Helm peering over shield
       ellipse(ctx, 28, 17, 9.5, 9.5, linGrad(ctx, 20, 9, 36, 25, [[0, "#fff2d6"], [0.45, "#e5b478"], [1, "#9e6630"]]), "#4a3018", 1.6);
+
+      // Hair tufts / strands under helmet sides
+      poly(ctx, [[19, 16], [17, 20], [20, 19]], "#3a2414", "#1a0e08", 0.6);
+      poly(ctx, [[37, 16], [39, 20], [36, 19]], "#3a2414", "#1a0e08", 0.6);
+      ctx.strokeStyle = "rgba(215, 170, 110, 0.45)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(19, 17); ctx.lineTo(18, 20);
+      ctx.moveTo(37, 17); ctx.lineTo(38, 20);
+      ctx.stroke();
+
       rounded(ctx, 18, 7, 20, 10, 4, linGrad(ctx, 18, 7, 38, 17, [[0, "#fff4b0"], [0.45, "#d4aa44"], [1, "#724e1c"]]), "#3a2810", 1.4);
       poly(ctx, [[28, 3], [25, 9], [31, 9]], linGrad(ctx, 25, 3, 31, 9, [[0, "#fff4b0"], [1, "#b58e38"]]), "#3a2810", 1);
 
@@ -7361,6 +7631,12 @@
       ctx.lineTo(44, 7);
       ctx.stroke();
       poly(ctx, [[44, 3], [48, 11], [40, 9]], linGrad(ctx, 40, 3, 48, 11, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1);
+      // Spearhead razor bevel
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(40, 9); ctx.lineTo(44, 3);
+      ctx.stroke();
 
       // Shield Prominent Forward Block with contact AO behind it
       ellipse(ctx, 25, 35, 14, 16, "rgba(18, 10, 4, 0.45)");
@@ -7414,13 +7690,29 @@
       ctx.lineTo(12, 58);
       ctx.stroke();
 
-      ctx.strokeStyle = "rgba(255,255,255,0.22)";
-      ctx.lineWidth = 1.2;
+      // Rich velvet drapery fold valleys (shadows)
+      ctx.strokeStyle = "rgba(10, 20, 48, 0.55)";
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.moveTo(26, 32);
-      ctx.lineTo(22, 56);
-      ctx.moveTo(38, 32);
-      ctx.lineTo(42, 56);
+      ctx.moveTo(22, 30); ctx.quadraticCurveTo(24, 44, 18, 57);
+      ctx.moveTo(42, 30); ctx.quadraticCurveTo(40, 44, 46, 57);
+      ctx.moveTo(32, 32); ctx.lineTo(32, 61);
+      ctx.stroke();
+
+      // Velvet fold luminous crest ridges (highlights)
+      ctx.strokeStyle = "rgba(195, 230, 255, 0.45)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(23, 30); ctx.quadraticCurveTo(25, 44, 19, 56);
+      ctx.moveTo(41, 30); ctx.quadraticCurveTo(39, 44, 45, 56);
+      ctx.moveTo(33, 32); ctx.lineTo(33, 59);
+      ctx.stroke();
+
+      // Embroidered gold filigree hem stitch along cape bottom
+      ctx.strokeStyle = "rgba(240, 210, 100, 0.4)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(13, 57); ctx.lineTo(32, 61); ctx.lineTo(51, 57);
       ctx.stroke();
 
       // Legs (Plate armor with 3-stop gradient)
@@ -7467,6 +7759,17 @@
       // Head (3-stop warm hero skin gradient)
       ellipse(ctx, 32, 18, 11, 11, linGrad(ctx, 22, 8, 42, 28, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
 
+      // Flowing chestnut hair lock strands framing face & neck
+      poly(ctx, [[21, 14], [18, 20], [21, 23], [23, 16]], linGrad(ctx, 18, 14, 23, 23, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
+      poly(ctx, [[43, 14], [46, 20], [43, 23], [41, 16]], linGrad(ctx, 41, 14, 46, 23, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
+      // Fine hair strand specular highlights
+      ctx.strokeStyle = "rgba(225, 175, 115, 0.55)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(20, 15); ctx.quadraticCurveTo(18, 19, 21, 22);
+      ctx.moveTo(44, 15); ctx.quadraticCurveTo(46, 19, 43, 22);
+      ctx.stroke();
+
       // Crown helm with 3-stop radiant gold gradient & cool rim
       rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#fff6ba"], [0.5, "#f0c842"], [1, "#9c6818"]]), "#4a3010", 1.4);
       poly(ctx, [[32, 0], [26, 8], [38, 8]], linGrad(ctx, 26, 0, 38, 8, [[0, "#fff6ba"], [0.5, "#f0d060"], [1, "#9c6818"]]), "#4a3010", 1);
@@ -7501,17 +7804,31 @@
       // Sword
       rounded(ctx, 44, 46, 12, 5, 2, linGrad(ctx, 44, 46, 56, 51, [[0, "#a07038"], [1, "#4a2c14"]]), "#2a1810", 1);
       ellipse(ctx, 50, 52, 2.5, 2.5, linGrad(ctx, 48, 50, 52, 54, [[0, "#fff0a0"], [1, "#9c6e20"]]), "#2a1810", 1);
+      // Crossguard edge highlights & gold filigree
+      ctx.strokeStyle = "rgba(255, 245, 180, 0.75)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(44, 47); ctx.lineTo(56, 47);
+      ctx.stroke();
       ctx.strokeStyle = "#d0dcee";
       ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.moveTo(48, 48);
       ctx.lineTo(56, 14);
       ctx.stroke();
+      // Central blade fuller line
+      ctx.strokeStyle = "rgba(30, 50, 80, 0.45)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(48.5, 47);
+      ctx.lineTo(55.5, 14.5);
+      ctx.stroke();
+      // Razor edge highlight
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(48, 47);
-      ctx.lineTo(55, 15);
+      ctx.moveTo(47, 46);
+      ctx.lineTo(55, 13);
       ctx.stroke();
       // Blade tip glow
       ellipse(ctx, 56, 12, 3, 3, "rgba(200,220,255,.7)");
@@ -7535,13 +7852,19 @@
       ctx.lineTo(12, 60);
       ctx.stroke();
 
-      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      // Dynamic velocity fold valleys & ripples
+      ctx.strokeStyle = "rgba(10, 20, 48, 0.55)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(18, 30);
-      ctx.lineTo(6, 48);
-      ctx.moveTo(28, 30);
-      ctx.lineTo(16, 54);
+      ctx.moveTo(18, 28); ctx.quadraticCurveTo(10, 40, 4, 48);
+      ctx.moveTo(28, 28); ctx.quadraticCurveTo(20, 44, 14, 58);
+      ctx.stroke();
+      // Luminous fold highlight crests
+      ctx.strokeStyle = "rgba(195, 230, 255, 0.45)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(19, 28); ctx.quadraticCurveTo(11, 40, 5, 47);
+      ctx.moveTo(29, 28); ctx.quadraticCurveTo(21, 44, 15, 57);
       ctx.stroke();
 
       // Legs lunging forward
@@ -7584,6 +7907,15 @@
 
       // Head focused forward
       ellipse(ctx, 35, 19, 11, 11, linGrad(ctx, 25, 9, 45, 29, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
+
+      // Windblown hair lock strands streaming back in lunging strike
+      poly(ctx, [[24, 15], [19, 18], [22, 22], [25, 17]], linGrad(ctx, 19, 15, 25, 22, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
+      ctx.strokeStyle = "rgba(225, 175, 115, 0.55)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(23, 16); ctx.quadraticCurveTo(19, 18, 22, 21);
+      ctx.stroke();
+
       rounded(ctx, 23, 7, 24, 10, 3, linGrad(ctx, 23, 7, 47, 17, [[0, "#fff6ba"], [0.5, "#f0c842"], [1, "#9c6818"]]), "#4a3010", 1.4);
       poly(ctx, [[36, 1], [29, 9], [42, 9]], linGrad(ctx, 29, 1, 42, 9, [[0, "#fff6ba"], [0.5, "#f0d060"], [1, "#9c6818"]]), "#4a3010", 1);
       // Cool rim on crown
@@ -7633,11 +7965,19 @@
       ctx.moveTo(49, 34);
       ctx.lineTo(63, 24);
       ctx.stroke();
+      // Central blade fuller line
+      ctx.strokeStyle = "rgba(30, 50, 80, 0.5)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(49.5, 33.5);
+      ctx.lineTo(62.5, 23.5);
+      ctx.stroke();
+      // Razor edge highlight
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(50, 34);
-      ctx.lineTo(63, 24);
+      ctx.moveTo(48, 35);
+      ctx.lineTo(64, 23);
       ctx.stroke();
 
       // Impact spark at strike point
@@ -7668,6 +8008,30 @@
       ctx.moveTo(18, 28);
       ctx.lineTo(2, 38);
       ctx.lineTo(6, 58);
+      ctx.stroke();
+
+      // Velvet drapery fold creases
+      ctx.strokeStyle = "rgba(10, 20, 48, 0.55)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(14, 34); ctx.quadraticCurveTo(8, 44, 7, 56);
+      ctx.moveTo(50, 34); ctx.quadraticCurveTo(56, 44, 57, 56);
+      ctx.moveTo(26, 32); ctx.lineTo(22, 58);
+      ctx.moveTo(38, 32); ctx.lineTo(42, 58);
+      ctx.stroke();
+      // Luminous fold highlight crests
+      ctx.strokeStyle = "rgba(195, 230, 255, 0.45)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(15, 34); ctx.quadraticCurveTo(9, 44, 8, 55);
+      ctx.moveTo(49, 34); ctx.quadraticCurveTo(55, 44, 56, 55);
+      ctx.stroke();
+      // Embroidered gold filigree hem stitch along cape bottom
+      ctx.strokeStyle = "rgba(240, 210, 100, 0.4)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(6, 58); ctx.lineTo(22, 54); ctx.moveTo(42, 54); ctx.lineTo(58, 58);
+      ctx.moveTo(16, 60); ctx.lineTo(32, 64); ctx.lineTo(48, 60);
       ctx.stroke();
 
       // Wide resolute stance
@@ -7712,6 +8076,17 @@
 
       // Head & helm with crown crest
       ellipse(ctx, 32, 17, 11, 11, linGrad(ctx, 22, 7, 42, 27, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
+
+      // Hero flowing locks uplifted by radiant aura
+      poly(ctx, [[21, 13], [17, 18], [20, 22], [23, 15]], linGrad(ctx, 17, 13, 23, 22, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
+      poly(ctx, [[43, 13], [47, 18], [44, 22], [41, 15]], linGrad(ctx, 41, 13, 47, 22, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
+      ctx.strokeStyle = "rgba(225, 175, 115, 0.6)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(20, 14); ctx.quadraticCurveTo(17, 18, 20, 21);
+      ctx.moveTo(44, 14); ctx.quadraticCurveTo(47, 18, 44, 21);
+      ctx.stroke();
+
       rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#fff8b0"], [0.6, "#f0c840"], [1, "#a87828"]]), "#4a3010", 1.5);
       poly(ctx, [[32, 0], [26, 7], [38, 7]], linGrad(ctx, 26, 0, 38, 7, [[0, "#ffffff"], [0.5, "#fff280"], [1, "#a87828"]]), "#4a3010", 1);
       poly(ctx, [[21, 3], [18, 8], [24, 8]], linGrad(ctx, 18, 3, 24, 8, [[0, "#fff490"], [1, "#a87828"]]), "#4a3010", 0.8);
@@ -7756,11 +8131,19 @@
       ctx.moveTo(46, 14);
       ctx.lineTo(46, 3);
       ctx.stroke();
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
+      // Central blade fuller line
+      ctx.strokeStyle = "rgba(30, 50, 80, 0.5)";
+      ctx.lineWidth = 0.8;
       ctx.beginPath();
       ctx.moveTo(46, 14);
       ctx.lineTo(46, 3);
+      ctx.stroke();
+      // Twin blade razor edge highlights
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(44.5, 14); ctx.lineTo(44.5, 4);
+      ctx.moveTo(47.5, 14); ctx.lineTo(47.5, 4);
       ctx.stroke();
       // Radiant star flare at blade tip
       poly(ctx, [[46, 0], [48, 3], [52, 3], [49, 6], [50, 10], [46, 7], [42, 10], [43, 6], [40, 3], [44, 3]], "#fffbbf", "#d4af37", 0.8);
