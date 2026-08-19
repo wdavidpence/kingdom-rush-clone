@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.60";
+  const KRC_VERSION = "1.0.61";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3443,6 +3443,8 @@ const bannerY = 98;
         slow: 0,
         blockedBy: null,
         dead: false,
+        walkDist: 0,
+        facingLeft: false,
       });
       enemy.sprite = this.add.image(enemy.x, enemy.y - 4, `enemy_${type}`).setScale(base.size / 30).setDepth(40);
       if (type === "drift") {
@@ -3777,6 +3779,7 @@ const bannerY = 98;
       let speed = enemy.speed * (enemy.slow > 0 ? 0.58 : 1);
       if (enemy.hp < enemy.maxHp * 0.3 && enemy.type === "brute") speed *= 1.18;
       let remaining = speed * dt;
+      enemy.walkDist = (enemy.walkDist || 0) + remaining;
       while (remaining > 0 && enemy.seg < this.path.length - 1) {
         const target = this.path[enemy.seg + 1];
         const dist = Phaser.Math.Distance.Between(enemy.x, enemy.y, target.x, target.y);
@@ -3811,33 +3814,60 @@ const bannerY = 98;
       if (!enemy.blockedBy && enemy.seg < this.path.length - 1) {
         const next = this.path[enemy.seg + 1];
         pathAngle = Phaser.Math.Angle.Between(enemy.x, enemy.y, next.x, next.y) * 0.08;
+        const dx = next.x - enemy.x;
+        if (dx < -0.5) enemy.facingLeft = true;
+        else if (dx > 0.5) enemy.facingLeft = false;
+      } else if (enemy.blockedBy) {
+        const dx = enemy.blockedBy.x - enemy.x;
+        if (dx < -0.5) enemy.facingLeft = true;
+        else if (dx > 0.5) enemy.facingLeft = false;
       }
+
+      if (enemy.type === "scout" || enemy.type === "brute") {
+        enemy.sprite.setFlipX(!!enemy.facingLeft);
+      }
+
       if (reducedMotion) {
+        if (enemy.type === "scout" || enemy.type === "brute") {
+          const texKey = `enemy_${enemy.type}_w0`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+        }
         enemy.sprite.setScale(baseScale);
-        enemy.sprite.rotation = pathAngle;
+        enemy.sprite.rotation = (enemy.type === "scout" || enemy.type === "brute") ? 0 : pathAngle;
       } else {
         const isFlyer = enemy.type === "flyer" || enemy.base?.flying;
         if (enemy.type === "scout") {
-          const t = this.time.now * 0.016 + enemy.wobble;
-          const strideBob = Math.sin(t) * (enemy.blockedBy ? 0.4 : 0.7);
-          const quickLean = enemy.blockedBy
-            ? Math.sin(this.time.now * 0.035 + enemy.wobble) * 0.22
-            : pathAngle + Math.sin(t) * 0.14;
-          enemy.sprite.y += strideBob;
-          enemy.sprite.rotation = quickLean;
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 7) % 4;
+          const texKey = `enemy_scout_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          if (enemy.blockedBy) {
+            const t = this.time.now * 0.035 + enemy.wobble;
+            enemy.sprite.y += Math.sin(this.time.now * 0.016 + enemy.wobble) * 0.4;
+            enemy.sprite.rotation = Math.sin(t) * 0.22;
+          } else {
+            enemy.sprite.rotation = 0;
+          }
           enemy.sprite.setScale(baseScale);
         } else if (enemy.type === "brute") {
-          const t = this.time.now * 0.007 + enemy.wobble;
-          const stompBob = Math.sin(t) * (enemy.blockedBy ? 0.8 : 1.5);
-          const squash = Math.sin(t * 2);
-          const scaleX = baseScale * (1 + squash * 0.08);
-          const scaleY = baseScale * (1 - squash * 0.08);
-          const rot = enemy.blockedBy
-            ? Math.sin(this.time.now * 0.02 + enemy.wobble) * 0.15
-            : pathAngle;
-          enemy.sprite.y += stompBob;
-          enemy.sprite.rotation = rot;
-          enemy.sprite.setScale(scaleX, scaleY);
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 8) % 4;
+          const texKey = `enemy_brute_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          if (enemy.blockedBy) {
+            const t = this.time.now * 0.007 + enemy.wobble;
+            enemy.sprite.y += Math.sin(t) * 0.8;
+            enemy.sprite.rotation = Math.sin(this.time.now * 0.02 + enemy.wobble) * 0.15;
+            const squash = Math.sin(t * 2);
+            enemy.sprite.setScale(baseScale * (1 + squash * 0.08), baseScale * (1 - squash * 0.08));
+          } else {
+            enemy.sprite.rotation = 0;
+            enemy.sprite.setScale(baseScale);
+          }
         } else if (enemy.type === "shield") {
           const t = this.time.now * 0.004 + enemy.wobble;
           const bounce = Math.sin(t * 2) * (enemy.blockedBy ? 0.2 : 0.35);
