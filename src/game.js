@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.75";
+  const KRC_VERSION = "1.0.76";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -310,6 +310,10 @@
         makeFallbackTower("tower_barracks_l2", "#b99c43");
         makeFallbackTower("tower_barracks_l3", "#b99c43");
         make("tower_barracks_fire", 32, 32, (ctx) => { ctx.fillStyle = "#d9bc63"; ctx.fillRect(2, 2, 28, 28); });
+        make("portrait_archer", 32, 32, (ctx) => { ctx.fillStyle = "#6fa546"; ctx.fillRect(2, 2, 28, 28); });
+        make("portrait_mage", 32, 32, (ctx) => { ctx.fillStyle = "#7867db"; ctx.fillRect(2, 2, 28, 28); });
+        make("portrait_artillery", 32, 32, (ctx) => { ctx.fillStyle = "#b87431"; ctx.fillRect(2, 2, 28, 28); });
+        make("portrait_barracks", 32, 32, (ctx) => { ctx.fillStyle = "#b99c43"; ctx.fillRect(2, 2, 28, 28); });
         ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
           make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
           for (let fi = 0; fi < 4; fi += 1) {
@@ -1780,7 +1784,7 @@
           t.color,
           () => this.chooseBuild(t.id),
           {
-            icon: `icon_tower_${t.id}`,
+            icon: `portrait_${t.id}`,
             iconScale: 0.52,
             iconOffsetY: -9,
             textOffsetY: 16,
