@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.79 — VFX overlay sprites
+- Dust, spark, leaf sprites replace circle particles. Worker: antigrav.
+
+
 ## KRC 1.0.78 — Map lighting cohesion
 - Per-map unit tint so sprites sit in the scene light. Worker: antigrav.
 

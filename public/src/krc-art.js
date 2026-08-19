@@ -7171,6 +7171,210 @@
     make("fx_rally_0", 128, 128, drawFxRally0);
     make("fx_rally_1", 128, 128, drawFxRally1);
 
+    // —— Authored VFX Overlay Sprites (Original KRC) ——
+    const drawFxDust = (ctx) => {
+      const cx = 16;
+      const cy = 16;
+
+      // Soft diffuse ambient dust aura
+      ellipse(
+        ctx,
+        cx,
+        cy,
+        14,
+        12,
+        radGrad(ctx, cx, cy, 2, 14, [
+          [0, "rgba(240, 230, 210, 0.45)"],
+          [0.6, "rgba(215, 200, 175, 0.22)"],
+          [1, "rgba(180, 160, 135, 0)"],
+        ])
+      );
+
+      // Billowy cloud lobes (overlapping painterly puffs)
+      const lobes = [
+        { x: cx, y: cy + 1, rx: 9.5, ry: 8.5, c0: "#f8f2e4", c1: "#d8c7a8", c2: "#9e8768" },
+        { x: cx - 5.5, y: cy + 0.5, rx: 7.5, ry: 7, c0: "#f4ede0", c1: "#cebca0", c2: "#947f62" },
+        { x: cx + 5.5, y: cy - 0.5, rx: 8, ry: 7.5, c0: "#faf5ea", c1: "#dfd0b6", c2: "#a48e70" },
+        { x: cx - 1, y: cy - 4.5, rx: 7, ry: 6.5, c0: "#ffffff", c1: "#e8dbc4", c2: "#ad987c" },
+        { x: cx + 3, y: cy + 4, rx: 6.5, ry: 5.5, c0: "#ece0cb", c1: "#c4b192", c2: "#887459" },
+        { x: cx - 4.5, y: cy + 4, rx: 5.5, ry: 5, c0: "#e4d6bf", c1: "#bca889", c2: "#806d53" },
+      ];
+
+      for (const lobe of lobes) {
+        ellipse(
+          ctx,
+          lobe.x,
+          lobe.y,
+          lobe.rx,
+          lobe.ry,
+          linGrad(ctx, lobe.x, lobe.y - lobe.ry, lobe.x, lobe.y + lobe.ry, [
+            [0, lobe.c0],
+            [0.52, lobe.c1],
+            [1, lobe.c2],
+          ])
+        );
+      }
+
+      // Delicate painterly contour arcs for depth between lobes
+      ctx.strokeStyle = "rgba(120, 100, 75, 0.22)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx - 3, cy - 2, 5, 0.2, Math.PI * 0.9);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + 3, cy + 1, 5.5, Math.PI * 0.8, Math.PI * 1.6);
+      ctx.stroke();
+
+      // Sunlit top rim highlight
+      ellipse(
+        ctx,
+        cx - 0.5,
+        cy - 5,
+        4.5,
+        2.5,
+        "rgba(255, 255, 255, 0.65)"
+      );
+
+      // Micro floating dust specks
+      speckles(ctx, 3, 3, 26, 26, 7, "rgba(255, 248, 230, 0.75)", 1.2);
+    };
+
+    const drawFxSpark = (ctx) => {
+      const cx = 12;
+      const cy = 12;
+
+      // Soft luminous radial outer bloom
+      const bloom = radGrad(ctx, cx, cy, 1, 11, [
+        [0, "rgba(255, 255, 255, 0.95)"],
+        [0.28, "rgba(255, 240, 140, 0.75)"],
+        [0.6, "rgba(255, 175, 50, 0.3)"],
+        [1, "rgba(255, 110, 0, 0)"],
+      ]);
+      ellipse(ctx, cx, cy, 11, 11, bloom);
+
+      // 4-pointed primary diamond flare rays
+      const vGrad = linGrad(ctx, cx, 1, cx, 23, [
+        [0, "rgba(255, 255, 255, 0.1)"],
+        [0.35, "rgba(255, 255, 210, 0.95)"],
+        [0.5, "#ffffff"],
+        [0.65, "rgba(255, 255, 210, 0.95)"],
+        [1, "rgba(255, 255, 255, 0.1)"],
+      ]);
+      poly(ctx, [[cx, 1], [cx + 1.6, cy], [cx, 23], [cx - 1.6, cy]], vGrad);
+
+      const hGrad = linGrad(ctx, 1, cy, 23, cy, [
+        [0, "rgba(255, 255, 255, 0.1)"],
+        [0.35, "rgba(255, 255, 210, 0.95)"],
+        [0.5, "#ffffff"],
+        [0.65, "rgba(255, 255, 210, 0.95)"],
+        [1, "rgba(255, 255, 255, 0.1)"],
+      ]);
+      poly(ctx, [[1, cy], [cx, cy + 1.6], [23, cy], [cx, cy - 1.6]], hGrad);
+
+      // Diagonal cross sub-rays (45 deg glint)
+      poly(
+        ctx,
+        [[cx - 6, cy - 6], [cx, cy - 0.8], [cx + 6, cy + 6], [cx, cy + 0.8]],
+        "rgba(255, 245, 180, 0.7)"
+      );
+      poly(
+        ctx,
+        [[cx - 6, cy + 6], [cx - 0.8, cy], [cx + 6, cy - 6], [cx + 0.8, cy]],
+        "rgba(255, 245, 180, 0.7)"
+      );
+
+      // Brilliant diamond core
+      poly(
+        ctx,
+        [[cx, cy - 3.5], [cx + 3.5, cy], [cx, cy + 3.5], [cx - 3.5, cy]],
+        linGrad(ctx, cx - 3, cy - 3, cx + 3, cy + 3, [
+          [0, "#ffffff"],
+          [0.6, "#fff8d0"],
+          [1, "#ffd566"],
+        ]),
+        "#ffffff",
+        0.6
+      );
+      ellipse(ctx, cx, cy, 1.8, 1.8, "#ffffff");
+    };
+
+    const drawFxLeaf = (ctx) => {
+      // Stem
+      ctx.strokeStyle = "#253b12";
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(3.5, 20.5);
+      ctx.quadraticCurveTo(6, 18, 8, 15);
+      ctx.stroke();
+
+      // Leaf body - upper/left sunlit lobe
+      ctx.beginPath();
+      ctx.moveTo(7, 16);
+      ctx.bezierCurveTo(3.5, 10, 10, 4.5, 20.5, 3.5);
+      ctx.bezierCurveTo(15, 9, 11, 13, 7, 16);
+      ctx.closePath();
+      ctx.fillStyle = linGrad(ctx, 4, 14, 18, 4, [
+        [0, "#569420"],
+        [0.45, "#82c82e"],
+        [1, "#b5ea54"],
+      ]);
+      ctx.fill();
+
+      // Leaf body - lower/right shaded lobe
+      ctx.beginPath();
+      ctx.moveTo(7, 16);
+      ctx.bezierCurveTo(11, 13, 15, 9, 20.5, 3.5);
+      ctx.bezierCurveTo(20, 13.5, 13.5, 19.5, 7, 16);
+      ctx.closePath();
+      ctx.fillStyle = linGrad(ctx, 7, 16, 20, 5, [
+        [0, "#305612"],
+        [0.55, "#487a1c"],
+        [1, "#66a426"],
+      ]);
+      ctx.fill();
+
+      // Bold readable dark contour
+      ctx.strokeStyle = "#162809";
+      ctx.lineWidth = 1.3;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(7, 16);
+      ctx.bezierCurveTo(3.5, 10, 10, 4.5, 20.5, 3.5);
+      ctx.bezierCurveTo(20, 13.5, 13.5, 19.5, 7, 16);
+      ctx.closePath();
+      ctx.stroke();
+
+      // Central midrib vein
+      ctx.strokeStyle = "rgba(225, 250, 150, 0.85)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(7, 16);
+      ctx.quadraticCurveTo(13, 10.5, 20, 4);
+      ctx.stroke();
+
+      // Lateral vein accents
+      ctx.strokeStyle = "rgba(205, 240, 125, 0.55)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(10, 13.5); ctx.lineTo(8, 10.5);
+      ctx.moveTo(13, 11); ctx.lineTo(12, 7.5);
+      ctx.moveTo(16, 8); ctx.lineTo(17.5, 11.5);
+      ctx.stroke();
+
+      // Highlight sheen on upper edge
+      ctx.strokeStyle = "rgba(255, 255, 230, 0.65)";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(7, 9);
+      ctx.quadraticCurveTo(12, 5.5, 17, 4.5);
+      ctx.stroke();
+    };
+
+    make("fx_dust", 32, 32, drawFxDust);
+    make("fx_spark", 24, 24, drawFxSpark);
+    make("fx_leaf", 24, 24, drawFxLeaf);
+
     // —— Units ——
     const drawSoldierGuardWalk = (ctx, frame = 0) => {
       const f = frame % 4;
