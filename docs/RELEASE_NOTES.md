@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.65 — Guard walk / attack / block
+- Soldiers have stride, thrust, and shield-forward frames.
+- Worker: antigrav.
+
+
 ## KRC 1.0.64 — Hero idle / attack / ability poses
 - Captain has idle, attack, and ability silhouettes.
 - reducedMotion stays idle. Worker: antigrav.
