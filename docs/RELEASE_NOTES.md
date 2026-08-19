@@ -1,5 +1,11 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.62 — Roster walk and fly cycles
+- Shield, Ember, Brood, Flyer, Hexer, Titan now have 4-frame walk/fly sheets.
+- Flip + reducedMotion lock match Scout/Brute.
+- Worker: antigrav (gemini-3.7-flash-high).
+
+
 ## KRC 1.0.61 — Scout and Brute walk cycles
 - Scout and Brute use 4-frame stride sheets (`w0`–`w3`) instead of a bobbing sticker.
 - Flip from path direction. reducedMotion locks frame 0.

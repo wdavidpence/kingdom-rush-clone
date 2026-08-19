@@ -637,184 +637,643 @@
     make("enemy_brute_w2", 80, 72, (ctx) => drawBrute(ctx, 2));
     make("enemy_brute_w3", 80, 72, (ctx) => drawBrute(ctx, 3));
 
-    make("enemy_shield", 80, 72, (ctx) => {
+    const drawShield = (ctx, frame = 0) => {
       shadow(ctx, 40, 62, 22, 6);
-      limbs(ctx, "#8a9098", "#2a3038", 44);
-      // plate body
-      rounded(ctx, 26, 26, 28, 24, 6, linGrad(ctx, 26, 26, 54, 50, [[0, "#e8eef0"], [0.5, "#98a0a8"], [1, "#4a545c"]]), "#2a3038", 2.2);
-      // helmet
-      ellipse(ctx, 40, 18, 14, 13, linGrad(ctx, 28, 8, 52, 30, [[0, "#f0f4f8"], [1, "#6a747c"]]), "#2a3038", 2);
-      rounded(ctx, 28, 12, 24, 8, 3, "#4a545c", "#1a2028", 1);
-      // visor slit
-      rounded(ctx, 32, 18, 16, 4, 1, "#0a0c10");
-      // kite shield
+      const f = frame % 4;
+      const bodyY = (f === 1 || f === 3) ? 25 : 27;
+      const headY = (f === 1 || f === 3) ? 17 : 19;
+
+      const skin = "#8a9098";
+      const skinDark = "#5e6670";
+      const outline = "#2a3038";
+      const boot = "#3a4048";
+      const bootDark = "#242a30";
+
+      // Legs: stride contact vs passing
+      if (f === 0) {
+        // Left forward contact
+        poly(ctx, [[27, 43], [34, 43], [26, 54], [19, 54]], skin, outline, 1.4);
+        rounded(ctx, 16, 52, 12, 5.5, 2, boot, outline, 1.1);
+        // Right back trailing
+        poly(ctx, [[42, 43], [49, 43], [54, 52], [47, 53]], skinDark, outline, 1.4);
+        rounded(ctx, 46, 50, 10, 5, 2, bootDark, outline, 1.1);
+      } else if (f === 1) {
+        // Left planted straight
+        rounded(ctx, 28, 41, 8, 14, 3, skin, outline, 1.4);
+        rounded(ctx, 26, 53, 12, 5.5, 2, boot, outline, 1.1);
+        // Right lifted passing knee
+        poly(ctx, [[42, 40], [49, 40], [51, 47], [44, 48]], skinDark, outline, 1.4);
+        rounded(ctx, 44, 45, 10, 5, 2, bootDark, outline, 1.1);
+      } else if (f === 2) {
+        // Left back trailing
+        poly(ctx, [[27, 43], [34, 43], [22, 53], [15, 52]], skinDark, outline, 1.4);
+        rounded(ctx, 14, 50, 10, 5, 2, bootDark, outline, 1.1);
+        // Right forward contact
+        poly(ctx, [[42, 43], [49, 43], [54, 54], [47, 54]], skin, outline, 1.4);
+        rounded(ctx, 45, 52, 12, 5.5, 2, boot, outline, 1.1);
+      } else {
+        // Left lifted passing knee
+        poly(ctx, [[27, 40], [34, 40], [36, 47], [29, 48]], skinDark, outline, 1.4);
+        rounded(ctx, 28, 45, 10, 5, 2, bootDark, outline, 1.1);
+        // Right planted straight
+        rounded(ctx, 41, 41, 8, 14, 3, skin, outline, 1.4);
+        rounded(ctx, 39, 53, 12, 5.5, 2, boot, outline, 1.1);
+      }
+
+      // Plate body
+      rounded(ctx, 26, bodyY, 28, 24, 6, linGrad(ctx, 26, bodyY, 54, bodyY + 24, [[0, "#e8eef0"], [0.5, "#98a0a8"], [1, "#4a545c"]]), outline, 2.2);
+      // Breastplate center ridge & highlight
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(40, bodyY + 3);
+      ctx.lineTo(40, bodyY + 20);
+      ctx.stroke();
+
+      // Helmet
+      ellipse(ctx, 40, headY, 14, 13, linGrad(ctx, 28, headY - 10, 52, headY + 12, [[0, "#f0f4f8"], [1, "#6a747c"]]), outline, 2);
+      rounded(ctx, 28, headY - 6, 24, 8, 3, "#4a545c", "#1a2028", 1);
+      // Visor slit
+      rounded(ctx, 32, headY, 16, 4, 1, "#0a0c10");
+      // Specular rim light on helmet
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(40, headY, 12, -Math.PI * 0.8, -Math.PI * 0.2);
+      ctx.stroke();
+
+      // Kite shield (left arm side)
+      let shDx = 0, shDy = 0, shRot = 0;
+      if (f === 0) { shDx = 0; shDy = 0; shRot = 0; }
+      else if (f === 1) { shDx = -1; shDy = -2; shRot = -0.06; }
+      else if (f === 2) { shDx = 1; shDy = 1; shRot = 0.05; }
+      else { shDx = 0; shDy = -1; shRot = -0.02; }
+
+      ctx.save();
+      ctx.translate(26 + shDx, bodyY + 13 + shDy);
+      ctx.rotate(shRot);
       poly(
         ctx,
-        [[18, 24], [34, 22], [36, 48], [26, 56], [16, 48]],
-        linGrad(ctx, 16, 22, 36, 56, [[0, "#d0d8e0"], [0.5, "#708090"], [1, "#384048"]]),
+        [[-8, -13], [8, -15], [10, 11], [0, 19], [-10, 11]],
+        linGrad(ctx, -10, -15, 10, 19, [[0, "#d0d8e0"], [0.5, "#708090"], [1, "#384048"]]),
         "#1a2028",
         2
       );
-      poly(ctx, [[22, 30], [30, 30], [28, 42], [24, 42]], "#c0a040", "#4a3810", 1);
-      // sword
-      ctx.strokeStyle = "#c0c8d0";
-      ctx.lineWidth = 3;
+      poly(ctx, [[-4, -7], [4, -7], [2, 5], [-2, 5]], "#c0a040", "#4a3810", 1);
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(54, 50);
-      ctx.lineTo(64, 18);
+      ctx.moveTo(-7, -12);
+      ctx.lineTo(7, -14);
       ctx.stroke();
-      rounded(ctx, 50, 48, 12, 5, 2, "#6a4830", "#2a1810", 1);
-    });
+      ctx.restore();
 
-    make("enemy_ember", 80, 72, (ctx) => {
-      shadow(ctx, 40, 62, 18, 5, 0.3);
-      // flame body
+      // Sword (right arm side)
+      let sw0x, sw0y, sw1x, sw1y;
+      if (f === 0) {
+        sw0x = 54; sw0y = bodyY + 22; sw1x = 64; sw1y = bodyY - 8;
+      } else if (f === 1) {
+        sw0x = 53; sw0y = bodyY + 20; sw1x = 62; sw1y = bodyY - 12;
+      } else if (f === 2) {
+        sw0x = 55; sw0y = bodyY + 18; sw1x = 66; sw1y = bodyY - 6;
+      } else {
+        sw0x = 54; sw0y = bodyY + 21; sw1x = 63; sw1y = bodyY - 10;
+      }
+
+      ctx.strokeStyle = "#c0c8d0";
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(sw0x, sw0y);
+      ctx.lineTo(sw1x, sw1y);
+      ctx.stroke();
+      // Edge shine
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sw0x - 0.5, sw0y);
+      ctx.lineTo(sw1x - 0.5, sw1y);
+      ctx.stroke();
+      // Guard & hilt
+      ctx.save();
+      ctx.translate(sw0x, sw0y);
+      const swAngle = Math.atan2(sw1y - sw0y, sw1x - sw0x);
+      ctx.rotate(swAngle + Math.PI / 2);
+      rounded(ctx, -6, -2, 12, 4, 1.5, "#c0a040", "#3a2a10", 1);
+      rounded(ctx, -2, 2, 4, 7, 1.5, "#6a4830", "#2a1810", 1);
+      ellipse(ctx, 0, 9, 2.5, 2.5, "#d4af37", "#3a2a10", 0.8);
+      // Right armored hand holding sword
+      ellipse(ctx, 0, 3, 3.5, 3.5, skin, outline, 1.2);
+      ctx.restore();
+    };
+
+    make("enemy_shield", 80, 72, (ctx) => drawShield(ctx, 0));
+    make("enemy_shield_w0", 80, 72, (ctx) => drawShield(ctx, 0));
+    make("enemy_shield_w1", 80, 72, (ctx) => drawShield(ctx, 1));
+    make("enemy_shield_w2", 80, 72, (ctx) => drawShield(ctx, 2));
+    make("enemy_shield_w3", 80, 72, (ctx) => drawShield(ctx, 3));
+
+    const drawEmber = (ctx, frame = 0) => {
+      const f = frame % 4;
+      const shY = (f === 1 || f === 3) ? 61 : 62;
+      const shR = (f === 1 || f === 3) ? 16 : 18;
+      shadow(ctx, 40, shY, shR, 5, 0.3);
+
+      let polyPoints, coreX, coreY, coreR, eyeY, embers;
+      if (f === 0) {
+        // Base / plant left: tip leaning left, left base skirt forward
+        polyPoints = [
+          [38, 5], [23, 27], [29, 29], [18, 48], [33, 42],
+          [39, 58], [47, 43], [60, 49], [51, 31], [57, 28]
+        ];
+        coreX = 39; coreY = 36; coreR = 15; eyeY = 32;
+        embers = [[22, 18, 3], [58, 22, 2.5], [30, 10, 2], [52, 12, 2.5], [44, 4, 2]];
+      } else if (f === 1) {
+        // Rise / pass: tall vertical flame flare, core lifted
+        polyPoints = [
+          [41, 3], [25, 25], [31, 28], [22, 46], [35, 39],
+          [41, 55], [48, 40], [58, 46], [52, 28], [58, 25]
+        ];
+        coreX = 41; coreY = 34; coreR = 16; eyeY = 30;
+        embers = [[20, 24, 2.5], [62, 18, 3], [34, 6, 2.5], [56, 10, 2], [42, 2, 2]];
+      } else if (f === 2) {
+        // Plant right: tip leaning right, right base skirt forward
+        polyPoints = [
+          [43, 6], [26, 29], [32, 31], [21, 50], [35, 43],
+          [42, 59], [48, 43], [63, 47], [52, 29], [58, 27]
+        ];
+        coreX = 42; coreY = 36; coreR = 15; eyeY = 32;
+        embers = [[18, 20, 3], [56, 25, 2.5], [28, 12, 2], [50, 8, 3], [46, 5, 2]];
+      } else {
+        // Compression / recover: wide fiery burst, low center
+        polyPoints = [
+          [40, 4], [22, 26], [28, 29], [17, 47], [33, 41],
+          [40, 56], [47, 41], [61, 48], [49, 30], [56, 26]
+        ];
+        coreX = 40; coreY = 35; coreR = 16.5; eyeY = 31;
+        embers = [[24, 15, 2.5], [60, 20, 2], [32, 8, 3], [54, 14, 2.5], [40, 3, 2.5]];
+      }
+
+      // Outer flame body
       poly(
         ctx,
-        [[40, 6], [24, 28], [30, 30], [20, 48], [34, 42], [40, 58], [46, 42], [60, 48], [50, 30], [56, 28]],
-        linGrad(ctx, 40, 6, 40, 58, [[0, "#fff8c0"], [0.35, "#ffb040"], [0.7, "#e04820"], [1, "#601808"]]),
+        polyPoints,
+        linGrad(ctx, 40, polyPoints[0][1], 40, 58, [[0, "#fff8c0"], [0.35, "#ffb040"], [0.7, "#e04820"], [1, "#601808"]]),
         "#4a1808",
         2
       );
-      ellipse(ctx, 40, 36, 14, 16, radGrad(ctx, 36, 30, 2, 18, [[0, "#fff8e0"], [0.4, "#ff9040"], [1, "rgba(160,30,10,.15)"]]));
-      // eyes
-      ellipse(ctx, 34, 32, 3, 4, "#fff8c0");
-      ellipse(ctx, 46, 32, 3, 4, "#fff8c0");
-      ellipse(ctx, 34, 32, 1.5, 2, "#401008");
-      ellipse(ctx, 46, 32, 1.5, 2, "#401008");
-      // embers
-      for (const [x, y, r] of [[22, 18, 3], [58, 22, 2.5], [30, 10, 2], [52, 12, 2.5], [44, 4, 2]]) {
-        ellipse(ctx, x, y, r, r, "rgba(255,200,80,.75)");
-      }
-    });
 
-    make("enemy_brood", 80, 72, (ctx) => {
+      // Inner glowing core
+      ellipse(ctx, coreX, coreY, coreR, coreR + 2, radGrad(ctx, coreX - 3, coreY - 4, 2, coreR + 3, [[0, "#fff8e0"], [0.45, "#ff9040"], [1, "rgba(160,30,10,.15)"]]));
+
+      // Inner bright flame tongue
+      poly(
+        ctx,
+        [[coreX, coreY - 14], [coreX - 7, coreY + 6], [coreX, coreY + 12], [coreX + 7, coreY + 6]],
+        linGrad(ctx, coreX, coreY - 14, coreX, coreY + 12, [[0, "#ffffff"], [0.5, "#fff0a0"], [1, "rgba(255,160,40,0)"]])
+      );
+
+      // Eyes with burning gaze
+      const eyeDx = f === 0 ? -1 : f === 2 ? 1 : 0;
+      ellipse(ctx, 34 + eyeDx, eyeY, 3, 4, "#fff8c0");
+      ellipse(ctx, 46 + eyeDx, eyeY, 3, 4, "#fff8c0");
+      ellipse(ctx, 34 + eyeDx, eyeY, 1.5, 2, "#401008");
+      ellipse(ctx, 46 + eyeDx, eyeY, 1.5, 2, "#401008");
+
+      // Sparks / orbiting ember motes
+      for (const [x, y, r] of embers) {
+        ellipse(ctx, x, y, r, r, "rgba(255,210,90,.85)");
+        ellipse(ctx, x - 0.3, y - 0.3, r * 0.45, r * 0.45, "#ffffff");
+      }
+    };
+
+    make("enemy_ember", 80, 72, (ctx) => drawEmber(ctx, 0));
+    make("enemy_ember_w0", 80, 72, (ctx) => drawEmber(ctx, 0));
+    make("enemy_ember_w1", 80, 72, (ctx) => drawEmber(ctx, 1));
+    make("enemy_ember_w2", 80, 72, (ctx) => drawEmber(ctx, 2));
+    make("enemy_ember_w3", 80, 72, (ctx) => drawEmber(ctx, 3));
+
+    const drawBrood = (ctx, frame = 0) => {
       shadow(ctx, 40, 60, 22, 6);
-      // spider legs
+      const f = frame % 4;
+      const headY = (f === 1 || f === 3) ? 27 : 28;
+      const abdY = (f === 1 || f === 3) ? 43 : 44;
+
+      // Spider legs - alternating tripod gait
       ctx.strokeStyle = "#4a2030";
       ctx.lineWidth = 2.5;
       ctx.lineCap = "round";
-      for (const [x0, y0, x1, y1] of [
-        [28, 36, 10, 28],
-        [28, 40, 8, 44],
-        [28, 44, 12, 56],
-        [52, 36, 70, 28],
-        [52, 40, 72, 44],
-        [52, 44, 68, 56],
-      ]) {
+
+      let legCoords;
+      if (f === 0) {
+        legCoords = [
+          [28, headY + 8, 8, 25],   // L1 forward plant
+          [28, headY + 12, 11, 46], // L2 mid back
+          [28, headY + 16, 9, 58],  // L3 back plant
+          [52, headY + 8, 72, 31],  // R1 front mid
+          [52, headY + 12, 73, 42], // R2 mid forward plant
+          [52, headY + 16, 66, 54], // R3 back mid
+        ];
+      } else if (f === 1) {
+        legCoords = [
+          [28, headY + 8, 12, 28],  // L1 lifted pass
+          [28, headY + 12, 8, 44],  // L2 planted
+          [28, headY + 16, 14, 55], // L3 lifted
+          [52, headY + 8, 70, 26],  // R1 reaching
+          [52, headY + 12, 70, 46], // R2 passing
+          [52, headY + 16, 70, 57], // R3 reaching
+        ];
+      } else if (f === 2) {
+        legCoords = [
+          [28, headY + 8, 12, 31],  // L1 front mid
+          [28, headY + 12, 7, 42],  // L2 mid forward plant
+          [28, headY + 16, 14, 54], // L3 back mid
+          [52, headY + 8, 72, 25],  // R1 forward plant
+          [52, headY + 12, 69, 46], // R2 mid back
+          [52, headY + 16, 71, 58], // R3 back plant
+        ];
+      } else {
+        legCoords = [
+          [28, headY + 8, 10, 26],  // L1 reaching
+          [28, headY + 12, 10, 46], // L2 passing
+          [28, headY + 16, 10, 57], // L3 reaching
+          [52, headY + 8, 68, 28],  // R1 lifted pass
+          [52, headY + 12, 72, 44], // R2 planted
+          [52, headY + 16, 66, 55], // R3 lifted
+        ];
+      }
+
+      for (const [x0, y0, x1, y1] of legCoords) {
         ctx.beginPath();
         ctx.moveTo(x0, y0);
-        ctx.quadraticCurveTo((x0 + x1) / 2, y0 - 8, x1, y1);
+        const midY = Math.min(y0, y1) - 8;
+        ctx.quadraticCurveTo((x0 + x1) / 2, midY, x1, y1);
         ctx.stroke();
       }
-      // abdomen
-      ellipse(ctx, 40, 44, 16, 14, linGrad(ctx, 28, 34, 52, 56, [[0, "#f0b0c8"], [0.5, "#b05878"], [1, "#501828"]]), "#301018", 2);
-      // thorax + head
-      ellipse(ctx, 40, 28, 12, 11, linGrad(ctx, 30, 20, 50, 38, [[0, "#f8c0d0"], [1, "#803050"]]), "#301018", 2);
-      // multi eyes
-      for (const [dx, dy] of [[-5, -2], [5, -2], [-3, 3], [3, 3], [0, -5]]) {
-        ellipse(ctx, 40 + dx, 26 + dy, 1.8, 1.8, "#ffe060");
-        ellipse(ctx, 40 + dx, 26 + dy, 0.8, 0.8, "#101008");
-      }
-      // fangs
-      poly(ctx, [[36, 34], [34, 40], [38, 36]], "#f0e0f0", "#401828", 1);
-      poly(ctx, [[44, 34], [46, 40], [42, 36]], "#f0e0f0", "#401828", 1);
-    });
 
-    make("enemy_flyer", 80, 72, (ctx) => {
-      shadow(ctx, 40, 60, 16, 5, 0.25);
-      // wings
+      // Abdomen
+      ellipse(ctx, 40, abdY, 16, 14, linGrad(ctx, 28, abdY - 10, 52, abdY + 12, [[0, "#f0b0c8"], [0.5, "#b05878"], [1, "#501828"]]), "#301018", 2);
+      // Abdomen pattern spots
+      ellipse(ctx, 40, abdY - 4, 3.5, 2.5, "rgba(255,220,240,.45)");
+      ellipse(ctx, 34, abdY + 2, 2.5, 2, "rgba(255,220,240,.35)");
+      ellipse(ctx, 46, abdY + 2, 2.5, 2, "rgba(255,220,240,.35)");
+
+      // Thorax + head
+      ellipse(ctx, 40, headY, 12, 11, linGrad(ctx, 30, headY - 8, 50, headY + 10, [[0, "#f8c0d0"], [1, "#803050"]]), "#301018", 2);
+
+      // Multi eyes (cluster of glowing spider eyes)
+      for (const [dx, dy] of [[-5, -2], [5, -2], [-3, 3], [3, 3], [0, -5]]) {
+        ellipse(ctx, 40 + dx, headY - 2 + dy, 1.8, 1.8, "#ffe060");
+        ellipse(ctx, 40 + dx, headY - 2 + dy, 0.8, 0.8, "#101008");
+      }
+
+      // Fangs
+      const fangSpread = (f === 1 || f === 3) ? 1 : 0;
+      poly(ctx, [[36 - fangSpread, headY + 6], [33 - fangSpread, headY + 12], [38 - fangSpread, headY + 8]], "#f0e0f0", "#401828", 1);
+      poly(ctx, [[44 + fangSpread, headY + 6], [47 + fangSpread, headY + 12], [42 + fangSpread, headY + 8]], "#f0e0f0", "#401828", 1);
+    };
+
+    make("enemy_brood", 80, 72, (ctx) => drawBrood(ctx, 0));
+    make("enemy_brood_w0", 80, 72, (ctx) => drawBrood(ctx, 0));
+    make("enemy_brood_w1", 80, 72, (ctx) => drawBrood(ctx, 1));
+    make("enemy_brood_w2", 80, 72, (ctx) => drawBrood(ctx, 2));
+    make("enemy_brood_w3", 80, 72, (ctx) => drawBrood(ctx, 3));
+
+    const drawFlyer = (ctx, frame = 0) => {
+      const f = frame % 4;
+
+      let bodyY, headY, shRx, shRy, shA, lWing, rWing, tailQuad;
+      if (f === 0) {
+        // High upstroke glide
+        bodyY = 37; headY = 25; shRx = 17; shRy = 5.2; shA = 0.28;
+        lWing = [[30, bodyY - 6], [8, bodyY - 24], [4, bodyY - 12], [14, bodyY - 2], [28, bodyY + 2]];
+        rWing = [[50, bodyY - 6], [72, bodyY - 24], [76, bodyY - 12], [66, bodyY - 2], [52, bodyY + 2]];
+        tailQuad = [48, 59, 56, 55];
+      } else if (f === 1) {
+        // Powerful downstroke push
+        bodyY = 34; headY = 22; shRx = 15.5; shRy = 4.8; shA = 0.25;
+        lWing = [[30, bodyY - 4], [6, bodyY - 10], [2, bodyY + 2], [14, bodyY + 8], [28, bodyY + 4]];
+        rWing = [[50, bodyY - 4], [74, bodyY - 10], [78, bodyY + 2], [66, bodyY + 8], [52, bodyY + 4]];
+        tailQuad = [48, 55, 56, 51];
+      } else if (f === 2) {
+        // Full bottom stroke scoop
+        bodyY = 32; headY = 20; shRx = 14; shRy = 4.2; shA = 0.22;
+        lWing = [[30, bodyY - 2], [10, bodyY + 6], [6, bodyY + 18], [18, bodyY + 16], [28, bodyY + 6]];
+        rWing = [[50, bodyY - 2], [70, bodyY + 6], [74, bodyY + 18], [62, bodyY + 16], [52, bodyY + 6]];
+        tailQuad = [50, 48, 58, 44];
+      } else {
+        // Wing recovery lift
+        bodyY = 35; headY = 23; shRx = 15.5; shRy = 4.8; shA = 0.25;
+        lWing = [[30, bodyY - 5], [14, bodyY - 16], [10, bodyY - 4], [20, bodyY + 2], [28, bodyY + 1]];
+        rWing = [[50, bodyY - 5], [66, bodyY - 16], [70, bodyY - 4], [60, bodyY + 2], [52, bodyY + 1]];
+        tailQuad = [47, 57, 55, 53];
+      }
+
+      shadow(ctx, 40, 60, shRx, shRy, shA);
+
+      // Wings
       poly(
         ctx,
-        [[30, 30], [8, 18], [4, 28], [12, 36], [28, 38]],
-        linGrad(ctx, 4, 18, 30, 38, [[0, "rgba(200,245,255,.85)"], [1, "rgba(60,140,180,.55)"]]),
+        lWing,
+        linGrad(ctx, lWing[1][0], lWing[1][1], lWing[4][0], lWing[4][1], [[0, "rgba(210,248,255,.9)"], [1, "rgba(60,140,180,.6)"]]),
         "#4aa0c0",
         1.5
       );
       poly(
         ctx,
-        [[50, 30], [72, 18], [76, 28], [68, 36], [52, 38]],
-        linGrad(ctx, 50, 18, 76, 38, [[0, "rgba(200,245,255,.85)"], [1, "rgba(60,140,180,.55)"]]),
+        rWing,
+        linGrad(ctx, rWing[1][0], rWing[1][1], rWing[4][0], rWing[4][1], [[0, "rgba(210,248,255,.9)"], [1, "rgba(60,140,180,.6)"]]),
         "#4aa0c0",
         1.5
       );
-      // body
-      ellipse(ctx, 40, 36, 14, 16, linGrad(ctx, 28, 22, 52, 50, [[0, "#e0f8ff"], [0.5, "#60c0e0"], [1, "#206080"]]), "#184858", 2);
-      ellipse(ctx, 40, 24, 10, 10, linGrad(ctx, 32, 16, 48, 32, [[0, "#f0fcff"], [1, "#48a0c0"]]), "#184858", 1.8);
-      face(ctx, 40, 24, "#e8f8ff", "#082028");
-      // horn crest
-      poly(ctx, [[40, 10], [34, 18], [46, 18]], "#a0e0f0", "#184858", 1.2);
-      // tail
+      // Wing leading edge highlight
+      ctx.strokeStyle = "rgba(255,255,255,0.45)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(lWing[0][0], lWing[0][1]);
+      ctx.lineTo(lWing[1][0], lWing[1][1]);
+      ctx.moveTo(rWing[0][0], rWing[0][1]);
+      ctx.lineTo(rWing[1][0], rWing[1][1]);
+      ctx.stroke();
+
+      // Tail
       ctx.strokeStyle = "#48a0c0";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(40, 50);
-      ctx.quadraticCurveTo(48, 58, 56, 54);
+      ctx.moveTo(40, bodyY + 14);
+      ctx.quadraticCurveTo(tailQuad[0], tailQuad[1], tailQuad[2], tailQuad[3]);
       ctx.stroke();
-    });
 
-    make("enemy_hexer", 80, 72, (ctx) => {
+      // Body
+      ellipse(ctx, 40, bodyY, 14, 16, linGrad(ctx, 28, bodyY - 14, 52, bodyY + 14, [[0, "#e0f8ff"], [0.5, "#60c0e0"], [1, "#206080"]]), "#184858", 2);
+      // Belly plates
+      ellipse(ctx, 40, bodyY + 3, 7, 9, "rgba(255,255,255,.3)");
+
+      // Head
+      ellipse(ctx, 40, headY, 10, 10, linGrad(ctx, 32, headY - 8, 48, headY + 8, [[0, "#f0fcff"], [1, "#48a0c0"]]), "#184858", 1.8);
+      face(ctx, 40, headY, "#e8f8ff", "#082028");
+
+      // Horn crest
+      poly(ctx, [[40, headY - 14], [34, headY - 6], [46, headY - 6]], "#a0e0f0", "#184858", 1.2);
+    };
+
+    make("enemy_flyer", 80, 72, (ctx) => drawFlyer(ctx, 0));
+    make("enemy_flyer_w0", 80, 72, (ctx) => drawFlyer(ctx, 0));
+    make("enemy_flyer_w1", 80, 72, (ctx) => drawFlyer(ctx, 1));
+    make("enemy_flyer_w2", 80, 72, (ctx) => drawFlyer(ctx, 2));
+    make("enemy_flyer_w3", 80, 72, (ctx) => drawFlyer(ctx, 3));
+
+    const drawHexer = (ctx, frame = 0) => {
       shadow(ctx, 40, 62, 20, 6);
-      limbs(ctx, "#6a5090", "#2a1848", 44);
-      // robe
+      const f = frame % 4;
+      const headOffset = (f === 1 || f === 3) ? -1 : 0;
+
+      const robeMain = "#6a5090";
+      const robeDark = "#2a1848";
+      const outline = "#201038";
+
+      // Robe skirt & walking feet beneath
+      if (f === 0) {
+        rounded(ctx, 25, 47, 8, 8, 2.5, "#3a2818", outline, 1);
+        rounded(ctx, 44, 46, 7, 7, 2, "#281a10", outline, 1);
+      } else if (f === 1) {
+        rounded(ctx, 26, 47, 8, 8, 2.5, "#3a2818", outline, 1);
+        rounded(ctx, 42, 42, 7, 7, 2, "#281a10", outline, 1);
+      } else if (f === 2) {
+        rounded(ctx, 23, 46, 7, 7, 2, "#281a10", outline, 1);
+        rounded(ctx, 42, 47, 8, 8, 2.5, "#3a2818", outline, 1);
+      } else {
+        rounded(ctx, 27, 42, 7, 7, 2, "#281a10", outline, 1);
+        rounded(ctx, 40, 47, 8, 8, 2.5, "#3a2818", outline, 1);
+      }
+
+      // Flowing robe body
+      let robePoly;
+      if (f === 0) {
+        robePoly = [[24, 28], [56, 28], [60, 53], [39, 58], [19, 55]];
+      } else if (f === 1) {
+        robePoly = [[24, 27], [56, 27], [58, 54], [40, 59], [21, 54]];
+      } else if (f === 2) {
+        robePoly = [[24, 28], [56, 28], [62, 55], [41, 57], [22, 53]];
+      } else {
+        robePoly = [[24, 27], [56, 27], [59, 54], [40, 58], [20, 54]];
+      }
+
       poly(
         ctx,
-        [[24, 28], [56, 28], [60, 54], [40, 58], [20, 54]],
+        robePoly,
         linGrad(ctx, 24, 28, 56, 58, [[0, "#d0c0ff"], [0.45, "#7858c8"], [1, "#302058"]]),
-        "#201038",
+        outline,
         2.2
       );
-      // hood
-      poly(ctx, [[24, 30], [40, 8], [56, 30], [48, 34], [40, 20], [32, 34]], linGrad(ctx, 24, 8, 56, 34, [[0, "#e8d8ff"], [1, "#4a3080"]]), "#201038", 2);
-      // face shadow
-      ellipse(ctx, 40, 28, 8, 7, "#1a1030");
-      ellipse(ctx, 36, 28, 2, 2.2, "#c080ff");
-      ellipse(ctx, 44, 28, 2, 2.2, "#c080ff");
-      // staff
+
+      // Left arm / hand curse gesture
+      let handX, handY, handRot;
+      if (f === 0) { handX = 18; handY = 35; handRot = -0.1; }
+      else if (f === 1) { handX = 15; handY = 30; handRot = -0.3; }
+      else if (f === 2) { handX = 19; handY = 37; handRot = 0.1; }
+      else { handX = 16; handY = 33; handRot = -0.15; }
+
+      ctx.save();
+      ctx.translate(handX, handY);
+      ctx.rotate(handRot);
+      rounded(ctx, -2, -3, 10, 6, 3, robeMain, robeDark, 1.2);
+      ellipse(ctx, -2, 0, 3, 3, "#d0c0ff", outline, 0.8);
+      ctx.restore();
+
+      // Hood
+      const hoodTop = 8 + headOffset;
+      const hoodMid = 20 + headOffset;
+      const hoodBot = 30 + headOffset;
+      poly(
+        ctx,
+        [[24, hoodBot], [40, hoodTop], [56, hoodBot], [48, hoodBot + 4], [40, hoodMid], [32, hoodBot + 4]],
+        linGrad(ctx, 24, hoodTop, 56, hoodBot + 4, [[0, "#e8d8ff"], [1, "#4a3080"]]),
+        outline,
+        2
+      );
+
+      // Face shadow & glowing eyes
+      const faceY = 28 + headOffset;
+      ellipse(ctx, 40, faceY, 8, 7, "#1a1030");
+      ellipse(ctx, 36, faceY, 2, 2.2, "#d090ff");
+      ellipse(ctx, 44, faceY, 2, 2.2, "#d090ff");
+      ellipse(ctx, 36, faceY, 1, 1, "#ffffff");
+      ellipse(ctx, 44, faceY, 1, 1, "#ffffff");
+
+      // Staff with curse pose changes
+      let st0x, st0y, st1x, st1y, orbR;
+      if (f === 0) {
+        st0x = 58; st0y = 58; st1x = 66; st1y = 12; orbR = 8;
+      } else if (f === 1) {
+        // Staff raised high & glowing
+        st0x = 57; st0y = 56; st1x = 68; st1y = 8; orbR = 9.5;
+      } else if (f === 2) {
+        // Staff thrust forward
+        st0x = 59; st0y = 58; st1x = 64; st1y = 14; orbR = 8;
+      } else {
+        st0x = 58; st0y = 57; st1x = 65; st1y = 10; orbR = 8.5;
+      }
+
       ctx.strokeStyle = "#6a4830";
       ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.moveTo(58, 58);
-      ctx.lineTo(66, 12);
+      ctx.moveTo(st0x, st0y);
+      ctx.lineTo(st1x, st1y);
       ctx.stroke();
-      ellipse(ctx, 66, 12, 8, 8, radGrad(ctx, 64, 10, 1, 8, [[0, "#fff"], [0.4, "#c0a0ff"], [1, "rgba(80,40,160,.2)"]]), "#e0d0ff", 1.5);
-      // rune motes
-      for (const [x, y] of [[22, 20], [30, 14], [50, 16]]) ellipse(ctx, x, y, 2, 2, "rgba(200,160,255,.8)");
-    });
 
-    make("enemy_titan", 88, 80, (ctx) => {
+      // Right hand holding staff
+      ellipse(ctx, (st0x * 0.4 + st1x * 0.6), (st0y * 0.4 + st1y * 0.6), 3.5, 3.5, robeMain, outline, 1);
+
+      // Staff magical orb
+      ellipse(
+        ctx,
+        st1x,
+        st1y,
+        orbR,
+        orbR,
+        radGrad(ctx, st1x - 2, st1y - 2, 1, orbR, [[0, "#ffffff"], [0.4, "#c0a0ff"], [1, "rgba(80,40,160,.15)"]]),
+        "#e0d0ff",
+        1.5
+      );
+      if (f === 1) {
+        // Extra aura ring when casting
+        ctx.strokeStyle = "rgba(220,180,255,.6)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(st1x, st1y, orbR + 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Floating rune motes
+      let motes;
+      if (f === 0) motes = [[22, 20], [30, 14], [50, 16]];
+      else if (f === 1) motes = [[18, 14], [32, 8], [54, 10], [14, 26]];
+      else if (f === 2) motes = [[24, 24], [28, 18], [48, 18]];
+      else motes = [[20, 18], [30, 12], [52, 14], [46, 22]];
+
+      for (const [mx, my] of motes) {
+        ellipse(ctx, mx, my, 2.2, 2.2, "rgba(220,170,255,.85)");
+        ellipse(ctx, mx, my, 1, 1, "#ffffff");
+      }
+    };
+
+    make("enemy_hexer", 80, 72, (ctx) => drawHexer(ctx, 0));
+    make("enemy_hexer_w0", 80, 72, (ctx) => drawHexer(ctx, 0));
+    make("enemy_hexer_w1", 80, 72, (ctx) => drawHexer(ctx, 1));
+    make("enemy_hexer_w2", 80, 72, (ctx) => drawHexer(ctx, 2));
+    make("enemy_hexer_w3", 80, 72, (ctx) => drawHexer(ctx, 3));
+
+    const drawTitan = (ctx, frame = 0) => {
       shadow(ctx, 44, 70, 30, 8);
-      // heavy legs
-      rounded(ctx, 28, 48, 12, 20, 4, linGrad(ctx, 28, 48, 40, 68, [[0, "#b0a898"], [1, "#4a4038"]]), "#2a241e", 2);
-      rounded(ctx, 48, 48, 12, 20, 4, linGrad(ctx, 48, 48, 60, 68, [[0, "#b0a898"], [1, "#4a4038"]]), "#2a241e", 2);
-      // torso
-      rounded(ctx, 22, 24, 44, 32, 8, linGrad(ctx, 22, 24, 66, 56, [[0, "#d0c8b8"], [0.5, "#888078"], [1, "#403830"]]), "#2a241e", 2.4);
-      // stone cracks
+      const f = frame % 4;
+
+      const bodyX = f === 0 ? 21 : f === 2 ? 23 : 22;
+      const bodyY = (f === 1 || f === 3) ? 23 : 25;
+      const headX = f === 0 ? 43 : f === 2 ? 45 : 44;
+      const headY = (f === 1 || f === 3) ? 17 : 19;
+
+      const stoneLight = "#b0a898";
+      const stoneDark = "#4a4038";
+      const outline = "#2a241e";
+
+      // Heavy stomp legs
+      if (f === 0) {
+        // Left forward stomp
+        rounded(ctx, 24, 46, 15, 22, 5, linGrad(ctx, 24, 46, 39, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 19, 63, 20, 7.5, 3, "#3a342c", outline, 1.5);
+        // Stomp shockwave dust under left foot
+        ctx.strokeStyle = "rgba(220,200,170,0.55)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(28, 68, 9, Math.PI * 0.8, Math.PI * 2.2);
+        ctx.stroke();
+
+        // Right trailing back
+        rounded(ctx, 52, 45, 14, 20, 4, linGrad(ctx, 52, 45, 66, 65, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
+        rounded(ctx, 50, 60, 16, 6.5, 3, "#2a241e", outline, 1.5);
+      } else if (f === 1) {
+        // Left planted straight
+        rounded(ctx, 27, 44, 15, 24, 5, linGrad(ctx, 27, 44, 42, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 25, 63, 19, 7.5, 3, "#3a342c", outline, 1.5);
+        // Right high knee lift stomp prep
+        rounded(ctx, 49, 39, 15, 18, 4, linGrad(ctx, 49, 39, 64, 57, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
+        rounded(ctx, 48, 52, 17, 7, 3, "#2a241e", outline, 1.5);
+      } else if (f === 2) {
+        // Left trailing back
+        rounded(ctx, 22, 45, 14, 20, 4, linGrad(ctx, 22, 45, 36, 65, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
+        rounded(ctx, 20, 60, 16, 6.5, 3, "#2a241e", outline, 1.5);
+        // Right forward stomp
+        rounded(ctx, 49, 46, 15, 22, 5, linGrad(ctx, 49, 46, 64, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 49, 63, 20, 7.5, 3, "#3a342c", outline, 1.5);
+        // Stomp shockwave dust under right foot
+        ctx.strokeStyle = "rgba(220,200,170,0.55)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(60, 68, 9, Math.PI * 0.8, Math.PI * 2.2);
+        ctx.stroke();
+      } else {
+        // Left high knee lift stomp prep
+        rounded(ctx, 24, 39, 15, 18, 4, linGrad(ctx, 24, 39, 39, 57, [[0, "#989082"], [1, "#3c342e"]]), outline, 2);
+        rounded(ctx, 23, 52, 17, 7, 3, "#2a241e", outline, 1.5);
+        // Right planted straight
+        rounded(ctx, 46, 44, 15, 24, 5, linGrad(ctx, 46, 44, 61, 68, [[0, stoneLight], [1, stoneDark]]), outline, 2);
+        rounded(ctx, 44, 63, 19, 7.5, 3, "#3a342c", outline, 1.5);
+      }
+
+      // Torso
+      rounded(ctx, bodyX, bodyY, 44, 32, 8, linGrad(ctx, bodyX, bodyY, bodyX + 44, bodyY + 32, [[0, "#d0c8b8"], [0.5, "#888078"], [1, "#403830"]]), outline, 2.4);
+
+      // Stone cracks
       ctx.strokeStyle = "rgba(30,24,18,.55)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(36, 28);
-      ctx.lineTo(40, 44);
-      ctx.lineTo(48, 38);
-      ctx.moveTo(52, 30);
-      ctx.lineTo(56, 48);
+      ctx.moveTo(bodyX + 14, bodyY + 4);
+      ctx.lineTo(bodyX + 18, bodyY + 20);
+      ctx.lineTo(bodyX + 26, bodyY + 14);
+      ctx.moveTo(bodyX + 30, bodyY + 6);
+      ctx.lineTo(bodyX + 34, bodyY + 24);
       ctx.stroke();
-      // moss
-      ellipse(ctx, 30, 36, 6, 3, "rgba(100,160,70,.45)");
-      ellipse(ctx, 58, 42, 5, 3, "rgba(100,160,70,.4)");
-      // head
-      ellipse(ctx, 44, 18, 16, 14, linGrad(ctx, 30, 8, 58, 30, [[0, "#e0d8c8"], [1, "#686058"]]), "#2a241e", 2);
-      // glowing eyes
-      ellipse(ctx, 38, 18, 3, 3.5, "#ffe060");
-      ellipse(ctx, 50, 18, 3, 3.5, "#ffe060");
-      ellipse(ctx, 38, 18, 1.4, 1.8, "#402008");
-      ellipse(ctx, 50, 18, 1.4, 1.8, "#402008");
-      // brow ridge
-      rounded(ctx, 30, 10, 28, 6, 2, "#585048", "#2a241e", 1);
-      // fists
-      ellipse(ctx, 18, 44, 10, 10, "#888078", "#2a241e", 2);
-      ellipse(ctx, 70, 44, 10, 10, "#888078", "#2a241e", 2);
-    });
+
+      // Moss patches
+      ellipse(ctx, bodyX + 8, bodyY + 12, 6, 3, "rgba(100,160,70,.45)");
+      ellipse(ctx, bodyX + 36, bodyY + 18, 5, 3, "rgba(100,160,70,.4)");
+
+      // Head
+      ellipse(ctx, headX, headY, 16, 14, linGrad(ctx, headX - 14, headY - 10, headX + 14, headY + 12, [[0, "#e0d8c8"], [1, "#686058"]]), outline, 2);
+
+      // Glowing eyes
+      ellipse(ctx, headX - 6, headY, 3, 3.5, "#ffe060");
+      ellipse(ctx, headX + 6, headY, 3, 3.5, "#ffe060");
+      ellipse(ctx, headX - 6, headY, 1.4, 1.8, "#402008");
+      ellipse(ctx, headX + 6, headY, 1.4, 1.8, "#402008");
+
+      // Brow ridge
+      rounded(ctx, headX - 14, headY - 8, 28, 6, 2, "#585048", outline, 1);
+
+      // Massive stone fists
+      let lFistX, lFistY, rFistX, rFistY;
+      if (f === 0) {
+        lFistX = bodyX - 7; lFistY = bodyY + 17; rFistX = bodyX + 50; rFistY = bodyY + 23;
+      } else if (f === 1) {
+        lFistX = bodyX - 5; lFistY = bodyY + 20; rFistX = bodyX + 48; rFistY = bodyY + 20;
+      } else if (f === 2) {
+        lFistX = bodyX - 5; lFistY = bodyY + 23; rFistX = bodyX + 52; rFistY = bodyY + 17;
+      } else {
+        lFistX = bodyX - 3; lFistY = bodyY + 20; rFistX = bodyX + 46; rFistY = bodyY + 20;
+      }
+
+      ellipse(ctx, lFistX, lFistY, 10, 10, "#888078", outline, 2);
+      ellipse(ctx, rFistX, rFistY, 10, 10, "#888078", outline, 2);
+      // Knuckle details
+      speckles(ctx, lFistX - 5, lFistY - 5, 10, 10, 3, "rgba(255,255,255,0.2)", 1.2);
+      speckles(ctx, rFistX - 5, rFistY - 5, 10, 10, 3, "rgba(255,255,255,0.2)", 1.2);
+    };
+
+    make("enemy_titan", 88, 80, (ctx) => drawTitan(ctx, 0));
+    make("enemy_titan_w0", 88, 80, (ctx) => drawTitan(ctx, 0));
+    make("enemy_titan_w1", 88, 80, (ctx) => drawTitan(ctx, 1));
+    make("enemy_titan_w2", 88, 80, (ctx) => drawTitan(ctx, 2));
+    make("enemy_titan_w3", 88, 80, (ctx) => drawTitan(ctx, 3));
 
     make("enemy_boss", 96, 88, (ctx) => {
       shadow(ctx, 48, 76, 34, 9);

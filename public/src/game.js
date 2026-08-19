@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.61";
+  const KRC_VERSION = "1.0.62";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -293,6 +293,9 @@
         make("tower_barracks", 32, 32, (ctx) => { ctx.fillStyle = "#b99c43"; ctx.fillRect(4, 4, 24, 24); });
         ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
           make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+          for (let fi = 0; fi < 4; fi += 1) {
+            make(`enemy_${k}_w${fi}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
+          }
         });
         make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
         make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
@@ -3823,19 +3826,20 @@ const bannerY = 98;
         else if (dx > 0.5) enemy.facingLeft = false;
       }
 
-      if (enemy.type === "scout" || enemy.type === "brute") {
+      const isAnimated = ["scout", "brute", "shield", "ember", "brood", "flyer", "hexer", "titan"].includes(enemy.type);
+      if (isAnimated) {
         enemy.sprite.setFlipX(!!enemy.facingLeft);
       }
 
       if (reducedMotion) {
-        if (enemy.type === "scout" || enemy.type === "brute") {
+        if (isAnimated) {
           const texKey = `enemy_${enemy.type}_w0`;
           if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
             enemy.sprite.setTexture(texKey);
           }
         }
         enemy.sprite.setScale(baseScale);
-        enemy.sprite.rotation = (enemy.type === "scout" || enemy.type === "brute") ? 0 : pathAngle;
+        enemy.sprite.rotation = isAnimated ? 0 : pathAngle;
       } else {
         const isFlyer = enemy.type === "flyer" || enemy.base?.flying;
         if (enemy.type === "scout") {
@@ -3869,21 +3873,87 @@ const bannerY = 98;
             enemy.sprite.setScale(baseScale);
           }
         } else if (enemy.type === "shield") {
-          const t = this.time.now * 0.004 + enemy.wobble;
-          const bounce = Math.sin(t * 2) * (enemy.blockedBy ? 0.2 : 0.35);
-          const sideSway = Math.sin(t) * 0.12;
-          const rot = enemy.blockedBy ? sideSway * 1.2 : pathAngle + sideSway;
-          enemy.sprite.y += bounce;
-          enemy.sprite.rotation = rot;
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 7.5) % 4;
+          const texKey = `enemy_shield_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          if (enemy.blockedBy) {
+            const t = this.time.now * 0.02 + enemy.wobble;
+            enemy.sprite.rotation = Math.sin(t) * 0.15;
+            enemy.sprite.y += Math.sin(this.time.now * 0.01 + enemy.wobble) * 0.3;
+          } else {
+            enemy.sprite.rotation = 0;
+          }
           enemy.sprite.setScale(baseScale);
-        } else if (isFlyer) {
-          const t = this.time.now * 0.006 + enemy.wobble;
-          const floatY = Math.sin(t) * 4.5;
-          const tilt = Math.sin(t * 0.8) * 0.08;
-          const rot = enemy.blockedBy ? tilt * 1.5 : pathAngle + tilt;
+        } else if (enemy.type === "ember") {
+          const frameIdx = enemy.blockedBy
+            ? Math.floor(this.time.now * 0.008 + enemy.wobble) % 4
+            : Math.floor((enemy.walkDist || 0) / 6.5) % 4;
+          const texKey = `enemy_ember_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          const floatY = Math.sin(this.time.now * 0.006 + enemy.wobble) * 1.5;
           enemy.sprite.y += floatY;
-          enemy.sprite.rotation = rot;
+          enemy.sprite.rotation = enemy.blockedBy ? Math.sin(this.time.now * 0.025 + enemy.wobble) * 0.12 : 0;
           enemy.sprite.setScale(baseScale);
+        } else if (enemy.type === "brood") {
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 6) % 4;
+          const texKey = `enemy_brood_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          if (enemy.blockedBy) {
+            enemy.sprite.rotation = Math.sin(this.time.now * 0.03 + enemy.wobble) * 0.16;
+            enemy.sprite.y += Math.sin(this.time.now * 0.015 + enemy.wobble) * 0.4;
+          } else {
+            enemy.sprite.rotation = 0;
+          }
+          enemy.sprite.setScale(baseScale);
+        } else if (enemy.type === "flyer" || isFlyer) {
+          const frameIdx = Math.floor(this.time.now * 0.007 + enemy.wobble) % 4;
+          const texKey = `enemy_flyer_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          const t = this.time.now * 0.005 + enemy.wobble;
+          const floatY = Math.sin(t) * 3.5;
+          const tilt = Math.sin(t * 0.8) * 0.06;
+          enemy.sprite.y += floatY;
+          enemy.sprite.rotation = enemy.blockedBy ? tilt * 1.5 : tilt;
+          enemy.sprite.setScale(baseScale);
+        } else if (enemy.type === "hexer") {
+          const frameIdx = enemy.blockedBy
+            ? Math.floor(this.time.now * 0.005 + enemy.wobble) % 4
+            : Math.floor((enemy.walkDist || 0) / 7) % 4;
+          const texKey = `enemy_hexer_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          if (enemy.blockedBy) {
+            enemy.sprite.rotation = Math.sin(this.time.now * 0.02 + enemy.wobble) * 0.14;
+            enemy.sprite.y += Math.sin(this.time.now * 0.01 + enemy.wobble) * 0.4;
+          } else {
+            enemy.sprite.rotation = 0;
+          }
+          enemy.sprite.setScale(baseScale);
+        } else if (enemy.type === "titan") {
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 9) % 4;
+          const texKey = `enemy_titan_w${frameIdx}`;
+          if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
+            enemy.sprite.setTexture(texKey);
+          }
+          if (enemy.blockedBy) {
+            const t = this.time.now * 0.006 + enemy.wobble;
+            enemy.sprite.y += Math.sin(t) * 0.6;
+            enemy.sprite.rotation = Math.sin(this.time.now * 0.015 + enemy.wobble) * 0.1;
+            const squash = Math.sin(t * 2);
+            enemy.sprite.setScale(baseScale * (1 + squash * 0.06), baseScale * (1 - squash * 0.06));
+          } else {
+            enemy.sprite.rotation = 0;
+            enemy.sprite.setScale(baseScale);
+          }
         } else {
           const bob = Math.sin(this.time.now * 0.008 + enemy.wobble);
           enemy.sprite.y += bob * (enemy.blockedBy ? 0.6 : 1.2);
