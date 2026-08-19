@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.61 — Scout and Brute walk cycles
+- Scout and Brute use 4-frame stride sheets (`w0`–`w3`) instead of a bobbing sticker.
+- Flip from path direction. reducedMotion locks frame 0.
+- Original painterly atlas only. Worker: antigrav (gemini-3.7-flash-high).
+
 ## KRC 1.0.8 — Campaign chrome, tooltips, combat visual fix
 
 - Visible `v1.0.8` on document title, shell subtitle, and campaign banner.
