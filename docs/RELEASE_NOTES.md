@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.75 — Gate set-piece
+- Painted door + leak overlay on the gate. Worker: antigrav.
+
+
 ## KRC 1.0.74 — Path terrain tiles
 - Dirt/stone/ember tiles replace the tan ribbon. Forest Gate (100,375) unchanged. Worker: antigrav.
 

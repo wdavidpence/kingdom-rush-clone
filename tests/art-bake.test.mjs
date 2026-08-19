@@ -127,6 +127,8 @@ const requiredKeys = [
   "tile_dirt",
   "tile_stone",
   "tile_ember",
+  "gate_arch",
+  "gate_leak",
 ];
 
 for (const key of requiredKeys) {
