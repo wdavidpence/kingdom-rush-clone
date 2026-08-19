@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.68 — Character rim light / AO / skin
+- Scout, brute, soldier, hero gain volume lighting.
+- Worker: antigrav.
+
+
 ## KRC 1.0.67 — 128px Runes / Mortar / Guard
 - Remaining tower families rebuilt at 128x128. Scale helpers keep footprint.
 - Worker: antigrav.
