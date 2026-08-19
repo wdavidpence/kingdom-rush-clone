@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.64 — Hero idle / attack / ability poses
+- Captain has idle, attack, and ability silhouettes.
+- reducedMotion stays idle. Worker: antigrav.
+
+
 ## KRC 1.0.63 — Tower fire / recoil poses
 - Each tower family has idle + fire textures. Shot flashes fire pose ~120ms.
 - reducedMotion skips the swap.

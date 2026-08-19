@@ -1677,38 +1677,203 @@
       poly(ctx, [[48, 6], [52, 14], [44, 12]], "#d0d8e0", "#303840", 1);
     });
 
-    make("hero_captain", 64, 72, (ctx) => {
+    const drawHeroCaptainIdle = (ctx) => {
       shadow(ctx, 32, 62, 22, 6, 0.4);
       // cape
-      poly(ctx, [[18, 28], [46, 28], [52, 58], [32, 62], [12, 58]], linGrad(ctx, 18, 28, 46, 62, [[0, "#5a90d0"], [1, "#183050"]]), "#0c1828", 1.8);
+      poly(ctx, [[18, 28], [46, 28], [52, 58], [32, 62], [12, 58]], linGrad(ctx, 18, 28, 46, 62, [[0, "#5a90d0"], [0.5, "#305888"], [1, "#183050"]]), "#0c1828", 1.8);
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(26, 32);
+      ctx.lineTo(22, 56);
+      ctx.moveTo(38, 32);
+      ctx.lineTo(42, 56);
+      ctx.stroke();
       // legs
-      rounded(ctx, 22, 44, 8, 16, 3, "#2a4060", "#101828", 1.2);
-      rounded(ctx, 34, 44, 8, 16, 3, "#2a4060", "#101828", 1.2);
+      rounded(ctx, 22, 44, 8, 16, 3, linGrad(ctx, 22, 44, 30, 60, [[0, "#3a5880"], [1, "#182840"]]), "#101828", 1.2);
+      rounded(ctx, 34, 44, 8, 16, 3, linGrad(ctx, 34, 44, 42, 60, [[0, "#3a5880"], [1, "#182840"]]), "#101828", 1.2);
+      rounded(ctx, 21, 54, 10, 6, 2, "#182438", "#0e1828", 1);
+      rounded(ctx, 33, 54, 10, 6, 2, "#182438", "#0e1828", 1);
+      ellipse(ctx, 26, 46, 3, 2.5, "#e8c860", "#4a3010", 0.8);
+      ellipse(ctx, 38, 46, 3, 2.5, "#e8c860", "#4a3010", 0.8);
       // armor torso
-      rounded(ctx, 18, 26, 28, 24, 6, linGrad(ctx, 18, 26, 46, 50, [[0, "#70a0e0"], [0.5, "#3060a0"], [1, "#183050"]]), "#0c1828", 2);
+      rounded(ctx, 18, 26, 28, 24, 6, linGrad(ctx, 18, 26, 46, 50, [[0, "#7aa8e8"], [0.5, "#3060a0"], [1, "#183050"]]), "#0c1828", 2);
       // gold trim
       ctx.strokeStyle = "#e8c860";
       ctx.lineWidth = 1.5;
       ctx.strokeRect(22, 30, 20, 14);
+      poly(ctx, [[32, 32], [35, 37], [32, 42], [29, 37]], "#f0d060", "#4a3010", 0.8);
+      rounded(ctx, 20, 46, 24, 4, 1, "#3a2414", "#120c06", 1);
+      rounded(ctx, 30, 45, 4, 6, 1, "#f0d060", "#4a3010", 0.8);
       // head
       ellipse(ctx, 32, 18, 11, 11, linGrad(ctx, 22, 8, 42, 28, [[0, "#ffe8b0"], [1, "#c09048"]]), "#4a3018", 1.6);
       // crown helm
       rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#f8e080"], [1, "#a87828"]]), "#4a3010", 1.4);
       poly(ctx, [[32, 0], [26, 8], [38, 8]], "#f0d060", "#4a3010", 1);
+      ellipse(ctx, 32, 7, 2, 2.5, "#d02020");
       face(ctx, 32, 18);
       // shield
-      poly(ctx, [[10, 28], [22, 26], [24, 48], [16, 54], [8, 48]], linGrad(ctx, 8, 26, 24, 54, [[0, "#fff0b8"], [1, "#a08030"]]), "#3a2810", 1.5);
+      poly(ctx, [[10, 28], [22, 26], [24, 48], [16, 54], [8, 48]], linGrad(ctx, 8, 26, 24, 54, [[0, "#fff4c0"], [0.5, "#d8b048"], [1, "#a08030"]]), "#3a2810", 1.5);
+      poly(ctx, [[16, 33], [19, 38], [16, 43], [13, 38]], "#2a4878", "#0e1828", 1);
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(11, 28, 10, 18);
       // sword
+      rounded(ctx, 44, 46, 12, 5, 2, "#8a6030", "#2a1810", 1);
+      ellipse(ctx, 50, 52, 2.5, 2.5, "#e8c860", "#2a1810", 1);
       ctx.strokeStyle = "#d0d8e8";
       ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.moveTo(48, 48);
       ctx.lineTo(56, 14);
       ctx.stroke();
-      rounded(ctx, 44, 46, 12, 5, 2, "#8a6030", "#2a1810", 1);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(48, 47);
+      ctx.lineTo(55, 15);
+      ctx.stroke();
       // blade tip glow
       ellipse(ctx, 56, 12, 3, 3, "rgba(200,220,255,.7)");
-    });
+    };
+
+    const drawHeroCaptainAttack = (ctx) => {
+      shadow(ctx, 34, 63, 26, 6, 0.42);
+      // cape billowing leftwards
+      poly(ctx, [[16, 26], [42, 26], [32, 54], [12, 60], [2, 46]], linGrad(ctx, 2, 26, 42, 60, [[0, "#5a90d0"], [0.5, "#2a4870"], [1, "#101e30"]]), "#0c1828", 1.8);
+      ctx.strokeStyle = "rgba(255,255,255,0.2)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(18, 30);
+      ctx.lineTo(6, 48);
+      ctx.moveTo(28, 30);
+      ctx.lineTo(16, 54);
+      ctx.stroke();
+      // legs lunging forward
+      poly(ctx, [[18, 44], [25, 44], [16, 58], [9, 58]], linGrad(ctx, 9, 44, 25, 58, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
+      rounded(ctx, 7, 56, 11, 6, 2, "#182438", "#0e1828", 1);
+      poly(ctx, [[34, 44], [43, 44], [47, 57], [40, 58]], linGrad(ctx, 34, 44, 47, 58, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
+      rounded(ctx, 38, 56, 12, 6, 2, "#182438", "#0e1828", 1);
+      ellipse(ctx, 42, 48, 3, 2.5, "#e8c860", "#4a3010", 0.8);
+      // torso angled forward
+      rounded(ctx, 22, 27, 28, 23, 6, linGrad(ctx, 22, 27, 50, 50, [[0, "#7aa8e8"], [0.5, "#3060a0"], [1, "#183050"]]), "#0c1828", 2);
+      ctx.strokeStyle = "#e8c860";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(26, 31, 18, 13);
+      poly(ctx, [[35, 33], [38, 37], [35, 41], [32, 37]], "#f0d060", "#4a3010", 0.8);
+      rounded(ctx, 24, 46, 23, 4, 1, "#3a2414", "#120c06", 1);
+      // head focused forward
+      ellipse(ctx, 35, 19, 11, 11, linGrad(ctx, 25, 9, 45, 29, [[0, "#ffe8b0"], [1, "#c09048"]]), "#4a3018", 1.6);
+      rounded(ctx, 23, 7, 24, 10, 3, linGrad(ctx, 23, 7, 47, 17, [[0, "#f8e080"], [1, "#a87828"]]), "#4a3010", 1.4);
+      poly(ctx, [[36, 1], [29, 9], [42, 9]], "#f0d060", "#4a3010", 1);
+      ellipse(ctx, 36, 8, 2, 2.5, "#d02020");
+      face(ctx, 35, 19, "#f6f0c2", "#101008", true);
+      // shield braced for impact
+      poly(ctx, [[6, 30], [18, 28], [21, 48], [14, 54], [5, 48]], linGrad(ctx, 5, 28, 21, 54, [[0, "#fff4c0"], [0.5, "#d8b048"], [1, "#8a6020"]]), "#3a2810", 1.5);
+      poly(ctx, [[11, 35], [14, 39], [11, 43], [8, 39]], "#2a4878", "#0e1828", 1);
+      // slash arc energy trail
+      ctx.beginPath();
+      ctx.arc(38, 36, 24, -Math.PI * 0.45, Math.PI * 0.16);
+      ctx.strokeStyle = "rgba(180, 225, 255, 0.45)";
+      ctx.lineWidth = 6;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(38, 36, 24, -Math.PI * 0.35, Math.PI * 0.12);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      // sword slashing committed
+      rounded(ctx, 42, 30, 12, 7, 3, linGrad(ctx, 42, 30, 54, 37, [[0, "#7aa8e8"], [1, "#183050"]]), "#0c1828", 1.5);
+      rounded(ctx, 46, 33, 6, 12, 2, "#8a6030", "#2a1810", 1);
+      ellipse(ctx, 44, 39, 2.5, 2.5, "#e8c860", "#2a1810", 1);
+      ctx.strokeStyle = "#e8f0ff";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(49, 34);
+      ctx.lineTo(63, 24);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(50, 34);
+      ctx.lineTo(63, 24);
+      ctx.stroke();
+      // impact spark at strike point
+      poly(ctx, [[63, 20], [65, 24], [69, 24], [65, 26], [64, 30], [62, 26], [58, 24], [62, 23]], "#ffffff");
+      ellipse(ctx, 63, 24, 3, 3, "rgba(255,240,160,0.85)");
+    };
+
+    const drawHeroCaptainAbility = (ctx) => {
+      shadow(ctx, 32, 63, 24, 7, 0.45);
+      // radiant halo aura
+      const auraGrad = radGrad(ctx, 32, 24, 8, 30, [[0, "rgba(255, 235, 140, 0.5)"], [0.6, "rgba(255, 200, 60, 0.2)"], [1, "rgba(255, 180, 40, 0)"]]);
+      ellipse(ctx, 32, 24, 28, 22, auraGrad);
+      // cape billowing wide on both sides
+      poly(ctx, [[18, 28], [2, 38], [6, 58], [22, 54]], linGrad(ctx, 2, 28, 22, 58, [[0, "#5a90d0"], [1, "#142438"]]), "#0c1828", 1.8);
+      poly(ctx, [[46, 28], [62, 38], [58, 58], [42, 54]], linGrad(ctx, 42, 28, 62, 58, [[0, "#5a90d0"], [1, "#142438"]]), "#0c1828", 1.8);
+      poly(ctx, [[20, 28], [44, 28], [48, 60], [32, 64], [16, 60]], linGrad(ctx, 16, 28, 48, 64, [[0, "#5a90d0"], [1, "#101e30"]]), "#0c1828", 1.8);
+      // wide resolute stance
+      rounded(ctx, 19, 44, 9, 16, 3, linGrad(ctx, 19, 44, 28, 60, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
+      rounded(ctx, 36, 44, 9, 16, 3, linGrad(ctx, 36, 44, 45, 60, [[0, "#3a5880"], [1, "#182840"]]), "#0e1828", 1.2);
+      rounded(ctx, 17, 55, 11, 6, 2, "#182438", "#0e1828", 1);
+      rounded(ctx, 36, 55, 11, 6, 2, "#182438", "#0e1828", 1);
+      ellipse(ctx, 23, 46, 3.5, 3, "#f0d060", "#4a3010", 0.8);
+      ellipse(ctx, 41, 46, 3.5, 3, "#f0d060", "#4a3010", 0.8);
+      // torso proud with glowing trim
+      rounded(ctx, 18, 25, 28, 25, 6, linGrad(ctx, 18, 25, 46, 50, [[0, "#88b8f8"], [0.5, "#3870b8"], [1, "#183860"]]), "#0c1828", 2);
+      ctx.strokeStyle = "#ffe070";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(22, 29, 20, 14);
+      poly(ctx, [[32, 31], [36, 36], [32, 41], [28, 36]], "#fff280", "#4a3010", 1);
+      rounded(ctx, 20, 46, 24, 4, 1, "#3a2414", "#120c06", 1);
+      rounded(ctx, 30, 45, 4, 6, 1, "#ffe070", "#4a3010", 0.8);
+      // head & helm with crown crest
+      ellipse(ctx, 32, 17, 11, 11, linGrad(ctx, 22, 7, 42, 27, [[0, "#ffe8b0"], [1, "#c09048"]]), "#4a3018", 1.6);
+      rounded(ctx, 20, 6, 24, 10, 3, linGrad(ctx, 20, 6, 44, 16, [[0, "#fff090"], [0.6, "#f0c840"], [1, "#a87828"]]), "#4a3010", 1.5);
+      poly(ctx, [[32, 0], [26, 7], [38, 7]], "#fff280", "#4a3010", 1);
+      poly(ctx, [[21, 3], [18, 8], [24, 8]], "#f8d860", "#4a3010", 0.8);
+      poly(ctx, [[43, 3], [40, 8], [46, 8]], "#f8d860", "#4a3010", 0.8);
+      face(ctx, 32, 17, "#fff8d0", "#101008", true);
+      ellipse(ctx, 32, 22, 2.5, 2, "#4a1c14", "#2a0a06", 0.8);
+      // shield raised outward
+      poly(ctx, [[4, 26], [18, 23], [20, 46], [12, 53], [3, 46]], linGrad(ctx, 3, 23, 20, 53, [[0, "#fffde0"], [0.5, "#f0ca50"], [1, "#987020"]]), "#3a2810", 1.6);
+      poly(ctx, [[11, 32], [14, 36], [11, 40], [8, 36]], "#2a4878", "#0e1828", 1);
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(6, 26, 11, 18);
+      // raised sword skyward
+      rounded(ctx, 42, 16, 8, 18, 3, linGrad(ctx, 42, 16, 50, 34, [[0, "#88b8f8"], [1, "#285088"]]), "#0c1828", 1.5);
+      rounded(ctx, 39, 14, 14, 5, 2, "#ffd866", "#3a2410", 1);
+      ellipse(ctx, 46, 21, 2.5, 2.5, "#ffd866", "#3a2410", 0.8);
+      ctx.strokeStyle = "#eef4ff";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(46, 14);
+      ctx.lineTo(46, 3);
+      ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(46, 14);
+      ctx.lineTo(46, 3);
+      ctx.stroke();
+      // radiant star flare at blade tip
+      poly(ctx, [[46, 0], [48, 3], [52, 3], [49, 6], [50, 10], [46, 7], [42, 10], [43, 6], [40, 3], [44, 3]], "#fffbbf", "#d4af37", 0.8);
+      ellipse(ctx, 46, 4, 3.5, 3.5, "rgba(255,255,255,0.95)");
+      ctx.strokeStyle = "rgba(255, 235, 120, 0.85)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(53, 2);
+      ctx.lineTo(57, 1);
+      ctx.moveTo(39, 2);
+      ctx.lineTo(35, 1);
+      ctx.stroke();
+    };
+
+    make("hero_captain_idle", 64, 72, drawHeroCaptainIdle);
+    make("hero_captain", 64, 72, drawHeroCaptainIdle);
+    make("hero_captain_attack", 64, 72, drawHeroCaptainAttack);
+    make("hero_captain_ability", 64, 72, drawHeroCaptainAbility);
 
     // —— Props ——
     make("tree_pine", 56, 72, (ctx) => {

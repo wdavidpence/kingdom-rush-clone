@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.63";
+  const KRC_VERSION = "1.0.64";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -313,6 +313,9 @@
         make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("soldier_guard", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
         make("hero_captain", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
+        make("hero_captain_idle", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
+        make("hero_captain_attack", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
+        make("hero_captain_ability", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
         make("tree_pine", 24, 32, (ctx) => { ctx.fillStyle = "#3a6a30"; ctx.fillRect(4,0,16,32); });
         make("rock_moss", 20, 14, (ctx) => { ctx.fillStyle = "#686c64"; ctx.fillRect(0,0,20,14); });
         make("pad_empty", 48, 32, (ctx) => { ctx.fillStyle = "#4a3c2a"; ctx.beginPath(); ctx.ellipse(24,16,20,10,0,0,Math.PI*2); ctx.fill(); });
@@ -1674,6 +1677,8 @@
         level: 1,
         xp: 0,
         attackCooldown: 0,
+        attackPoseTime: 0,
+        abilityPoseTime: 0,
         respawn: 0,
         commandTime: 0,
         dead: false,
@@ -1685,7 +1690,8 @@
       const outerRing = this.add.circle(0, 0, 34, 0xf5d76e, 0.08).setStrokeStyle(3.5, 0xf5d76e, 0.9);
       ringContainer.add([innerDisc, outerRing]);
       this.hero.ring = ringContainer;
-      this.hero.sprite = this.add.image(post.x, post.y - 10, "hero_captain").setScale(0.82).setDepth(46);
+      const heroIdleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
+      this.hero.sprite = this.add.image(post.x, post.y - 10, heroIdleKey).setScale(0.82).setDepth(46);
       if (isSentinel) this.hero.sprite.setTint(0xb8c4c8);
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
@@ -5147,6 +5153,8 @@ const bannerY = 98;
         return;
       }
       hero.commandTime = Math.max(0, hero.commandTime - dt);
+      hero.attackPoseTime = Math.max(0, (hero.attackPoseTime || 0) - dt);
+      hero.abilityPoseTime = Math.max(0, (hero.abilityPoseTime || 0) - dt);
       const forcedMove = hero.commandTime > 0 && Phaser.Math.Distance.Between(hero.x, hero.y, hero.targetX, hero.targetY) > 8;
       const target = forcedMove ? null : this.findEnemyNear(hero.x, hero.y, 42, false);
       if (!target) this.moveSoldierToward(hero, hero.targetX, hero.targetY, 4, dt);
@@ -5157,12 +5165,27 @@ const bannerY = 98;
       const attackTarget = forcedMove ? null : this.findEnemyNear(hero.x, hero.y, 34, false);
       if (attackTarget && hero.attackCooldown <= 0) {
         hero.attackCooldown = Math.max(0.34, 0.58 - hero.level * 0.04);
+        hero.attackPoseTime = 0.22;
         this.damageEnemy(attackTarget, (18 + hero.level * 7) * (this.bannerTime > 0 ? 1.25 : 1), { hero: true });
         this.audio.play("impact", 0.14, 1.1);
       }
       hero.hp = Math.min(hero.maxHp, hero.hp + (4 + hero.level) * dt);
       hero.sprite.setPosition(hero.x, hero.y - 8);
-      hero.sprite.rotation = attackTarget ? Math.sin(this.time.now * 0.025) * 0.1 : 0;
+
+      const reducedMotion = !!this.settings?.reducedMotion;
+      let desiredTexture = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
+      if (!reducedMotion) {
+        if (hero.abilityPoseTime > 0 && this.textures.exists("hero_captain_ability")) {
+          desiredTexture = "hero_captain_ability";
+        } else if (hero.attackPoseTime > 0 && this.textures.exists("hero_captain_attack")) {
+          desiredTexture = "hero_captain_attack";
+        }
+      }
+      if (hero.sprite && hero.sprite.texture.key !== desiredTexture && this.textures.exists(desiredTexture)) {
+        hero.sprite.setTexture(desiredTexture);
+      }
+
+      hero.sprite.rotation = (!reducedMotion && attackTarget && hero.attackPoseTime > 0) ? Math.sin(this.time.now * 0.025) * 0.1 : 0;
       hero.ring.setPosition(hero.x, hero.y);
       if (this.heroSelected && !this.settings?.reducedMotion) {
         const pulseScale = 1 + Math.sin(this.time.now * 0.006) * 0.08;
@@ -5255,6 +5278,7 @@ const bannerY = 98;
         }
         this.flashText("HEAL", hero.x, hero.y - 42, "#9eff9c");
       }
+      hero.abilityPoseTime = 0.55;
       ability.ready = ability.cooldown;
       if (id === "charge") this.audio.playLayered("chargeAbility");
       else if (id === "banner") this.audio.playLayered("bannerAbility");
@@ -5270,9 +5294,13 @@ const bannerY = 98;
         targetX: point.x,
         targetY: point.y,
         hp: this.hero.maxHp,
+        attackPoseTime: 0,
+        abilityPoseTime: 0,
         dead: false,
         state: "active",
       });
+      const idleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
+      if (this.hero.sprite && this.textures.exists(idleKey)) this.hero.sprite.setTexture(idleKey);
       for (const obj of [this.hero.sprite, this.hero.barBg, this.hero.bar, this.hero.levelText]) obj.setVisible(true);
       this.say("Captain has returned.");
     }
@@ -5283,6 +5311,8 @@ const bannerY = 98;
       this.entityRegistry.transition(hero, "dead");
       hero.respawn = 9;
       hero.hp = 0;
+      hero.attackPoseTime = 0;
+      hero.abilityPoseTime = 0;
       this.heroSelected = false;
       hero.ring.setVisible(false);
       if (this.heroAura) {
