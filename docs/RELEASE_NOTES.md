@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.70 — Death poses
+- Per-family corpse textures; fade after pose. Worker: antigrav.
+
+
 ## KRC 1.0.69 — Tower L2/L3 morph art
 - Each family has distinct L2/L3 silhouettes. Fire pose returns to level idle.
 - Worker: antigrav (repair after bake crash).
