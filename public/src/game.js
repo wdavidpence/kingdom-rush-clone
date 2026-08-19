@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.77";
+  const KRC_VERSION = "1.0.78";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1133,14 +1133,35 @@
       });
     }
 
+    getMapUnitTint() {
+      const tints = [
+        0xf4f7e6, // Forest Gate: forest green-gold
+        0xe6ecf5, // Stone Pass: stone cool
+        0xfcf0e2, // Ember Marsh: ember warm
+        0xe6f4f0, // Gale Reach: gale cool mist
+        0xf6e8e2, // Ash Spire: ash warm
+      ];
+      return tints[this.mapIndex] ?? 0xffffff;
+    }
+
+    applyUnitTint(sprite) {
+      if (!sprite) return;
+      const tint = this.getMapUnitTint();
+      if (tint && tint !== 0xffffff) {
+        sprite.setTint(tint);
+      } else {
+        sprite.clearTint();
+      }
+    }
+
     drawMap() {
       const grass = this.map.grass;
       const themes = [
-        { accent: 0x3a5a2e, accent2: 0x1e3018, road: 0x9a7a4a, roadEdge: 0x4a3420, pathMid: 0xc4a06a, tint: 0xffffff, skyTop: 0x6a9ac8, skyBot: 0xb8d8a0 },
-        { accent: 0x3a4a50, accent2: 0x1a282c, road: 0x8a9098, roadEdge: 0x3a4048, pathMid: 0xb0b8c0, tint: 0xc8d0d8, skyTop: 0x5a7088, skyBot: 0x90a8a0 },
-        { accent: 0x4a3a20, accent2: 0x2a2410, road: 0xb07a42, roadEdge: 0x5a3a18, pathMid: 0xe0a060, tint: 0xe8c898, skyTop: 0xc07040, skyBot: 0xa08040 },
-        { accent: 0x3a5550, accent2: 0x1a2c2a, road: 0x8a9a90, roadEdge: 0x3a4840, pathMid: 0xc0d0c4, tint: 0xd0e0d8, skyTop: 0x6a8890, skyBot: 0x90b0a0 },
-        { accent: 0x5a3a28, accent2: 0x2a1c14, road: 0x8a6a50, roadEdge: 0x3a2818, pathMid: 0xc4a080, tint: 0xe0c0a0, skyTop: 0x8a6050, skyBot: 0xa08060 },
+        { accent: 0x3a5a2e, accent2: 0x1e3018, road: 0x9a7a4a, roadEdge: 0x4a3420, pathMid: 0xc4a06a, tint: 0xffffff, unitTint: 0xf4f7e6, skyTop: 0x6a9ac8, skyBot: 0xb8d8a0 },
+        { accent: 0x3a4a50, accent2: 0x1a282c, road: 0x8a9098, roadEdge: 0x3a4048, pathMid: 0xb0b8c0, tint: 0xc8d0d8, unitTint: 0xe6ecf5, skyTop: 0x5a7088, skyBot: 0x90a8a0 },
+        { accent: 0x4a3a20, accent2: 0x2a2410, road: 0xb07a42, roadEdge: 0x5a3a18, pathMid: 0xe0a060, tint: 0xe8c898, unitTint: 0xfcf0e2, skyTop: 0xc07040, skyBot: 0xa08040 },
+        { accent: 0x3a5550, accent2: 0x1a2c2a, road: 0x8a9a90, roadEdge: 0x3a4840, pathMid: 0xc0d0c4, tint: 0xd0e0d8, unitTint: 0xe6f4f0, skyTop: 0x6a8890, skyBot: 0x90b0a0 },
+        { accent: 0x5a3a28, accent2: 0x2a1c14, road: 0x8a6a50, roadEdge: 0x3a2818, pathMid: 0xc4a080, tint: 0xe0c0a0, unitTint: 0xf6e8e2, skyTop: 0x8a6050, skyBot: 0xa08060 },
       ];
       const theme = themes[this.mapIndex] || themes[0];
 
@@ -1646,7 +1667,11 @@
       this.hero.ring = ringContainer;
       const heroIdleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
       this.hero.sprite = this.add.image(post.x, post.y - 10, heroIdleKey).setScale(0.82).setDepth(46);
-      if (isSentinel) this.hero.sprite.setTint(0xb8c4c8);
+      if (isSentinel) {
+        this.hero.sprite.setTint(0xb8c4c8);
+      } else {
+        this.applyUnitTint(this.hero.sprite);
+      }
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
       this.hero.levelText = this.add
@@ -1665,7 +1690,7 @@
         this.hero.sprite?.setTint?.(0xb8c4c8);
         this.hero.levelText?.setText?.("HLD");
       } else {
-        this.hero.sprite?.clearTint?.();
+        this.applyUnitTint(this.hero.sprite);
         this.hero.levelText?.setText?.(`H${this.hero.level}`);
       }
       if (this.heroPortraitLabel) {
@@ -2862,6 +2887,7 @@ const bannerY = 98;
       const baseScale = this.getTowerScale(type, 0);
       const initialKey = this.getTowerTextureKey(type, 0);
       tower.sprite = this.add.image(pad.x, pad.y - 8, initialKey).setScale(baseScale).setDepth(30);
+      this.applyUnitTint(tower.sprite);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.makeRangeDecal(pad.x, pad.y, cfg.range[0], cfg.color);
       if (type === "barracks") {
@@ -3064,6 +3090,11 @@ const bannerY = 98;
       if (tower.sprite) {
         tower.sprite.setTexture(idleKeyPath);
         tower.sprite.setScale(this.getTowerScale(tower));
+        if (tower.hexed) {
+          tower.sprite.setTint(0xb49cff);
+        } else {
+          this.applyUnitTint(tower.sprite);
+        }
       }
       tower.label.setText(
         ["I", "II", "III", "IV", "V"][tower.level] + (chosen.tag || "")
@@ -3106,7 +3137,14 @@ const bannerY = 98;
         tower.firePoseTimer = null;
       }
       const idleKeyUp = this.getTowerTextureKey(tower);
-      if (tower.sprite) tower.sprite.setTexture(idleKeyUp);
+      if (tower.sprite) {
+        tower.sprite.setTexture(idleKeyUp);
+        if (tower.hexed) {
+          tower.sprite.setTint(0xb49cff);
+        } else {
+          this.applyUnitTint(tower.sprite);
+        }
+      }
       // Upgrade visual: scale bounce + scaffold morph + stronger glow burst
       if (tower.sprite && !this.settings?.reducedMotion) {
         this.tweens.add({ targets: tower.sprite, scale: this.getTowerBounceScale(tower.type, tower.level), duration: 120, yoyo: true, repeat: 1 });
@@ -3467,6 +3505,7 @@ const bannerY = 98;
         facingLeft: false,
       });
       enemy.sprite = this.add.image(enemy.x, enemy.y - 4, `enemy_${type}`).setScale(base.size / 30).setDepth(40);
+      this.applyUnitTint(enemy.sprite);
       if (type === "drift") {
         if (!this.textures.exists("enemy_drift")) enemy.sprite.setTexture("enemy_scout");
         enemy.sprite.setTint(0xb8e8ff).setAlpha(0.72);
@@ -3792,8 +3831,8 @@ const bannerY = 98;
         enemy.sprite?.setTint(0xd8c2ff);
       } else if (enemy.phase === 3 && enemy.phaseTimer > 0) {
         enemy.sprite?.setTint(0xffb0c8);
-      } else if (enemy.sprite) {
-        enemy.sprite.clearTint();
+      } else if (enemy.sprite && enemy.slow <= 0) {
+        this.applyUnitTint(enemy.sprite);
       }
     }
 
@@ -4008,24 +4047,6 @@ const bannerY = 98;
           }
         }
       }
-      if (enemy.type === "boss") {
-        if (enemy.slow > 0) {
-          enemy.sprite.setTint(0xaaddff);
-        } else if (enemy.phase === 2 && enemy.phaseTimer > 0) {
-          enemy.sprite.setTint(0xd8c2ff);
-        } else if (enemy.phase === 3 && enemy.phaseTimer > 0) {
-          enemy.sprite.setTint(0xffb0c8);
-        } else {
-          enemy.sprite.clearTint();
-        }
-      } else {
-        if (enemy.hp < enemy.maxHp * 0.35) enemy.sprite.setTint(0xffb0a0);
-        else if (!enemy.base.phases) {
-          if (enemy.type === "mage" || enemy.type === "wizard") enemy.sprite.setTint(0xc8b0ff);
-          else enemy.sprite.clearTint();
-        }
-      }
-      // Slow visual: blue tint + ice crystal particles
       if (enemy.slow > 0) {
         enemy.sprite.setTint(0xaaddff);
         if (!enemy.iceTimer || enemy.iceTimer <= 0) {
@@ -4042,10 +4063,23 @@ const bannerY = 98;
           }
           enemy.iceTimer = 0.2;
         }
+      } else if (enemy.type === "boss" || enemy.base?.phases) {
+        if (enemy.phase === 2 && enemy.phaseTimer > 0) {
+          enemy.sprite.setTint(0xd8c2ff);
+        } else if (enemy.phase === 3 && enemy.phaseTimer > 0) {
+          enemy.sprite.setTint(0xffb0c8);
+        } else {
+          this.applyUnitTint(enemy.sprite);
+        }
       } else {
-        if (!enemy.base.phases && enemy.hp >= enemy.maxHp * 0.35) {
-          if (enemy.type === "mage" || enemy.type === "wizard") enemy.sprite.setTint(0xc8b0ff);
-          else enemy.sprite.clearTint();
+        if (enemy.hp < enemy.maxHp * 0.35) {
+          enemy.sprite.setTint(0xffb0a0);
+        } else if (enemy.type === "drift") {
+          enemy.sprite.setTint(0xb8e8ff);
+        } else if (enemy.type === "mage" || enemy.type === "wizard") {
+          enemy.sprite.setTint(0xc8b0ff);
+        } else {
+          this.applyUnitTint(enemy.sprite);
         }
       }
       enemy.iceTimer = Math.max(0, (enemy.iceTimer || 0) - dt);
@@ -4323,8 +4357,11 @@ const bannerY = 98;
         enemy.sprite = null;
         const family = enemy.type;
         const deadKey = `enemy_${family}_dead`;
-        if (sprite && this.textures.exists(deadKey)) {
-          sprite.setTexture(deadKey);
+        if (sprite) {
+          if (this.textures.exists(deadKey)) {
+            sprite.setTexture(deadKey);
+          }
+          this.applyUnitTint(sprite);
         }
 
         if (this.settings?.reducedMotion) {
@@ -4583,16 +4620,20 @@ const bannerY = 98;
         if (window.KRCTowerAbilities) {
           tower.abilityCooldown = window.KRCTowerAbilities.tickCooldown(tower.abilityCooldown, dt);
         }
+        if (tower.hexed && tower.sprite) {
+          if (this.settings?.reducedMotion || Math.floor(this.time.now / 180) % 2 === 0) {
+            tower.sprite.setTint(0xb49cff);
+          } else {
+            this.applyUnitTint(tower.sprite);
+          }
+        } else if (tower.sprite) {
+          this.applyUnitTint(tower.sprite);
+        }
         if (tower.type === "barracks") {
           this.updateBarracks(tower, dt);
           continue;
         }
         tower.cooldown -= dt * (this.rallyTime > 0 ? 1.28 : 1) * (tower.hexed ? Math.max(0.45, 1 - (tower.hexPenalty || 0.3)) : 1);
-        if (tower.hexed && tower.sprite && Math.floor(this.time.now / 180) % 2 === 0) {
-          tower.sprite.setTint(0xb49cff);
-        } else if (tower.sprite) {
-          tower.sprite.clearTint();
-        }
         // Hex visual: purple crackle particles around hexed tower
         if (tower.hexed && tower.sprite) {
           if (!tower.hexTimer || tower.hexTimer <= 0) {
@@ -5233,6 +5274,7 @@ const bannerY = 98;
 
         if (soldier.sprite && soldier.sprite.texture.key !== desiredTexture && this.textures.exists(desiredTexture)) {
           soldier.sprite.setTexture(desiredTexture);
+          this.applyUnitTint(soldier.sprite);
         }
         if (soldier.sprite) {
           soldier.sprite.setFlipX(!!soldier.facingLeft);
@@ -5488,6 +5530,11 @@ const bannerY = 98;
       }
       if (hero.sprite && hero.sprite.texture.key !== desiredTexture && this.textures.exists(desiredTexture)) {
         hero.sprite.setTexture(desiredTexture);
+        if (hero.kind === "sentinel") {
+          hero.sprite.setTint(0xb8c4c8);
+        } else {
+          this.applyUnitTint(hero.sprite);
+        }
       }
 
       hero.sprite.rotation = (!reducedMotion && attackTarget && hero.attackPoseTime > 0) ? Math.sin(this.time.now * 0.025) * 0.1 : 0;
@@ -5606,6 +5653,11 @@ const bannerY = 98;
       });
       const idleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
       if (this.hero.sprite && this.textures.exists(idleKey)) this.hero.sprite.setTexture(idleKey);
+      if (this.hero.kind === "sentinel") {
+        this.hero.sprite?.setTint?.(0xb8c4c8);
+      } else {
+        this.applyUnitTint(this.hero.sprite);
+      }
       for (const obj of [this.hero.sprite, this.hero.barBg, this.hero.bar, this.hero.levelText]) obj.setVisible(true);
       this.say("Captain has returned.");
     }
@@ -5624,6 +5676,7 @@ const bannerY = 98;
         this.heroAura.destroy();
         this.heroAura = null;
       }
+      this.hero.sprite?.clearTint?.();
       for (const obj of [hero.sprite, hero.barBg, hero.bar, hero.levelText]) obj.setVisible(false);
       this.say("Captain is recovering.");
     }
@@ -5681,6 +5734,7 @@ const bannerY = 98;
         dead: false,
       });
       soldier.sprite = this.add.image(soldier.x, soldier.y - 6, "soldier_guard").setScale(0.82).setDepth(44);
+      this.applyUnitTint(soldier.sprite);
       soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
       tower.soldiers.push(soldier);
       this.soldiers.push(soldier);
@@ -5742,6 +5796,7 @@ const bannerY = 98;
         this.flashText("FALLEN", soldier.x, soldier.y - 24, "#f0a0a0");
         this.refreshBarracksReadiness(tower, alive, wanted);
       }
+      soldier.sprite?.clearTint?.();
       soldier.sprite.destroy();
       soldier.bar.destroy();
       this.soldiers = this.soldiers.filter((s) => s !== soldier);

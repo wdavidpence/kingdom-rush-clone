@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.78 — Map lighting cohesion
+- Per-map unit tint so sprites sit in the scene light. Worker: antigrav.
+
+
 ## KRC 1.0.77 — Hair / cloth / weapon microdetail
 - Extra folds and edges on hero, guards, scout, brute. Worker: antigrav.
 
