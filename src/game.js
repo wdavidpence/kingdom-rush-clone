@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.72";
+  const KRC_VERSION = "1.0.73";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -324,6 +324,10 @@
         make("projectile_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
         make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
+        make("fx_trail_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
+        make("fx_trail_magic", 12, 12, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(6,6,4,0,Math.PI*2); ctx.fill(); });
+        make("fx_trail_bomb", 14, 14, (ctx) => { ctx.fillStyle = "#555"; ctx.beginPath(); ctx.arc(7,7,5,0,Math.PI*2); ctx.fill(); });
+        make("fx_trail_smoke", 12, 12, (ctx) => { ctx.fillStyle = "#666"; ctx.beginPath(); ctx.arc(6,6,4,0,Math.PI*2); ctx.fill(); });
         make("soldier_guard", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
         for (let fi = 0; fi < 4; fi += 1) {
           make(`soldier_guard_walk${fi}`, 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
@@ -4893,78 +4897,122 @@ const bannerY = 98;
     }
 
     createProjectileTrail(p) {
-      if (this.settings?.reducedMotion) {
-        const family = p.family || (p.tower ? p.tower.type : "archer");
-        const color = family === "mage" ? 0x00ffff : family === "artillery" ? 0xffaa00 : 0xf0c040;
-        const flash = this.add.circle(p.x, p.y, 2.5, color, 0.85).setDepth(59);
-        this.tweens.add({
-          targets: flash,
-          alpha: 0,
-          duration: 100,
-          onComplete: () => flash.destroy(),
-        });
-        return;
-      }
+      if (this.settings?.reducedMotion) return;
+
       const family = p.family || (p.tower ? p.tower.type : "archer");
       const rot = p.sprite ? p.sprite.rotation : Phaser.Math.Angle.Between(p.x, p.y, p.target.x, p.target.y);
       const cos = Math.cos(rot);
       const sin = Math.sin(rot);
 
       if (family === "archer") {
-        const length = 12;
-        const startX = p.x - cos * length;
-        const startY = p.y - sin * length;
-        const isGold = Math.random() < 0.65;
-        const color = isGold ? 0xf0c040 : 0xd4a359;
-        const streak = this.add.line(0, 0, startX, startY, p.x, p.y, color, 0.6)
-          .setLineWidth(1.5)
-          .setDepth(59);
-        this.tweens.add({
-          targets: streak,
-          alpha: 0,
-          duration: 110,
-          onComplete: () => streak.destroy(),
-        });
+        const trailKey = this.textures.exists("fx_trail_arrow") ? "fx_trail_arrow" : null;
+        if (trailKey) {
+          const trail = this.add
+            .image(p.x - cos * 12, p.y - sin * 12, trailKey)
+            .setRotation(rot)
+            .setDepth(59)
+            .setAlpha(0.68)
+            .setScale(0.85);
+          this.tweens.add({
+            targets: trail,
+            alpha: 0,
+            scaleX: 0.45,
+            scaleY: 0.65,
+            duration: 120,
+            onComplete: () => trail.destroy(),
+          });
+        } else {
+          const length = 12;
+          const startX = p.x - cos * length;
+          const startY = p.y - sin * length;
+          const streak = this.add.line(0, 0, startX, startY, p.x, p.y, 0xf0c040, 0.6)
+            .setLineWidth(1.5)
+            .setDepth(59);
+          this.tweens.add({
+            targets: streak,
+            alpha: 0,
+            duration: 110,
+            onComplete: () => streak.destroy(),
+          });
+        }
       } else if (family === "mage") {
-        const backX = p.x - cos * 6 + (Math.random() - 0.5) * 4;
-        const backY = p.y - sin * 6 + (Math.random() - 0.5) * 4;
-        const moteColor = Math.random() < 0.5 ? 0x00ffff : 0x70efff;
-        const spark = this.add.circle(backX, backY, 1.5 + Math.random() * 1.5, moteColor, 0.85).setDepth(59);
-        const driftAngle = rot + Math.PI + (Math.random() - 0.5) * 0.8;
-        const dist = 6 + Math.random() * 6;
-        this.tweens.add({
-          targets: spark,
-          x: backX + Math.cos(driftAngle) * dist,
-          y: backY + Math.sin(driftAngle) * dist,
-          alpha: 0,
-          scale: 0.2,
-          duration: 160 + Math.random() * 60,
-          onComplete: () => spark.destroy(),
-        });
+        const trailKey = this.textures.exists("fx_trail_magic") ? "fx_trail_magic" : null;
+        if (trailKey) {
+          const backX = p.x - cos * 8 + (Math.random() - 0.5) * 3;
+          const backY = p.y - sin * 8 + (Math.random() - 0.5) * 3;
+          const trail = this.add
+            .image(backX, backY, trailKey)
+            .setRotation(rot + (Math.random() - 0.5) * 0.35)
+            .setDepth(59)
+            .setAlpha(0.8)
+            .setScale(0.75);
+          this.tweens.add({
+            targets: trail,
+            alpha: 0,
+            scale: 0.22,
+            duration: 160,
+            onComplete: () => trail.destroy(),
+          });
+        } else {
+          const backX = p.x - cos * 6 + (Math.random() - 0.5) * 4;
+          const backY = p.y - sin * 6 + (Math.random() - 0.5) * 4;
+          const spark = this.add.circle(backX, backY, 1.5 + Math.random() * 1.5, 0x00ffff, 0.85).setDepth(59);
+          this.tweens.add({
+            targets: spark,
+            alpha: 0,
+            scale: 0.2,
+            duration: 160,
+            onComplete: () => spark.destroy(),
+          });
+        }
       } else if (family === "artillery") {
-        const backX = p.x - cos * 8;
-        const backY = p.y - sin * 8;
-        const smoke = this.add.circle(
-          backX + (Math.random() - 0.5) * 3,
-          backY + (Math.random() - 0.5) * 3,
-          4,
-          0x555555,
-          0.45
-        ).setDepth(58);
-        this.tweens.add({
-          targets: smoke,
-          scale: 1.8,
-          alpha: 0,
-          duration: 230,
-          onComplete: () => smoke.destroy(),
-        });
+        const backX = p.x - cos * 10;
+        const backY = p.y - sin * 10;
+        const key = Math.random() < 0.65 && this.textures.exists("fx_trail_bomb")
+          ? "fx_trail_bomb"
+          : (this.textures.exists("fx_trail_smoke") ? "fx_trail_smoke" : null);
 
-        if (Math.random() < 0.6) {
+        if (key) {
+          const smoke = this.add
+            .image(
+              backX + (Math.random() - 0.5) * 4,
+              backY + (Math.random() - 0.5) * 4,
+              key
+            )
+            .setRotation(Math.random() * Math.PI * 2)
+            .setDepth(58)
+            .setAlpha(0.72)
+            .setScale(0.7);
+          this.tweens.add({
+            targets: smoke,
+            scale: 1.35,
+            alpha: 0,
+            duration: 220,
+            onComplete: () => smoke.destroy(),
+          });
+        } else {
+          const smoke = this.add.circle(
+            backX + (Math.random() - 0.5) * 3,
+            backY + (Math.random() - 0.5) * 3,
+            4,
+            0x555555,
+            0.45
+          ).setDepth(58);
+          this.tweens.add({
+            targets: smoke,
+            scale: 1.8,
+            alpha: 0,
+            duration: 230,
+            onComplete: () => smoke.destroy(),
+          });
+        }
+
+        if (Math.random() < 0.45) {
           const emberColor = Math.random() < 0.5 ? 0xff6600 : 0xffaa00;
           const ember = this.add.circle(
             backX + (Math.random() - 0.5) * 4,
             backY + (Math.random() - 0.5) * 4,
-            1.5 + Math.random() * 1.0,
+            1.2 + Math.random() * 0.8,
             emberColor,
             0.9
           ).setDepth(59);
