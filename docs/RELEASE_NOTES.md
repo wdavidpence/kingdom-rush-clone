@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.69 — Tower L2/L3 morph art
+- Each family has distinct L2/L3 silhouettes. Fire pose returns to level idle.
+- Worker: antigrav (repair after bake crash).
+
+
 ## KRC 1.0.68 — Character rim light / AO / skin
 - Scout, brute, soldier, hero gain volume lighting.
 - Worker: antigrav.

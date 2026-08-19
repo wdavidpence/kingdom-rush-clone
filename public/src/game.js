@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.68";
+  const KRC_VERSION = "1.0.69";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -292,15 +292,23 @@
         };
         makeFallbackTower("tower_archer", "#6fa546");
         makeFallbackTower("tower_archer_idle", "#6fa546");
+        makeFallbackTower("tower_archer_l2", "#6fa546");
+        makeFallbackTower("tower_archer_l3", "#6fa546");
         make("tower_archer_fire", 32, 32, (ctx) => { ctx.fillStyle = "#8fbe62"; ctx.fillRect(2, 2, 28, 28); });
         makeFallbackTower("tower_mage", "#7867db");
         makeFallbackTower("tower_mage_idle", "#7867db");
+        makeFallbackTower("tower_mage_l2", "#7867db");
+        makeFallbackTower("tower_mage_l3", "#7867db");
         make("tower_mage_fire", 32, 32, (ctx) => { ctx.fillStyle = "#a888ff"; ctx.fillRect(2, 2, 28, 28); });
         makeFallbackTower("tower_artillery", "#b87431");
         makeFallbackTower("tower_artillery_idle", "#b87431");
+        makeFallbackTower("tower_artillery_l2", "#b87431");
+        makeFallbackTower("tower_artillery_l3", "#b87431");
         make("tower_artillery_fire", 32, 32, (ctx) => { ctx.fillStyle = "#d88441"; ctx.fillRect(2, 2, 28, 28); });
         makeFallbackTower("tower_barracks", "#b99c43");
         makeFallbackTower("tower_barracks_idle", "#b99c43");
+        makeFallbackTower("tower_barracks_l2", "#b99c43");
+        makeFallbackTower("tower_barracks_l3", "#b99c43");
         make("tower_barracks_fire", 32, 32, (ctx) => { ctx.fillStyle = "#d9bc63"; ctx.fillRect(2, 2, 28, 28); });
         ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
           make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
@@ -2856,6 +2864,18 @@ const bannerY = 98;
       this.updateUpgradeLabel();
     }
 
+    getTowerTextureKey(towerOrType, level = 0) {
+      const type = typeof towerOrType === "object" ? towerOrType?.type : towerOrType;
+      const lvl = typeof towerOrType === "object" ? (towerOrType?.level || 0) : level;
+      if (lvl >= 2 && this.textures.exists(`tower_${type}_l3`)) {
+        return `tower_${type}_l3`;
+      }
+      if (lvl >= 1 && this.textures.exists(`tower_${type}_l2`)) {
+        return `tower_${type}_l2`;
+      }
+      return this.textures.exists(`tower_${type}_idle`) ? `tower_${type}_idle` : `tower_${type}`;
+    }
+
     getTowerScale(typeOrTower, level = 0) {
       const lvl = typeof typeOrTower === "object" ? (typeOrTower?.level || 0) : level;
       return 0.465 + lvl * 0.03;
@@ -2899,7 +2919,8 @@ const bannerY = 98;
       }
       pad.tower = tower;
       const baseScale = this.getTowerScale(type, 0);
-      tower.sprite = this.add.image(pad.x, pad.y - 8, `tower_${type}`).setScale(baseScale).setDepth(30);
+      const initialKey = this.getTowerTextureKey(type, 0);
+      tower.sprite = this.add.image(pad.x, pad.y - 8, initialKey).setScale(baseScale).setDepth(30);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.makeRangeDecal(pad.x, pad.y, cfg.range[0], cfg.color);
       if (type === "barracks") {
@@ -3098,7 +3119,7 @@ const bannerY = 98;
         tower.firePoseTimer.remove(false);
         tower.firePoseTimer = null;
       }
-      const idleKeyPath = this.textures.exists(`tower_${tower.type}_idle`) ? `tower_${tower.type}_idle` : `tower_${tower.type}`;
+      const idleKeyPath = this.getTowerTextureKey(tower);
       if (tower.sprite) {
         tower.sprite.setTexture(idleKeyPath);
         tower.sprite.setScale(this.getTowerScale(tower));
@@ -3143,7 +3164,7 @@ const bannerY = 98;
         tower.firePoseTimer.remove(false);
         tower.firePoseTimer = null;
       }
-      const idleKeyUp = this.textures.exists(`tower_${tower.type}_idle`) ? `tower_${tower.type}_idle` : `tower_${tower.type}`;
+      const idleKeyUp = this.getTowerTextureKey(tower);
       if (tower.sprite) tower.sprite.setTexture(idleKeyUp);
       // Upgrade visual: scale bounce + scaffold morph + stronger glow burst
       if (tower.sprite && !this.settings?.reducedMotion) {
@@ -4446,7 +4467,7 @@ const bannerY = 98;
       if (!tower || !tower.sprite || this.settings?.reducedMotion) return;
       const type = tower.type;
       const fireKey = `tower_${type}_fire`;
-      const idleKey = this.textures.exists(`tower_${type}_idle`) ? `tower_${type}_idle` : `tower_${type}`;
+      const idleKey = this.getTowerTextureKey(tower);
       if (!this.textures.exists(fireKey)) return;
 
       tower.sprite.setTexture(fireKey);
