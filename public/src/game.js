@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.79";
+  const KRC_VERSION = "1.0.80";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1538,7 +1538,7 @@
 
       placeAway(14, 48, (x, y, i) => {
         const key = i % 3 === 0 && this.textures.exists("tree_oak") ? "tree_oak" : "tree_pine";
-        this.add.image(x, y - 12, key).setScale(0.78 + (i % 4) * 0.08).setDepth(-15).setTint(theme.tint);
+        this.add.image(x, y - 12, key).setScale(0.98 + (i % 4) * 0.1).setDepth(-15).setTint(theme.tint);
       });
       placeAway(10, 42, (x, y, i) => {
         if (this.textures.exists("bush_round")) {
@@ -1595,13 +1595,13 @@
       }
 
       if (this.textures.exists("gate_arch")) {
-        this.gateImage = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.05);
+        this.gateImage = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.38);
       } else {
         this.gateImage = this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
         this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
       }
       if (this.textures.exists("gate_leak")) {
-        this.gateLeakOverlay = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_leak").setDepth(-4.8).setScale(1.05).setAlpha(0);
+        this.gateLeakOverlay = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_leak").setDepth(-4.8).setScale(1.38).setAlpha(0);
       }
       this.add
         .text(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY + 22, "GATE", {
@@ -1614,12 +1614,15 @@
         .setDepth(-4);
 
       const vig = this.add.graphics().setDepth(-3);
-      vig.fillStyle(0x000000, 0.2);
-      vig.fillRect(0, 0, W, 16);
-      vig.fillRect(0, H - 16, W, 16);
+      vig.fillStyle(0x000000, 0.38);
+      vig.fillRect(0, 0, W, 28);
+      vig.fillRect(0, H - 28, W, 28);
+      vig.fillStyle(0x000000, 0.22);
+      vig.fillRect(0, 0, 18, H);
+      vig.fillRect(W - 18, 0, 18, H);
       vig.fillStyle(0x000000, 0.12);
-      vig.fillRect(0, 0, 10, H);
-      vig.fillRect(W - 10, 0, 10, H);
+      vig.fillRect(0, 28, W, 18);
+      vig.fillRect(0, H - 46, W, 18);
     }
 
     strokePath(graphics) {
@@ -1633,7 +1636,7 @@
       for (const pad of this.buildPads) {
         pad.tower = null;
         if (this.textures.exists("pad_empty")) {
-          pad.base = this.add.image(pad.x, pad.y + 2, "pad_empty").setDepth(8).setScale(0.95);
+          pad.base = this.add.image(pad.x, pad.y + 2, "pad_empty").setDepth(8).setScale(1.12);
           pad.glow = this.add.circle(pad.x, pad.y, 22, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.35).setDepth(7);
         } else {
           pad.base = this.add.circle(pad.x, pad.y, 25, 0x1a2215, 0.95).setStrokeStyle(3, 0xb19b58, 0.9);
@@ -1674,7 +1677,7 @@
       ringContainer.add([innerDisc, outerRing]);
       this.hero.ring = ringContainer;
       const heroIdleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
-      this.hero.sprite = this.add.image(post.x, post.y - 10, heroIdleKey).setScale(0.82).setDepth(46);
+      this.hero.sprite = this.add.image(post.x, post.y - 10, heroIdleKey).setScale(1.12).setDepth(46);
       if (isSentinel) {
         this.hero.sprite.setTint(0xb8c4c8);
       } else {
@@ -1705,12 +1708,12 @@
         this.heroPortraitLabel.setText(isSentinel ? "SENTINEL" : "CAPTAIN");
       }
       if (this.heroButtons?.[0]) {
-        this.heroButtons[0].setLabel(isSentinel ? "HOLD" : "CHG");
+        this.heroButtons[0].setLabel(isSentinel ? "Hold" : "Charge");
       }
     }
 
     createHud() {
-      // Layered Wood & Stone Base HUD Bar
+      // Layered Wood & Stone Base HUD Bar — reserved right rail for Mute / Pause / Call
       this.add.rectangle(W / 2, TOP_H / 2, W, TOP_H, 0x1f1712, 0.98).setDepth(90);
       this.add.rectangle(W / 2, TOP_H / 2 - 12, W, TOP_H / 2 - 4, 0x2b2019, 0.6).setDepth(90.2);
       this.add.rectangle(W / 2, TOP_H / 2 + 10, W, TOP_H / 2 - 4, 0x1a120c, 0.6).setDepth(90.2);
@@ -1719,67 +1722,67 @@
       this.add.rectangle(W / 2, TOP_H, W, 4, 0x4a3726).setDepth(91);
       this.add.rectangle(W / 2, TOP_H - 1, W, 2, 0x8a6a42).setDepth(91.2);
       this.add.rectangle(W / 2, TOP_H - 2, W, 1, 0xf5c85a, 0.6).setDepth(91.5);
-      const nailX = [12, 104, 208, 324, 408];
+      const nailX = [10, 92, 174, 248, 410];
       nailX.forEach((nx) => {
         this.add.circle(nx, 6, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
         this.add.circle(nx, TOP_H - 8, 2.5, 0xf5c85a, 0.9).setStrokeStyle(1, 0x3a250c).setDepth(92);
       });
-      if (this.textures.exists("icon_gold")) this.add.image(14, 19, "icon_gold").setScale(0.8).setDepth(100);
-      if (this.textures.exists("icon_heart")) this.add.image(110, 19, "icon_heart").setScale(0.8).setDepth(100);
-      this.goldText = this.add.text(25, 10, "", { font: "bold 15px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
-      this.livesText = this.add.text(121, 10, "", { font: "bold 15px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
+      if (this.textures.exists("icon_gold")) this.add.image(16, 18, "icon_gold").setScale(0.78).setDepth(100);
+      if (this.textures.exists("icon_heart")) this.add.image(92, 18, "icon_heart").setScale(0.78).setDepth(100);
+      this.goldText = this.add.text(28, 8, "", { font: "bold 15px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
+      this.livesText = this.add.text(104, 8, "", { font: "bold 15px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
       if (this.spellRank() > 1 && !this.spellRankHud) {
-        this.spellRankHud = this.add.text(300, 42, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, { font: "bold 10px Cinzel", color: "#f5c85a" }).setDepth(100);
+        this.spellRankHud = this.add.text(168, 10, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, { font: "bold 9px Cinzel", color: "#f5c85a" }).setDepth(100);
       }
       if (this.ironMode && !this.ironHud) {
-        this.ironHud = this.add.text(168, 26, "IRON", { font: "bold 10px Cinzel", color: "#c8d0d8" }).setDepth(100);
+        this.ironHud = this.add.text(168, 24, "IRON", { font: "bold 9px Cinzel", color: "#c8d0d8" }).setDepth(100);
       }
-      this.waveText = this.add.text(228, 8, "", { font: "bold 14px Cinzel", color: COLORS.ink }).setDepth(100);
-      this.mapText = this.add.text(228, 26, "", { font: "bold 10px Cinzel", color: "#cfc4a2" }).setDepth(100);
-      this.waveBarBg = this.add.rectangle(228, 42, 72, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
-      this.waveBar = this.add.rectangle(228, 42, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
+      this.mapText = this.add.text(12, 34, "", { font: "bold 11px Cinzel", color: "#e8d9a8" }).setDepth(100);
+      this.waveText = this.add.text(150, 34, "", { font: "bold 11px Cinzel", color: COLORS.ink }).setDepth(100);
+      this.waveBarBg = this.add.rectangle(12, 52, 140, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
+      this.waveBar = this.add.rectangle(12, 52, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
-        .text(10, 42, "", { font: "bold 12px 'Source Sans 3', Arial", color: "#f8f0d8", wordWrap: { width: 210 } })
+        .text(12, 52, "", { font: "bold 10px 'Source Sans 3', Arial", color: "#f8f0d8", wordWrap: { width: 230 } })
         .setOrigin(0, 0.5)
-        .setDepth(100);
+        .setDepth(102);
       this.muteButton = this.makeButton(
-        208,
-        18,
+        268,
+        28,
         30,
-        20,
+        26,
         "",
         0x3d4f5a,
         () => this.toggleMuted(),
         {
           icon: this.settings.muted ? "icon_sound_off" : "icon_sound_on",
-          iconScale: 0.35,
+          iconScale: 0.38,
           iconOffsetY: 0,
           tooltip: () => this.settings.muted ? "Unmute Audio (M)" : "Mute Audio (M)",
         }
       );
       this.pauseButton = this.makeButton(
-        324,
-        39,
-        32,
-        30,
+        306,
+        28,
+        34,
+        26,
         "II",
         0x3d4f5a,
         () => this.togglePause(),
         {
-          font: "bold 14px 'Source Sans 3', Arial",
+          font: "bold 13px 'Source Sans 3', Arial",
           tooltip: () => this.paused ? "Resume Battle (P)" : "Pause Battle (P)",
         }
       );
       this.callButton = this.makeButton(
-        375,
-        39,
-        58,
-        30,
+        366,
+        28,
+        76,
+        32,
         "CALL",
         0x7a4f25,
         () => this.callWave(),
         {
-          font: "bold 13px Cinzel",
+          font: "bold 14px Cinzel",
           tooltip: () => this.waveActive ? "Wave marching — defend the road!" : "Call Next Wave (SPACE)\nCall early for an extra gold bonus!",
         }
       );
@@ -1864,9 +1867,9 @@
       );
       this.spellButtons = [];
       const spellDefs = [
-        ["meteor", 56, "MET", "icon_spell_meteor", "Meteor (24s cooldown)\nMassive AoE explosion (270 dmg).\nStrikes highest HP enemy swarm."],
-        ["frost", 153, "ICE", "icon_spell_frost", "Frost (22s cooldown)\nFreezes & slows all active enemies\nfor 4.2 seconds."],
-        ["rally", 250, "RLY", "icon_spell_rally", "Rally (28s cooldown)\nInspires all Guards & soldiers with\nboosted attack & temporary armor."],
+        ["meteor", 56, "Meteor", "icon_spell_meteor", "Meteor (24s cooldown)\nMassive AoE explosion (270 dmg).\nStrikes highest HP enemy swarm."],
+        ["frost", 153, "Frost", "icon_spell_frost", "Frost (22s cooldown)\nFreezes & slows all active enemies\nfor 4.2 seconds."],
+        ["rally", 250, "Rally", "icon_spell_rally", "Rally (28s cooldown)\nInspires all Guards & soldiers with\nboosted attack & temporary armor."],
       ];
       for (const [id, x, label, iconKey, tip] of spellDefs) {
         const btn = this.makeButton(
@@ -1896,9 +1899,9 @@
       }
       this.heroButtons = [];
       const heroDefs = [
-        ["charge", 63, this.heroKind === "sentinel" ? "HOLD" : "CHG", "icon_ability_charge", "Hero Charge (16s cooldown)\nCaptain dashes to target area with\na high-damage piercing strike."],
-        ["banner", 166, "BAN", "icon_ability_banner", "Hero Banner (24s cooldown)\nPlants an inspiring battle standard\nto buff nearby soldiers."],
-        ["heal", 269, "HEAL", "icon_ability_heal", "Hero Heal (28s cooldown)\nRestores health to Captain\nand all nearby allied guards."],
+        ["charge", 63, this.heroKind === "sentinel" ? "Hold" : "Charge", "icon_ability_charge", "Hero Charge (16s cooldown)\nCaptain dashes to target area with\na high-damage piercing strike."],
+        ["banner", 166, "Banner", "icon_ability_banner", "Hero Banner (24s cooldown)\nPlants an inspiring battle standard\nto buff nearby soldiers."],
+        ["heal", 269, "Heal", "icon_ability_heal", "Hero Heal (28s cooldown)\nRestores health to Captain\nand all nearby allied guards."],
       ];
       for (const [id, x, label, iconKey, tip] of heroDefs) {
         const btn = this.makeButton(
@@ -1948,13 +1951,16 @@
         for (const el of plateElements) el.setVisible(val);
       };
       this.heroPortraitPlate = plateElements;
+      this.infoBg = this.add.rectangle(W / 2, SHOP_Y - 10, W, 18, 0x120e0a, 0.78).setDepth(88);
       this.infoText = this.add
-        .text(12, SHOP_Y + 61, "Tap a tower type, then tap a build pad.", {
-          font: "12px 'Source Sans 3', Arial",
-          color: "#d9d0ae",
-          wordWrap: { width: 330 },
+        .text(W / 2, SHOP_Y - 10, "Tap a tower type, then tap a build pad.", {
+          font: "11px 'Source Sans 3', Arial",
+          color: "#f0e6c8",
+          wordWrap: { width: 400 },
+          align: "center",
         })
-        .setDepth(100);
+        .setOrigin(0.5)
+        .setDepth(89);
       this.setHeroPanel(false);
     }
 
@@ -2002,8 +2008,8 @@
 
       if (options.roleMark) {
         const rm = options.roleMark;
-        roleMarkX = x - 20;
-        roleMarkY = y - 15;
+        roleMarkX = x - w / 2 + 13;
+        roleMarkY = y - h / 2 + 11;
 
         const roleColors = {
           archer: { fill: 0x152613, stroke: 0x8ae67c },
@@ -2188,8 +2194,7 @@
 
     showStartOverlay() {
       this.overlay = this.add.container(0, 0).setDepth(500);
-      // Darker overlay with vignette feel
-      this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.93));
+      this.overlay.add(this.add.rectangle(W / 2, H / 2, W + 8, H + 8, 0x0a1008, 1));
       // Subtle gold border glow
       const borderGlow = this.add.rectangle(W / 2, H / 2, W - 40, H - 80, 0xf5c85a, 0.04).setStrokeStyle(2, 0xf5c85a, 0.15).setDepth(499);
       this.overlay.add(borderGlow);
@@ -2252,7 +2257,7 @@ const bannerY = 98;
           heroPickSentinel.text.setColor(!isCap ? "#ffd866" : "#aaaaaa");
         }
       };
-      heroPickCaptain = this.makeButton(W / 2 - 80, 668, 120, 30, "CAPTAIN", 0x243548, () => {
+      heroPickCaptain = this.makeButton(W / 2 - 80, 618, 120, 32, "CAPTAIN", 0x243548, () => {
         this.heroKind = "captain";
         updateHeroPicks();
         this.applyHeroKind();
@@ -2260,7 +2265,7 @@ const bannerY = 98;
         font: "bold 11px Cinzel",
         tooltip: () => "Hero: Captain\nDamage & dash-charge hunter.",
       });
-      heroPickSentinel = this.makeButton(W / 2 + 80, 668, 120, 30, "SENTINEL", 0x334440, () => {
+      heroPickSentinel = this.makeButton(W / 2 + 80, 618, 120, 32, "SENTINEL", 0x334440, () => {
         this.heroKind = "sentinel";
         updateHeroPicks();
         this.applyHeroKind();
@@ -2298,7 +2303,7 @@ const bannerY = 98;
 
       this.overlay.add(
         this.add
-          .text(W / 2, 130, "Select a province to defend. Earn up to 3 stars per victory.", {
+          .text(W / 2, 146, "Select a province to defend. Earn up to 3 stars per victory.", {
             font: "14px 'Source Sans 3', Arial",
             color: "#cfc4a2",
             align: "center",
@@ -2540,9 +2545,9 @@ const bannerY = 98;
       };
       ironBtn = this.makeButton(
         W / 2 - 80,
-        706,
+        660,
         150,
-        28,
+        30,
         this.ironMode ? "IRON WATCH: ON" : "IRON WATCH: OFF",
         0x1c241a,
         () => {
@@ -2560,9 +2565,9 @@ const bannerY = 98;
 
       const motionBtn = this.makeButton(
         W / 2 + 80,
-        706,
+        660,
         150,
-        28,
+        30,
         this.settings.reducedMotion ? "MOTION: REDUCED" : "MOTION: FULL",
         0x334657,
         () => {
@@ -2583,7 +2588,7 @@ const bannerY = 98;
 
       this.overlay.add(
         this.add
-          .text(W / 2, 738, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
+          .text(W / 2, 698, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
             font: "12px 'Source Sans 3', Arial",
             color: "#a9b59d",
             align: "center",
@@ -2595,11 +2600,11 @@ const bannerY = 98;
 
       if (this.starBonusLives() > 0) {
         const aegisBg = this.add
-          .rectangle(W / 2 - 80, 148, 160, 20, 0x24150a, 0.95)
+          .rectangle(W / 2 - 80, 168, 160, 20, 0x24150a, 0.95)
           .setStrokeStyle(1.5, 0xd8b548, 0.9)
           .setDepth(503);
         const aegisText = this.add
-          .text(W / 2 - 80, 148, "3★ AEGIS +1 LIFE", {
+          .text(W / 2 - 80, 168, "3★ AEGIS +1 LIFE", {
             font: "bold 11px Cinzel",
             color: "#f5c85a",
           })
@@ -2610,11 +2615,11 @@ const bannerY = 98;
 
       if (this.spellRank() > 1) {
         const spellPlaqueBg = this.add
-          .rectangle(W / 2 + 80, 148, 90, 20, 0x24150a, 0.95)
+          .rectangle(W / 2 + 80, 168, 90, 20, 0x24150a, 0.95)
           .setStrokeStyle(1.5, 0xd8b548, 0.9)
           .setDepth(503);
         const spellPlaqueText = this.add
-          .text(W / 2 + 80, 148, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, {
+          .text(W / 2 + 80, 168, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, {
             font: "bold 11px Cinzel",
             color: "#f5c85a",
           })
@@ -5787,7 +5792,7 @@ const bannerY = 98;
         isMoving: false,
         dead: false,
       });
-      soldier.sprite = this.add.image(soldier.x, soldier.y - 6, "soldier_guard").setScale(0.82).setDepth(44);
+      soldier.sprite = this.add.image(soldier.x, soldier.y - 6, "soldier_guard").setScale(0.98).setDepth(44);
       this.applyUnitTint(soldier.sprite);
       soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
       tower.soldiers.push(soldier);
@@ -6461,13 +6466,13 @@ const bannerY = 98;
     }
 
     updateHud() {
-      this.goldText.setText(`Gold ${this.gold}`);
-      this.livesText.setText(`Lives ${Math.max(0, this.lives)}`);
+      this.goldText.setText(String(this.gold));
+      this.livesText.setText(String(Math.max(0, this.lives)));
       this.waveText.setText(`Wave ${Math.min(this.waveIndex + 1, WAVES.length)}/${WAVES.length}`);
-      this.mapText.setText(`${this.map.name} ${this.mapIndex + 1}/${MAPS.length}`);
+      this.mapText.setText(this.map.name);
       const remaining = this.waveActive ? this.queue.length + this.enemies.length : 0;
       const progress = this.waveTotal > 0 ? 1 - remaining / this.waveTotal : this.waveIndex / WAVES.length;
-      this.waveBar.width = Math.max(1, 72 * Phaser.Math.Clamp(progress, 0, 1));
+      this.waveBar.width = Math.max(1, 140 * Phaser.Math.Clamp(progress, 0, 1));
       this.callButton.setAlpha(this.waveActive || this.gameEnded ? 0.45 : 1);
       this.callButton.setLabel(this.waveActive ? "LIVE" : "CALL");
       this.infoText.setText(this.infoLine());
@@ -6488,7 +6493,7 @@ const bannerY = 98;
       if (this.heroSelected) {
         const hero = this.hero;
         if (!hero || hero.dead) return "Captain is recovering — wait for respawn.";
-        return `Captain L${hero.level} HP ${Math.ceil(hero.hp)}/${hero.maxHp}. Tap road to move. CHG/BAN/HEAL below.`;
+        return `Captain L${hero.level} HP ${Math.ceil(hero.hp)}/${hero.maxHp}. Tap road to move. Charge, Banner, Heal below.`;
       }
       if (this.selectedBuild) {
         const cfg = TOWERS[this.selectedBuild];
