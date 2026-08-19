@@ -1652,30 +1652,225 @@
     });
 
     // —— Units ——
-    make("soldier_guard", 56, 60, (ctx) => {
-      shadow(ctx, 28, 52, 18, 5);
-      // legs
-      rounded(ctx, 18, 36, 8, 14, 3, "#5a4830", "#2a1e10", 1.2);
-      rounded(ctx, 30, 36, 8, 14, 3, "#5a4830", "#2a1e10", 1.2);
-      // body armor
-      rounded(ctx, 14, 22, 28, 20, 5, linGrad(ctx, 14, 22, 42, 42, [[0, "#e8d080"], [0.5, "#a88840"], [1, "#5a4020"]]), "#2a1e10", 1.8);
-      // head
-      ellipse(ctx, 28, 16, 10, 10, linGrad(ctx, 20, 8, 36, 24, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
-      // helm
-      rounded(ctx, 18, 6, 20, 10, 4, linGrad(ctx, 18, 6, 38, 16, [[0, "#f0e0a0"], [1, "#8a7030"]]), "#3a2810", 1.4);
-      ellipse(ctx, 24, 15, 1.6, 1.8, "#1a120c");
-      ellipse(ctx, 32, 15, 1.6, 1.8, "#1a120c");
-      // shield
-      poly(ctx, [[10, 24], [20, 22], [22, 40], [16, 46], [8, 40]], linGrad(ctx, 8, 22, 22, 46, [[0, "#fff0b0"], [1, "#8a6820"]]), "#3a2810", 1.4);
-      // spear
+    const drawSoldierGuardWalk = (ctx, frame = 0) => {
+      const f = frame % 4;
+      const bodyY = (f === 1 || f === 3) ? 20 : 22;
+      const headY = (f === 1 || f === 3) ? 14 : 16;
+      const helmY = (f === 1 || f === 3) ? 5 : 7;
+      const shY = bodyY + 2;
+
+      shadow(ctx, 28, 52, (f === 0 || f === 2) ? 19 : 17, 5);
+
+      // Legs: stride vs passing
+      if (f === 0) {
+        // Far/right leg trailing back
+        poly(ctx, [[30, 36], [37, 36], [42, 47], [35, 48]], "#463624", "#24180c", 1.2);
+        rounded(ctx, 35, 46, 10, 5, 2, "#2c1e10", "#24180c", 1);
+        // Near/left leg stepping forward
+        poly(ctx, [[18, 36], [25, 36], [20, 48], [13, 48]], "#5c4832", "#2a1e10", 1.2);
+        rounded(ctx, 10, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+      } else if (f === 1) {
+        // Near/left leg planted straight
+        rounded(ctx, 18, 34, 8, 14, 3, "#5c4832", "#2a1e10", 1.2);
+        rounded(ctx, 16, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+        // Far/right leg lifting passing knee
+        poly(ctx, [[30, 34], [37, 34], [39, 41], [33, 42]], "#463624", "#24180c", 1.2);
+        rounded(ctx, 33, 39, 9, 5, 2, "#2c1e10", "#24180c", 1);
+      } else if (f === 2) {
+        // Near/left leg trailing back
+        poly(ctx, [[18, 36], [25, 36], [14, 47], [8, 46]], "#463624", "#24180c", 1.2);
+        rounded(ctx, 6, 45, 10, 5, 2, "#2c1e10", "#24180c", 1);
+        // Far/right leg stepping forward
+        poly(ctx, [[30, 36], [37, 36], [42, 48], [35, 48]], "#5c4832", "#2a1e10", 1.2);
+        rounded(ctx, 36, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+      } else {
+        // Near/left leg lifting passing knee
+        poly(ctx, [[18, 34], [25, 34], [27, 41], [21, 42]], "#463624", "#24180c", 1.2);
+        rounded(ctx, 20, 39, 9, 5, 2, "#2c1e10", "#24180c", 1);
+        // Far/right leg planted straight
+        rounded(ctx, 30, 34, 8, 14, 3, "#5c4832", "#2a1e10", 1.2);
+        rounded(ctx, 29, 47, 11, 5.5, 2, "#3c2a18", "#2a1e10", 1);
+      }
+
+      // Torso body armor
+      rounded(ctx, 14, bodyY, 28, 20, 5, linGrad(ctx, 14, bodyY, 42, bodyY + 20, [[0, "#f2da8c"], [0.45, "#b59445"], [1, "#5e4320"]]), "#2a1e10", 1.8);
+      // Armor center ridge & belt
+      ctx.strokeStyle = "rgba(255,245,190,0.4)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(28, bodyY + 2);
+      ctx.lineTo(28, bodyY + 16);
+      ctx.stroke();
+      rounded(ctx, 16, bodyY + 14, 24, 4, 1, "#3c2814", "#1c1208", 1);
+      rounded(ctx, 26, bodyY + 13.5, 4, 5, 1, "#d8b248", "#2a1e10", 0.8);
+
+      // Head & Helmet
+      ellipse(ctx, 28, headY, 10, 10, linGrad(ctx, 20, headY - 8, 36, headY + 8, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
+      rounded(ctx, 18, helmY, 20, 10, 4, linGrad(ctx, 18, helmY, 38, helmY + 10, [[0, "#f8e29a"], [0.6, "#c29d44"], [1, "#6a4a1c"]]), "#3a2810", 1.4);
+      poly(ctx, [[28, helmY - 4], [25, helmY + 2], [31, helmY + 2]], "#d8b248", "#3a2810", 1);
+      ellipse(ctx, 24, headY - 1, 1.6, 1.8, "#1a120c");
+      ellipse(ctx, 32, headY - 1, 1.6, 1.8, "#1a120c");
+
+      // Shield (Left arm)
+      let shDx = 0, shDy = 0, shRot = 0;
+      if (f === 0) { shDx = 0; shDy = 0; shRot = -0.04; }
+      else if (f === 1) { shDx = 1; shDy = -1; shRot = 0.02; }
+      else if (f === 2) { shDx = 2; shDy = 0; shRot = 0.05; }
+      else { shDx = 1; shDy = -1; shRot = -0.02; }
+
+      ctx.save();
+      ctx.translate(16 + shDx, shY + 12 + shDy);
+      ctx.rotate(shRot);
+      poly(ctx, [[-6, -11], [4, -13], [6, 6], [0, 12], [-8, 6]], linGrad(ctx, -8, -13, 6, 12, [[0, "#fff0b0"], [0.45, "#d4aa40"], [1, "#7c5618"]]), "#3a2810", 1.4);
+      poly(ctx, [[-3, -6], [1, -6], [0, 2], [-4, 2]], "#2a4878", "#0e1828", 0.8);
+      ctx.restore();
+
+      // Spear (Right arm)
+      let sp0x, sp0y, sp1x, sp1y;
+      if (f === 0) { sp0x = 39; sp0y = bodyY + 19; sp1x = 48; sp1y = bodyY - 14; }
+      else if (f === 1) { sp0x = 38; sp0y = bodyY + 17; sp1x = 46; sp1y = bodyY - 17; }
+      else if (f === 2) { sp0x = 40; sp0y = bodyY + 16; sp1x = 50; sp1y = bodyY - 13; }
+      else { sp0x = 39; sp0y = bodyY + 18; sp1x = 47; sp1y = bodyY - 16; }
+
       ctx.strokeStyle = "#8a6030";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.moveTo(40, 42);
-      ctx.lineTo(48, 10);
+      ctx.moveTo(sp0x, sp0y);
+      ctx.lineTo(sp1x, sp1y);
       ctx.stroke();
-      poly(ctx, [[48, 6], [52, 14], [44, 12]], "#d0d8e0", "#303840", 1);
-    });
+
+      const ang = Math.atan2(sp1y - sp0y, sp1x - sp0x);
+      const tipX = sp1x + Math.cos(ang) * 9;
+      const tipY = sp1y + Math.sin(ang) * 9;
+      const pX = -Math.sin(ang) * 4;
+      const pY = Math.cos(ang) * 4;
+      poly(ctx, [[tipX, tipY], [sp1x + pX, sp1y + pY], [sp1x - pX, sp1y - pY]], linGrad(ctx, sp1x - 3, sp1y - 3, tipX, tipY, [[0, "#d8e0e8"], [0.6, "#ffffff"], [1, "#8090a0"]]), "#2a323c", 1);
+      ellipse(ctx, tipX - 0.5, tipY - 0.5, 1, 1, "#ffffff");
+      ellipse(ctx, (sp0x * 0.4 + sp1x * 0.6), (sp0y * 0.4 + sp1y * 0.6), 3, 3, "#b59445", "#2a1e10", 1);
+    };
+
+    const drawSoldierGuardAttack = (ctx) => {
+      shadow(ctx, 30, 53, 22, 5.5);
+
+      // Legs lunging forward
+      poly(ctx, [[16, 36], [23, 36], [16, 49], [9, 49]], "#5c4832", "#2a1e10", 1.3);
+      rounded(ctx, 7, 47, 12, 6, 2, "#3c2a18", "#2a1e10", 1.1);
+      poly(ctx, [[29, 36], [36, 36], [46, 48], [39, 49]], "#463624", "#24180c", 1.3);
+      rounded(ctx, 42, 47, 11, 5.5, 2, "#2c1e10", "#24180c", 1.1);
+
+      // Torso leaned into thrust
+      rounded(ctx, 17, 23, 28, 19, 5, linGrad(ctx, 17, 23, 45, 42, [[0, "#f2da8c"], [0.45, "#b59445"], [1, "#5e4320"]]), "#2a1e10", 1.8);
+      ctx.strokeStyle = "rgba(255,245,190,0.4)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(31, 25);
+      ctx.lineTo(31, 38);
+      ctx.stroke();
+      rounded(ctx, 19, 37, 24, 4, 1, "#3c2814", "#1c1208", 1);
+
+      // Head & Helm forward
+      ellipse(ctx, 31, 16, 10, 10, linGrad(ctx, 23, 8, 39, 24, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
+      rounded(ctx, 21, 6, 20, 10, 4, linGrad(ctx, 21, 6, 41, 16, [[0, "#f8e29a"], [0.6, "#c29d44"], [1, "#6a4a1c"]]), "#3a2810", 1.4);
+      poly(ctx, [[32, 2], [29, 8], [35, 8]], "#d8b248", "#3a2810", 1);
+      ellipse(ctx, 27, 15, 1.8, 1.8, "#1a120c");
+      ellipse(ctx, 35, 15, 1.8, 1.8, "#1a120c");
+      ctx.strokeStyle = "#1a120c";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(25, 12);
+      ctx.lineTo(29, 14);
+      ctx.moveTo(37, 12);
+      ctx.lineTo(33, 14);
+      ctx.stroke();
+
+      // Shield pulled back
+      poly(ctx, [[6, 25], [15, 23], [17, 41], [12, 46], [4, 41]], linGrad(ctx, 4, 23, 17, 46, [[0, "#fff0b0"], [0.45, "#d4aa40"], [1, "#7c5618"]]), "#3a2810", 1.4);
+      poly(ctx, [[9, 30], [13, 30], [12, 37], [8, 37]], "#2a4878", "#0e1828", 0.8);
+
+      // Spear Thrust with motion line
+      ctx.strokeStyle = "rgba(255,245,180,0.55)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(28, 28);
+      ctx.lineTo(50, 24);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#8a6030";
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.moveTo(26, 29);
+      ctx.lineTo(46, 25);
+      ctx.stroke();
+
+      rounded(ctx, 28, 26, 12, 6, 2.5, linGrad(ctx, 28, 26, 40, 32, [[0, "#f2da8c"], [1, "#7c5618"]]), "#2a1e10", 1.2);
+      ellipse(ctx, 39, 29, 3, 3, "#b59445", "#2a1e10", 1);
+
+      poly(ctx, [[54, 23], [44, 19], [46, 24], [44, 29]], linGrad(ctx, 44, 19, 54, 24, [[0, "#d8e0e8"], [0.6, "#ffffff"], [1, "#8090a0"]]), "#2a323c", 1.2);
+      ellipse(ctx, 54, 23, 2.5, 2.5, "rgba(255,255,255,0.95)");
+      ellipse(ctx, 54, 23, 4, 4, "rgba(255,230,120,0.4)");
+    };
+
+    const drawSoldierGuardBlock = (ctx) => {
+      shadow(ctx, 28, 53, 21, 6);
+
+      // Legs wide braced defensive stance
+      poly(ctx, [[14, 38], [21, 38], [15, 50], [8, 50]], "#5c4832", "#2a1e10", 1.3);
+      rounded(ctx, 6, 48, 12, 6, 2, "#3c2a18", "#2a1e10", 1.1);
+      poly(ctx, [[33, 38], [40, 38], [46, 50], [39, 50]], "#463624", "#24180c", 1.3);
+      rounded(ctx, 38, 48, 12, 6, 2, "#2c1e10", "#24180c", 1.1);
+
+      // Torso hunkered behind shield
+      rounded(ctx, 14, 24, 28, 20, 5, linGrad(ctx, 14, 24, 42, 44, [[0, "#f2da8c"], [0.45, "#b59445"], [1, "#5e4320"]]), "#2a1e10", 1.8);
+
+      // Head & Helm peering over shield
+      ellipse(ctx, 28, 17, 9.5, 9.5, linGrad(ctx, 20, 9, 36, 25, [[0, "#ffe8b8"], [1, "#c09050"]]), "#4a3018", 1.6);
+      rounded(ctx, 18, 7, 20, 10, 4, linGrad(ctx, 18, 7, 38, 17, [[0, "#f8e29a"], [0.6, "#c29d44"], [1, "#6a4a1c"]]), "#3a2810", 1.4);
+      poly(ctx, [[28, 3], [25, 9], [31, 9]], "#d8b248", "#3a2810", 1);
+      ellipse(ctx, 24, 16, 1.6, 1.8, "#1a120c");
+      ellipse(ctx, 32, 16, 1.6, 1.8, "#1a120c");
+      ctx.strokeStyle = "#1a120c";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(22, 14);
+      ctx.lineTo(26, 15);
+      ctx.moveTo(34, 14);
+      ctx.lineTo(30, 15);
+      ctx.stroke();
+
+      // Spear upright in guard behind shield
+      ctx.strokeStyle = "#8a6030";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(39, 45);
+      ctx.lineTo(44, 7);
+      ctx.stroke();
+      poly(ctx, [[44, 3], [48, 11], [40, 9]], linGrad(ctx, 40, 3, 48, 11, [[0, "#d8e0e8"], [0.6, "#ffffff"], [1, "#8090a0"]]), "#2a323c", 1);
+
+      // Shield Prominent Forward Block
+      poly(ctx, [[14, 20], [36, 18], [39, 42], [25, 50], [11, 42]], linGrad(ctx, 11, 18, 39, 50, [[0, "#fff5c8"], [0.45, "#e0b848"], [1, "#8a621c"]]), "#2a1e10", 1.8);
+      ctx.strokeStyle = "rgba(255,255,255,0.45)";
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(16, 22);
+      ctx.lineTo(34, 20);
+      ctx.lineTo(37, 40);
+      ctx.lineTo(25, 47);
+      ctx.lineTo(13, 40);
+      ctx.closePath();
+      ctx.stroke();
+
+      poly(ctx, [[25, 27], [30, 33], [25, 39], [20, 33]], "#244270", "#0e1828", 1.2);
+      ellipse(ctx, 25, 33, 2.5, 2.5, "#f0d060", "#3a2810", 0.8);
+      ellipse(ctx, 17, 24, 2, 2, "rgba(255,255,255,0.85)");
+    };
+
+    make("soldier_guard", 56, 60, (ctx) => drawSoldierGuardWalk(ctx, 0));
+    make("soldier_guard_walk0", 56, 60, (ctx) => drawSoldierGuardWalk(ctx, 0));
+    make("soldier_guard_walk1", 56, 60, (ctx) => drawSoldierGuardWalk(ctx, 1));
+    make("soldier_guard_walk2", 56, 60, (ctx) => drawSoldierGuardWalk(ctx, 2));
+    make("soldier_guard_walk3", 56, 60, (ctx) => drawSoldierGuardWalk(ctx, 3));
+    make("soldier_guard_attack", 56, 60, drawSoldierGuardAttack);
+    make("soldier_guard_block", 56, 60, drawSoldierGuardBlock);
 
     const drawHeroCaptainIdle = (ctx) => {
       shadow(ctx, 32, 62, 22, 6, 0.4);

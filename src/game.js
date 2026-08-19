@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.64";
+  const KRC_VERSION = "1.0.65";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -312,6 +312,11 @@
         make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("soldier_guard", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
+        for (let fi = 0; fi < 4; fi += 1) {
+          make(`soldier_guard_walk${fi}`, 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
+        }
+        make("soldier_guard_attack", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
+        make("soldier_guard_block", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
         make("hero_captain", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
         make("hero_captain_idle", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
         make("hero_captain_attack", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
@@ -4902,10 +4907,14 @@ const bannerY = 98;
       this.refreshBarracksReadiness(tower, roster.length, wanted);
       this.tryBarracksAbility(tower, roster);
 
-      for (const soldier of roster) {
-        soldier.homeX = tower.rallyX;
-        soldier.homeY = tower.rallyY;
+      const squadOffsets = [[-8, 5], [8, 5], [0, -6], [-10, -4], [10, -4]];
+      for (let i = 0; i < roster.length; i += 1) {
+        const soldier = roster[i];
+        const off = squadOffsets[i % squadOffsets.length] || [0, 0];
+        soldier.homeX = tower.rallyX + off[0];
+        soldier.homeY = tower.rallyY + off[1];
         soldier.attackCooldown -= dt;
+        soldier.attackPoseTime = Math.max(0, (soldier.attackPoseTime || 0) - dt);
         soldier.arrowCooldown = Math.max(0, (soldier.arrowCooldown || 0) - dt);
         const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
         if (meleeTarget) {
@@ -4914,6 +4923,7 @@ const bannerY = 98;
           this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 22, dt);
           if (soldier.attackCooldown <= 0) {
             soldier.attackCooldown = cfg.rate[tower.level];
+            soldier.attackPoseTime = 0.24;
             soldier.strikeCount = (soldier.strikeCount || 0) + 1;
             let attackerDamage = cfg.damage[tower.level];
             if (tower.path === "spike") attackerDamage *= 1.25;
@@ -4928,7 +4938,7 @@ const bannerY = 98;
           }
         } else {
           soldier.target = null;
-          this.moveSoldierToward(soldier, soldier.homeX, soldier.homeY, 6, dt);
+          this.moveSoldierToward(soldier, soldier.homeX, soldier.homeY, 4, dt);
           if (tower.level >= 2 && soldier.arrowCooldown <= 0) {
             const arrowTarget = this.findTarget(tower, cfg.range[tower.level], true);
             if (arrowTarget) {
@@ -4939,9 +4949,48 @@ const bannerY = 98;
             }
           }
         }
+
+        if (soldier.target) {
+          const targetDx = soldier.target.x - soldier.x;
+          if (targetDx < -0.5) soldier.facingLeft = true;
+          else if (targetDx > 0.5) soldier.facingLeft = false;
+        }
+
         soldier.hp = readiness.idleRegen(soldier.hp, soldier.maxHp, dt, !!soldier.target);
         soldier.sprite.setPosition(soldier.x, soldier.y - 4);
-        soldier.sprite.rotation = soldier.target ? Math.sin(this.time.now * 0.02) * 0.12 : 0;
+
+        const reducedMotion = !!this.settings?.reducedMotion;
+        let desiredTexture = "soldier_guard";
+        if (reducedMotion) {
+          desiredTexture = "soldier_guard";
+        } else if (soldier.attackPoseTime > 0 && this.textures.exists("soldier_guard_attack")) {
+          desiredTexture = "soldier_guard_attack";
+        } else if (soldier.target && (!soldier.isMoving || Phaser.Math.Distance.Between(soldier.x, soldier.y, soldier.target.x, soldier.target.y) <= 26) && this.textures.exists("soldier_guard_block")) {
+          desiredTexture = "soldier_guard_block";
+        } else if (soldier.isMoving) {
+          const frameIdx = Math.floor((soldier.walkDist || 0) / 6.5) % 4;
+          const walkKey = `soldier_guard_walk${frameIdx}`;
+          desiredTexture = this.textures.exists(walkKey) ? walkKey : "soldier_guard";
+        } else {
+          desiredTexture = this.textures.exists("soldier_guard_walk0") ? "soldier_guard_walk0" : "soldier_guard";
+        }
+
+        if (soldier.sprite && soldier.sprite.texture.key !== desiredTexture && this.textures.exists(desiredTexture)) {
+          soldier.sprite.setTexture(desiredTexture);
+        }
+        if (soldier.sprite) {
+          soldier.sprite.setFlipX(!!soldier.facingLeft);
+          if (reducedMotion) {
+            soldier.sprite.rotation = 0;
+          } else if (soldier.attackPoseTime > 0) {
+            soldier.sprite.rotation = Math.sin(this.time.now * 0.03) * 0.08;
+          } else if (soldier.target) {
+            soldier.sprite.rotation = Math.sin(this.time.now * 0.015 + (soldier.wobble || 0)) * 0.05;
+          } else {
+            soldier.sprite.rotation = 0;
+          }
+        }
+
         soldier.bar.width = Math.max(1, 20 * (soldier.hp / soldier.maxHp));
         soldier.bar.setPosition(soldier.x - 10, soldier.y - 17);
         if (soldier.bar) soldier.bar.fillColor = soldier.target ? 0xf0c35a : 0x7ee06a;
@@ -5339,10 +5388,19 @@ const bannerY = 98;
 
     moveSoldierToward(soldier, x, y, stopDistance, dt) {
       const d = Phaser.Math.Distance.Between(soldier.x, soldier.y, x, y);
-      if (d <= stopDistance) return;
+      if (d <= stopDistance) {
+        soldier.isMoving = false;
+        return;
+      }
       const step = Math.min(d - stopDistance, 52 * dt);
-      soldier.x += ((x - soldier.x) / d) * step;
-      soldier.y += ((y - soldier.y) / d) * step;
+      const dx = ((x - soldier.x) / d) * step;
+      const dy = ((y - soldier.y) / d) * step;
+      soldier.x += dx;
+      soldier.y += dy;
+      soldier.isMoving = true;
+      soldier.walkDist = (soldier.walkDist || 0) + step;
+      if (dx < -0.3) soldier.facingLeft = true;
+      else if (dx > 0.3) soldier.facingLeft = false;
     }
 
     spawnSoldier(tower) {
@@ -5359,6 +5417,11 @@ const bannerY = 98;
         maxHp,
         tower,
         attackCooldown: 0.2,
+        attackPoseTime: 0,
+        walkDist: 0,
+        facingLeft: false,
+        wobble: Math.random() * Math.PI * 2,
+        isMoving: false,
         dead: false,
       });
       soldier.sprite = this.add.image(soldier.x, soldier.y - 6, "soldier_guard").setScale(0.82).setDepth(44);
