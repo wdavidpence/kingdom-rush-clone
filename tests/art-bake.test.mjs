@@ -117,6 +117,13 @@ const requiredKeys = [
   "fx_rally",
   "fx_rally_0",
   "fx_rally_1",
+  "projectile_arrow",
+  "projectile_magic",
+  "projectile_bomb",
+  "fx_trail_arrow",
+  "fx_trail_magic",
+  "fx_trail_bomb",
+  "fx_trail_smoke",
 ];
 
 for (const key of requiredKeys) {

@@ -1,5 +1,9 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.73 — Projectile and trail sprites
+- Authored arrow/rune/bomb missiles plus trail stamps. Worker: antigrav.
+
+
 ## KRC 1.0.72 — Spell impact sprites
 - Authored MET/ICE/RLY bursts. Worker: antigrav.
 

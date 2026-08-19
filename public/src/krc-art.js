@@ -5216,44 +5216,447 @@
     make("enemy_boss_rage", 96, 88, (ctx) => drawBossRage(ctx));
     make("enemy_boss_dead", 96, 88, (ctx) => drawBossDead(ctx));
 
-    // —— Projectiles ——
-    make("projectile_arrow", 40, 20, (ctx) => {
-      // shaft
-      ctx.strokeStyle = "#8a5a28";
-      ctx.lineWidth = 3;
+    // —— Projectiles (Original KRC Authored Missiles) ——
+    make("projectile_arrow", 44, 20, (ctx) => {
+      // 1. Shaft shadow / dark outline
+      ctx.strokeStyle = "#1c1006";
+      ctx.lineWidth = 3.6;
       ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(6, 10);
-      ctx.lineTo(32, 10);
+      ctx.moveTo(8, 10);
+      ctx.lineTo(34, 10);
       ctx.stroke();
-      // fletching
-      poly(ctx, [[6, 10], [0, 4], [8, 10], [0, 16]], "#e8d070", "#5a4018", 1);
-      // tip
-      poly(ctx, [[28, 6], [40, 10], [28, 14]], "#e8eef0", "#3a4048", 1);
-    });
 
-    make("projectile_magic", 32, 32, (ctx) => {
-      ellipse(ctx, 16, 16, 14, 14, radGrad(ctx, 12, 12, 2, 14, [[0, "#ffffff"], [0.35, "#c8b0ff"], [1, "rgba(80,60,180,.05)"]]));
-      ellipse(ctx, 16, 16, 7, 7, radGrad(ctx, 14, 14, 1, 7, [[0, "#fff"], [1, "#9070ff"]]));
-      for (let i = 0; i < 6; i += 1) {
-        const a = (i / 6) * Math.PI * 2;
-        ellipse(ctx, 16 + Math.cos(a) * 11, 16 + Math.sin(a) * 11, 2, 2, "rgba(230,210,255,.85)");
-      }
-    });
-
-    make("projectile_bomb", 36, 36, (ctx) => {
-      shadow(ctx, 16, 28, 12, 5, 0.3);
-      ellipse(ctx, 16, 20, 13, 13, linGrad(ctx, 6, 10, 26, 30, [[0, "#6a5a48"], [0.5, "#2a2018"], [1, "#0c0806"]]), "#080604", 1.8);
-      // highlight
-      ellipse(ctx, 12, 15, 4, 3, "rgba(255,240,200,.25)");
-      // fuse
-      ctx.strokeStyle = "#d0a060";
-      ctx.lineWidth = 2;
+      // 2. Wooden shaft gradient
+      const shaftGrad = linGrad(ctx, 8, 8, 8, 12, [
+        [0, "#deb87a"],
+        [0.4, "#a26a32"],
+        [1, "#4e2c0e"],
+      ]);
+      ctx.strokeStyle = shaftGrad;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(22, 10);
-      ctx.quadraticCurveTo(28, 4, 30, 8);
+      ctx.moveTo(8, 10);
+      ctx.lineTo(34, 10);
       ctx.stroke();
-      ellipse(ctx, 30, 6, 5, 5, radGrad(ctx, 29, 5, 1, 5, [[0, "#fff8c0"], [0.4, "#ff9020"], [1, "rgba(200,40,0,.05)"]]));
+
+      // Shaft top highlight filament
+      ctx.strokeStyle = "rgba(255, 240, 200, 0.65)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(10, 9.2);
+      ctx.lineTo(32, 9.2);
+      ctx.stroke();
+
+      // 3. Whipping thread bindings (reinforcement cord)
+      rounded(ctx, 31, 8.2, 3, 3.6, 1, "#d49b3d", "#261304", 0.8);
+      rounded(ctx, 15, 8.2, 2.5, 3.6, 1, "#d49b3d", "#261304", 0.8);
+
+      // 4. Rear horn nock
+      rounded(ctx, 6, 8.5, 3, 3, 1, "#543820", "#180e06", 0.8);
+      ctx.fillStyle = "#180e06";
+      ctx.fillRect(5.5, 9.5, 1.5, 1);
+
+      // 5. Fletchings (Dual aerodynamic feathers with painterly vanes)
+      // Top feather
+      poly(
+        ctx,
+        [[7, 9.2], [3, 4], [13, 5], [16, 9.2]],
+        linGrad(ctx, 3, 4, 16, 9.2, [
+          [0, "#fff5d8"],
+          [0.35, "#f0cb5a"],
+          [0.85, "#bb7b1c"],
+          [1, "#5e3408"],
+        ]),
+        "#241406",
+        1.1
+      );
+      ctx.strokeStyle = "rgba(80, 40, 8, 0.4)";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(6, 6); ctx.lineTo(9, 8.5);
+      ctx.moveTo(9, 5.5); ctx.lineTo(12, 8.5);
+      ctx.stroke();
+
+      // Bottom feather
+      poly(
+        ctx,
+        [[7, 10.8], [3, 16], [13, 15], [16, 10.8]],
+        linGrad(ctx, 3, 16, 16, 10.8, [
+          [0, "#fff5d8"],
+          [0.35, "#f0cb5a"],
+          [0.85, "#bb7b1c"],
+          [1, "#5e3408"],
+        ]),
+        "#241406",
+        1.1
+      );
+      ctx.beginPath();
+      ctx.moveTo(6, 14); ctx.lineTo(9, 11.5);
+      ctx.moveTo(9, 14.5); ctx.lineTo(12, 11.5);
+      ctx.stroke();
+
+      // Central quill spine
+      ctx.strokeStyle = "#fff6db";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(6, 10);
+      ctx.lineTo(16, 10);
+      ctx.stroke();
+
+      // 6. Steel Broadhead Arrowhead
+      rounded(ctx, 32.5, 8.2, 3, 3.6, 1, "#667888", "#121b22", 1);
+
+      // Top facet (lit)
+      poly(
+        ctx,
+        [[34, 10], [33, 5], [43, 10]],
+        linGrad(ctx, 33, 5, 43, 10, [
+          [0, "#e8f2f8"],
+          [0.5, "#cbdbe6"],
+          [1, "#ffffff"],
+        ]),
+        "#141c24",
+        1.2
+      );
+      // Bottom facet (shadowed)
+      poly(
+        ctx,
+        [[34, 10], [43, 10], [33, 15]],
+        linGrad(ctx, 33, 15, 43, 10, [
+          [0, "#485a6a"],
+          [0.5, "#7b93a6"],
+          [1, "#283440"],
+        ]),
+        "#141c24",
+        1.2
+      );
+
+      // Razor cutting edge gleam
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(33.5, 5.5);
+      ctx.lineTo(42.5, 10);
+      ctx.stroke();
+
+      // Central steel spine
+      ctx.strokeStyle = "#22303c";
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(34, 10);
+      ctx.lineTo(42, 10);
+      ctx.stroke();
+
+      // Diamond tip glint sparkle
+      ellipse(ctx, 42.5, 10, 1.4, 1.4, "#ffffff");
+    });
+
+    make("projectile_magic", 36, 36, (ctx) => {
+      const cx = 18;
+      const cy = 18;
+
+      // 1. Soft radiant plasma aura (multi-stop violet & cyan)
+      const aura = radGrad(ctx, cx, cy, 2, 17, [
+        [0, "rgba(255, 255, 255, 0.95)"],
+        [0.22, "rgba(215, 160, 255, 0.8)"],
+        [0.5, "rgba(130, 70, 255, 0.45)"],
+        [0.8, "rgba(40, 190, 255, 0.2)"],
+        [1, "rgba(20, 10, 80, 0)"],
+      ]);
+      ellipse(ctx, cx, cy, 17, 17, aura);
+
+      // 2. Trailing comet plasma wisps (pointing left / backward)
+      ctx.strokeStyle = "rgba(190, 140, 255, 0.6)";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(cx - 2, cy - 7);
+      ctx.quadraticCurveTo(cx - 10, cy - 10, cx - 15, cy - 6);
+      ctx.moveTo(cx - 2, cy + 7);
+      ctx.quadraticCurveTo(cx - 10, cy + 10, cx - 15, cy + 6);
+      ctx.moveTo(cx - 4, cy);
+      ctx.lineTo(cx - 16, cy);
+      ctx.stroke();
+
+      // 3. Primary Arcane Rune Diamond Core
+      const diamondOuter = [
+        [cx + 14, cy],
+        [cx, cy - 10],
+        [cx - 11, cy],
+        [cx, cy + 10],
+      ];
+      poly(
+        ctx,
+        diamondOuter,
+        linGrad(ctx, cx - 11, cy, cx + 14, cy, [
+          [0, "#5b15d9"],
+          [0.35, "#9333ea"],
+          [0.7, "#38bdf8"],
+          [1, "#ffffff"],
+        ]),
+        "#180638",
+        1.5
+      );
+
+      // 4. Inner Crystalline Rune Core
+      const diamondInner = [
+        [cx + 8, cy],
+        [cx, cy - 6],
+        [cx - 6, cy],
+        [cx, cy + 6],
+      ];
+      poly(
+        ctx,
+        diamondInner,
+        linGrad(ctx, cx - 6, cy - 6, cx + 8, cy + 6, [
+          [0, "#ffffff"],
+          [0.4, "#e0f2fe"],
+          [0.75, "#a855f7"],
+          [1, "#6366f1"],
+        ]),
+        "#311068",
+        1
+      );
+
+      // 5. Orbiting Arcane Runes / Energy Motes
+      const motes = [
+        { x: cx + 6, y: cy - 9, r: 2.2, c: "#38bdf8" },
+        { x: cx + 6, y: cy + 9, r: 2.2, c: "#38bdf8" },
+        { x: cx - 8, y: cy - 7, r: 1.8, c: "#c084fc" },
+        { x: cx - 8, y: cy + 7, r: 1.8, c: "#c084fc" },
+      ];
+      for (const m of motes) {
+        ellipse(ctx, m.x, m.y, m.r, m.r, m.c, "#1a0836", 0.8);
+        ellipse(ctx, m.x, m.y, m.r * 0.45, m.r * 0.45, "#ffffff");
+      }
+
+      // 6. Arcane Cross-Spark / White-Hot Star Glint
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(cx + 1, cy - 7); ctx.lineTo(cx + 1, cy + 7);
+      ctx.moveTo(cx - 6, cy); ctx.lineTo(cx + 8, cy);
+      ctx.stroke();
+
+      ellipse(ctx, cx + 1, cy, 2.5, 2.5, "#ffffff");
+    });
+
+    make("projectile_bomb", 40, 40, (ctx) => {
+      const cx = 19;
+      const cy = 21;
+      const r = 12.5;
+
+      // 1. Soft ground / motion shadow
+      shadow(ctx, cx, cy + 11, 13, 5, 0.25);
+
+      // 2. Cast Iron Spherical Body
+      ellipse(ctx, cx, cy, r + 0.8, r + 0.8, "#0c0b10", "#050406", 1.8);
+
+      const ironGrad = radGrad(ctx, cx - 4, cy - 4, 1.5, r + 1, [
+        [0, "#8a94a6"],
+        [0.25, "#4c5361"],
+        [0.6, "#252830"],
+        [0.9, "#121318"],
+        [1, "#0a0a0e"],
+      ]);
+      ellipse(ctx, cx, cy, r, r, ironGrad);
+
+      speckles(ctx, cx - 10, cy - 10, 20, 20, 14, "rgba(255, 255, 255, 0.08)", 1);
+      speckles(ctx, cx - 10, cy - 10, 20, 20, 16, "rgba(0, 0, 0, 0.25)", 1.2);
+
+      // Specular highlight crescent on upper-left curve
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 2.5, -Math.PI * 0.75, -Math.PI * 0.25);
+      ctx.stroke();
+
+      ellipse(ctx, cx - 4.5, cy - 5, 2.5, 1.8, "rgba(255, 255, 255, 0.65)");
+
+      // Reinforced Iron Equator Seam
+      ctx.strokeStyle = "rgba(10, 10, 14, 0.85)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 1, r - 0.5, 4.5, 0.15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(180, 195, 215, 0.3)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 0.3, r - 1.2, 4.2, 0.15, Math.PI * 0.9, Math.PI * 2.1);
+      ctx.stroke();
+
+      // 3. Heavy Brass Fuse Collar
+      const spoutX = cx + 7.5;
+      const spoutY = cy - 8.5;
+      poly(
+        ctx,
+        [[spoutX - 3.5, spoutY + 2], [spoutX - 1, spoutY - 3.5], [spoutX + 4.5, spoutY - 0.5], [spoutX + 2, spoutY + 5]],
+        linGrad(ctx, spoutX - 3, spoutY - 3, spoutX + 4, spoutY + 4, [
+          [0, "#ffd260"],
+          [0.45, "#b57d24"],
+          [1, "#4a300a"],
+        ]),
+        "#1c1103",
+        1.2
+      );
+      ellipse(ctx, spoutX + 1.8, spoutY - 2, 2.8, 1.6, "#140a02", "#e6b442", 0.9);
+
+      // 4. Burning Braided Rope Fuse
+      const fuseStartX = spoutX + 1.8;
+      const fuseStartY = spoutY - 2;
+      const fuseTipX = 33;
+      const fuseTipY = 6;
+
+      ctx.strokeStyle = "#2b1704";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(fuseStartX, fuseStartY);
+      ctx.quadraticCurveTo(32, 12, fuseTipX, fuseTipY);
+      ctx.stroke();
+
+      ctx.strokeStyle = linGrad(ctx, fuseStartX, fuseStartY, fuseTipX, fuseTipY, [
+        [0, "#d8a45c"],
+        [0.65, "#a86828"],
+        [1, "#401804"],
+      ]);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(fuseStartX, fuseStartY);
+      ctx.quadraticCurveTo(32, 12, fuseTipX, fuseTipY);
+      ctx.stroke();
+
+      // 5. Fiery Sizzling Spark & Ignition Burst at Fuse Tip
+      const sparkAura = radGrad(ctx, fuseTipX, fuseTipY, 1, 7, [
+        [0, "rgba(255, 240, 180, 0.95)"],
+        [0.35, "rgba(255, 120, 20, 0.7)"],
+        [0.75, "rgba(200, 30, 0, 0.3)"],
+        [1, "rgba(60, 0, 0, 0)"],
+      ]);
+      ellipse(ctx, fuseTipX, fuseTipY, 7, 7, sparkAura);
+
+      poly(
+        ctx,
+        [
+          [fuseTipX, fuseTipY - 5],
+          [fuseTipX + 1.8, fuseTipY - 1.5],
+          [fuseTipX + 5, fuseTipY - 2],
+          [fuseTipX + 2.5, fuseTipY + 1.5],
+          [fuseTipX + 4, fuseTipY + 5],
+          [fuseTipX, fuseTipY + 2.5],
+          [fuseTipX - 3.5, fuseTipY + 4],
+          [fuseTipX - 2, fuseTipY],
+          [fuseTipX - 5, fuseTipY - 2],
+          [fuseTipX - 1.5, fuseTipY - 1.5],
+        ],
+        "#ffdd44",
+        "#ff4400",
+        0.8
+      );
+
+      ellipse(ctx, fuseTipX, fuseTipY, 1.8, 1.8, "#ffffff");
+      ellipse(ctx, fuseTipX + 4, fuseTipY - 4, 0.9, 0.9, "#ffe066");
+      ellipse(ctx, fuseTipX - 3, fuseTipY - 4.5, 0.8, 0.8, "#ff8822");
+      ellipse(ctx, fuseTipX + 5.5, fuseTipY + 2, 0.7, 0.7, "#ffaa33");
+    });
+
+    // —— Projectile Trail Stamps (Original KRC VFX) ——
+    make("fx_trail_arrow", 32, 14, (ctx) => {
+      const trailGrad = linGrad(ctx, 2, 7, 30, 7, [
+        [0, "rgba(240, 200, 100, 0)"],
+        [0.4, "rgba(255, 230, 150, 0.35)"],
+        [0.85, "rgba(255, 245, 210, 0.75)"],
+        [1, "rgba(255, 255, 255, 0.9)"],
+      ]);
+
+      poly(
+        ctx,
+        [[2, 7], [18, 4], [30, 6], [32, 7], [30, 8], [18, 10]],
+        trailGrad
+      );
+
+      ctx.strokeStyle = linGrad(ctx, 6, 7, 32, 7, [
+        [0, "rgba(255, 220, 120, 0)"],
+        [0.5, "rgba(255, 240, 180, 0.8)"],
+        [1, "rgba(255, 255, 255, 0.95)"],
+      ]);
+      ctx.lineWidth = 1.2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(8, 7);
+      ctx.lineTo(31, 7);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 225, 140, 0.4)";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(12, 5); ctx.lineTo(24, 3.5);
+      ctx.moveTo(12, 9); ctx.lineTo(24, 10.5);
+      ctx.stroke();
+    });
+
+    make("fx_trail_magic", 24, 24, (ctx) => {
+      const cx = 12;
+      const cy = 12;
+      const aura = radGrad(ctx, cx, cy, 1, 11, [
+        [0, "rgba(255, 255, 255, 0.9)"],
+        [0.35, "rgba(190, 120, 255, 0.6)"],
+        [0.7, "rgba(60, 200, 255, 0.25)"],
+        [1, "rgba(20, 0, 80, 0)"],
+      ]);
+      ellipse(ctx, cx, cy, 11, 11, aura);
+
+      poly(
+        ctx,
+        [[cx, cy - 8], [cx + 2.5, cy - 1.5], [cx + 8, cy], [cx + 2.5, cy + 1.5], [cx, cy + 8], [cx - 2.5, cy + 1.5], [cx - 8, cy], [cx - 2.5, cy - 1.5]],
+        linGrad(ctx, cx - 6, cy - 6, cx + 6, cy + 6, [
+          [0, "#ffffff"],
+          [0.5, "#d8b4fe"],
+          [1, "#38bdf8"],
+        ])
+      );
+      ellipse(ctx, cx, cy, 1.8, 1.8, "#ffffff");
+    });
+
+    make("fx_trail_bomb", 28, 28, (ctx) => {
+      const cx = 14;
+      const cy = 14;
+
+      const puffs = [
+        { x: cx - 2, y: cy - 2, r: 8, c: "#48434f" },
+        { x: cx + 3, y: cy - 1, r: 6.5, c: "#5c5663" },
+        { x: cx - 1, y: cy + 3, r: 7, c: "#37323d" },
+        { x: cx + 2, y: cy + 2, r: 6, c: "#423d49" },
+      ];
+      for (const p of puffs) {
+        ellipse(ctx, p.x, p.y, p.r, p.r, p.c);
+      }
+
+      ellipse(ctx, cx, cy, 10, 10, radGrad(ctx, cx, cy, 2, 11, [
+        [0, "rgba(90, 85, 98, 0.4)"],
+        [0.7, "rgba(50, 45, 55, 0.25)"],
+        [1, "rgba(20, 18, 22, 0)"],
+      ]));
+
+      ellipse(ctx, cx - 1, cy - 1, 3.2, 3.2, radGrad(ctx, cx - 1, cy - 1, 0.5, 3.5, [
+        [0, "#ffffff"],
+        [0.4, "#ffb830"],
+        [0.8, "#ff4400"],
+        [1, "rgba(180, 20, 0, 0)"],
+      ]));
+    });
+
+    make("fx_trail_smoke", 24, 24, (ctx) => {
+      const cx = 12;
+      const cy = 12;
+      ellipse(ctx, cx - 2, cy - 1, 6.5, 6, "rgba(75, 70, 80, 0.45)");
+      ellipse(ctx, cx + 2, cy - 2, 5.5, 5, "rgba(95, 90, 102, 0.4)");
+      ellipse(ctx, cx, cy + 2, 6, 5.5, "rgba(60, 56, 65, 0.4)");
+      ellipse(ctx, cx, cy, 9, 8, radGrad(ctx, cx, cy, 1, 10, [
+        [0, "rgba(110, 105, 118, 0.35)"],
+        [0.6, "rgba(70, 65, 76, 0.2)"],
+        [1, "rgba(30, 28, 34, 0)"],
+      ]));
     });
 
     // —— Spell Impact Effects (Original KRC VFX) ——
