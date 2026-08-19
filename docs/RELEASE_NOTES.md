@@ -1,5 +1,10 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.66 — 128px Rangers rebuild
+- Rangers idle/fire rebuilt at 128x128. On-map scale preserved.
+- Worker: antigrav.
+
+
 ## KRC 1.0.65 — Guard walk / attack / block
 - Soldiers have stride, thrust, and shield-forward frames.
 - Worker: antigrav.
