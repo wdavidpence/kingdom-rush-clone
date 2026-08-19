@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.74";
+  const KRC_VERSION = "1.0.75";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -341,7 +341,8 @@
         make("tree_pine", 24, 32, (ctx) => { ctx.fillStyle = "#3a6a30"; ctx.fillRect(4,0,16,32); });
         make("rock_moss", 20, 14, (ctx) => { ctx.fillStyle = "#686c64"; ctx.fillRect(0,0,20,14); });
         make("pad_empty", 48, 32, (ctx) => { ctx.fillStyle = "#4a3c2a"; ctx.beginPath(); ctx.ellipse(24,16,20,10,0,0,Math.PI*2); ctx.fill(); });
-        make("gate_arch", 64, 40, (ctx) => { ctx.fillStyle = "#5a4a38"; ctx.fillRect(0,0,64,40); });
+        make("gate_arch", 96, 64, (ctx) => { ctx.fillStyle = "#5a4a38"; ctx.fillRect(8,14,80,44); ctx.fillStyle = "#2a1a10"; ctx.fillRect(28,24,40,30); ctx.fillStyle = "#8a2020"; ctx.fillRect(12,18,12,26); ctx.fillRect(72,18,12,26); });
+        make("gate_leak", 96, 64, (ctx) => { ctx.fillStyle = "rgba(255,50,20,0.8)"; ctx.fillRect(24,20,48,36); });
         make("bush_round", 24, 18, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,24,18); });
         make("flower_patch", 20, 14, (ctx) => { ctx.fillStyle = "#f0d060"; ctx.fillRect(0,0,20,14); });
         make("tree_oak", 32, 32, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,32,32); });
@@ -1561,10 +1562,13 @@
       }
 
       if (this.textures.exists("gate_arch")) {
-        this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.05);
+        this.gateImage = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.05);
       } else {
-        this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
+        this.gateImage = this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
         this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
+      }
+      if (this.textures.exists("gate_leak")) {
+        this.gateLeakOverlay = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_leak").setDepth(-4.8).setScale(1.05).setAlpha(0);
       }
       this.add
         .text(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY + 22, "GATE", {
@@ -4160,9 +4164,84 @@ const bannerY = 98;
     leakEnemy(enemy) {
       this.lives -= enemy.base.leak;
       this.audio.play("impact", 0.45, 0.82);
+      this.triggerGateLeak(enemy);
       this.removeEnemy(enemy, false);
       this.flashText("-" + enemy.base.leak, 360, 88, "#ff8069");
       if (this.lives <= 0) this.endGame(false);
+    }
+
+    triggerGateLeak(enemy) {
+      const gx = MAP_LAYOUT.gateX;
+      const gy = MAP_LAYOUT.gateY;
+
+      // 1. Gate leak overlay breach flash directly on the gate art
+      if (this.gateLeakOverlay) {
+        this.tweens.killTweensOf(this.gateLeakOverlay);
+        this.gateLeakOverlay.setAlpha(1.0);
+        this.tweens.add({
+          targets: this.gateLeakOverlay,
+          alpha: 0,
+          duration: this.settings?.reducedMotion ? 260 : 520,
+          ease: "Quad.easeOut",
+        });
+      }
+
+      // 2. Gate set-piece shudder & impact tint
+      if (this.gateImage) {
+        this.gateImage.setTint(0xff4444);
+        if (!this.settings?.reducedMotion) {
+          this.tweens.killTweensOf(this.gateImage);
+          this.gateImage.setScale(1.18);
+          this.tweens.add({
+            targets: this.gateImage,
+            scaleX: 1.05,
+            scaleY: 1.05,
+            duration: 300,
+            ease: "Back.easeOut",
+            onComplete: () => {
+              this.gateImage?.clearTint();
+            },
+          });
+        } else {
+          this.time.delayedCall(200, () => {
+            this.gateImage?.clearTint();
+          });
+        }
+      }
+
+      // 3. Floating breach penalty directly at the gate door
+      this.flashText("-" + enemy.base.leak, gx - 14, gy - 26, "#ff4040");
+
+      // 4. Breach shockwave & spark explosion into the lane
+      if (!this.settings?.reducedMotion) {
+        const shockRing = this.add.circle(gx, gy, 10, 0xff2a10, 0.45).setStrokeStyle(3, 0xff9922, 1).setDepth(60);
+        this.tweens.add({
+          targets: shockRing,
+          scale: 2.6,
+          alpha: 0,
+          duration: 420,
+          ease: "Quad.easeOut",
+          onComplete: () => shockRing.destroy(),
+        });
+
+        for (let i = 0; i < 7; i += 1) {
+          const spark = this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
+          const angle = Math.PI * (0.65 + Math.random() * 0.7);
+          const dist = 35 + Math.random() * 60;
+          this.tweens.add({
+            targets: spark,
+            x: spark.x + Math.cos(angle) * dist,
+            y: spark.y + Math.sin(angle) * dist,
+            alpha: 0,
+            scale: 0.2,
+            duration: 320 + Math.random() * 180,
+            ease: "Quad.easeOut",
+            onComplete: () => spark.destroy(),
+          });
+        }
+
+        this.cameras.main.shake(130, 0.006);
+      }
     }
 
     damageEnemy(enemy, amount, source = {}) {
