@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.62";
+  const KRC_VERSION = "1.0.63";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -287,10 +287,21 @@
           draw(ctx, w, h);
           texture.refresh();
         };
-        make("tower_archer", 32, 32, (ctx) => { ctx.fillStyle = "#6fa546"; ctx.fillRect(4, 4, 24, 24); });
-        make("tower_mage", 32, 32, (ctx) => { ctx.fillStyle = "#7867db"; ctx.fillRect(4, 4, 24, 24); });
-        make("tower_artillery", 32, 32, (ctx) => { ctx.fillStyle = "#b87431"; ctx.fillRect(4, 4, 24, 24); });
-        make("tower_barracks", 32, 32, (ctx) => { ctx.fillStyle = "#b99c43"; ctx.fillRect(4, 4, 24, 24); });
+        const makeFallbackTower = (key, color) => {
+          make(key, 32, 32, (ctx) => { ctx.fillStyle = color; ctx.fillRect(4, 4, 24, 24); });
+        };
+        makeFallbackTower("tower_archer", "#6fa546");
+        makeFallbackTower("tower_archer_idle", "#6fa546");
+        make("tower_archer_fire", 32, 32, (ctx) => { ctx.fillStyle = "#8fbe62"; ctx.fillRect(2, 2, 28, 28); });
+        makeFallbackTower("tower_mage", "#7867db");
+        makeFallbackTower("tower_mage_idle", "#7867db");
+        make("tower_mage_fire", 32, 32, (ctx) => { ctx.fillStyle = "#a888ff"; ctx.fillRect(2, 2, 28, 28); });
+        makeFallbackTower("tower_artillery", "#b87431");
+        makeFallbackTower("tower_artillery_idle", "#b87431");
+        make("tower_artillery_fire", 32, 32, (ctx) => { ctx.fillStyle = "#d88441"; ctx.fillRect(2, 2, 28, 28); });
+        makeFallbackTower("tower_barracks", "#b99c43");
+        makeFallbackTower("tower_barracks_idle", "#b99c43");
+        make("tower_barracks_fire", 32, 32, (ctx) => { ctx.fillStyle = "#d9bc63"; ctx.fillRect(2, 2, 28, 28); });
         ["scout","brute","shield","ember","brood","flyer","hexer","titan","boss"].forEach((k) => {
           make(`enemy_${k}`, 32, 32, (ctx) => { ctx.fillStyle = "#c0c0c0"; ctx.beginPath(); ctx.arc(16,16,12,0,Math.PI*2); ctx.fill(); });
           for (let fi = 0; fi < 4; fi += 1) {
@@ -3057,7 +3068,15 @@ const bannerY = 98;
       tower.level += 1;
       tower.path = path;
       this.clearFamilyPathPick();
-      if (tower.sprite) tower.sprite.setScale(0.62 + tower.level * 0.04);
+      if (tower.firePoseTimer) {
+        tower.firePoseTimer.remove(false);
+        tower.firePoseTimer = null;
+      }
+      const idleKeyPath = this.textures.exists(`tower_${tower.type}_idle`) ? `tower_${tower.type}_idle` : `tower_${tower.type}`;
+      if (tower.sprite) {
+        tower.sprite.setTexture(idleKeyPath);
+        tower.sprite.setScale(0.62 + tower.level * 0.04);
+      }
       tower.label.setText(
         ["I", "II", "III", "IV", "V"][tower.level] + (chosen.tag || "")
       );
@@ -3094,6 +3113,12 @@ const bannerY = 98;
       }
       this.gold -= cost;
       tower.level += 1;
+      if (tower.firePoseTimer) {
+        tower.firePoseTimer.remove(false);
+        tower.firePoseTimer = null;
+      }
+      const idleKeyUp = this.textures.exists(`tower_${tower.type}_idle`) ? `tower_${tower.type}_idle` : `tower_${tower.type}`;
+      if (tower.sprite) tower.sprite.setTexture(idleKeyUp);
       // Upgrade visual: scale bounce + scaffold morph + stronger glow burst
       if (tower.sprite && !this.settings?.reducedMotion) {
         this.tweens.add({ targets: tower.sprite, scale: 0.78 + tower.level * 0.04, duration: 120, yoyo: true, repeat: 1 });
@@ -3183,6 +3208,10 @@ const bannerY = 98;
       const refund = Math.floor(spent * 0.55);
       this.gold += refund;
       this.audio.playLayered("towerSell");
+      if (tower.firePoseTimer) {
+        tower.firePoseTimer.remove(false);
+        tower.firePoseTimer = null;
+      }
       tower.sprite.destroy();
       tower.label.destroy();
       tower.rangeRing.destroy();
@@ -4387,6 +4416,26 @@ const bannerY = 98;
       if (this.selectedPad?.tower) this.updateUpgradeLabel();
     }
 
+    flashTowerFirePose(tower, duration = 120) {
+      if (!tower || !tower.sprite || this.settings?.reducedMotion) return;
+      const type = tower.type;
+      const fireKey = `tower_${type}_fire`;
+      const idleKey = this.textures.exists(`tower_${type}_idle`) ? `tower_${type}_idle` : `tower_${type}`;
+      if (!this.textures.exists(fireKey)) return;
+
+      tower.sprite.setTexture(fireKey);
+      if (tower.firePoseTimer) {
+        tower.firePoseTimer.remove(false);
+        tower.firePoseTimer = null;
+      }
+      tower.firePoseTimer = this.time.delayedCall(duration, () => {
+        if (tower.sprite && tower.sprite.active) {
+          tower.sprite.setTexture(idleKey);
+        }
+        tower.firePoseTimer = null;
+      });
+    }
+
     tryTowerAbility(tower, target) {
       const api = window.KRCTowerAbilities;
       if (!api || !api.canTrigger(tower)) return;
@@ -4399,6 +4448,7 @@ const bannerY = 98;
           .slice(0, 2);
         for (const extra of extras) this.fireTower(tower, extra);
         if (extras.length) {
+          this.flashTowerFirePose(tower, 140);
           if (this.settings?.reducedMotion) {
             const ring = this.add.circle(tower.x, tower.y, 6, 0xb7f08a, 0.8).setDepth(56);
             this.tweens.add({ targets: ring, alpha: 0, scale: 2, duration: 150, onComplete: () => ring.destroy() });
@@ -4413,6 +4463,7 @@ const bannerY = 98;
         return;
       }
       if (ability.id === "nova") {
+        this.flashTowerFirePose(tower, 140);
         if (this.settings?.reducedMotion) {
           const ring = this.add.circle(target.x, target.y, 8, 0xc2b6ff, 0.8).setDepth(56);
           this.tweens.add({ targets: ring, alpha: 0, scale: 2.5, duration: 150, onComplete: () => ring.destroy() });
@@ -4432,6 +4483,7 @@ const bannerY = 98;
         return;
       }
       if (ability.id === "barrage") {
+        this.flashTowerFirePose(tower, 140);
         const x = target.x;
         const y = target.y;
         const strikeX = x + 18;
@@ -4533,6 +4585,7 @@ const bannerY = 98;
       // Muzzle flash effect
       const angle = Phaser.Math.Angle.Between(tower.x, tower.y - 10, target.x, target.y);
       this.createMuzzleFlash(tower.x, tower.y - 10, angle);
+      this.flashTowerFirePose(tower, 120);
       if (tower.sprite && !this.settings.reducedMotion) {
         const recoilAngle = Phaser.Math.Angle.Between(tower.x, tower.y, target.x, target.y);
         const baseX = tower.x;
@@ -4896,6 +4949,7 @@ const bannerY = 98;
       if (!threatened && !this.enemies.some((e) => !e.dead && Phaser.Math.Distance.Between(tower.rallyX, tower.rallyY, e.x, e.y) < 90)) {
         return;
       }
+      this.flashTowerFirePose(tower, 160);
       for (const soldier of roster) {
         soldier.hp = Math.min(soldier.maxHp, soldier.hp + soldier.maxHp * 0.35);
         soldier.holdFast = 3.5;
@@ -4940,6 +4994,28 @@ const bannerY = 98;
         duration: flashKind === "crit" ? 180 : 120,
         onComplete: () => spark.destroy(),
       });
+      if (flashKind === "crit" && !this.settings?.reducedMotion) {
+        const ring = this.add.circle(midX, midY, 14, 0xfff1a0, 0.25).setStrokeStyle(2, 0xffea70, 0.9).setDepth(69);
+        this.tweens.add({
+          targets: ring,
+          alpha: 0,
+          scale: 2.2,
+          duration: 220,
+          ease: "Quad.easeOut",
+          onComplete: () => ring.destroy(),
+        });
+      }
+      if (this.bannerTime > 0) {
+        const streak = this.add.line(0, 0, soldier.x, soldier.y - 12, enemy.x, enemy.y - 12, 0xffd700, 0.8)
+          .setLineWidth(flashKind === "crit" ? 2.5 : 1.5)
+          .setDepth(68);
+        this.tweens.add({
+          targets: streak,
+          alpha: 0,
+          duration: flashKind === "crit" ? 160 : 110,
+          onComplete: () => streak.destroy(),
+        });
+      }
       if (flashKind === "crit") this.flashText("CLASH", midX, midY - 16, "#fff1a0");
       if (this.settings?.reducedMotion) return;
 
@@ -4973,6 +5049,7 @@ const bannerY = 98;
     }
 
     fireGuardArrow(soldier, target, damage) {
+      if (soldier.tower) this.flashTowerFirePose(soldier.tower, 120);
       const projectile = this.entityRegistry.create("projectile", {
         x: soldier.x,
         y: soldier.y - 12,
@@ -5027,6 +5104,7 @@ const bannerY = 98;
       tower.rallyRing.setPosition(rally.x, rally.y);
       tower.rallyFlag.setPosition(rally.x, rally.y - 20);
       this.syncRallyReadability(tower);
+      this.flashTowerFirePose(tower, 140);
       if (!this.settings?.reducedMotion) {
         for (let i = 0; i < 4; i += 1) {
           const angle = (i / 4) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
@@ -5238,6 +5316,7 @@ const bannerY = 98;
     }
 
     spawnSoldier(tower) {
+      this.flashTowerFirePose(tower, 140);
       const point = { x: tower.rallyX, y: tower.rallyY };
       let maxHp = TOWERS.barracks.soldierHp[tower.level];
       if (tower.path === "bulwark") maxHp = Math.round(maxHp * 1.28);
