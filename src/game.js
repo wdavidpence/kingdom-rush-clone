@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.78";
+  const KRC_VERSION = "1.0.79";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1208,12 +1208,16 @@
           for (let i = 0; i < 6; i += 1) {
             const lx = (i * 70 + 20) % W;
             const ly = 90 + ((i * 85) % 440);
-            const leaf = this.add.circle(lx, ly, 2.5 + (i % 2), leafColors[i], 0.65).setDepth(-17);
+            const leaf = this.textures.exists("fx_leaf")
+              ? this.add.image(lx, ly, "fx_leaf").setScale(0.55 + (i % 2) * 0.15).setTint(leafColors[i]).setAlpha(0.75).setDepth(-17)
+              : this.add.circle(lx, ly, 2.5 + (i % 2), leafColors[i], 0.65).setDepth(-17);
+            if (leaf.setAngle) leaf.setAngle(-20 + i * 15);
             this.tweens.add({
               targets: leaf,
               x: { from: lx, to: (lx + 140) % W },
               y: { from: ly, to: ly + (i % 2 === 0 ? 14 : -14) },
-              alpha: { from: 0.7, to: 0.35 },
+              angle: { from: -20 + i * 15, to: 25 + i * 12 },
+              alpha: { from: 0.75, to: 0.35 },
               duration: 3600 + i * 400,
               yoyo: true,
               repeat: -1,
@@ -1282,11 +1286,15 @@
             const pt = this.path[Math.min(this.path.length - 1, 1 + i * 2)] || this.path[i % this.path.length];
             const dx = pt.x + (i % 2 === 0 ? 18 : -18);
             const dy = pt.y + (i % 2 === 0 ? -10 : 10);
-            const dust = this.add.circle(dx, dy, 1.5 + (i % 2) * 0.5, dustColors[i], 0.55).setDepth(-17);
+            const dust = this.textures.exists("fx_dust")
+              ? this.add.image(dx, dy, "fx_dust").setScale(0.35 + (i % 2) * 0.12).setTint(dustColors[i]).setAlpha(0.6).setDepth(-17)
+              : this.add.circle(dx, dy, 1.5 + (i % 2) * 0.5, dustColors[i], 0.55).setDepth(-17);
+            if (dust.setAngle) dust.setAngle(i * 45);
             this.tweens.add({
               targets: dust,
               y: dy - 25 - i * 6,
               x: dx + (i % 2 === 0 ? 6 : -6),
+              scale: (dust.scale || 1) * 1.35,
               alpha: { from: 0.6, to: 0.15 },
               duration: 2500 + i * 400,
               yoyo: true,
@@ -2938,14 +2946,16 @@ const bannerY = 98;
           const dist = 6 + Math.random() * 12;
           const dx = Math.cos(angle) * dist;
           const dy = Math.sin(angle) * (dist * 0.6);
-          const r = 4 + Math.random() * 4;
           const color = dustColors[i % dustColors.length];
-          const dust = this.add.circle(pad.x + dx * 0.3, pad.y + dy * 0.3, r, color, 0.65).setDepth(34);
+          const dust = this.textures.exists("fx_dust")
+            ? this.add.image(pad.x + dx * 0.3, pad.y + dy * 0.3, "fx_dust").setScale(0.35 + Math.random() * 0.25).setTint(color).setAlpha(0.7).setDepth(34)
+            : this.add.circle(pad.x + dx * 0.3, pad.y + dy * 0.3, 4 + Math.random() * 4, color, 0.65).setDepth(34);
+          if (dust.setAngle) dust.setAngle(Math.random() * 360);
           this.tweens.add({
             targets: dust,
             x: pad.x + dx * 1.5,
             y: pad.y + dy * 1.5 - 4,
-            scale: 1.8,
+            scale: (dust.scale || 1) * 1.8,
             alpha: 0,
             duration: 300 + Math.random() * 100,
             ease: "Quad.out",
@@ -3190,7 +3200,10 @@ const bannerY = 98;
         for (let i = 0; i < 16; i += 1) {
           const angle = (i / 16) * Math.PI * 2;
           const speed = 40 + Math.random() * 30;
-          const sparkle = this.add.circle(tower.x, tower.y - 8, 1.5 + Math.random(), ringColor, 0.9).setDepth(36);
+          const sparkle = this.textures.exists("fx_spark")
+            ? this.add.image(tower.x, tower.y - 8, "fx_spark").setScale(0.28 + Math.random() * 0.18).setTint(ringColor).setAlpha(0.95).setDepth(36)
+            : this.add.circle(tower.x, tower.y - 8, 1.5 + Math.random(), ringColor, 0.9).setDepth(36);
+          if (sparkle.setAngle) sparkle.setAngle(Math.random() * 360);
           this.effects.push({ obj: sparkle, life: 0.4 + Math.random() * 0.2, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
         }
         this.cameras.main.flash(40, 255, 250, 220, false);
@@ -3466,17 +3479,21 @@ const bannerY = 98;
       const pts = this.path && this.path.length ? this.path : [{ x: 200, y: 300 }];
       for (let i = 0; i < 8; i += 1) {
         const pt = pts[i % pts.length];
-        const dust = this.add.circle(
-          pt.x + (Math.random() - 0.5) * 20,
-          pt.y + 6,
-          2.5 + Math.random() * 2,
-          0xc8b89a,
-          0.4
-        ).setDepth(18);
+        const dust = this.textures.exists("fx_dust")
+          ? this.add.image(pt.x + (Math.random() - 0.5) * 20, pt.y + 6, "fx_dust").setScale(0.28 + Math.random() * 0.2).setTint(0xc8b89a).setAlpha(0.45).setDepth(18)
+          : this.add.circle(
+              pt.x + (Math.random() - 0.5) * 20,
+              pt.y + 6,
+              2.5 + Math.random() * 2,
+              0xc8b89a,
+              0.4
+            ).setDepth(18);
+        if (dust.setAngle) dust.setAngle(Math.random() * 360);
         this.tweens.add({
           targets: dust,
           alpha: 0,
           y: dust.y + 10,
+          scale: (dust.scale || 1) * 1.3,
           duration: 720,
           ease: "Quad.out",
           onComplete: () => dust.destroy(),
@@ -3666,12 +3683,15 @@ const bannerY = 98;
             if (enemy.stompTimer <= 0) {
               enemy.stompTimer = 0.45;
               for (const side of [-1, 1]) {
-                const dust = this.add.circle(enemy.x + side * 10, enemy.y + 12, 4, 0x9e8e7a, 0.6).setDepth(39);
+                const dust = this.textures.exists("fx_dust")
+                  ? this.add.image(enemy.x + side * 10, enemy.y + 12, "fx_dust").setScale(0.42).setTint(0x9e8e7a).setAlpha(0.7).setDepth(39)
+                  : this.add.circle(enemy.x + side * 10, enemy.y + 12, 4, 0x9e8e7a, 0.6).setDepth(39);
+                if (dust.setAngle) dust.setAngle(Math.random() * 360);
                 this.tweens.add({
                   targets: dust,
                   x: dust.x + side * 14,
                   y: dust.y - 2,
-                  scale: 2.2,
+                  scale: (dust.scale || 1) * 2.0,
                   alpha: 0,
                   duration: 350,
                   ease: "Quad.easeOut",
@@ -4148,13 +4168,16 @@ const bannerY = 98;
           enemy.fuseSpark.setPosition(enemy.x + jitterX, headY + jitterY);
           enemy.fuseSpark.setAlpha(0.6 + Math.random() * 0.4);
           if (Math.random() < 0.25) {
-            const spark = this.add.circle(enemy.x + jitterX, headY + jitterY, 1.5, 0xffea00, 0.9).setDepth(42);
+            const spark = this.textures.exists("fx_spark")
+              ? this.add.image(enemy.x + jitterX, headY + jitterY, "fx_spark").setScale(0.32).setTint(0xffea00).setAlpha(0.95).setDepth(42)
+              : this.add.circle(enemy.x + jitterX, headY + jitterY, 1.5, 0xffea00, 0.9).setDepth(42);
+            if (spark.setAngle) spark.setAngle(Math.random() * 360);
             this.tweens.add({
               targets: spark,
               x: spark.x + (Math.random() - 0.5) * 12,
               y: spark.y - 6 - Math.random() * 8,
               alpha: 0,
-              scale: 0.2,
+              scale: 0.1,
               duration: 180 + Math.random() * 120,
               onComplete: () => spark.destroy(),
             });
@@ -4263,7 +4286,10 @@ const bannerY = 98;
         });
 
         for (let i = 0; i < 7; i += 1) {
-          const spark = this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
+          const spark = this.textures.exists("fx_spark")
+            ? this.add.image(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, "fx_spark").setScale(0.35 + Math.random() * 0.2).setTint(0xffe066).setAlpha(0.95).setDepth(61)
+            : this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
+          if (spark.setAngle) spark.setAngle(Math.random() * 360);
           const angle = Math.PI * (0.65 + Math.random() * 0.7);
           const dist = 35 + Math.random() * 60;
           this.tweens.add({
@@ -4271,7 +4297,7 @@ const bannerY = 98;
             x: spark.x + Math.cos(angle) * dist,
             y: spark.y + Math.sin(angle) * dist,
             alpha: 0,
-            scale: 0.2,
+            scale: 0.1,
             duration: 320 + Math.random() * 180,
             ease: "Quad.easeOut",
             onComplete: () => spark.destroy(),
@@ -4411,7 +4437,10 @@ const bannerY = 98;
                 const dustY = startY + 6;
                 for (let i = 0; i < 5; i += 1) {
                   const dir = i % 2 === 0 ? 1 : -1;
-                  const dust = this.add.circle(ex, dustY, 2 + Math.random() * 2, 0xd0c4b4, 0.7).setDepth(76);
+                  const dust = this.textures.exists("fx_dust")
+                    ? this.add.image(ex, dustY, "fx_dust").setScale(0.3 + Math.random() * 0.2).setTint(0xd0c4b4).setAlpha(0.75).setDepth(76)
+                    : this.add.circle(ex, dustY, 2 + Math.random() * 2, 0xd0c4b4, 0.7).setDepth(76);
+                  if (dust.setAngle) dust.setAngle(Math.random() * 360);
                   this.effects.push({
                     obj: dust,
                     life: 0.35 + Math.random() * 0.15,
@@ -4444,7 +4473,10 @@ const bannerY = 98;
               ease: "Quad.easeOut",
               onComplete: () => {
                 for (let i = 0; i < 3; i += 1) {
-                  const spark = this.add.circle(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, 1.5, 0xfff0b0, 0.9).setDepth(76);
+                  const spark = this.textures.exists("fx_spark")
+                    ? this.add.image(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, "fx_spark").setScale(0.3).setTint(0xfff0b0).setAlpha(0.95).setDepth(76)
+                    : this.add.circle(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, 1.5, 0xfff0b0, 0.9).setDepth(76);
+                  if (spark.setAngle) spark.setAngle(Math.random() * 360);
                   this.effects.push({ obj: spark, life: 0.25, vx: (Math.random() - 0.5) * 30, vy: -15 - Math.random() * 15 });
                 }
                 this.tweens.add({
@@ -4536,7 +4568,10 @@ const bannerY = 98;
               ease: "Quad.easeIn",
               onComplete: () => {
                 for (let i = 0; i < 4; i += 1) {
-                  const spark = this.add.circle(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, 1.8, 0xd090ff, 0.85).setDepth(76);
+                  const spark = this.textures.exists("fx_spark")
+                    ? this.add.image(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, "fx_spark").setScale(0.35).setTint(0xd090ff).setAlpha(0.9).setDepth(76)
+                    : this.add.circle(enemy.x + (Math.random() - 0.5) * 16, enemy.y + (Math.random() - 0.5) * 8, 1.8, 0xd090ff, 0.85).setDepth(76);
+                  if (spark.setAngle) spark.setAngle(Math.random() * 360);
                   this.effects.push({ obj: spark, life: 0.35 + Math.random() * 0.15, vx: (Math.random() - 0.5) * 25, vy: -20 - Math.random() * 15 });
                 }
                 this.tweens.add({
@@ -4562,7 +4597,10 @@ const bannerY = 98;
               ease: "Quad.easeIn",
               onComplete: () => {
                 for (let i = 0; i < 8; i += 1) {
-                  const rock = this.add.circle(ex + (Math.random() - 0.5) * 24, startY + 6 + (Math.random() - 0.5) * 8, 1.8 + Math.random() * 2, 0x888078, 0.85).setDepth(76);
+                  const rock = this.textures.exists("fx_dust")
+                    ? this.add.image(ex + (Math.random() - 0.5) * 24, startY + 6 + (Math.random() - 0.5) * 8, "fx_dust").setScale(0.28 + Math.random() * 0.2).setTint(0x888078).setAlpha(0.85).setDepth(76)
+                    : this.add.circle(ex + (Math.random() - 0.5) * 24, startY + 6 + (Math.random() - 0.5) * 8, 1.8 + Math.random() * 2, 0x888078, 0.85).setDepth(76);
+                  if (rock.setAngle) rock.setAngle(Math.random() * 360);
                   this.effects.push({
                     obj: rock,
                     life: 0.4 + Math.random() * 0.2,
@@ -5004,11 +5042,14 @@ const bannerY = 98;
         } else {
           const backX = p.x - cos * 6 + (Math.random() - 0.5) * 4;
           const backY = p.y - sin * 6 + (Math.random() - 0.5) * 4;
-          const spark = this.add.circle(backX, backY, 1.5 + Math.random() * 1.5, 0x00ffff, 0.85).setDepth(59);
+          const spark = this.textures.exists("fx_spark")
+            ? this.add.image(backX, backY, "fx_spark").setScale(0.25 + Math.random() * 0.15).setTint(0x00ffff).setAlpha(0.9).setDepth(59)
+            : this.add.circle(backX, backY, 1.5 + Math.random() * 1.5, 0x00ffff, 0.85).setDepth(59);
+          if (spark.setAngle) spark.setAngle(Math.random() * 360);
           this.tweens.add({
             targets: spark,
             alpha: 0,
-            scale: 0.2,
+            scale: 0.1,
             duration: 160,
             onComplete: () => spark.destroy(),
           });
@@ -5114,13 +5155,16 @@ const bannerY = 98;
           const angle = Math.random() * Math.PI * 2;
           const speed = 50 + Math.random() * 60;
           const color = Math.random() < 0.5 ? 0x00ffff : 0x80eeff;
-          const spark = this.add.circle(x, y, 2 + Math.random() * 1.5, color, 0.9).setDepth(80);
+          const spark = this.textures.exists("fx_spark")
+            ? this.add.image(x, y, "fx_spark").setScale(0.32 + Math.random() * 0.2).setTint(color).setAlpha(0.95).setDepth(80)
+            : this.add.circle(x, y, 2 + Math.random() * 1.5, color, 0.9).setDepth(80);
+          if (spark.setAngle) spark.setAngle(Math.random() * 360);
           this.tweens.add({
             targets: spark,
             x: x + Math.cos(angle) * (speed * 0.18),
             y: y + Math.sin(angle) * (speed * 0.18),
             alpha: 0,
-            scale: 0.2,
+            scale: 0.1,
             duration: 200 + Math.random() * 80,
             onComplete: () => spark.destroy(),
           });
@@ -5339,11 +5383,14 @@ const bannerY = 98;
       const midX = (soldier.x + enemy.x) * 0.5;
       const midY = (soldier.y + enemy.y) * 0.5 - 8;
       const color = flashKind === "crit" ? 0xfff1a0 : 0xffd0a0;
-      const spark = this.add.circle(midX, midY, flashKind === "crit" ? 10 : 6, color, 0.55).setDepth(70);
+      const spark = this.textures.exists("fx_spark")
+        ? this.add.image(midX, midY, "fx_spark").setScale(flashKind === "crit" ? 0.7 : 0.45).setTint(color).setAlpha(0.95).setDepth(70)
+        : this.add.circle(midX, midY, flashKind === "crit" ? 10 : 6, color, 0.55).setDepth(70);
+      if (spark.setAngle) spark.setAngle(Math.random() * 360);
       this.tweens.add({
         targets: spark,
         alpha: 0,
-        scale: flashKind === "crit" ? 2.1 : 1.6,
+        scale: (spark.scale || 1) * (flashKind === "crit" ? 2.1 : 1.6),
         duration: flashKind === "crit" ? 180 : 120,
         onComplete: () => spark.destroy(),
       });
@@ -5462,17 +5509,21 @@ const bannerY = 98;
         for (let i = 0; i < 4; i += 1) {
           const angle = (i / 4) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
           const dist = 5 + Math.random() * 8;
-          const dust = this.add.circle(
-            rally.x + Math.cos(angle) * 3,
-            rally.y + Math.sin(angle) * 2,
-            2 + Math.random() * 1.5,
-            0xd4c596,
-            0.6
-          ).setDepth(18);
+          const dust = this.textures.exists("fx_dust")
+            ? this.add.image(rally.x + Math.cos(angle) * 3, rally.y + Math.sin(angle) * 2, "fx_dust").setScale(0.28 + Math.random() * 0.15).setTint(0xd4c596).setAlpha(0.65).setDepth(18)
+            : this.add.circle(
+                rally.x + Math.cos(angle) * 3,
+                rally.y + Math.sin(angle) * 2,
+                2 + Math.random() * 1.5,
+                0xd4c596,
+                0.6
+              ).setDepth(18);
+          if (dust.setAngle) dust.setAngle(Math.random() * 360);
           this.tweens.add({
             targets: dust,
             x: rally.x + Math.cos(angle) * dist,
             y: rally.y + Math.sin(angle) * dist,
+            scale: (dust.scale || 1) * 1.4,
             alpha: 0,
             duration: 500,
             ease: "Quad.out",
@@ -5608,7 +5659,10 @@ const bannerY = 98;
           for (let i = 0; i < 16; i += 1) {
             const angle = (i / 16) * Math.PI * 2;
             const speed = 50 + Math.random() * 40;
-            const sparkle = this.add.circle(hero.x, hero.y, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+            const sparkle = this.textures.exists("fx_spark")
+              ? this.add.image(hero.x, hero.y, "fx_spark").setScale(0.28 + Math.random() * 0.2).setTint(0xf5d76e).setAlpha(0.9).setDepth(72)
+              : this.add.circle(hero.x, hero.y, 1.5 + Math.random(), 0xf5d76e, 0.8).setDepth(72);
+            if (sparkle.setAngle) sparkle.setAngle(Math.random() * 360);
             this.effects.push({ obj: sparkle, life: 0.5 + Math.random() * 0.3, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed });
           }
         }
@@ -5910,13 +5964,16 @@ const bannerY = 98;
           for (let i = 0; i < 12; i += 1) {
             const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.2;
             const dist = 15 + Math.random() * 35;
-            const spark = this.add.circle(target.x, target.y, 2 + Math.random() * 2, 0xffd07a, 0.9).setDepth(58);
+            const spark = this.textures.exists("fx_spark")
+              ? this.add.image(target.x, target.y, "fx_spark").setScale(0.35 + Math.random() * 0.25).setTint(0xffd07a).setAlpha(0.95).setDepth(58)
+              : this.add.circle(target.x, target.y, 2 + Math.random() * 2, 0xffd07a, 0.9).setDepth(58);
+            if (spark.setAngle) spark.setAngle(Math.random() * 360);
             this.tweens.add({
               targets: spark,
               x: target.x + Math.cos(angle) * dist,
               y: target.y + Math.sin(angle) * dist,
               alpha: 0,
-              scale: 0.2,
+              scale: 0.1,
               duration: 300 + Math.random() * 150,
               onComplete: () => spark.destroy()
             });
@@ -6264,7 +6321,10 @@ const bannerY = 98;
       for (let i = 0; i < 5; i += 1) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 40 + Math.random() * 60;
-        const spark = this.add.circle(x, y, 1.5 + Math.random() * 2, color || 0xfff0c0, 0.9).setDepth(85);
+        const spark = this.textures.exists("fx_spark")
+          ? this.add.image(x, y, "fx_spark").setScale(0.3 + Math.random() * 0.25).setTint(color || 0xfff0c0).setAlpha(0.95).setDepth(85)
+          : this.add.circle(x, y, 1.5 + Math.random() * 2, color || 0xfff0c0, 0.9).setDepth(85);
+        if (spark.setAngle) spark.setAngle(Math.random() * 360);
         this.effects.push({
           obj: spark, life: 0.2 + Math.random() * 0.15,
           vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 20,
