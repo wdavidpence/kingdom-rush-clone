@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.73";
+  const KRC_VERSION = "1.0.74";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -349,6 +349,12 @@
         make("banner_flag", 20, 32, (ctx) => { ctx.fillStyle = "#e07050"; ctx.fillRect(0,0,20,32); });
         make("cloud_soft", 48, 24, (ctx) => { ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fillRect(0,0,48,24); });
         make("path_mark", 16, 10, (ctx) => { ctx.fillStyle = "rgba(180,150,100,.35)"; ctx.fillRect(0,0,16,10); });
+        make("tile_dirt", 32, 32, (ctx) => { ctx.fillStyle = "#7a5530"; ctx.fillRect(0,0,32,32); });
+        make("tile_stone", 32, 32, (ctx) => { ctx.fillStyle = "#5a6876"; ctx.fillRect(0,0,32,32); });
+        make("tile_ember", 32, 32, (ctx) => { ctx.fillStyle = "#2a1e1c"; ctx.fillRect(0,0,32,32); });
+        make("tile_dirt_edge", 32, 16, (ctx) => { ctx.fillStyle = "#4a301a"; ctx.fillRect(0,0,32,16); });
+        make("tile_stone_edge", 32, 16, (ctx) => { ctx.fillStyle = "#3a424a"; ctx.fillRect(0,0,32,16); });
+        make("tile_ember_edge", 32, 16, (ctx) => { ctx.fillStyle = "#1e1412"; ctx.fillRect(0,0,32,16); });
         make("icon_gold", 16, 16, (ctx) => { ctx.fillStyle = "#f5c85a"; ctx.fillRect(0,0,16,16); });
         make("icon_heart", 16, 16, (ctx) => { ctx.fillStyle = "#e66550"; ctx.fillRect(0,0,16,16); });
       }
@@ -1368,70 +1374,23 @@
       }
 
       const edge = this.add.graphics().setDepth(-10);
-      edge.lineStyle(PATH_WIDTH + 18, theme.roadEdge, 1);
+      edge.lineStyle(PATH_WIDTH + 14, theme.roadEdge, 0.95);
       this.strokePath(edge);
       const roadShadow = this.add.graphics().setDepth(-9);
-      roadShadow.lineStyle(PATH_WIDTH + 8, 0x1a120c, 0.35);
+      roadShadow.lineStyle(PATH_WIDTH + 6, 0x140e08, 0.4);
       this.strokePath(roadShadow);
-      const road = this.add.graphics().setDepth(-8);
-      road.lineStyle(PATH_WIDTH, theme.road, 1);
-      this.strokePath(road);
-      const center = this.add.graphics().setDepth(-7);
-      center.lineStyle(3, theme.pathMid, 0.45);
-      this.strokePath(center);
 
-      if (this.mapIndex === 0) {
-        // Forest Gate: dirt ruts along road
-        const rutColor = 0x2b1c10;
-        const leftRut = this.add.graphics().setDepth(-6.8);
-        leftRut.lineStyle(2, rutColor, 0.45);
-        const rightRut = this.add.graphics().setDepth(-6.8);
-        rightRut.lineStyle(2, rutColor, 0.45);
-        for (let i = 0; i < this.path.length - 1; i += 1) {
-          const a = this.path[i];
-          const b = this.path[i + 1];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const len = Math.hypot(dx, dy);
-          if (len === 0) continue;
-          const nx = -dy / len;
-          const ny = dx / len;
-          const offset = PATH_WIDTH * 0.22;
-          if (i === 0) {
-            leftRut.beginPath();
-            leftRut.moveTo(a.x + nx * offset, a.y + ny * offset);
-            rightRut.beginPath();
-            rightRut.moveTo(a.x - nx * offset, a.y - ny * offset);
-          }
-          leftRut.lineTo(b.x + nx * offset, b.y + ny * offset);
-          rightRut.lineTo(b.x - nx * offset, b.y - ny * offset);
-        }
-        leftRut.strokePath();
-        rightRut.strokePath();
+      const tileKey =
+        this.mapIndex === 0 ? "tile_dirt" :
+        (this.mapIndex === 1 || this.mapIndex === 3) ? "tile_stone" :
+        "tile_ember";
+      const edgeKey =
+        this.mapIndex === 0 ? "tile_dirt_edge" :
+        (this.mapIndex === 1 || this.mapIndex === 3) ? "tile_stone_edge" :
+        "tile_ember_edge";
 
-        const rutMark = this.add.graphics().setDepth(-6.5);
-        rutMark.lineStyle(1.5, 0x3d2716, 0.5);
-        for (let i = 0; i < this.path.length - 1; i += 1) {
-          const a = this.path[i];
-          const b = this.path[i + 1];
-          const len = Math.hypot(b.x - a.x, b.y - a.y);
-          const count = Math.floor(len / 22);
-          for (let s = 1; s <= count; s += 1) {
-            const t = s / (count + 1);
-            const px = a.x + (b.x - a.x) * t;
-            const py = a.y + (b.y - a.y) * t;
-            const angle = Math.atan2(b.y - a.y, b.x - a.x);
-            const perp = angle + Math.PI / 2;
-            const rLen = 6 + (s % 3) * 2;
-            rutMark.beginPath();
-            rutMark.moveTo(px - Math.cos(perp) * (rLen / 2), py - Math.sin(perp) * (rLen / 2));
-            rutMark.lineTo(px + Math.cos(perp) * (rLen / 2), py + Math.sin(perp) * (rLen / 2));
-            rutMark.strokePath();
-          }
-        }
-      } else if (this.mapIndex === 1) {
-        // Stone Pass: stone flagstones along path
-        const flagG = this.add.graphics().setDepth(-6.5);
+      if (this.textures.exists(tileKey)) {
+        const stepDist = 22;
         for (let i = 0; i < this.path.length - 1; i += 1) {
           const a = this.path[i];
           const b = this.path[i + 1];
@@ -1440,75 +1399,40 @@
           const len = Math.hypot(dx, dy);
           if (len === 0) continue;
           const angle = Math.atan2(dy, dx);
-          const cos = Math.cos(angle);
-          const sin = Math.sin(angle);
-          const count = Math.floor(len / 18);
-          for (let s = 0; s < count; s += 1) {
-            const t = (s + 0.5) / count;
-            const px = a.x + dx * t;
-            const py = a.y + dy * t;
-            const side = (s % 2 === 0 ? 1 : -1) * (3 + (s % 3) * 2);
-            const nx = -sin * side;
-            const ny = cos * side;
-            const cx = px + nx;
-            const cy = py + ny;
-            const stoneColor = (s % 3 === 0) ? 0x5a5d5b : (s % 3 === 1) ? 0x474948 : 0x6b6e6c;
-            const hw = (10 + (s % 3) * 2) / 2;
-            const hh = (6 + (s % 2) * 2) / 2;
-            const p1x = cx - hw * cos + hh * sin, p1y = cy - hw * sin - hh * cos;
-            const p2x = cx + hw * cos + hh * sin, p2y = cy + hw * sin - hh * cos;
-            const p3x = cx + hw * cos - hh * sin, p3y = cy + hw * sin + hh * cos;
-            const p4x = cx - hw * cos - hh * sin, p4y = cy - hw * sin + hh * cos;
+          const angleDeg = Phaser.Math.RadToDeg(angle);
+          const steps = Math.max(1, Math.round(len / stepDist));
+          const nx = -Math.sin(angle);
+          const ny = Math.cos(angle);
+          const edgeOffset = PATH_WIDTH * 0.44;
 
-            flagG.fillStyle(stoneColor, 0.65);
-            flagG.lineStyle(1, 0x2e302f, 0.7);
-            flagG.beginPath();
-            flagG.moveTo(p1x, p1y);
-            flagG.lineTo(p2x, p2y);
-            flagG.lineTo(p3x, p3y);
-            flagG.lineTo(p4x, p4y);
-            flagG.closePath();
-            flagG.fillPath();
-            flagG.strokePath();
-          }
-        }
-      } else if (this.mapIndex === 2) {
-        // Ember Marsh: ember crust (warm specks/cracks along road)
-        const crustG = this.add.graphics().setDepth(-6.5);
-        const emberColors = [0xff4500, 0xff8c00, 0xdaa520, 0xb22222, 0xe65100];
-        for (let i = 0; i < this.path.length - 1; i += 1) {
-          const a = this.path[i];
-          const b = this.path[i + 1];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const len = Math.hypot(dx, dy);
-          if (len === 0) continue;
-          const angle = Math.atan2(dy, dx);
-          const count = Math.floor(len / 14);
-          for (let s = 0; s < count; s += 1) {
-            const t = (s + 0.5) / count;
+          for (let s = 0; s <= steps; s += 1) {
+            const t = s / steps;
             const px = a.x + dx * t;
             const py = a.y + dy * t;
-            const side = ((s * 7) % 17 - 8);
-            const nx = -Math.sin(angle) * side;
-            const ny = Math.cos(angle) * side;
-            const cx = px + nx;
-            const cy = py + ny;
-            if (s % 2 === 0) {
-              const cLen = 8 + (s % 3) * 4;
-              const cAngle = angle + (s % 2 === 0 ? 0.4 : -0.4);
-              crustG.lineStyle(1.2, 0xff5722, 0.7);
-              crustG.beginPath();
-              crustG.moveTo(cx, cy);
-              crustG.lineTo(cx + Math.cos(cAngle) * cLen, cy + Math.sin(cAngle) * cLen);
-              crustG.strokePath();
-            } else {
-              const color = emberColors[s % emberColors.length];
-              crustG.fillStyle(color, 0.75);
-              crustG.fillCircle(cx, cy, 1.5 + (s % 3) * 0.5);
+
+            const tileImg = this.add.image(px, py, tileKey).setAngle(angleDeg).setDepth(-8);
+            if (s % 2 === 1) tileImg.setScale(1.0, -1.0);
+
+            if (this.textures.exists(edgeKey) && s % 2 === 0) {
+              this.add.image(px + nx * edgeOffset, py + ny * edgeOffset, edgeKey)
+                .setAngle(angleDeg).setDepth(-7.8).setScale(0.95).setAlpha(0.75);
+              this.add.image(px - nx * edgeOffset, py - ny * edgeOffset, edgeKey)
+                .setAngle(angleDeg + 180).setDepth(-7.8).setScale(0.95).setAlpha(0.75);
             }
           }
         }
+
+        // Waypoint corner node junctions for smooth turns
+        for (const node of this.path) {
+          this.add.image(node.x, node.y, tileKey).setDepth(-7.9).setAlpha(0.95);
+        }
+      } else {
+        const road = this.add.graphics().setDepth(-8);
+        road.lineStyle(PATH_WIDTH, theme.road, 1);
+        this.strokePath(road);
+        const center = this.add.graphics().setDepth(-7);
+        center.lineStyle(3, theme.pathMid, 0.45);
+        this.strokePath(center);
       }
 
       if (this.textures.exists("path_mark")) {
@@ -1521,7 +1445,7 @@
             const y = a.y + (b.y - a.y) * t;
             this.add
               .image(x, y, "path_mark")
-              .setAlpha(0.5)
+              .setAlpha(0.4)
               .setDepth(-6.5)
               .setAngle(Phaser.Math.RadToDeg(Math.atan2(b.y - a.y, b.x - a.x)));
           }
