@@ -1,5 +1,11 @@
 # KRC 1.0 Release Notes
 
+## KRC 1.0.63 — Tower fire / recoil poses
+- Each tower family has idle + fire textures. Shot flashes fire pose ~120ms.
+- reducedMotion skips the swap.
+- Worker: antigrav (gemini-3.7-flash-high).
+
+
 ## KRC 1.0.62 — Roster walk and fly cycles
 - Shield, Ember, Brood, Flyer, Hexer, Titan now have 4-frame walk/fly sheets.
 - Flip + reducedMotion lock match Scout/Brute.
