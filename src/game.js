@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.1.6";
+  const KRC_VERSION = "1.1.7";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2698,6 +2698,7 @@ const bannerY = 98;
       const intelBg = this.add.rectangle(W / 2, 532, 348, 70, 0x1a140c, 0.94)
         .setStrokeStyle(2, 0xf5c85a, 0.88)
         .setDepth(502);
+      this.campaignIntelBg = intelBg;
       const intelInner = this.add.rectangle(W / 2, 532, 338, 60, 0x24180e, 0.5)
         .setStrokeStyle(1, 0xd8b548, 0.4)
         .setDepth(502.2);
@@ -2888,6 +2889,11 @@ const bannerY = 98;
       } else {
         this.campaignIntelTitle.setText(card[0]);
         this.campaignIntelBody.setText(card[1]);
+      }
+      if (this.campaignIntelBg) {
+        const biomeColors = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
+        const color = locked ? 0x4a554a : (biomeColors[index] ?? 0x7ec86a);
+        this.campaignIntelBg.setStrokeStyle(2, color, 0.88);
       }
     }
 
