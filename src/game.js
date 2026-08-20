@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.87";
+  const KRC_VERSION = "1.0.88";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -127,6 +127,9 @@
         if (shotMode === "battle") {
           this.beginMap(0);
           this.dismissMapBriefing?.();
+          this.updateHud();
+          if (this.buildPads[0]) this.buildTower(this.buildPads[0], "archer");
+          if (this.buildPads[2]) this.buildTower(this.buildPads[2], "mage");
         }
         try {
           this.sys.game.step(performance.now(), 16);
@@ -2873,16 +2876,16 @@ const bannerY = 98;
 
     getTowerScale(typeOrTower, level = 0) {
       const lvl = typeof typeOrTower === "object" ? (typeOrTower?.level || 0) : level;
-      return 0.465 + lvl * 0.03;
+      return 0.62 + lvl * 0.04;
     }
 
     getTowerSpawnScale(type) {
-      return 0.2625;
+      return 0.36;
     }
 
     getTowerBounceScale(type, level = 0) {
       const lvl = typeof type === "object" ? (type?.level || 0) : level;
-      return 0.585 + lvl * 0.03;
+      return 0.74 + lvl * 0.04;
     }
 
     buildTower(pad, type) {
