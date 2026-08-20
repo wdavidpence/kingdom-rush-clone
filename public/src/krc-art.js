@@ -763,10 +763,9 @@
       ctx.lineJoin = "round";
 
       // 1. Ground Contact Shadow & Base Earth Mound
-      shadow(ctx, 64, 116, 48, 11, 0.44);
-      shadow(ctx, 64, 117, 36, 6, 0.58);
-
-      ellipse(ctx, 64, 110, 46, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#546a32"], [0.4, "#3c4d22"], [1, "#1c2610"]]), "#141c0a", 2);
+      shadow(ctx, 64, 118, 50, 12, 0.52);
+      shadow(ctx, 64, 119, 38, 7, 0.62);
+      ellipse(ctx, 64, 110, 48, 15, linGrad(ctx, 24, 96, 104, 122, [[0, "#546a32"], [0.4, "#3c4d22"], [1, "#1c2610"]]), "#141c0a", 3);
       ctx.strokeStyle = "rgba(145, 205, 75, 0.45)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
@@ -1165,11 +1164,9 @@
       ctx.lineJoin = "round";
 
       // 1. Ground Contact Shadow & Arcane Earthen Mound
-      shadow(ctx, 64, 116, 48, 11, 0.45);
-      shadow(ctx, 64, 117, 36, 6, 0.58);
-
-      // Arcane-tinged earthen mound
-      ellipse(ctx, 64, 110, 46, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#3e3a6a"], [0.4, "#28224c"], [1, "#120e28"]]), "#0c081e", 2);
+      shadow(ctx, 64, 118, 50, 12, 0.55);
+      shadow(ctx, 64, 119, 38, 7, 0.62);
+      ellipse(ctx, 64, 110, 48, 15, linGrad(ctx, 24, 96, 104, 122, [[0, "#3e3a6a"], [0.4, "#28224c"], [1, "#120e28"]]), "#0c081e", 3);
       ctx.strokeStyle = "rgba(180, 150, 255, 0.4)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
@@ -1921,11 +1918,9 @@
       ctx.lineJoin = "round";
 
       // 1. Ground Contact Shadow & Scorched Berm
-      shadow(ctx, 64, 116, 50, 12, 0.45);
-      shadow(ctx, 64, 117, 38, 7, 0.6);
-
-      // Scorched quarry earth mound
-      ellipse(ctx, 64, 110, 48, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#5e4c34"], [0.4, "#3e301e"], [1, "#1c140a"]]), "#120c04", 2);
+      shadow(ctx, 64, 118, 52, 13, 0.55);
+      shadow(ctx, 64, 119, 40, 8, 0.65);
+      ellipse(ctx, 64, 110, 50, 15, linGrad(ctx, 24, 96, 104, 122, [[0, "#5e4c34"], [0.4, "#3e301e"], [1, "#1c140a"]]), "#120c04", 3);
       ctx.strokeStyle = "rgba(180, 140, 75, 0.35)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
@@ -2598,11 +2593,9 @@
       ctx.lineJoin = "round";
 
       // 1. Ground Contact Shadow & Grassy Rampart Berm
-      shadow(ctx, 64, 116, 50, 12, 0.42);
-      shadow(ctx, 64, 117, 38, 7, 0.55);
-
-      // Fortified earthen berm
-      ellipse(ctx, 64, 110, 48, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#5a7036"], [0.4, "#3e4f24"], [1, "#1c2610"]]), "#121a0a", 2);
+      shadow(ctx, 64, 118, 52, 13, 0.52);
+      shadow(ctx, 64, 119, 40, 8, 0.6);
+      ellipse(ctx, 64, 110, 50, 15, linGrad(ctx, 24, 96, 104, 122, [[0, "#5a7036"], [0.4, "#3e4f24"], [1, "#1c2610"]]), "#121a0a", 3);
       ctx.strokeStyle = "rgba(160, 215, 80, 0.4)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();

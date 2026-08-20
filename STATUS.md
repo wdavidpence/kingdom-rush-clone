@@ -3,13 +3,13 @@
 KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.93: 128px archer mound/plinth heavier ink. Captain set + HUD/campaign chrome hold.
+v1.0.94: mage/artillery/barracks 128px idle foundations match archer heavy ink.
 
 ## Last error / blocker
 None for syntax.
 
 ## Next step
-Mage/artillery/barracks 128 tops still canvas-TD. Not near-AAA.
+L2/L3 tower bodies still old ink. Not near-AAA.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
