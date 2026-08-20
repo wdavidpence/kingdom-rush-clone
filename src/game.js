@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.80";
+  const KRC_VERSION = "1.0.81";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -30,6 +30,7 @@
     }
 
     preload() {
+      if (new URLSearchParams(window.location.search).has("shot")) return;
       const audioPath = "assets/kenney/audio/";
       const audioFiles = {
         shoot: "kenney-shoot.ogg",
@@ -119,6 +120,26 @@
       this.createHud();
       this.createShop();
       this.showStartOverlay();
+      document.body.setAttribute("data-krc", "overlay");
+      const shotMode = new URLSearchParams(window.location.search).get("shot");
+      document.body.setAttribute("data-shotmode", String(shotMode || "") + "@" + location.hostname);
+      if (shotMode && (location.hostname === "127.0.0.1" || location.hostname === "localhost")) {
+        if (shotMode === "battle") {
+          this.beginMap(0);
+          this.dismissMapBriefing?.();
+        }
+        try {
+          this.sys.game.step(performance.now(), 16);
+          const data = this.game.canvas.toDataURL("image/png");
+          document.body.setAttribute("data-png", String(data.length));
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "http://127.0.0.1:8799/", false);
+          xhr.send(data);
+          document.body.setAttribute("data-xhr", String(xhr.status));
+        } catch (e) {
+          document.body.setAttribute("data-err", String(e && e.message || e));
+        }
+      }
       this.input.on("pointerdown", this.handlePointer, this);
       this.input.keyboard?.on("keydown-P", () => this.togglePause());
       this.input.keyboard?.on("keydown-R", () => this.toggleReducedMotion());
@@ -1686,7 +1707,7 @@
       this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
       this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
       this.hero.levelText = this.add
-        .text(post.x, post.y + 18, isSentinel ? "HLD" : "H1", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" })
+        .text(post.x, post.y + 18, "", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" })
         .setOrigin(0.5)
         .setDepth(49);
     }
@@ -1729,16 +1750,16 @@
       });
       if (this.textures.exists("icon_gold")) this.add.image(16, 18, "icon_gold").setScale(0.78).setDepth(100);
       if (this.textures.exists("icon_heart")) this.add.image(92, 18, "icon_heart").setScale(0.78).setDepth(100);
-      this.goldText = this.add.text(28, 8, "", { font: "bold 15px Cinzel", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
-      this.livesText = this.add.text(104, 8, "", { font: "bold 15px Cinzel", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
+      this.goldText = this.add.text(28, 8, "", { font: "bold 16px Arial", color: COLORS.gold, stroke: "#3a2810", strokeThickness: 3 }).setDepth(100);
+      this.livesText = this.add.text(104, 8, "", { font: "bold 16px Arial", color: "#ff8a73", stroke: "#3a1010", strokeThickness: 3 }).setDepth(100);
       if (this.spellRank() > 1 && !this.spellRankHud) {
         this.spellRankHud = this.add.text(168, 10, `SPELLS ${["", "I", "II", "III"][this.spellRank()]}`, { font: "bold 9px Cinzel", color: "#f5c85a" }).setDepth(100);
       }
       if (this.ironMode && !this.ironHud) {
         this.ironHud = this.add.text(168, 24, "IRON", { font: "bold 9px Cinzel", color: "#c8d0d8" }).setDepth(100);
       }
-      this.mapText = this.add.text(12, 34, "", { font: "bold 11px Cinzel", color: "#e8d9a8" }).setDepth(100);
-      this.waveText = this.add.text(150, 34, "", { font: "bold 11px Cinzel", color: COLORS.ink }).setDepth(100);
+      this.mapText = this.add.text(12, 34, "", { font: "bold 12px Arial", color: "#e8d9a8" }).setDepth(100);
+      this.waveText = this.add.text(150, 34, "", { font: "bold 12px Arial", color: COLORS.ink }).setDepth(100);
       this.waveBarBg = this.add.rectangle(12, 52, 140, 5, 0x26351d, 1).setOrigin(0, 0.5).setDepth(100);
       this.waveBar = this.add.rectangle(12, 52, 1, 5, 0xf5c85a, 1).setOrigin(0, 0.5).setDepth(101);
       this.messageText = this.add
@@ -1782,7 +1803,7 @@
         0x7a4f25,
         () => this.callWave(),
         {
-          font: "bold 14px Cinzel",
+          font: "bold 14px Cinzel, Arial, sans-serif",
           tooltip: () => this.waveActive ? "Wave marching — defend the road!" : "Call Next Wave (SPACE)\nCall early for an extra gold bonus!",
         }
       );
@@ -2062,7 +2083,7 @@
 
         const fontSz = rm.label.length >= 4 ? "bold 8.5px 'Source Sans 3', Arial" : "bold 9.5px 'Source Sans 3', Arial";
         roleMarkText = this.add
-          .text(roleMarkX, roleMarkY + roleMarkTextOffsetY, rm.label, {
+          .text(roleMarkX, roleMarkY + roleMarkTextOffsetY, "", {
             font: fontSz,
             color: "#ffffff",
             align: "center",
@@ -2376,11 +2397,11 @@ const bannerY = 98;
 
       // Node Positions on the painted map board (HARD RULE: Forest Gate stays at { x: 100, y: 375 })
       const nodePositions = [
-        { x: 100, y: 375 }, // Node 0: Forest Gate (bottom-left)
-        { x: 210, y: 295 }, // Node 1: Stone Pass (center)
-        { x: 310, y: 225 }, // Node 2: Ember Marsh (top-right)
-        { x: 350, y: 140 }, // Node 3: Gale Reach
-        { x: 240, y: 95 },  // Node 4: Ash Spire
+        { x: 100, y: 375 }, // Node 0: Forest Gate HARD RULE
+        { x: 205, y: 305 }, // Node 1: Stone Pass
+        { x: 308, y: 248 }, // Node 2: Ember Marsh
+        { x: 338, y: 175 }, // Node 3: Gale Reach
+        { x: 148, y: 248 }, // Node 4: Ash Spire, below banner, left of stone
       ];
 
       // Draw connecting path segments between nodes
@@ -2452,8 +2473,14 @@ const bannerY = 98;
         let lockBg = null;
         let lockText = null;
         if (!unlocked) {
-          lockBg = this.add.circle(nx, ny, 14, 0x101410, 0.85).setDepth(505);
-          lockText = this.add.text(nx, ny, "🔒", { font: "13px Arial" }).setOrigin(0.5).setDepth(506);
+          lockBg = this.add.circle(nx, ny, 15, 0x101410, 0.9).setDepth(505);
+          lockText = this.add.graphics().setDepth(506);
+          lockText.fillStyle(0xd8c48a, 1);
+          lockText.fillRoundedRect(nx - 7, ny - 2, 14, 11, 2);
+          lockText.lineStyle(2.2, 0xd8c48a, 1);
+          lockText.strokeCircle(nx, ny - 5, 5);
+          lockText.lineStyle(2, 0x2a2010, 1);
+          lockText.strokeRoundedRect(nx - 7, ny - 2, 14, 11, 2);
         }
 
         // Star Rating Display
@@ -2725,7 +2752,7 @@ const bannerY = 98;
         this.add.rectangle(W / 2, H / 2, W, H, 0x2a1810, 0.08).setDepth(5);
       }
       this.showMapBriefing(mapIndex);
-      this.say(`${this.map.name}: build two towers, then CALL. Tap pads for range preview.`);
+      this.updateHud();
     }
 
     handlePointer(pointer, targets) {
@@ -7077,7 +7104,7 @@ const bannerY = 98;
   }
 
   const config = {
-    type: Phaser.AUTO,
+    type: new URLSearchParams(window.location.search).has("canvas") ? Phaser.CANVAS : Phaser.AUTO,
     parent: "game",
     width: W,
     height: H,
@@ -7093,7 +7120,10 @@ const bannerY = 98;
     scene: GameScene,
   };
 
-  window.addEventListener("load", () => {
+  const boot = () => {
+    if (window.__KRC_GAME__) return;
     window.__KRC_GAME__ = new Phaser.Game(config);
-  });
+  };
+  if (document.readyState === "complete" || document.readyState === "interactive") boot();
+  else document.addEventListener("DOMContentLoaded", boot);
 })();
