@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.81";
+  const KRC_VERSION = "1.0.82";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1616,23 +1616,14 @@
       }
 
       if (this.textures.exists("gate_arch")) {
-        this.gateImage = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_arch").setDepth(-5).setScale(1.38);
+        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
       } else {
         this.gateImage = this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
         this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
       }
       if (this.textures.exists("gate_leak")) {
-        this.gateLeakOverlay = this.add.image(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, "gate_leak").setDepth(-4.8).setScale(1.38).setAlpha(0);
+        this.gateLeakOverlay = this.add.image(378, 588, "gate_leak").setDepth(-4.8).setScale(1.58).setAlpha(0);
       }
-      this.add
-        .text(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY + 22, "GATE", {
-          font: "bold 10px 'Source Sans 3', Arial",
-          color: "#f0e0b0",
-          backgroundColor: "#00000055",
-          padding: { x: 4, y: 1 },
-        })
-        .setOrigin(0.5)
-        .setDepth(-4);
 
       const vig = this.add.graphics().setDepth(-3);
       vig.fillStyle(0x000000, 0.38);
@@ -1698,7 +1689,7 @@
       ringContainer.add([innerDisc, outerRing]);
       this.hero.ring = ringContainer;
       const heroIdleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
-      this.hero.sprite = this.add.image(post.x, post.y - 10, heroIdleKey).setScale(1.12).setDepth(46);
+      this.hero.sprite = this.add.image(post.x, post.y - 12, heroIdleKey).setScale(1.28).setDepth(46);
       if (isSentinel) {
         this.hero.sprite.setTint(0xb8c4c8);
       } else {
