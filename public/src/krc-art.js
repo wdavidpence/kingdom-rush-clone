@@ -239,11 +239,10 @@
       ctx.lineJoin = "round";
 
       // 1. Ground Contact Shadow & Base Earth Mound
-      shadow(ctx, 64, 116, 48, 11, 0.42);
-      shadow(ctx, 64, 117, 36, 6, 0.55);
-
-      // Earthen mound
-      ellipse(ctx, 64, 110, 46, 14, linGrad(ctx, 24, 96, 104, 122, [[0, "#546a32"], [0.4, "#3c4d22"], [1, "#1c2610"]]), "#141c0a", 2);
+      shadow(ctx, 64, 118, 50, 12, 0.5);
+      shadow(ctx, 64, 119, 38, 7, 0.6);
+      ellipse(ctx, 64, 110, 48, 15, linGrad(ctx, 24, 96, 104, 122, [[0, "#546a32"], [0.4, "#3c4d22"], [1, "#1c2610"]]), "#0c1208", 3);
+      rounded(ctx, 30, 78, 68, 34, 5, linGrad(ctx, 32, 80, 96, 110, [[0, "#98a284"], [0.35, "#707a60"], [0.75, "#4c543e"], [1, "#2a3020"]]), "#12180c", 3);
       ctx.strokeStyle = "rgba(145, 205, 75, 0.45)";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
