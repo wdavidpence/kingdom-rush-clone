@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.1.8";
+  const KRC_VERSION = "1.1.9";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2685,11 +2685,14 @@ const bannerY = 98;
           });
         } else {
           nodeBg.setInteractive({ useHandCursor: true });
+          const biomeColor = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878][index];
           nodeBg.on("pointerover", () => {
+            nodeBg.setStrokeStyle(2.5, biomeColor, 0.85);
             this.showTooltip(nx, ny - 50, `${map.name}\nLOCKED — Clear previous map to unlock!`);
             this.setCampaignIntel(index, true);
           });
           nodeBg.on("pointerout", () => {
+            nodeBg.setStrokeStyle(2, 0x4a554a, 0.7);
             this.hideTooltip();
           });
         }
