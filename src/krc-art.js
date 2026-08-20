@@ -7944,154 +7944,49 @@
       ellipse(ctx, 58, 9, 3.2, 3.2, "rgba(200,220,255,0.8)");
     };
     const drawHeroCaptainAttack = (ctx) => {
-      shadow(ctx, 34, 63, 26, 6, 0.44);
+      shadow(ctx, 34, 64, 26, 6, 0.5);
+      ellipse(ctx, 14, 61, 7, 2.2, "rgba(8,12,20,0.8)");
+      ellipse(ctx, 46, 61, 7, 2.2, "rgba(8,12,20,0.8)");
 
-      // Contact AO under lunging hero boots
-      ellipse(ctx, 13.5, 59, 6.5, 2, "rgba(8, 12, 20, 0.75)");
-      ellipse(ctx, 44, 59, 7, 2, "rgba(8, 12, 20, 0.75)");
+      poly(ctx, [[8, 24], [44, 26], [36, 60], [10, 64], [0, 44]], linGrad(ctx, 0, 24, 44, 64, [[0, "#7eb4f0"], [0.5, "#2a5a98"], [1, "#0e1c38"]]), "#081018", 2.6);
 
-      // Cape billowing leftwards (3-stop gradient)
-      poly(ctx, [[16, 26], [42, 26], [32, 54], [12, 60], [2, 46]], linGrad(ctx, 2, 26, 42, 60, [[0, "#6ea6ea"], [0.5, "#2a4870"], [1, "#101e30"]]), "#0c1828", 1.8);
-      // Cool rim on billowing cape edge
-      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
-      ctx.lineWidth = 1.3;
+      poly(ctx, [[16, 42], [26, 42], [14, 60], [6, 58]], linGrad(ctx, 6, 42, 26, 60, [[0, "#5a88c0"], [1, "#122438"]]), "#0c1828", 2);
+      poly(ctx, [[36, 42], [48, 42], [52, 60], [40, 60]], linGrad(ctx, 36, 42, 52, 60, [[0, "#5a88c0"], [1, "#122438"]]), "#0c1828", 2);
+      rounded(ctx, 4, 56, 13, 8, 2, "#1a2838", "#0c141c", 1.4);
+      rounded(ctx, 40, 56, 14, 8, 2, "#1a2838", "#0c141c", 1.4);
+
+      rounded(ctx, 20, 24, 30, 24, 7, linGrad(ctx, 20, 24, 50, 48, [[0, "#a8d0ff"], [0.45, "#3a74b8"], [1, "#142848"]]), "#081018", 2.8);
+      ellipse(ctx, 22, 30, 8, 7, linGrad(ctx, 16, 24, 28, 36, [[0, "#c8e4ff"], [1, "#2a5088"]]), "#081018", 2);
+      ctx.strokeStyle = "#f0d060";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(26, 30, 18, 12);
+
+      ellipse(ctx, 36, 16, 12, 12, linGrad(ctx, 26, 6, 46, 26, [[0, "#fff4dc"], [1, "#8a5428"]]), "#3a2410", 2.4);
+      rounded(ctx, 22, 4, 28, 12, 4, linGrad(ctx, 22, 4, 50, 16, [[0, "#fff6ba"], [1, "#8a5810"]]), "#3a2408", 2);
+      poly(ctx, [[36, 0], [28, 8], [44, 8]], "#fff8c8", "#3a2408", 1.4);
+      rounded(ctx, 26, 13, 20, 5, 2, "#1a1410");
+      face(ctx, 36, 17, "#f6f0c2", "#101008", true);
+
+      poly(ctx, [[2, 26], [20, 24], [22, 52], [12, 58], [0, 48]], linGrad(ctx, 2, 24, 22, 58, [[0, "#fff4c0"], [1, "#7a5418"]]), "#2a1c08", 2.4);
+
       ctx.beginPath();
-      ctx.moveTo(16, 26);
-      ctx.lineTo(2, 46);
-      ctx.lineTo(12, 60);
+      ctx.arc(40, 34, 22, -Math.PI * 0.5, Math.PI * 0.12);
+      ctx.strokeStyle = "rgba(180,225,255,0.5)";
+      ctx.lineWidth = 5;
       ctx.stroke();
-
-      // Dynamic velocity fold valleys & ripples
-      ctx.strokeStyle = "rgba(10, 20, 48, 0.55)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(18, 28); ctx.quadraticCurveTo(10, 40, 4, 48);
-      ctx.moveTo(28, 28); ctx.quadraticCurveTo(20, 44, 14, 58);
-      ctx.stroke();
-      // Luminous fold highlight crests
-      ctx.strokeStyle = "rgba(195, 230, 255, 0.45)";
-      ctx.lineWidth = 1.0;
-      ctx.beginPath();
-      ctx.moveTo(19, 28); ctx.quadraticCurveTo(11, 40, 5, 47);
-      ctx.moveTo(29, 28); ctx.quadraticCurveTo(21, 44, 15, 57);
-      ctx.stroke();
-
-      // Legs lunging forward
-      poly(ctx, [[18, 44], [25, 44], [16, 58], [9, 58]], linGrad(ctx, 9, 44, 25, 58, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#0e1828", 1.2);
-      rounded(ctx, 7, 56, 11, 6, 2, linGrad(ctx, 7, 56, 7, 62, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
-      // Cool rim on front lunge leg
-      ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.moveTo(18, 45);
-      ctx.lineTo(9, 58);
-      ctx.stroke();
-
-      poly(ctx, [[34, 44], [43, 44], [47, 57], [40, 58]], linGrad(ctx, 34, 44, 47, 58, [[0, "#4a70a2"], [0.5, "#264870"], [1, "#122238"]]), "#0e1828", 1.2);
-      rounded(ctx, 38, 56, 12, 6, 2, linGrad(ctx, 38, 56, 38, 62, [[0, "#283850"], [0.5, "#182438"], [1, "#0a101c"]]), "#0e1828", 1);
-      ellipse(ctx, 42, 48, 3, 2.5, linGrad(ctx, 40, 46, 44, 50, [[0, "#fff2a0"], [1, "#9c6e20"]]), "#4a3010", 0.8);
-
-      // Contact AO under chestplate
-      ellipse(ctx, 35, 46, 14, 2.5, "rgba(10, 16, 28, 0.6)");
-
-      // Torso angled forward
-      rounded(ctx, 22, 27, 28, 23, 6, linGrad(ctx, 22, 27, 50, 50, [[0, "#92beff"], [0.45, "#386cb0"], [1, "#163458"]]), "#0c1828", 2);
-      // Cool rim on torso upper-left
-      ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(23, 37);
-      ctx.lineTo(23, 30);
-      ctx.arcTo(23, 27, 29, 27, 5);
-      ctx.stroke();
-
-      ctx.strokeStyle = "#e8c860";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(26, 31, 18, 13);
-      poly(ctx, [[35, 33], [38, 37], [35, 41], [32, 37]], linGrad(ctx, 32, 33, 38, 41, [[0, "#fff6b8"], [0.5, "#f0d060"], [1, "#8c6018"]]), "#4a3010", 0.8);
-      rounded(ctx, 24, 46, 23, 4, 1, linGrad(ctx, 24, 46, 47, 50, [[0, "#4a301c"], [1, "#1c1008"]]), "#120c06", 1);
-
-      // Contact AO under chin onto gorget
-      ellipse(ctx, 35, 28, 10, 3, "rgba(12, 16, 28, 0.65)");
-
-      // Head focused forward
-      ellipse(ctx, 35, 19, 11, 11, linGrad(ctx, 25, 9, 45, 29, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
-
-      // Windblown hair lock strands streaming back in lunging strike
-      poly(ctx, [[24, 15], [19, 18], [22, 22], [25, 17]], linGrad(ctx, 19, 15, 25, 22, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
-      ctx.strokeStyle = "rgba(225, 175, 115, 0.55)";
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(23, 16); ctx.quadraticCurveTo(19, 18, 22, 21);
-      ctx.stroke();
-
-      rounded(ctx, 23, 7, 24, 10, 3, linGrad(ctx, 23, 7, 47, 17, [[0, "#fff6ba"], [0.5, "#f0c842"], [1, "#9c6818"]]), "#4a3010", 1.4);
-      poly(ctx, [[36, 1], [29, 9], [42, 9]], linGrad(ctx, 29, 1, 42, 9, [[0, "#fff6ba"], [0.5, "#f0d060"], [1, "#9c6818"]]), "#4a3010", 1);
-      // Cool rim on crown
-      ctx.strokeStyle = "rgba(215, 245, 255, 0.65)";
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(23, 10);
-      ctx.lineTo(23, 8);
-      ctx.lineTo(29, 9);
-      ctx.lineTo(36, 1);
-      ctx.stroke();
-
-      ellipse(ctx, 36, 8, 2, 2.5, linGrad(ctx, 34, 6, 38, 10, [[0, "#ff7070"], [0.5, "#d02020"], [1, "#600808"]]));
-      face(ctx, 35, 19, "#f6f0c2", "#101008", true);
-
-      // Shield braced for impact with contact AO
-      ellipse(ctx, 13, 41, 7, 12, "rgba(12, 16, 28, 0.45)");
-      poly(ctx, [[6, 30], [18, 28], [21, 48], [14, 54], [5, 48]], linGrad(ctx, 5, 28, 21, 54, [[0, "#fff6c4"], [0.5, "#dcba4c"], [1, "#967024"]]), "#3a2810", 1.5);
-      poly(ctx, [[11, 35], [14, 39], [11, 43], [8, 39]], linGrad(ctx, 8, 35, 14, 43, [[0, "#3e68a8"], [1, "#14223c"]]), "#0e1828", 1);
-      // Cool rim on shield
-      ctx.strokeStyle = "rgba(215, 245, 255, 0.55)";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(6, 30);
-      ctx.lineTo(18, 28);
-      ctx.stroke();
-
-      // Slash arc energy trail
-      ctx.beginPath();
-      ctx.arc(38, 36, 24, -Math.PI * 0.45, Math.PI * 0.16);
-      ctx.strokeStyle = "rgba(180, 225, 255, 0.45)";
-      ctx.lineWidth = 6;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(38, 36, 24, -Math.PI * 0.35, Math.PI * 0.12);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      // Sword slashing committed
-      rounded(ctx, 42, 30, 12, 7, 3, linGrad(ctx, 42, 30, 54, 37, [[0, "#92beff"], [1, "#163458"]]), "#0c1828", 1.5);
-      rounded(ctx, 46, 33, 6, 12, 2, linGrad(ctx, 46, 33, 52, 45, [[0, "#a07038"], [1, "#4a2c14"]]), "#2a1810", 1);
-      ellipse(ctx, 44, 39, 2.5, 2.5, linGrad(ctx, 42, 37, 46, 41, [[0, "#fff0a0"], [1, "#9c6e20"]]), "#2a1810", 1);
       ctx.strokeStyle = "#e8f0ff";
       ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(49, 34);
-      ctx.lineTo(63, 24);
+      ctx.moveTo(50, 32);
+      ctx.lineTo(62, 18);
       ctx.stroke();
-      // Central blade fuller line
-      ctx.strokeStyle = "rgba(30, 50, 80, 0.5)";
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(49.5, 33.5);
-      ctx.lineTo(62.5, 23.5);
-      ctx.stroke();
-      // Razor edge highlight
       ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(48, 35);
-      ctx.lineTo(64, 23);
+      ctx.moveTo(49, 33);
+      ctx.lineTo(63, 17);
       ctx.stroke();
-
-      // Impact spark at strike point
-      poly(ctx, [[63, 20], [65, 24], [69, 24], [65, 26], [64, 30], [62, 26], [58, 24], [62, 23]], "#ffffff");
-      ellipse(ctx, 63, 24, 3, 3, "rgba(255,240,160,0.85)");
+      poly(ctx, [[62, 14], [64, 18], [68, 18], [64, 20], [63, 24], [61, 20], [57, 18], [61, 17]], "#ffffff");
     };
 
     const drawHeroCaptainAbility = (ctx) => {
