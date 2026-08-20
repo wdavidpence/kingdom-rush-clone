@@ -7898,7 +7898,7 @@
       ellipse(ctx, 38, 57.5, 6, 2, "rgba(8, 12, 20, 0.75)");
 
       // Cape (3-stop rich royal blue velvet gradient)
-      poly(ctx, [[18, 28], [46, 28], [52, 58], [32, 62], [12, 58]], linGrad(ctx, 18, 28, 46, 62, [[0, "#6ea6ea"], [0.45, "#325c94"], [1, "#142848"]]), "#0c1828", 1.8);
+      poly(ctx, [[18, 28], [46, 28], [52, 58], [32, 62], [12, 58]], linGrad(ctx, 18, 28, 46, 62, [[0, "#6ea6ea"], [0.45, "#325c94"], [1, "#142848"]]), "#0c1828", 2.6);
       // Cool rim on left cape edge
       ctx.strokeStyle = "rgba(210, 240, 255, 0.45)";
       ctx.lineWidth = 1.2;
@@ -8489,6 +8489,16 @@
         [0.5, "#34281c"],
         [1, "#1c140e"]
       ]), "#120c06", 2);
+
+      // Twin keeps for a castle silhouette
+      rounded(ctx, 1, 10, 20, 44, 2, linGrad(ctx, 1, 10, 21, 54, [[0, "#8a7a64"], [0.5, "#5a4a38"], [1, "#24180e"]]), "#100c08", 2.2);
+      rounded(ctx, 75, 10, 20, 44, 2, linGrad(ctx, 75, 10, 95, 54, [[0, "#8a7a64"], [0.5, "#5a4a38"], [1, "#24180e"]]), "#100c08", 2.2);
+      poly(ctx, [[0, 12], [11, 1], [22, 12]], linGrad(ctx, 0, 1, 22, 12, [[0, "#c45a3a"], [1, "#6a2010"]]), "#2a1008", 1.6);
+      poly(ctx, [[74, 12], [85, 1], [96, 12]], linGrad(ctx, 74, 1, 96, 12, [[0, "#c45a3a"], [1, "#6a2010"]]), "#2a1008", 1.6);
+      ellipse(ctx, 11, 28, 3, 4, "#1a1008");
+      ellipse(ctx, 85, 28, 3, 4, "#1a1008");
+      ellipse(ctx, 11, 40, 3, 4, "#1a1008");
+      ellipse(ctx, 85, 40, 3, 4, "#1a1008");
 
       // Threshold flagstone paving
       poly(ctx, [[28, 54], [68, 54], [72, 60], [24, 60]], linGrad(ctx, 28, 54, 28, 60, [
@@ -9254,21 +9264,17 @@
       ctx.stroke();
 
       // Compass Rose in bottom-right corner
-      const cx = 315;
-      const cy = 245;
-      ellipse(ctx, cx, cy, 17, 17, "rgba(230, 210, 170, 0.6)", "#6a5030", 1);
-      poly(ctx, [[cx, cy - 15], [cx + 4, cy - 3], [cx, cy], [cx - 4, cy - 3]], "#8a2424");
-      poly(ctx, [[cx, cy + 15], [cx + 4, cy + 3], [cx, cy], [cx - 4, cy + 3]], "#4a3824");
-      poly(ctx, [[cx + 15, cy], [cx + 3, cy + 4], [cx, cy], [cx + 3, cy - 4]], "#4a3824");
-      poly(ctx, [[cx - 15, cy], [cx - 3, cy + 4], [cx, cy], [cx - 3, cy - 4]], "#4a3824");
-
-      // Banner Ribbon Title at top of map
-      rounded(ctx, 100, 16, 160, 24, 4, linGrad(ctx, 100, 16, 260, 40, [[0, "#3a2a1b"], [1, "#1e140a"]]), "#c8a450", 1.2);
-      ctx.fillStyle = "#f5d88c";
-      ctx.font = "bold 11px Cinzel, serif";
+      const cx = 318;
+      const cy = 252;
+      ellipse(ctx, cx, cy, 18, 18, "rgba(230, 210, 170, 0.7)", "#6a5030", 1.4);
+      poly(ctx, [[cx, cy - 16], [cx + 4, cy - 3], [cx, cy], [cx - 4, cy - 3]], "#8a2424");
+      poly(ctx, [[cx, cy + 16], [cx + 4, cy + 3], [cx, cy], [cx - 4, cy + 3]], "#4a3824");
+      poly(ctx, [[cx + 16, cy], [cx + 3, cy + 4], [cx, cy], [cx + 3, cy - 4]], "#4a3824");
+      poly(ctx, [[cx - 16, cy], [cx - 3, cy + 4], [cx, cy], [cx - 3, cy - 4]], "#4a3824");
+      ctx.fillStyle = "#6a4020";
+      ctx.font = "bold 9px Arial";
       ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("KINGDOM OF KRC", 180, 28);
+      ctx.fillText("N", cx, cy - 20);
     });
   };
 

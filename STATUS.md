@@ -3,15 +3,15 @@
 KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.81: HUD numbers+rail verified in canvas shot. Campaign HUD bleed gone, title clear, drawn locks, nodes off banner. Spell full names. Forest Gate (100,375) and bannerY=98 unchanged.
+v1.0.82: twin-keep gate, no GATE stamp, hero 1.28, campaign ribbon removed, HUD still clean. Verified canvas shots.
 
 ## Last error / blocker
-None for 1.0.81. Headless WebGL shots still blank; canvas+shot hook works.
+None.
 
 ## Next step
-If still not near-AAA: authored campaign regions, unique pads, bigger gatehouse, hero silhouette pass.
+Campaign regions still blobs; trees/path still canvas-TD. Not near-AAA yet.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
 - Use Claude/Opus
-- Claim AAA while trees/path still read as canvas TD
+- Claim AAA while map/trees read as painted shapes
