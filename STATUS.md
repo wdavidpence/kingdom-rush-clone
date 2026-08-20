@@ -3,13 +3,13 @@
 KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.89: redrawn Captain idle (wider cape, kite shield, pauldrons, visor). Syntax OK.
+v1.0.90: Captain attack pose matches new idle (lunge, kite shield, slash). Syntax OK.
 
 ## Last error / blocker
-None for 1.0.89 syntax.
+None for syntax.
 
 ## Next step
-Still canvas-TD. Not near-AAA. Attack/ability poses still old idle-era art.
+Ability pose still old. Towers still canvas-TD. Not near-AAA.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
