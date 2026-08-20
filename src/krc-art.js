@@ -8794,108 +8794,30 @@
     });
 
     // —— Path and terrain tile sprites ——
-    make("tile_dirt", 54, 48, (ctx) => {
-      // Base earthen bed
+    const drawDirtTile = (ctx, pebbleShift) => {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       rounded(ctx, 0, 0, 54, 48, 2, linGrad(ctx, 0, 0, 0, 48, [
-        [0, "#3a2616"],
-        [0.15, "#5c3d22"],
-        [0.5, "#7e5732"],
-        [0.85, "#54371e"],
-        [1, "#321e10"]
+        [0, "#3a2616"], [0.15, "#5c3d22"], [0.5, "#7e5732"], [0.85, "#54371e"], [1, "#321e10"]
       ]));
-
-      // Fine horizontal soil grain and layer lines
-      ctx.strokeStyle = "rgba(42, 24, 12, 0.4)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, 8); ctx.lineTo(54, 8);
-      ctx.moveTo(0, 24); ctx.lineTo(54, 24);
-      ctx.moveTo(0, 40); ctx.lineTo(54, 40);
-      ctx.stroke();
-
-      // Top wagon rut depression (Y=12 to 19)
-      rounded(ctx, 0, 12, 54, 7, 2, linGrad(ctx, 0, 12, 0, 19, [
-        [0, "#22140a"],
-        [0.5, "#301c0e"],
-        [1, "#482c16"]
-      ]));
-      ctx.strokeStyle = "#1a0e06";
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(0, 15.5); ctx.lineTo(54, 15.5);
-      ctx.stroke();
-      // Sunlit rim bevel on bottom of top rut
-      ctx.strokeStyle = "rgba(225, 185, 125, 0.45)";
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.moveTo(0, 19.5); ctx.lineTo(54, 19.5);
-      ctx.stroke();
-
-      // Bottom wagon rut depression (Y=29 to 36)
-      rounded(ctx, 0, 29, 54, 7, 2, linGrad(ctx, 0, 29, 0, 36, [
-        [0, "#22140a"],
-        [0.5, "#301c0e"],
-        [1, "#482c16"]
-      ]));
-      ctx.strokeStyle = "#1a0e06";
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(0, 32.5); ctx.lineTo(54, 32.5);
-      ctx.stroke();
-      // Sunlit rim bevel on bottom of bottom rut
-      ctx.strokeStyle = "rgba(225, 185, 125, 0.45)";
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.moveTo(0, 36.5); ctx.lineTo(54, 36.5);
-      ctx.stroke();
-
-      // Center raised dirt hump / ridge (Y=20 to 28)
-      rounded(ctx, 0, 20.5, 54, 8, 2, linGrad(ctx, 0, 20.5, 0, 28.5, [
-        [0, "#8c6238"],
-        [0.45, "#9c7042"],
-        [1, "#764e28"]
-      ]));
-      ctx.strokeStyle = "rgba(255, 235, 180, 0.35)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, 21.5); ctx.lineTo(54, 21.5);
-      ctx.stroke();
-
-      // Embedded gravel, pebbles, and cobblestones
+      const rutY = 11 + (pebbleShift % 3);
+      rounded(ctx, 0, rutY, 54, 7, 2, linGrad(ctx, 0, rutY, 0, rutY + 7, [[0, "#22140a"], [1, "#482c16"]]));
+      rounded(ctx, 0, rutY + 17, 54, 7, 2, linGrad(ctx, 0, rutY + 17, 0, rutY + 24, [[0, "#22140a"], [1, "#482c16"]]));
+      rounded(ctx, 0, rutY + 8, 54, 8, 2, linGrad(ctx, 0, rutY + 8, 0, rutY + 16, [[0, "#8c6238"], [1, "#764e28"]]));
       const pebbles = [
-        [8, 10, 3, 2, "#82786a", "#383228"],
-        [24, 7, 2.5, 1.8, "#968a78", "#40382e"],
-        [44, 11, 3.2, 2.2, "#7a7062", "#342e24"],
-        [14, 24, 2.2, 1.6, "#a49884", "#483e32"],
-        [36, 25, 2.8, 1.8, "#8e8472", "#3c342a"],
-        [6, 39, 2.5, 1.8, "#948876", "#423a30"],
-        [28, 41, 3.5, 2.2, "#7e7464", "#363026"],
-        [48, 38, 2.8, 1.8, "#8a8070", "#3a3228"],
+        [8 + pebbleShift, 10, 3, 2], [24 - pebbleShift, 7, 2.5, 1.8], [44, 11 + pebbleShift * 0.4, 3.2, 2.2],
+        [14, 24, 2.2, 1.6], [36 + pebbleShift, 25, 2.8, 1.8], [6, 39, 2.5, 1.8],
+        [28 - pebbleShift, 41, 3.5, 2.2], [48, 38, 2.8, 1.8],
       ];
-      for (const [px, py, prx, pry, fillC, strokeC] of pebbles) {
-        ellipse(ctx, px, py, prx, pry, fillC, strokeC, 0.8);
-        ellipse(ctx, px - 0.5, py - 0.5, prx * 0.45, pry * 0.45, "rgba(255,255,240,0.5)");
+      for (const [px, py, prx, pry] of pebbles) {
+        ellipse(ctx, ((px % 50) + 50) % 50 + 2, py, prx, pry, "#82786a", "#383228", 0.8);
       }
-
-      // Trampled grass/moss flecks on borders and center ridge
-      const grassFlecks = [
-        [4, 4, 3, 2], [18, 3, 4, 2], [34, 4, 3.5, 2], [48, 3, 4, 2],
-        [10, 23, 2.5, 1.5], [30, 26, 3, 1.5], [50, 23, 2.5, 1.5],
-        [6, 45, 3.5, 2], [22, 44, 4, 2.2], [40, 45, 3.5, 2],
-      ];
-      for (const [gx, gy, grx, gry] of grassFlecks) {
-        ellipse(ctx, gx, gy, grx, gry, linGrad(ctx, gx - grx, gy - gry, gx + grx, gy + gry, [
-          [0, "#74a838"],
-          [1, "#365c1a"]
-        ]), "#1a300c", 0.7);
-      }
-
-      // Fine dirt specks and loam granules
-      speckles(ctx, 1, 2, 52, 44, 26, "rgba(0, 0, 0, 0.2)", 1.2);
-      speckles(ctx, 1, 2, 52, 44, 18, "rgba(255, 235, 175, 0.22)", 1.0);
-    });
+      speckles(ctx, 1 + pebbleShift, 2, 52, 44, 22, "rgba(0,0,0,0.22)", 1.2);
+      speckles(ctx, 2, 3 + pebbleShift, 50, 42, 14, "rgba(255,235,175,0.2)", 1);
+    };
+    make("tile_dirt", 54, 48, (ctx) => drawDirtTile(ctx, 0));
+    make("tile_dirt_b", 54, 48, (ctx) => drawDirtTile(ctx, 7));
+    make("tile_dirt_c", 54, 48, (ctx) => drawDirtTile(ctx, 13));
 
     make("tile_stone", 54, 48, (ctx) => {
       ctx.lineCap = "round";

@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.84";
+  const KRC_VERSION = "1.0.85";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1465,7 +1465,11 @@
             const px = a.x + dx * t;
             const py = a.y + dy * t;
 
-            const tileImg = this.add.image(px, py, tileKey).setAngle(angleDeg).setDepth(-8);
+            const dirtKeys = ["tile_dirt", "tile_dirt_b", "tile_dirt_c"].filter((k) => this.textures.exists(k));
+            const useKey = this.mapIndex === 0 && dirtKeys.length
+              ? dirtKeys[(i * 5 + s) % dirtKeys.length]
+              : tileKey;
+            const tileImg = this.add.image(px, py, useKey).setAngle(angleDeg).setDepth(-8);
             if (s % 2 === 1) tileImg.setScale(1.0, -1.0);
 
             if (this.textures.exists(edgeKey) && s % 2 === 0) {
