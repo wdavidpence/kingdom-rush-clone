@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.83";
+  const KRC_VERSION = "1.0.84";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1559,7 +1559,7 @@
 
       placeAway(14, 48, (x, y, i) => {
         const key = i % 3 === 0 && this.textures.exists("tree_oak") ? "tree_oak" : "tree_pine";
-        this.add.image(x, y - 12, key).setScale(0.98 + (i % 4) * 0.1).setDepth(-15).setTint(theme.tint);
+        this.add.image(x, y - 18, key).setScale(1.08 + (i % 4) * 0.12).setDepth(-15).setTint(theme.tint);
       });
       placeAway(10, 42, (x, y, i) => {
         if (this.textures.exists("bush_round")) {

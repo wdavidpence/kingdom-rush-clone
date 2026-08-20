@@ -8381,43 +8381,48 @@
     make("hero_captain_ability", 64, 72, drawHeroCaptainAbility);
 
     // —— Props ——
-    make("tree_pine", 56, 72, (ctx) => {
-      shadow(ctx, 28, 66, 20, 6, 0.36);
-      rounded(ctx, 23, 42, 11, 24, 2, linGrad(ctx, 23, 42, 34, 66, [[0, "#8a6038"], [1, "#2a1808"]]), "#120c06", 1.8);
-      ctx.strokeStyle = "rgba(40,20,10,.5)";
-      ctx.lineWidth = 1.1;
+    make("tree_pine", 56, 80, (ctx) => {
+      shadow(ctx, 28, 74, 16, 5, 0.4);
+      rounded(ctx, 24, 52, 8, 24, 2, linGrad(ctx, 24, 52, 32, 76, [[0, "#8a5a30"], [1, "#2a1608"]]), "#120c06", 1.8);
+      ctx.strokeStyle = "rgba(30,16,8,.55)";
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(26, 46);
-      ctx.lineTo(25, 62);
-      ctx.moveTo(31, 48);
-      ctx.lineTo(32, 64);
+      ctx.moveTo(26, 56);
+      ctx.lineTo(25, 72);
       ctx.stroke();
-      const layers = [
-        { pts: [[28, 4], [6, 28], [18, 24], [4, 44], [52, 44], [38, 24], [50, 28]], hi: "#9ed068", mid: "#3a6a28", lo: "#142810" },
-        { pts: [[28, 14], [10, 36], [20, 32], [8, 50], [48, 50], [36, 32], [46, 36]], hi: "#86b858", mid: "#2e5820", lo: "#102010" },
-        { pts: [[28, 24], [14, 42], [22, 40], [12, 56], [44, 56], [34, 40], [42, 42]], hi: "#6e9848", mid: "#244818", lo: "#0c180c" },
+      const tiers = [
+        [28, 6, 20, 28, "#9ed060", "#1a3810"],
+        [28, 18, 18, 28, "#6eac40", "#163010"],
+        [28, 30, 16, 26, "#4e8830", "#12280c"],
+        [28, 42, 14, 22, "#3a6a24", "#0e200a"],
       ];
-      for (const layer of layers) {
-        poly(ctx, layer.pts, linGrad(ctx, 8, 6, 50, 56, [[0, layer.hi], [0.5, layer.mid], [1, layer.lo]]), "#0a1408", 2.1);
+      for (const [cx, top, hw, h, hi, lo] of tiers) {
+        poly(ctx, [[cx, top], [cx - hw, top + h], [cx + hw, top + h]], linGrad(ctx, cx, top, cx, top + h, [[0, hi], [1, lo]]), "#0a1608", 2);
       }
-      ctx.strokeStyle = "rgba(230,255,190,.4)";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(230,255,180,.35)";
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(24, 12);
-      ctx.lineTo(16, 26);
-      ctx.moveTo(34, 18);
-      ctx.lineTo(42, 32);
+      ctx.moveTo(28, 8);
+      ctx.lineTo(18, 28);
       ctx.stroke();
     });
 
-    make("tree_oak", 64, 64, (ctx) => {
-      shadow(ctx, 32, 58, 22, 6, 0.36);
-      rounded(ctx, 27, 32, 11, 26, 2, linGrad(ctx, 27, 32, 38, 58, [[0, "#a07040"], [1, "#3a200c"]]), "#120c06", 1.8);
-      ellipse(ctx, 32, 26, 26, 22, linGrad(ctx, 10, 8, 54, 44, [[0, "#a8d868"], [0.45, "#4a8828"], [1, "#183818"]]), "#102010", 2.3);
-      ellipse(ctx, 20, 22, 12, 10, linGrad(ctx, 12, 14, 30, 30, [[0, "#b8e878"], [1, "#3a6820"]]), "#142810", 1.4);
-      ellipse(ctx, 44, 20, 11, 9, linGrad(ctx, 36, 12, 54, 28, [[0, "#c8f090"], [1, "#3a6820"]]), "#142810", 1.4);
-      ellipse(ctx, 22, 20, 7, 5, "rgba(200,240,140,.35)");
-      ellipse(ctx, 42, 16, 6, 4, "rgba(220,255,170,.28)");
+    make("tree_oak", 64, 72, (ctx) => {
+      shadow(ctx, 32, 66, 20, 5, 0.4);
+      rounded(ctx, 28, 36, 9, 30, 2, linGrad(ctx, 28, 36, 37, 66, [[0, "#a07040"], [1, "#2e1808"]]), "#120c06", 1.8);
+      rounded(ctx, 34, 44, 10, 4, 2, "#6a4020", "#2a1808", 1);
+      const lobes = [
+        [32, 22, 18, 16, "#8ec850"],
+        [18, 26, 12, 11, "#6aa838"],
+        [46, 24, 12, 11, "#9ed060"],
+        [24, 16, 10, 9, "#b4e070"],
+        [40, 15, 9, 8, "#c0e878"],
+        [32, 32, 14, 10, "#4e8828"],
+      ];
+      for (const [x, y, rx, ry, c] of lobes) {
+        ellipse(ctx, x, y, rx, ry, linGrad(ctx, x - rx, y - ry, x + rx, y + ry, [[0, c], [1, "#1a3810"]]), "#102010", 1.6);
+      }
+      ellipse(ctx, 22, 18, 5, 4, "rgba(220,255,160,.3)");
     });
 
     make("rock_moss", 40, 28, (ctx) => {
