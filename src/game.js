@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.103";
+  const KRC_VERSION = "1.1.1";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4533,6 +4533,23 @@ const bannerY = 98;
             duration: 320 + Math.random() * 180,
             ease: "Quad.easeOut",
             onComplete: () => spark.destroy(),
+          });
+        }
+
+        for (let i = 0; i < 8; i += 1) {
+          const splinter = this.textures.exists("fx_dust")
+            ? this.add.image(gx, gy, "fx_dust").setScale(0.24 + Math.random() * 0.18).setTint(0x6a4428).setAlpha(0.9).setDepth(61)
+            : this.add.rectangle(gx, gy, 4 + Math.random() * 3, 2 + Math.random() * 2, 0x6a4428).setDepth(61);
+          if (splinter.setAngle) splinter.setAngle(Math.random() * 360);
+          const angle = Math.PI * (1.0 + Math.random() * 0.45);
+          const speed = 40 + Math.random() * 60;
+          const life = 0.4 + Math.random() * 0.3;
+          this.effects.push({
+            obj: splinter,
+            life,
+            maxLife: life,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
           });
         }
 
