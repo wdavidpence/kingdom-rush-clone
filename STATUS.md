@@ -3,13 +3,13 @@
 KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.86: shop role-shape overlays removed; idle cooldown ticks hidden. HUD/pines/gate/hero hold. Verified battle shot.
+v1.0.87: Captain scale 1.42, thicker armor/head/shield ink, larger shop portraits.
 
 ## Last error / blocker
-None.
+Shot-server background start failed this turn; 1.0.87 not canvas-shot verified.
 
 ## Next step
-Still canvas-TD, not near-AAA. Authoring full tower/hero atlases is the remaining jump.
+Still canvas-TD. Full tower/hero atlas rewrite needed for near-AAA characters.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
