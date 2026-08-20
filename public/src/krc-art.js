@@ -8893,6 +8893,9 @@
       ctx.moveTo(308, 56);
       ctx.quadraticCurveTo(338, 50, 350, 66);
       ctx.stroke();
+      ellipse(ctx, 320, 52, 28, 14, "rgba(220, 238, 248, 0.45)");
+      poly(ctx, [[306, 56], [318, 42], [330, 56]], "rgba(175, 205, 222, 0.65)", "rgba(110, 145, 168, 0.7)", 1);
+      poly(ctx, [[322, 62], [334, 48], [346, 62]], "rgba(160, 192, 212, 0.6)", "rgba(100, 135, 158, 0.65)", 1);
 
       // Ash haze leftover above the cone
       ellipse(ctx, 128, 70, 36, 16, "rgba(90, 80, 70, 0.22)");

@@ -3,14 +3,14 @@
 KRC AAA upgrades. Hermes judge only. SWE from antigrav + qwen2735 MoA.
 
 ## Done
-v1.1.6 campaign hover biomes (antigrav).
-v1.1.7 intel plaque biome stroke (antigrav). MoA synth would break overlay.add.
+v1.1.7 intel biome stroke (antigrav).
+v1.1.8 Gale campaign-board cliffs (antigrav). MoA missing ctx/fills. REJECT.
 
 ## Last error / blocker
 None for syntax.
 
 ## Next step
-1.1.8: Gale Reach on campaign_board_bg is two faint strokes. Still canvas-TD. Not AAA.
+Still canvas-TD. Not AAA.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
