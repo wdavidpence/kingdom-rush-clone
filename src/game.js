@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.98";
+  const KRC_VERSION = "1.0.99";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -3101,6 +3101,18 @@ const bannerY = 98;
           scale: baseScale,
           duration: 240,
           ease: "Cubic.out",
+          onComplete: () => {
+            if (!tower.sprite || this.settings?.reducedMotion) return;
+            this.tweens.add({
+              targets: tower.sprite,
+              scaleX: baseScale * 1.035,
+              scaleY: baseScale * 0.97,
+              duration: 980,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          },
         });
 
         const flash = this.add.circle(pad.x, pad.y - 8, 12, 0xf5d76e, 0.7).setDepth(35);
@@ -3812,6 +3824,10 @@ const bannerY = 98;
         if (enemy.dead) continue;
         enemy.slow = Math.max(0, enemy.slow - dt);
         enemy.burnTime = Math.max(0, (enemy.burnTime || 0) - dt);
+        if (enemy.hitFlash > 0) {
+          enemy.hitFlash -= dt;
+          if (enemy.hitFlash <= 0 && enemy.sprite) this.applyUnitTint(enemy.sprite);
+        }
         if (enemy.type === "boss" && enemy.base.phases) this.updateBossPhases(enemy, dt);
         if (!enemy.blockedBy || enemy.blockedBy.dead) {
           enemy.blockedBy = this.findBlockingSoldier(enemy);
@@ -4013,6 +4029,8 @@ const bannerY = 98;
         enemy.sprite?.setTint(0xd8c2ff);
       } else if (enemy.phase === 3 && enemy.phaseTimer > 0) {
         enemy.sprite?.setTint(0xffb0c8);
+      } else if (enemy.sprite && enemy.hitFlash > 0) {
+        enemy.sprite.setTint(0xfff3d6);
       } else if (enemy.sprite && enemy.slow <= 0) {
         this.applyUnitTint(enemy.sprite);
       }
@@ -4088,7 +4106,7 @@ const bannerY = 98;
       } else {
         const isFlyer = enemy.type === "flyer" || enemy.base?.flying;
         if (enemy.type === "scout") {
-          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 7) % 4;
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 4.2) % 4;
           const texKey = `enemy_scout_w${frameIdx}`;
           if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
             enemy.sprite.setTexture(texKey);
@@ -4102,7 +4120,7 @@ const bannerY = 98;
           }
           enemy.sprite.setScale(baseScale);
         } else if (enemy.type === "brute") {
-          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 8) % 4;
+          const frameIdx = enemy.blockedBy ? 0 : Math.floor((enemy.walkDist || 0) / 5) % 4;
           const texKey = `enemy_brute_w${frameIdx}`;
           if (enemy.sprite.texture.key !== texKey && this.textures.exists(texKey)) {
             enemy.sprite.setTexture(texKey);
@@ -4484,6 +4502,20 @@ const bannerY = 98;
       if (damage >= 5 && !enemy.dead) {
         this.createHitSparks(enemy.x, enemy.y - 8, source.magic ? 0xc8b0ff : 0xfff0c0);
         this.createDamageNumber(enemy.x, enemy.y - enemy.base.size, `-${damage}`, source.magic ? "#c8b0ff" : "#fff2ba");
+        if (enemy.sprite && !this.settings?.reducedMotion) {
+          enemy.hitFlash = 0.09;
+          enemy.sprite.setTint(0xfff3d6);
+          const sx = enemy.sprite.scaleX || 1;
+          const sy = enemy.sprite.scaleY || 1;
+          this.tweens.add({
+            targets: enemy.sprite,
+            scaleX: sx * 1.14,
+            scaleY: sy * 0.88,
+            duration: 70,
+            yoyo: true,
+            ease: "Quad.easeOut",
+          });
+        }
       }
       if (enemy.hp <= 0) {
         const burn = enemy.base.burn;
@@ -4575,14 +4607,23 @@ const bannerY = 98;
             const baseScale = (enemy.base?.size || 15) / 30;
             sprite.setScale(baseScale);
             this.puff(enemy.x, enemy.y + 2, enemy.base?.color);
+            sprite.setDepth(9);
             this.tweens.add({
               targets: sprite,
-              y: sprite.y + 4,
-              rotation: sprite.flipX ? -0.1 : 0.1,
-              alpha: 0,
-              duration: 420,
+              y: sprite.y + 6,
+              rotation: sprite.flipX ? -0.18 : 0.18,
+              duration: 160,
               ease: "Quad.easeIn",
-              onComplete: () => sprite.destroy(),
+              onComplete: () => {
+                this.tweens.add({
+                  targets: sprite,
+                  alpha: 0,
+                  delay: 720,
+                  duration: 480,
+                  ease: "Linear",
+                  onComplete: () => sprite.destroy(),
+                });
+              },
             });
           }
         } else if (family === "brute") {
@@ -4614,7 +4655,8 @@ const bannerY = 98;
                 this.tweens.add({
                   targets: sprite,
                   alpha: 0,
-                  duration: 380,
+                  delay: 640,
+                  duration: 480,
                   ease: "Linear",
                   onComplete: () => sprite.destroy(),
                 });
@@ -4888,7 +4930,7 @@ const bannerY = 98;
       if (this.selectedPad?.tower) this.updateUpgradeLabel();
     }
 
-    flashTowerFirePose(tower, duration = 120) {
+    flashTowerFirePose(tower, duration = 280) {
       if (!tower || !tower.sprite || this.settings?.reducedMotion) return;
       const type = tower.type;
       const fireKey = `tower_${type}_fire`;
@@ -4896,6 +4938,8 @@ const bannerY = 98;
       if (!this.textures.exists(fireKey)) return;
 
       tower.sprite.setTexture(fireKey);
+      const bloom = this.add.circle(tower.x, tower.y - 12, 10, 0xffe08a, 0.55).setDepth(36);
+      this.tweens.add({ targets: bloom, alpha: 0, scale: 2.1, duration: Math.min(220, duration), onComplete: () => bloom.destroy() });
       if (tower.firePoseTimer) {
         tower.firePoseTimer.remove(false);
         tower.firePoseTimer = null;
