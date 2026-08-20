@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.91";
+  const KRC_VERSION = "1.0.92";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2876,7 +2876,7 @@ const bannerY = 98;
 
     getTowerScale(typeOrTower, level = 0) {
       const lvl = typeof typeOrTower === "object" ? (typeOrTower?.level || 0) : level;
-      return 0.62 + lvl * 0.04;
+      return 0.72 + lvl * 0.04;
     }
 
     getTowerSpawnScale(type) {
@@ -2918,9 +2918,10 @@ const bannerY = 98;
       pad.tower = tower;
       const baseScale = this.getTowerScale(type, 0);
       const initialKey = this.getTowerTextureKey(type, 0);
-      tower.sprite = this.add.image(pad.x, pad.y - 8, initialKey).setScale(baseScale).setDepth(30);
+      tower.sprite = this.add.image(pad.x, pad.y - 10, initialKey).setScale(baseScale).setDepth(30);
       this.applyUnitTint(tower.sprite);
-      tower.label = this.add.text(pad.x + 16, pad.y + 15, "I", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
+      tower.ground = this.add.ellipse(pad.x, pad.y + 10, 56, 18, 0x050804, 0.4).setDepth(29);
+      tower.label = this.add.text(pad.x + 16, pad.y + 15, "", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.makeRangeDecal(pad.x, pad.y, cfg.range[0], cfg.color);
       if (type === "barracks") {
         tower.rallyRing = this.add.circle(tower.rallyX, tower.rallyY, 17, 0xf5d76e, 0.08).setStrokeStyle(2, 0xf5d76e, 0.9).setDepth(28);
@@ -3130,9 +3131,7 @@ const bannerY = 98;
           this.applyUnitTint(tower.sprite);
         }
       }
-      tower.label.setText(
-        ["I", "II", "III", "IV", "V"][tower.level] + (chosen.tag || "")
-      );
+      tower.label.setText("");
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       this.flashText(path.toUpperCase(), tower.x, tower.y - 42, "#fff2ba");
       this.say(`${cfg.name} upgraded to ${path.toUpperCase()}.`);
@@ -3234,9 +3233,7 @@ const bannerY = 98;
       }
       tower.sprite.setScale(this.getTowerScale(tower));
       const pathTag = this.familyPaths(tower.type)?.find((p) => p.id === tower.path)?.tag || "";
-      tower.label.setText(
-        ["I", "II", "III", "IV", "V"][tower.level] + pathTag
-      );
+      tower.label.setText("");
       tower.rangeRing.setRadius(cfg.range[tower.level]);
       const unlocked = window.KRCTowerAbilities?.isUnlocked(tower.type, tower.level);
       const ability = window.KRCTowerAbilities?.getAbility(tower.type);

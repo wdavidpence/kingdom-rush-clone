@@ -167,17 +167,13 @@
     const towerBase = (ctx, cfg) => {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      shadow(ctx, 48, 86, 34, 9, 0.4);
-      // earthen mound
-      ellipse(ctx, 48, 80, 34, 13, linGrad(ctx, 20, 72, 76, 90, [[0, "#5a6e3a"], [1, "#2a381c"]]), "#1a2410", 2.2);
-      // stone plinth
-      stoneBrick(ctx, 22, 52, 52, 30, cfg.stoneHi, cfg.stone, cfg.stoneLo);
-      // wooden platform lip
-      woodPlank(ctx, 18, 48, 60, 10, cfg.woodHi, cfg.woodLo);
-      // battlements
-      for (let i = 0; i < 5; i += 1) {
-        const x = 22 + i * 11;
-        rounded(ctx, x, 42, 8, 10, 2, linGrad(ctx, x, 42, x, 52, [[0, cfg.stoneHi], [1, cfg.stone]]), "#1a140f", 1.2);
+      shadow(ctx, 48, 88, 36, 10, 0.5);
+      ellipse(ctx, 48, 82, 36, 14, linGrad(ctx, 20, 72, 76, 92, [[0, "#6a8248"], [1, "#1a2810"]]), "#12180c", 2.4);
+      stoneBrick(ctx, 20, 50, 56, 34, cfg.stoneHi, cfg.stone, cfg.stoneLo);
+      woodPlank(ctx, 16, 46, 64, 12, cfg.woodHi, cfg.woodLo);
+      for (let i = 0; i < 6; i += 1) {
+        const x = 20 + i * 10;
+        rounded(ctx, x, 38, 9, 12, 2, linGrad(ctx, x, 38, x, 50, [[0, cfg.stoneHi], [1, cfg.stone]]), "#12100c", 1.8);
       }
     };
 
