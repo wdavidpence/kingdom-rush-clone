@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.94";
+  const KRC_VERSION = "1.0.95";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
