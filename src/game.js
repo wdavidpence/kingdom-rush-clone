@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.1.5";
+  const KRC_VERSION = "1.1.6";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -2650,9 +2650,12 @@ const bannerY = 98;
         if (unlocked) {
           interactiveTargets.forEach((target) => target.setInteractive({ useHandCursor: true }));
 
+          const biomeHoverColors = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
+          const hoverColor = biomeHoverColors[index] ?? 0xfff0a0;
+
           const onOver = () => {
-            nodeBg.setStrokeStyle(3.5, 0xfff0a0, 1);
-            labelBg.setStrokeStyle(2, 0xfff0a0, 1);
+            nodeBg.setStrokeStyle(3.5, hoverColor, 1);
+            labelBg.setStrokeStyle(2, hoverColor, 1);
             if (!this.settings?.reducedMotion) {
               this.tweens.add({ targets: nodeGroup, scaleX: 1.07, scaleY: 1.07, duration: 120, ease: "Quad.easeOut" });
             }
