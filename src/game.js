@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.97";
+  const KRC_VERSION = "1.0.98";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -294,7 +294,7 @@
       this.updateTowers(dt);
       this.updateProjectiles(dt);
       this.updateEffects(dt);
-      this.audio.music(dt, this.waveActive && !this.gameEnded);
+      this.audio.music(dt, (this.waveActive && !this.gameEnded) || this.lives <= 8);
       this.audio.ambience(dt);
       this.updateHud();
     }
@@ -1631,6 +1631,7 @@
       if (this.textures.exists("gate_leak")) {
         this.gateLeakOverlay = this.add.image(378, 588, "gate_leak").setDepth(-4.8).setScale(1.58).setAlpha(0);
       }
+      this.dressBattlefield();
 
       const vig = this.add.graphics().setDepth(-3);
       vig.fillStyle(0x000000, 0.38);
@@ -1651,6 +1652,59 @@
       graphics.strokePath();
     }
 
+    dressBattlefield() {
+      this.worldStains = this.worldStains || [];
+      if (!this.path?.length) return;
+      const reduced = !!this.settings?.reducedMotion;
+      for (let i = 0; i < this.path.length; i += 1) {
+        const p = this.path[i];
+        const n = this.path[Math.min(this.path.length - 1, i + 1)];
+        const dx = n.x - p.x;
+        const dy = n.y - p.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const side = i % 2 === 0 ? 1 : -1;
+        const ox = p.x + nx * (22 + (i % 3) * 7) * side;
+        const oy = p.y + ny * (18 + (i % 3) * 5) * side;
+        if (oy < TOP_H + 10 || oy > SHOP_Y - 22) continue;
+        const kind = i % 5;
+        if (kind === 0) {
+          this.add.ellipse(ox, oy + 2, 15, 9, 0x3a2818, 0.5).setDepth(-13);
+          this.add.ellipse(ox - 2, oy - 2, 10, 7, 0x6a5040, 0.45).setDepth(-13);
+        } else if (kind === 1) {
+          this.add.rectangle(ox, oy + 5, 3, 7, 0xc8b090, 0.85).setDepth(-11);
+          const cap = this.add.circle(ox, oy, 5.5, 0x8a3040, 0.9).setDepth(-11);
+          if (!reduced) {
+            this.tweens.add({ targets: cap, scale: 1.1, duration: 1500 + i * 50, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+          }
+        } else if (kind === 2) {
+          this.add.ellipse(ox, oy + 3, 22, 9, 0x152214, 0.32).setDepth(-14);
+        } else {
+          const tuft = this.add.rectangle(ox, oy, 3, 12, 0x4a7c30, 0.55).setOrigin(0.5, 1).setDepth(-13);
+          tuft.setAngle((i * 17) % 24 - 12);
+          if (!reduced) {
+            this.tweens.add({ targets: tuft, angle: tuft.angle + 9, duration: 1700 + i * 40, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+          }
+        }
+      }
+      if (!reduced) {
+        for (let i = 0; i < 5; i += 1) {
+          const p = this.path[Math.min(this.path.length - 1, 1 + i * 2)];
+          const mote = this.add.circle(p.x, p.y - 4, 1.7, 0xf5e6b0, 0.32).setDepth(12);
+          this.tweens.add({
+            targets: mote,
+            y: p.y - 22,
+            alpha: 0.06,
+            duration: 2100 + i * 180,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        }
+      }
+    }
+
     createPads() {
       for (const pad of this.buildPads) {
         pad.tower = null;
@@ -1664,6 +1718,37 @@
           .text(pad.x, pad.y - 4, "+", { font: "bold 22px 'Source Sans 3', Arial", color: "#fff2ba", stroke: "#3a2810", strokeThickness: 3 })
           .setOrigin(0.5)
           .setDepth(9);
+        pad.hint = this.add
+          .text(pad.x, pad.y - 30, "BUILD", {
+            font: "bold 9px Cinzel",
+            color: "#ffd866",
+            stroke: "#2a1808",
+            strokeThickness: 3,
+          })
+          .setOrigin(0.5)
+          .setDepth(10);
+        if (!this.settings?.reducedMotion) {
+          if (pad.glow) {
+            this.tweens.add({
+              targets: pad.glow,
+              alpha: { from: 0.12, to: 0.42 },
+              scale: { from: 1, to: 1.12 },
+              duration: 900,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+          this.tweens.add({
+            targets: pad.hint,
+            y: pad.y - 36,
+            alpha: { from: 0.55, to: 1 },
+            duration: 700,
+            yoyo: true,
+            repeat: -1,
+            ease: "Sine.easeInOut",
+          });
+        }
       }
     }
 
@@ -1966,7 +2051,7 @@
       this.heroPortraitPlate = plateElements;
       this.infoBg = this.add.rectangle(W / 2, SHOP_Y - 10, W, 18, 0x120e0a, 0.78).setDepth(88);
       this.infoText = this.add
-        .text(W / 2, SHOP_Y - 10, "Tap a tower type, then tap a build pad.", {
+        .text(W / 2, SHOP_Y - 10, "Tap a tower, then a glowing pad.", {
           font: "11px 'Source Sans 3', Arial",
           color: "#f0e6c8",
           wordWrap: { width: 400 },
@@ -2521,6 +2606,7 @@ const bannerY = 98;
               this.tweens.add({ targets: nodeGroup, scaleX: 1.07, scaleY: 1.07, duration: 120, ease: "Quad.easeOut" });
             }
             this.showTooltip(nx, ny - 50, mapDescriptions[index]);
+            this.setCampaignIntel(index, false);
           };
 
           const onOut = () => {
@@ -2547,12 +2633,31 @@ const bannerY = 98;
           nodeBg.setInteractive({ useHandCursor: true });
           nodeBg.on("pointerover", () => {
             this.showTooltip(nx, ny - 50, `${map.name}\nLOCKED — Clear previous map to unlock!`);
+            this.setCampaignIntel(index, true);
           });
           nodeBg.on("pointerout", () => {
             this.hideTooltip();
           });
         }
       });
+
+      const intelBg = this.add.rectangle(W / 2, 532, 348, 70, 0x1a140c, 0.94)
+        .setStrokeStyle(2, 0xf5c85a, 0.88)
+        .setDepth(502);
+      const intelInner = this.add.rectangle(W / 2, 532, 338, 60, 0x24180e, 0.5)
+        .setStrokeStyle(1, 0xd8b548, 0.4)
+        .setDepth(502.2);
+      this.campaignIntelTitle = this.add.text(W / 2, 512, "FOREST GATE · OPEN", {
+        font: "bold 13px Cinzel",
+        color: "#ffd866",
+      }).setOrigin(0.5).setDepth(503);
+      this.campaignIntelBody = this.add.text(W / 2, 542, "Green lane, honest bend. Scouts then brutes.\n3★ if the gate holds. Early CALL pays gold.", {
+        font: "12px 'Source Sans 3', Arial",
+        color: "#efe4c4",
+        align: "center",
+        wordWrap: { width: 320 },
+      }).setOrigin(0.5).setDepth(503);
+      this.overlay.add([intelBg, intelInner, this.campaignIntelTitle, this.campaignIntelBody]);
 
       let ironBtn;
       const updateIronBtn = () => {
@@ -2607,7 +2712,7 @@ const bannerY = 98;
 
       this.overlay.add(
         this.add
-          .text(W / 2, 698, "Tip: Call early waves for a gold bonus. Guards hold roads.", {
+          .text(W / 2, 698, "Hover a province. Stars, threat, and gold wait on the field.", {
             font: "12px 'Source Sans 3', Arial",
             color: "#a9b59d",
             align: "center",
@@ -2710,6 +2815,26 @@ const bannerY = 98;
         this.briefing = null;
       }
       this.overlayActive = false;
+    }
+
+    setCampaignIntel(index, locked) {
+      if (!this.campaignIntelTitle || !this.campaignIntelBody) return;
+      const cards = [
+        ["FOREST GATE · OPEN", "Green lane, honest bend. Scouts then brutes.\n3★ if the gate holds. Early CALL pays gold."],
+        ["STONE PASS", "Armor and flyers in the pinch. Barracks hold the cut.\n3★: no leaks through the canyon."],
+        ["EMBER MARSH", "Heat, embers, bosses. Artillery earns its keep.\nWatch the fissures."],
+        ["GALE REACH", "Cross-gusts hide flyers on the switchbacks.\nKeep eyes on the sky."],
+        ["ASH SPIRE", "Cinder peak. Armor and embers climb the switch.\nHold the high road."],
+      ];
+      const card = cards[index] || cards[0];
+      const mapName = (MAPS[index]?.name || "Province").toUpperCase();
+      if (locked) {
+        this.campaignIntelTitle.setText(`${mapName} · LOCKED`);
+        this.campaignIntelBody.setText("Clear the road behind you to open this province.");
+      } else {
+        this.campaignIntelTitle.setText(card[0]);
+        this.campaignIntelBody.setText(card[1]);
+      }
     }
 
     beginMap(mapIndex) {
@@ -2899,6 +3024,11 @@ const bannerY = 98;
       pad.icon.setText("");
       pad.icon.setVisible(false);
       if (pad.glow) pad.glow.setVisible(false);
+      if (pad.hint) {
+        this.tweens.killTweensOf(pad.hint);
+        pad.hint.destroy();
+        pad.hint = null;
+      }
       const tower = this.entityRegistry.create("tower", {
         type,
         level: 0,
@@ -2952,6 +3082,17 @@ const bannerY = 98;
         tower.readyFill = this.add.rectangle(pad.x - 18, pad.y + 40, 36, 4, 0x8fd45a).setOrigin(0, 0.5).setDepth(33);
       }
       this.towers.push(tower);
+      if (this.waveIndex === 0 && this.towers.length >= 2 && this.callButton && !this.settings?.reducedMotion) {
+        this.tweens.add({
+          targets: this.callButton.bg,
+          scaleX: 1.08,
+          scaleY: 1.08,
+          duration: 220,
+          yoyo: true,
+          repeat: 3,
+          ease: "Sine.easeInOut",
+        });
+      }
       if (!this.settings?.reducedMotion) {
         tower.sprite.setPosition(pad.x, pad.y + 6).setScale(this.getTowerSpawnScale(type));
         this.tweens.add({
@@ -4246,6 +4387,7 @@ const bannerY = 98;
     leakEnemy(enemy) {
       this.lives -= enemy.base.leak;
       this.audio.play("impact", 0.45, 0.82);
+      this.audio.play("fail", 0.2, 0.88);
       this.triggerGateLeak(enemy);
       this.removeEnemy(enemy, false);
       this.flashText("-" + enemy.base.leak, 360, 88, "#ff8069");
@@ -4643,6 +4785,13 @@ const bannerY = 98;
         } else {
           const size = enemy.base?.size || 16;
           this.puff(enemy.x, enemy.y, enemy.base?.color);
+          const stain = this.add.ellipse(enemy.x, enemy.y + 6, 16 + size * 0.35, 7, 0x2a1810, 0.32).setDepth(-12);
+          this.worldStains = this.worldStains || [];
+          this.worldStains.push(stain);
+          if (this.worldStains.length > 22) {
+            const old = this.worldStains.shift();
+            old?.destroy?.();
+          }
           const ring = this.add.circle(enemy.x, enemy.y, 4, enemy.base?.color, 0.6).setStrokeStyle(2, "#fff8c0", 0.9).setDepth(75);
           this.tweens.add({ targets: ring, alpha: 0, scale: size / 8 + 1.5, duration: 280, onComplete: () => ring.destroy() });
           const debrisCount = Math.min(12, 4 + size / 3);
@@ -6535,8 +6684,8 @@ const bannerY = 98;
         return `${cfg.name} L${tower.level + 1}: dmg ${dmg} / ${rate.toFixed(2)}s / rng ${range}. ${up}. Sell ${refund}g.${ab}`;
       }
       if (this.waveActive) return `${this.queue.length} queued, ${this.enemies.length} alive. Defend the gate.`;
-      if (this.waveIndex === 0 && this.towers.length < 2) return "Tutorial: build two towers on the round pads, then CALL the first wave.";
-      return "Tap CALL for early-wave gold, upgrade towers, or command Captain.";
+      if (this.waveIndex === 0 && this.towers.length < 2) return "Two glowing pads. Then CALL — early gold.";
+      return "CALL for early gold. Upgrade. Command the hero.";
     }
 
     endGame(victory) {
@@ -7025,7 +7174,7 @@ const bannerY = 98;
       if (this.muted || this.scene.settings?.reducedMotion || !this.ambienceOn) return;
       this.ambienceClock -= dt;
       if (this.ambienceClock > 0) return;
-      this.ambienceClock = 2.4;
+      this.ambienceClock = this.scene.waveActive ? 1.15 : 2.4;
       const beds = {
         0: [196, 247],
         1: [110, 147],
