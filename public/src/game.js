@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.85";
+  const KRC_VERSION = "1.0.86";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1842,12 +1842,6 @@
             textOffsetY: 16,
             font: "bold 12px 'Source Sans 3', Arial",
             textColor: "#ffd866",
-            roleMark: {
-              type: t.id,
-              shape: t.id === "archer" ? "triangle" : t.id === "mage" ? "diamond" : t.id === "artillery" ? "circle" : "shield",
-              label: t.shopLabel,
-              glyph: t.glyph,
-            },
             tooltip: () => `${t.name} (${t.cost}g)\n${t.role}\nDmg: ${t.damage[0]} · Rng: ${t.range[0]} · Spd: ${t.rate[0]}s\n${t.desc}`,
           }
         );
@@ -1910,7 +1904,7 @@
           }
         );
         btn.spell = id;
-        btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 104, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102);
+        btn.cooldownBar = this.add.rectangle(x - 39, SHOP_Y + 104, 1, 4, 0xaee9ff, 0.95).setOrigin(0, 0.5).setDepth(102).setVisible(false);
         this.spellButtons.push(btn);
       }
       this.heroButtons = [];
@@ -6247,6 +6241,7 @@ const bannerY = 98;
         b.setAlpha(s.ready > 0 ? 0.55 : 1);
         const pct = s.ready > 0 ? 1 - s.ready / s.cooldown : 1;
         b.cooldownBar.width = Math.max(1, 78 * pct);
+        b.cooldownBar.setVisible(s.ready > 0);
         b.cooldownBar.setFillStyle(s.ready > 0 ? 0x84a9c7 : 0xaee9ff, s.ready > 0 ? 0.65 : 0.95);
       }
       for (const b of this.heroButtons || []) {
@@ -6256,6 +6251,7 @@ const bannerY = 98;
         b.setAlpha(ability.ready > 0 ? 0.55 : 1);
         const pct = ability.ready > 0 ? 1 - ability.ready / ability.cooldown : 1;
         b.cooldownBar.width = Math.max(1, 84 * pct);
+        b.cooldownBar.setVisible(ability.ready > 0);
         b.cooldownBar.setFillStyle(ability.ready > 0 ? 0xa98f44 : 0xf5d76e, ability.ready > 0 ? 0.65 : 0.95);
       }
     }
