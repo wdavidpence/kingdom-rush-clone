@@ -751,6 +751,10 @@
       ellipse(ctx, 96, 52, 1.1, 1.1, "#ffffff", "#ffd850", 0.8);
       ellipse(ctx, 82, 42, 1.0, 1.0, "#ffffff", "#ffd850", 0.8);
       ellipse(ctx, 106, 43, 1.4, 0.8, "rgba(255, 248, 200, 0.75)");
+      ellipse(ctx, 102, 43, 0.9, 0.9, "#ffffff", "#ffd850", 0.8);
+      ellipse(ctx, 107, 42, 1.0, 0.8, "#ffffff", "#ffd850", 0.8);
+      ellipse(ctx, 113, 41, 0.8, 1.0, "#ffffff", "#ffd850", 0.8);
+      ellipse(ctx, 120, 44, 1.1, 0.9, "#ffffff", "#ffd850", 0.8);
 
       // Structure overlays
       drawThatchRoof128(ctx);
