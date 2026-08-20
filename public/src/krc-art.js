@@ -7409,10 +7409,10 @@
       // Legs: stride vs passing
       if (f === 0) {
         // Far/right leg trailing back
-        poly(ctx, [[30, 36], [37, 36], [42, 47], [35, 48]], farLegGrad(30, 36, 42, 48), "#24180c", 1.2);
+        poly(ctx, [[30, 36], [37, 36], [42, 47], [35, 48]], farLegGrad(30, 36, 42, 48), "#24180c", 2.0);
         rounded(ctx, 35, 46, 10, 5, 2, bootGrad(35, 46, 35, 51), "#24180c", 1);
         // Near/left leg stepping forward
-        poly(ctx, [[18, 36], [25, 36], [20, 48], [13, 48]], nearLegGrad(18, 36, 13, 48), "#2a1e10", 1.2);
+        poly(ctx, [[18, 36], [25, 36], [20, 48], [13, 48]], nearLegGrad(18, 36, 13, 48), "#2a1e10", 2.0);
         rounded(ctx, 10, 47, 11, 5.5, 2, bootGrad(10, 47, 10, 52), "#2a1e10", 1);
         // Cool rim on forward leg
         ctx.strokeStyle = "rgba(210, 240, 255, 0.4)";
@@ -7423,7 +7423,7 @@
         ctx.stroke();
       } else if (f === 1) {
         // Near/left leg planted straight
-        rounded(ctx, 18, 34, 8, 14, 3, nearLegGrad(18, 34, 26, 48), "#2a1e10", 1.2);
+        rounded(ctx, 18, 34, 8, 14, 3, nearLegGrad(18, 34, 26, 48), "#2a1e10", 2.0);
         rounded(ctx, 16, 47, 11, 5.5, 2, bootGrad(16, 47, 16, 52), "#2a1e10", 1);
         // Cool rim on left planted leg
         ctx.strokeStyle = "rgba(210, 240, 255, 0.4)";
@@ -7433,21 +7433,21 @@
         ctx.lineTo(18, 47);
         ctx.stroke();
         // Far/right leg lifting passing knee
-        poly(ctx, [[30, 34], [37, 34], [39, 41], [33, 42]], farLegGrad(30, 34, 39, 42), "#24180c", 1.2);
+        poly(ctx, [[30, 34], [37, 34], [39, 41], [33, 42]], farLegGrad(30, 34, 39, 42), "#24180c", 2.0);
         rounded(ctx, 33, 39, 9, 5, 2, bootGrad(33, 39, 33, 44), "#24180c", 1);
       } else if (f === 2) {
         // Near/left leg trailing back
-        poly(ctx, [[18, 36], [25, 36], [14, 47], [8, 46]], farLegGrad(18, 36, 14, 47), "#24180c", 1.2);
+        poly(ctx, [[18, 36], [25, 36], [14, 47], [8, 46]], farLegGrad(18, 36, 14, 47), "#24180c", 2.0);
         rounded(ctx, 6, 45, 10, 5, 2, bootGrad(6, 45, 6, 50), "#24180c", 1);
         // Far/right leg stepping forward
-        poly(ctx, [[30, 36], [37, 36], [42, 48], [35, 48]], nearLegGrad(30, 36, 42, 48), "#2a1e10", 1.2);
+        poly(ctx, [[30, 36], [37, 36], [42, 48], [35, 48]], nearLegGrad(30, 36, 42, 48), "#2a1e10", 2.0);
         rounded(ctx, 36, 47, 11, 5.5, 2, bootGrad(36, 47, 36, 52), "#2a1e10", 1);
       } else {
         // Near/left leg lifting passing knee
-        poly(ctx, [[18, 34], [25, 34], [27, 41], [21, 42]], farLegGrad(18, 34, 27, 41), "#24180c", 1.2);
+        poly(ctx, [[18, 34], [25, 34], [27, 41], [21, 42]], farLegGrad(18, 34, 27, 41), "#24180c", 2.0);
         rounded(ctx, 20, 39, 9, 5, 2, bootGrad(20, 39, 20, 44), "#24180c", 1);
         // Far/right leg planted straight
-        rounded(ctx, 30, 34, 8, 14, 3, nearLegGrad(30, 34, 38, 48), "#2a1e10", 1.2);
+        rounded(ctx, 30, 34, 8, 14, 3, nearLegGrad(30, 34, 38, 48), "#2a1e10", 2.0);
         rounded(ctx, 29, 47, 11, 5.5, 2, bootGrad(29, 47, 29, 52), "#2a1e10", 1);
       }
 
@@ -7724,7 +7724,7 @@
       ctx.lineTo(46, 25);
       ctx.stroke();
 
-      rounded(ctx, 28, 26, 12, 6, 2.5, linGrad(ctx, 28, 26, 40, 32, [[0, "#fff0a4"], [0.5, "#cca448"], [1, "#66481c"]]), "#2a1e10", 1.2);
+      rounded(ctx, 28, 26, 12, 6, 2.5, linGrad(ctx, 28, 26, 40, 32, [[0, "#fff0a4"], [0.5, "#cca448"], [1, "#66481c"]]), "#2a1e10", 2.0);
       ellipse(ctx, 39, 29, 3, 3, linGrad(ctx, 36, 26, 42, 32, [[0, "#fff0a0"], [1, "#8a6820"]]), "#2a1e10", 1);
 
       poly(ctx, [[54, 23], [44, 19], [46, 24], [44, 29]], linGrad(ctx, 44, 19, 54, 24, [[0, "#e4ecf4"], [0.6, "#ffffff"], [1, "#7c8c9c"]]), "#2a323c", 1.2);

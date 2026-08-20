@@ -3,7 +3,7 @@
 KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.96: enemy walk/attack outlines 1.4 → 2.2 (scout/brute/etc).
+v1.0.97: soldier-guard walk/attack outlines 1.2 → 2.0.
 
 ## Last error / blocker
 None for syntax.
