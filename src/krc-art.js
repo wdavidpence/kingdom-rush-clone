@@ -1522,6 +1522,20 @@
       drawMageSpireBody128(ctx);
       drawMagePennant128(ctx, true);
       drawMageCrystal128(ctx, true);
+      ellipse(ctx, 104, 36, 16, 16, radGrad(ctx, 104, 36, 2, 16, [
+        [0, "#fff8ff"],
+        [0.35, "#c8a0ff"],
+        [1, "rgba(70, 16, 140, 0)"],
+      ]));
+      ctx.strokeStyle = "rgba(220, 180, 255, 0.95)";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(74, 50);
+      ctx.quadraticCurveTo(94, 28, 120, 28);
+      ctx.stroke();
+      ellipse(ctx, 120, 28, 5, 5, "#f8eeff", "#a070ff", 1);
+      ellipse(ctx, 90, 38, 2.2, 2.2, "#ffffff");
+      ellipse(ctx, 108, 24, 1.8, 1.8, "#ffe8ff");
     };
 
     const drawMageL2 = (ctx) => {
@@ -8827,6 +8841,16 @@
       ctx.quadraticCurveTo(286, 78, 328, 98);
       ctx.stroke();
 
+      // Ash Spire — cinder cone matching battlefield ash pits
+      ellipse(ctx, 122, 102, 74, 52, radGrad(ctx, 122, 102, 8, 74, [
+        [0, "rgba(110, 82, 62, 0.72)"],
+        [0.55, "rgba(70, 48, 36, 0.4)"],
+        [1, "rgba(30, 18, 12, 0)"],
+      ]));
+      poly(ctx, [[90, 132], [122, 58], [156, 132]], linGrad(ctx, 122, 58, 122, 132, [[0, "#6a5040"], [0.45, "#3a281c"], [1, "#1a100c"]]), "#120c08", 1.4);
+      poly(ctx, [[114, 78], [122, 58], [130, 78]], "rgba(40, 28, 22, 0.85)");
+      speckles(ctx, 96, 78, 52, 46, 28, "rgba(16, 10, 8, 0.4)", 1.3);
+
       // Gale cliffs (upper)
       ctx.strokeStyle = "rgba(180, 210, 220, 0.55)";
       ctx.lineWidth = 2;
@@ -8837,8 +8861,8 @@
       ctx.quadraticCurveTo(338, 50, 350, 66);
       ctx.stroke();
 
-      // Ash haze
-      ellipse(ctx, 168, 72, 40, 22, "rgba(90, 80, 70, 0.28)");
+      // Ash haze leftover above the cone
+      ellipse(ctx, 128, 70, 36, 16, "rgba(90, 80, 70, 0.22)");
 
       // Winding road connecting regions
       ctx.strokeStyle = "rgba(160, 125, 80, 0.5)";
