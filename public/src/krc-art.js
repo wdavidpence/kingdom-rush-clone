@@ -169,7 +169,7 @@
       ctx.lineJoin = "round";
       shadow(ctx, 48, 86, 34, 9, 0.4);
       // earthen mound
-      ellipse(ctx, 48, 80, 32, 12, linGrad(ctx, 20, 72, 76, 90, [[0, "#5a6e3a"], [1, "#2a381c"]]), "#1a2410", 1.5);
+      ellipse(ctx, 48, 80, 34, 13, linGrad(ctx, 20, 72, 76, 90, [[0, "#5a6e3a"], [1, "#2a381c"]]), "#1a2410", 2.2);
       // stone plinth
       stoneBrick(ctx, 22, 52, 52, 30, cfg.stoneHi, cfg.stone, cfg.stoneLo);
       // wooden platform lip
