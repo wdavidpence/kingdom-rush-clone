@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.99";
+  const KRC_VERSION = "1.0.100";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4684,13 +4684,7 @@ const bannerY = 98;
                   if (spark.setAngle) spark.setAngle(Math.random() * 360);
                   this.effects.push({ obj: spark, life: 0.25, vx: (Math.random() - 0.5) * 30, vy: -15 - Math.random() * 15 });
                 }
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 400,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite);
               },
             });
           }
@@ -4708,13 +4702,7 @@ const bannerY = 98;
                   const smoke = this.add.circle(enemy.x + (Math.random() - 0.5) * 14, enemy.y - 2, 2 + Math.random() * 2, 0x504038, 0.6).setDepth(76);
                   this.effects.push({ obj: smoke, life: 0.4 + Math.random() * 0.2, vx: (Math.random() - 0.5) * 15, vy: -20 - Math.random() * 15 });
                 }
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 420,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite);
               },
             });
           }
@@ -4729,13 +4717,7 @@ const bannerY = 98;
               duration: 160,
               ease: "Quad.easeIn",
               onComplete: () => {
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 380,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite);
               },
             });
           }
@@ -4752,13 +4734,7 @@ const bannerY = 98;
               ease: "Quad.easeIn",
               onComplete: () => {
                 this.puff(enemy.x, startY + 16, 0x73d9ff);
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 380,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite, 420, 500);
               },
             });
           }
@@ -4779,13 +4755,7 @@ const bannerY = 98;
                   if (spark.setAngle) spark.setAngle(Math.random() * 360);
                   this.effects.push({ obj: spark, life: 0.35 + Math.random() * 0.15, vx: (Math.random() - 0.5) * 25, vy: -20 - Math.random() * 15 });
                 }
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 420,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite);
               },
             });
           }
@@ -4814,13 +4784,7 @@ const bannerY = 98;
                   });
                 }
                 this.cameras.main.shake(140, 0.008);
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  duration: 460,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite, 720, 520);
               },
             });
           }
@@ -4852,10 +4816,9 @@ const bannerY = 98;
             this.tweens.add({
               targets: sprite,
               y: sprite.y + 4,
-              alpha: 0,
-              duration: 450,
-              ease: "Linear",
-              onComplete: () => sprite.destroy(),
+              duration: 160,
+              ease: "Quad.easeIn",
+              onComplete: () => this.fadeCorpse(sprite),
             });
           }
         }
@@ -4930,21 +4893,43 @@ const bannerY = 98;
       if (this.selectedPad?.tower) this.updateUpgradeLabel();
     }
 
-    flashTowerFirePose(tower, duration = 280) {
+    fadeCorpse(sprite, delay = 640, fade = 480) {
+      if (!sprite) return;
+      sprite.setDepth(9);
+      this.tweens.add({
+        targets: sprite,
+        alpha: 0,
+        delay,
+        duration: fade,
+        ease: "Linear",
+        onComplete: () => sprite.destroy(),
+      });
+    }
+
+    flashTowerFirePose(tower, duration) {
       if (!tower || !tower.sprite || this.settings?.reducedMotion) return;
       const type = tower.type;
       const fireKey = `tower_${type}_fire`;
       const idleKey = this.getTowerTextureKey(tower);
       if (!this.textures.exists(fireKey)) return;
+      const looks = {
+        archer: { duration: 220, color: 0xc8f08a, r: 8, shake: 0 },
+        mage: { duration: 340, color: 0xb49cff, r: 16, shake: 0 },
+        artillery: { duration: 300, color: 0xff7a3a, r: 20, shake: 0.004 },
+        barracks: { duration: 180, color: 0xf5d76e, r: 7, shake: 0 },
+      };
+      const look = looks[type] || looks.archer;
+      const ms = duration && duration >= 250 ? duration : look.duration;
 
       tower.sprite.setTexture(fireKey);
-      const bloom = this.add.circle(tower.x, tower.y - 12, 10, 0xffe08a, 0.55).setDepth(36);
-      this.tweens.add({ targets: bloom, alpha: 0, scale: 2.1, duration: Math.min(220, duration), onComplete: () => bloom.destroy() });
+      const bloom = this.add.circle(tower.x, tower.y - 12, look.r, look.color, 0.58).setDepth(36);
+      this.tweens.add({ targets: bloom, alpha: 0, scale: type === "mage" ? 2.4 : 2.0, duration: Math.min(240, ms), onComplete: () => bloom.destroy() });
+      if (look.shake) this.cameras.main.shake(70, look.shake);
       if (tower.firePoseTimer) {
         tower.firePoseTimer.remove(false);
         tower.firePoseTimer = null;
       }
-      tower.firePoseTimer = this.time.delayedCall(duration, () => {
+      tower.firePoseTimer = this.time.delayedCall(ms, () => {
         if (tower.sprite && tower.sprite.active) {
           tower.sprite.setTexture(idleKey);
         }
