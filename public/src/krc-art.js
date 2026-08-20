@@ -2170,6 +2170,11 @@
         ctx.moveTo(106, 70); ctx.lineTo(112, 76);
         ctx.stroke();
 
+        // 3 Volumetric backblast smoke ellipses behind the barrel
+        ellipse(ctx, 22, 60, 8, 6.5, "rgba(65,55,48,0.8)", "#14100c", 1.0);
+        ellipse(ctx, 16, 52, 9.5, 7.5, "rgba(85,75,66,0.7)", "#181410", 0.8);
+        ellipse(ctx, 28, 48, 7.5, 6, "rgba(105,95,84,0.65)", "#201a14", 0.8);
+
         // Recoiled Kicked-Back Barrel (Pitched up steeply, breech rammed down-left)
         const barrelPoly = [
           [28, 54],
@@ -2203,39 +2208,42 @@
         ellipse(ctx, 68, 23, 9, 11, linGrad(ctx, 60, 12, 76, 34, [[0, "#fff0a0"], [0.4, "#ff8c20"], [1, "#941800"]]), "#400600", 2.2);
         ellipse(ctx, 68, 23, 5, 7, "#ff3800");
 
-        // MASSIVE VOLUMETRIC MUZZLE FIREBALL (Expanding forward and up)
+        // MASSIVE VOLUMETRIC MUZZLE FIREBALL (Expanding forward and up, breaking 128 box top-right)
         // Layer 1: Outer Roaring Crimson / Orange Flame Lobes
         const flamePoly = [
           [68, 23],
-          [82, 8],
-          [98, 2],
-          [116, 8],
-          [126, 20],
-          [122, 34],
-          [106, 44],
-          [88, 40],
+          [82, 4],
+          [100, -6],
+          [122, -8],
+          [136, 6],
+          [138, 22],
+          [128, 38],
+          [108, 46],
+          [88, 42],
           [76, 32],
         ];
-        poly(ctx, flamePoly, linGrad(ctx, 68, 23, 126, 20, [[0, "#ffffff"], [0.2, "#ffe850"], [0.55, "#ff5500"], [0.85, "#cc1200"], [1, "#640400"]]), "#3a0200", 2);
+        poly(ctx, flamePoly, linGrad(ctx, 68, 23, 138, 10, [[0, "#ffffff"], [0.2, "#ffe850"], [0.55, "#ff5500"], [0.85, "#cc1200"], [1, "#640400"]]), "#3a0200", 2.2);
 
         // Layer 2: Inner Incandescent Golden Core
         const corePoly = [
           [68, 23],
-          [84, 13],
-          [102, 10],
-          [112, 20],
-          [104, 30],
-          [82, 28],
+          [86, 9],
+          [106, 0],
+          [124, 6],
+          [128, 20],
+          [112, 32],
+          [84, 29],
         ];
-        poly(ctx, corePoly, linGrad(ctx, 68, 23, 112, 20, [[0, "#ffffff"], [0.45, "#fff280"], [1, "#ff8810"]]));
+        poly(ctx, corePoly, linGrad(ctx, 68, 23, 128, 12, [[0, "#ffffff"], [0.45, "#fff280"], [1, "#ff8810"]]));
 
         // Layer 3: Blinding White Ignition Heart
-        ellipse(ctx, 74, 22, 7, 7, "#ffffff");
+        ellipse(ctx, 76, 21, 9, 8, "#ffffff");
 
-        // Flying Burning Shrapnel Sparks & Embers
+        // Flying Burning Shrapnel Sparks & Embers (scattering top-right)
         for (const [bx, by, br] of [
-          [120, 6, 2.4], [126, 14, 2.2], [124, 38, 2.0], [110, 48, 1.8],
-          [96, 48, 1.6], [104, -2, 2.0], [114, 28, 2.2], [88, 2, 1.8]
+          [134, -4, 2.6], [140, 12, 2.4], [132, 28, 2.2], [118, -10, 2.2],
+          [124, 40, 2.0], [108, 50, 1.8], [98, -8, 2.0], [86, 0, 1.8],
+          [114, 26, 2.2], [130, 4, 2.4]
         ]) {
           ellipse(ctx, bx, by, br, br, "#ffffff", "#ff8800", 1);
         }
@@ -2770,6 +2778,22 @@
         poly(ctx, [[48, 63], [54, 65], [54, 88], [48, 86]], "#2c160a", "#0c0400", 1.2);
         // Right open door leaf angled inward
         poly(ctx, [[80, 63], [74, 65], [74, 88], [80, 86]], "#241006", "#0c0400", 1.2);
+        // Left Guard (x=56) — moa2735 synth 1.0.104
+        poly(ctx, [[54, 60], [62, 60], [63, 64], [57, 64]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[53, 65], [63, 65], [64, 76], [52, 76]], "#8b0000", "#0e1e0c", 1);
+        poly(ctx, [[54, 77], [58, 77], [57, 86], [53, 86]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[60, 77], [64, 77], [65, 86], [61, 86]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[47, 65], [53, 64], [54, 76], [48, 77]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[69, 50], [71, 49], [70, 86], [68, 87]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[69, 50], [71, 49], [70, 46]], "#d4af37", "#0e1e0c", 1);
+        // Right Guard (x=72, ahead)
+        poly(ctx, [[70, 63], [78, 63], [79, 67], [73, 67]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[69, 68], [79, 68], [80, 79], [68, 79]], "#8b0000", "#0e1e0c", 1);
+        poly(ctx, [[70, 80], [74, 80], [73, 89], [69, 89]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[76, 80], [80, 80], [81, 89], [77, 89]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[68, 68], [74, 67], [75, 79], [69, 80]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[85, 53], [87, 52], [86, 89], [84, 90]], "#d4af37", "#0e1e0c", 1);
+        poly(ctx, [[85, 53], [87, 52], [86, 49]], "#d4af37", "#0e1e0c", 1);
       }
     };
 
