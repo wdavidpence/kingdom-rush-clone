@@ -9201,48 +9201,72 @@
       mapGrad.addColorStop(1, "#b09c70");
       rounded(ctx, 10, 10, 340, 280, 8, mapGrad, "#2a1e12", 2);
 
-      // Painted Regions on the parchment:
-      // 1. Forest Gate region (bottom-left)
-      ellipse(ctx, 95, 235, 92, 62, radGrad(ctx, 95, 235, 8, 92, [
-        [0, "rgba(70, 140, 62, 0.72)"],
-        [0.55, "rgba(48, 96, 42, 0.5)"],
-        [1, "rgba(40, 70, 32, 0)"]
+      speckles(ctx, 14, 14, 332, 272, 90, "rgba(90,70,40,0.12)", 1.2);
+      speckles(ctx, 18, 18, 324, 264, 40, "rgba(255,240,200,0.1)", 1);
+
+      // Forest Gate — pine canopy, not blobs
+      ellipse(ctx, 90, 238, 100, 68, radGrad(ctx, 90, 238, 6, 100, [
+        [0, "rgba(52, 110, 48, 0.78)"],
+        [0.6, "rgba(36, 78, 36, 0.45)"],
+        [1, "rgba(30, 50, 24, 0)"]
       ]));
-      for (const [tx, ty, r] of [[42, 242, 11], [62, 218, 14], [78, 258, 12], [118, 248, 15], [142, 222, 11], [98, 210, 10]]) {
-        ellipse(ctx, tx, ty, r, r * 1.15, linGrad(ctx, tx, ty - r, tx, ty + r, [[0, "#6a9a48"], [1, "#243818"]]), "#1a2810", 1.1);
+      const pines = [
+        [38, 248, 11, 22], [52, 228, 13, 26], [68, 252, 12, 24],
+        [86, 218, 14, 28], [104, 246, 15, 30], [122, 230, 12, 24],
+        [138, 250, 11, 22], [74, 236, 10, 20], [150, 238, 9, 18],
+      ];
+      for (const [px, py, hw, hh] of pines) {
+        poly(ctx, [[px, py - hh], [px - hw, py + 4], [px + hw, py + 4]], linGrad(ctx, px, py - hh, px, py + 4, [[0, "#8ec868"], [1, "#1e3814"]]), "#102010", 1);
+        rounded(ctx, px - 2, py + 2, 4, 8, 1, "#4a3018", "#1a1008", 0.8);
       }
-      rounded(ctx, 70, 250, 18, 8, 3, "#3a5a28");
-
-      // 2. Stone Pass region (middle)
-      ellipse(ctx, 195, 160, 96, 66, radGrad(ctx, 195, 160, 8, 96, [
-        [0, "rgba(120, 132, 148, 0.62)"],
-        [0.6, "rgba(70, 82, 94, 0.38)"],
-        [1, "rgba(70, 82, 94, 0)"]
-      ]));
-      poly(ctx, [[138, 168], [168, 118], [196, 168]], linGrad(ctx, 168, 118, 168, 168, [[0, "#d8e0e8"], [1, "#4a545c"]]), "#1c2428", 1.4);
-      poly(ctx, [[172, 162], [202, 108], [230, 162]], linGrad(ctx, 202, 108, 202, 162, [[0, "#e8f0f8"], [1, "#586470"]]), "#1c2428", 1.4);
-      poly(ctx, [[208, 170], [238, 124], [266, 170]], linGrad(ctx, 238, 124, 238, 170, [[0, "#c8d0d8"], [1, "#3a444c"]]), "#1c2428", 1.4);
-      poly(ctx, [[194, 122], [202, 108], [210, 122]], "#f4f8fc");
-
-      // 3. Ember Marsh region (top-right)
-      ellipse(ctx, 285, 95, 80, 58, radGrad(ctx, 285, 95, 8, 80, [
-        [0, "rgba(180, 56, 28, 0.7)"],
-        [0.55, "rgba(110, 32, 16, 0.4)"],
-        [1, "rgba(90, 32, 18, 0)"]
-      ]));
-      ctx.strokeStyle = "#ff6a18";
-      ctx.lineWidth = 5;
+      ctx.strokeStyle = "#4a7a9a";
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(248, 112);
-      ctx.quadraticCurveTo(280, 82, 324, 102);
+      ctx.moveTo(40, 268);
+      ctx.quadraticCurveTo(70, 258, 100, 270);
       ctx.stroke();
-      ctx.strokeStyle = "#ffe060";
+
+      // Stone Pass — ridgeline
+      ellipse(ctx, 200, 168, 88, 58, radGrad(ctx, 200, 168, 8, 88, [
+        [0, "rgba(130, 140, 150, 0.55)"],
+        [1, "rgba(80, 90, 100, 0)"]
+      ]));
+      const peaks = [
+        [[150, 188], [168, 122], [186, 188]],
+        [[176, 184], [200, 108], [224, 184]],
+        [[214, 186], [236, 128], [258, 186]],
+      ];
+      for (const pts of peaks) {
+        poly(ctx, pts, linGrad(ctx, pts[1][0], pts[1][1], pts[1][0], pts[2][1], [[0, "#eef2f6"], [0.35, "#8a96a0"], [1, "#3a444c"]]), "#1a2024", 1.5);
+      }
+      poly(ctx, [[192, 124], [200, 108], [208, 124]], "#f6fafc");
+
+      // Ember Marsh — lava pools
+      ellipse(ctx, 292, 92, 78, 52, radGrad(ctx, 292, 92, 6, 78, [
+        [0, "rgba(190, 50, 20, 0.72)"],
+        [1, "rgba(90, 24, 12, 0)"]
+      ]));
+      ellipse(ctx, 278, 96, 16, 8, radGrad(ctx, 278, 96, 1, 16, [[0, "#fff0a0"], [0.4, "#ff7018"], [1, "#6a1808"]]));
+      ellipse(ctx, 308, 86, 12, 6, radGrad(ctx, 308, 86, 1, 12, [[0, "#ffe080"], [1, "#8a2008"]]));
+      ctx.strokeStyle = "#ff7a20";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(250, 108);
+      ctx.quadraticCurveTo(286, 78, 328, 98);
+      ctx.stroke();
+
+      // Gale cliffs (upper)
+      ctx.strokeStyle = "rgba(180, 210, 220, 0.55)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(248, 112);
-      ctx.quadraticCurveTo(280, 82, 324, 102);
+      ctx.moveTo(300, 48);
+      ctx.quadraticCurveTo(330, 40, 348, 58);
+      ctx.moveTo(308, 56);
+      ctx.quadraticCurveTo(338, 50, 350, 66);
       ctx.stroke();
-      ellipse(ctx, 292, 88, 6, 4, "rgba(255, 200, 80, 0.55)");
+
+      // Ash haze
+      ellipse(ctx, 168, 72, 40, 22, "rgba(90, 80, 70, 0.28)");
 
       // Winding road connecting regions
       ctx.strokeStyle = "rgba(160, 125, 80, 0.5)";
