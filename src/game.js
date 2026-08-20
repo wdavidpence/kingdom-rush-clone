@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.86";
+  const KRC_VERSION = "1.0.87";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1693,7 +1693,7 @@
       ringContainer.add([innerDisc, outerRing]);
       this.hero.ring = ringContainer;
       const heroIdleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
-      this.hero.sprite = this.add.image(post.x, post.y - 12, heroIdleKey).setScale(1.28).setDepth(46);
+      this.hero.sprite = this.add.image(post.x, post.y - 14, heroIdleKey).setScale(1.42).setDepth(46);
       if (isSentinel) {
         this.hero.sprite.setTint(0xb8c4c8);
       } else {
@@ -1837,7 +1837,7 @@
           () => this.chooseBuild(t.id),
           {
             icon: `portrait_${t.id}`,
-            iconScale: 0.52,
+            iconScale: 0.64,
             iconOffsetY: -9,
             textOffsetY: 16,
             font: "bold 12px 'Source Sans 3', Arial",

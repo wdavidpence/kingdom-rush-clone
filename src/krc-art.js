@@ -7952,7 +7952,7 @@
       ellipse(ctx, 32, 46, 14, 2.5, "rgba(10, 16, 28, 0.6)");
 
       // Armor torso (3-stop cobalt/steel plate armor gradient)
-      rounded(ctx, 18, 26, 28, 24, 6, linGrad(ctx, 18, 26, 46, 50, [[0, "#92beff"], [0.45, "#386cb0"], [1, "#163458"]]), "#0c1828", 2);
+      rounded(ctx, 18, 26, 28, 24, 6, linGrad(ctx, 18, 26, 46, 50, [[0, "#92beff"], [0.45, "#386cb0"], [1, "#163458"]]), "#0c1828", 2.8);
       // Cool rim on left shoulder / torso
       ctx.strokeStyle = "rgba(210, 240, 255, 0.55)";
       ctx.lineWidth = 1.4;
@@ -7974,7 +7974,7 @@
       ellipse(ctx, 32, 27, 10, 3, "rgba(12, 16, 28, 0.65)");
 
       // Head (3-stop warm hero skin gradient)
-      ellipse(ctx, 32, 18, 11, 11, linGrad(ctx, 22, 8, 42, 28, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 1.6);
+      ellipse(ctx, 32, 18, 11, 11, linGrad(ctx, 22, 8, 42, 28, [[0, "#fff4dc"], [0.45, "#e8b87e"], [1, "#a86c34"]]), "#4a3018", 2.3);
 
       // Flowing chestnut hair lock strands framing face & neck
       poly(ctx, [[21, 14], [18, 20], [21, 23], [23, 16]], linGrad(ctx, 18, 14, 23, 23, [[0, "#54341c"], [0.5, "#38200e"], [1, "#1e1006"]]), "#140a04", 0.8);
@@ -8005,7 +8005,7 @@
 
       // Shield with contact AO
       ellipse(ctx, 16, 40, 7, 12, "rgba(12, 16, 28, 0.45)");
-      poly(ctx, [[10, 28], [22, 26], [24, 48], [16, 54], [8, 48]], linGrad(ctx, 8, 26, 24, 54, [[0, "#fff6c4"], [0.5, "#dcba4c"], [1, "#967024"]]), "#3a2810", 1.5);
+      poly(ctx, [[10, 28], [22, 26], [24, 48], [16, 54], [8, 48]], linGrad(ctx, 8, 26, 24, 54, [[0, "#fff6c4"], [0.5, "#dcba4c"], [1, "#967024"]]), "#3a2810", 2.2);
       poly(ctx, [[16, 33], [19, 38], [16, 43], [13, 38]], linGrad(ctx, 13, 33, 19, 43, [[0, "#3e68a8"], [1, "#14223c"]]), "#0e1828", 1);
       ctx.strokeStyle = "rgba(255,255,255,0.45)";
       ctx.lineWidth = 1;
