@@ -4022,7 +4022,7 @@
       // Legs: stride contact vs passing with 3-stop skin/hide volume
       if (f === 0) {
         // Left forward contact
-        poly(ctx, [[28, 43], [34, 43], [27, 54], [21, 54]], skinLit(28, 43, 21, 54), outline, 1.4);
+        poly(ctx, [[28, 43], [34, 43], [27, 54], [21, 54]], skinLit(28, 43, 21, 54), outline, 2.2);
         rounded(ctx, 18, 52, 11, 5, 2, bootGrad(18, 52, 18, 57), outline, 1);
         // Cool rim on left forward leg
         ctx.strokeStyle = "rgba(205, 245, 255, 0.4)";
@@ -4032,11 +4032,11 @@
         ctx.lineTo(21, 54);
         ctx.stroke();
         // Right back trailing
-        poly(ctx, [[42, 43], [48, 43], [54, 52], [48, 53]], skinShaded(42, 43, 54, 52), outline, 1.4);
+        poly(ctx, [[42, 43], [48, 43], [54, 52], [48, 53]], skinShaded(42, 43, 54, 52), outline, 2.2);
         rounded(ctx, 47, 51, 9, 5, 2, bootGrad(47, 51, 47, 56), outline, 1);
       } else if (f === 1) {
         // Left planted straight
-        rounded(ctx, 29, 41, 7, 14, 3, skinLit(29, 41, 36, 55), outline, 1.4);
+        rounded(ctx, 29, 41, 7, 14, 3, skinLit(29, 41, 36, 55), outline, 2.2);
         rounded(ctx, 27, 53, 11, 5, 2, bootGrad(27, 53, 27, 58), outline, 1);
         // Cool rim on left leg
         ctx.strokeStyle = "rgba(205, 245, 255, 0.4)";
@@ -4046,21 +4046,21 @@
         ctx.lineTo(29, 53);
         ctx.stroke();
         // Right lifted passing knee
-        poly(ctx, [[42, 40], [48, 40], [50, 47], [44, 48]], skinShaded(42, 40, 50, 47), outline, 1.4);
+        poly(ctx, [[42, 40], [48, 40], [50, 47], [44, 48]], skinShaded(42, 40, 50, 47), outline, 2.2);
         rounded(ctx, 44, 45, 9, 5, 2, bootGrad(44, 45, 44, 50), outline, 1);
       } else if (f === 2) {
         // Left back trailing
-        poly(ctx, [[28, 43], [34, 43], [23, 53], [17, 52]], skinShaded(28, 43, 23, 53), outline, 1.4);
+        poly(ctx, [[28, 43], [34, 43], [23, 53], [17, 52]], skinShaded(28, 43, 23, 53), outline, 2.2);
         rounded(ctx, 16, 51, 9, 5, 2, bootGrad(16, 51, 16, 56), outline, 1);
         // Right forward contact
-        poly(ctx, [[42, 43], [48, 43], [53, 54], [47, 54]], skinLit(42, 43, 53, 54), outline, 1.4);
+        poly(ctx, [[42, 43], [48, 43], [53, 54], [47, 54]], skinLit(42, 43, 53, 54), outline, 2.2);
         rounded(ctx, 45, 52, 11, 5, 2, bootGrad(45, 52, 45, 57), outline, 1);
       } else {
         // Left lifted passing knee
-        poly(ctx, [[28, 40], [34, 40], [36, 47], [30, 48]], skinShaded(28, 40, 36, 47), outline, 1.4);
+        poly(ctx, [[28, 40], [34, 40], [36, 47], [30, 48]], skinShaded(28, 40, 36, 47), outline, 2.2);
         rounded(ctx, 29, 45, 9, 5, 2, bootGrad(29, 45, 29, 50), outline, 1);
         // Right planted straight
-        rounded(ctx, 41, 41, 7, 14, 3, skinLit(41, 41, 48, 55), outline, 1.4);
+        rounded(ctx, 41, 41, 7, 14, 3, skinLit(41, 41, 48, 55), outline, 2.2);
         rounded(ctx, 39, 53, 11, 5, 2, bootGrad(39, 53, 39, 58), outline, 1);
       }
 
@@ -4357,7 +4357,7 @@
       else if (f === 1) { fArmX = 18; fArmY = bodyY + 10; fArmR = 6.5; }
       else if (f === 2) { fArmX = 22; fArmY = bodyY + 9; fArmR = 6; }
       else { fArmX = 19; fArmY = bodyY + 10; fArmR = 6.5; }
-      ellipse(ctx, fArmX, fArmY, fArmR, fArmR, bruteSkinShaded(fArmX - fArmR, fArmY - fArmR, fArmX + fArmR, fArmY + fArmR), outline, 1.4);
+      ellipse(ctx, fArmX, fArmY, fArmR, fArmR, bruteSkinShaded(fArmX - fArmR, fArmY - fArmR, fArmX + fArmR, fArmY + fArmR), outline, 2.2);
       // Arm hide wrap cross-straps
       ctx.strokeStyle = "#4e2a14";
       ctx.lineWidth = 1.0;
@@ -4616,11 +4616,11 @@
       ctx.restore();
 
       // Back leg & boot
-      poly(ctx, [[18, 46], [8, 52], [10, 58], [22, 53]], bruteSkinShaded(8, 46, 22, 58), outline, 1.4);
+      poly(ctx, [[18, 46], [8, 52], [10, 58], [22, 53]], bruteSkinShaded(8, 46, 22, 58), outline, 2.2);
       rounded(ctx, 4, 52, 9, 5.5, 2, "#361a0c", outline, 1.1);
 
       // Front leg & boot
-      poly(ctx, [[24, 48], [16, 56], [20, 60], [28, 54]], bruteSkinLit(16, 48, 28, 60), outline, 1.4);
+      poly(ctx, [[24, 48], [16, 56], [20, 60], [28, 54]], bruteSkinLit(16, 48, 28, 60), outline, 2.2);
       rounded(ctx, 13, 56, 10, 5.5, 2, "#361a0c", outline, 1.1);
 
       // Heavy muscular torso collapsed forward
@@ -4695,31 +4695,31 @@
       // Legs: stride contact vs passing
       if (f === 0) {
         // Left forward contact
-        poly(ctx, [[27, 43], [34, 43], [26, 54], [19, 54]], skin, outline, 1.4);
+        poly(ctx, [[27, 43], [34, 43], [26, 54], [19, 54]], skin, outline, 2.2);
         rounded(ctx, 16, 52, 12, 5.5, 2, boot, outline, 1.1);
         // Right back trailing
-        poly(ctx, [[42, 43], [49, 43], [54, 52], [47, 53]], skinDark, outline, 1.4);
+        poly(ctx, [[42, 43], [49, 43], [54, 52], [47, 53]], skinDark, outline, 2.2);
         rounded(ctx, 46, 50, 10, 5, 2, bootDark, outline, 1.1);
       } else if (f === 1) {
         // Left planted straight
-        rounded(ctx, 28, 41, 8, 14, 3, skin, outline, 1.4);
+        rounded(ctx, 28, 41, 8, 14, 3, skin, outline, 2.2);
         rounded(ctx, 26, 53, 12, 5.5, 2, boot, outline, 1.1);
         // Right lifted passing knee
-        poly(ctx, [[42, 40], [49, 40], [51, 47], [44, 48]], skinDark, outline, 1.4);
+        poly(ctx, [[42, 40], [49, 40], [51, 47], [44, 48]], skinDark, outline, 2.2);
         rounded(ctx, 44, 45, 10, 5, 2, bootDark, outline, 1.1);
       } else if (f === 2) {
         // Left back trailing
-        poly(ctx, [[27, 43], [34, 43], [22, 53], [15, 52]], skinDark, outline, 1.4);
+        poly(ctx, [[27, 43], [34, 43], [22, 53], [15, 52]], skinDark, outline, 2.2);
         rounded(ctx, 14, 50, 10, 5, 2, bootDark, outline, 1.1);
         // Right forward contact
-        poly(ctx, [[42, 43], [49, 43], [54, 54], [47, 54]], skin, outline, 1.4);
+        poly(ctx, [[42, 43], [49, 43], [54, 54], [47, 54]], skin, outline, 2.2);
         rounded(ctx, 45, 52, 12, 5.5, 2, boot, outline, 1.1);
       } else {
         // Left lifted passing knee
-        poly(ctx, [[27, 40], [34, 40], [36, 47], [29, 48]], skinDark, outline, 1.4);
+        poly(ctx, [[27, 40], [34, 40], [36, 47], [29, 48]], skinDark, outline, 2.2);
         rounded(ctx, 28, 45, 10, 5, 2, bootDark, outline, 1.1);
         // Right planted straight
-        rounded(ctx, 41, 41, 8, 14, 3, skin, outline, 1.4);
+        rounded(ctx, 41, 41, 8, 14, 3, skin, outline, 2.2);
         rounded(ctx, 39, 53, 12, 5.5, 2, boot, outline, 1.1);
       }
 
@@ -5658,7 +5658,7 @@
       ellipse(ctx, headX, headY + 7, 3, 1.8, "#ffaa00");
 
       // Brow ridge angled in rage
-      rounded(ctx, headX - 14, headY - 9, 28, 6, 2, "#4a3c30", outline, 1.4);
+      rounded(ctx, headX - 14, headY - 9, 28, 6, 2, "#4a3c30", outline, 2.2);
 
       // BOTH FISTS RAISED HIGH OVERHEAD in rage slam!
       const lFistX = bodyX - 4;
