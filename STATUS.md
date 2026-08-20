@@ -1,18 +1,17 @@
 # STATUS
 ## Task
-KRC AAA upgrades on the 5 hardest visual fails. Hermes implementing.
+KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.80 local: HUD rail, full spell names, opaque campaign backdrop, richer pad/trees/map, hero/gate/pad scale, face mouths.
-Syntax: game.js + krc-art.js node --check OK. Phaser 3.80.1 boots. bannerY=98 and Forest Gate (100,375) unchanged.
+v1.0.81: HUD numbers+rail verified in canvas shot. Campaign HUD bleed gone, title clear, drawn locks, nodes off banner. Spell full names. Forest Gate (100,375) and bannerY=98 unchanged.
 
 ## Last error / blocker
-Headless Chrome screenshots capture empty canvas (WebGL ReadPixels stall). Playwright MCP died mid-verify.
+None for 1.0.81. Headless WebGL shots still blank; canvas+shot hook works.
 
 ## Next step
-Push v1.0.80 to main + gh-pages. Visually confirm HUD/campaign in a real browser. Then another art cohesion pass if still sticker-like.
+If still not near-AAA: authored campaign regions, unique pads, bigger gatehouse, hero silhouette pass.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
 - Use Claude/Opus
-- Claim AAA without a real-browser screenshot
+- Claim AAA while trees/path still read as canvas TD
