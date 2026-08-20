@@ -3,13 +3,13 @@
 KRC AAA upgrades on the 5 hardest visual fails.
 
 ## Done
-v1.0.84: battlefield pines are stacked-triangle silhouettes. HUD/campaign/gate/hero holds. Verified battle shot.
+v1.0.85: 3 dirt path variants cycled on Forest Gate. Pines/HUD/gate/hero hold. Verified battle shot.
 
 ## Last error / blocker
 None.
 
 ## Next step
-Path tiles still repeating dirt cookies. Not near-AAA.
+Still canvas-TD, not near-AAA. Need authored characters/towers or stop claiming AAA.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
