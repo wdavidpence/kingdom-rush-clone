@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.0.100";
+  const KRC_VERSION = "1.0.101";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1199,6 +1199,7 @@
       skyGlow.fillRect(0, 0, W, 60);
 
       this.add.rectangle(W / 2, H / 2, W, H, grass).setDepth(-21);
+      this.paintMapGround(theme);
 
       for (let i = 0; i < 48; i += 1) {
         const x = (i * 89 + 17) % W;
@@ -1210,7 +1211,7 @@
       for (let i = 0; i < 120; i += 1) {
         const x = (i * 73) % W;
         const y = 76 + ((i * 47) % 545);
-        const c = i % 3 === 0 ? theme.accent : i % 2 ? 0x38542d : 0x20371b;
+        const c = i % 3 === 0 ? theme.accent : i % 2 ? theme.accent2 : grass;
         this.add.rectangle(x, y, 18 + (i % 4) * 7, 3, c, 0.22).setAngle((i * 19) % 180).setDepth(-19);
       }
 
@@ -1564,20 +1565,29 @@
         }
       };
 
-      placeAway(14, 48, (x, y, i) => {
+      const grove = [
+        { trees: 14, bush: 10, rock: 8, ruin: 1 },
+        { trees: 4, bush: 2, rock: 16, ruin: 4 },
+        { trees: 3, bush: 1, rock: 10, ruin: 5 },
+        { trees: 6, bush: 6, rock: 8, ruin: 2 },
+        { trees: 2, bush: 1, rock: 14, ruin: 3 },
+      ][this.mapIndex] || { trees: 10, bush: 8, rock: 10, ruin: 2 };
+
+      placeAway(grove.trees, 48, (x, y, i) => {
         const key = i % 3 === 0 && this.textures.exists("tree_oak") ? "tree_oak" : "tree_pine";
         this.add.image(x, y - 18, key).setScale(1.08 + (i % 4) * 0.12).setDepth(-15).setTint(theme.tint);
       });
-      placeAway(10, 42, (x, y, i) => {
+      placeAway(grove.bush, 42, (x, y, i) => {
         if (this.textures.exists("bush_round")) {
           this.add.image(x, y, "bush_round").setScale(0.7 + (i % 3) * 0.1).setDepth(-14).setTint(theme.tint);
         }
       });
-      placeAway(12, 40, (x, y, i) => {
+      placeAway(grove.rock, 40, (x, y, i) => {
         if (i % 2 === 0) this.add.image(x, y, "rock_moss").setScale(0.85).setDepth(-6).setTint(theme.tint);
-        else if (this.textures.exists("flower_patch")) this.add.image(x, y, "flower_patch").setScale(0.85).setDepth(-6);
+        else if (this.textures.exists("flower_patch") && this.mapIndex === 0) this.add.image(x, y, "flower_patch").setScale(0.85).setDepth(-6);
+        else this.add.image(x, y, "rock_moss").setScale(0.7).setDepth(-6).setTint(theme.tint);
       });
-      placeAway(3, 55, (x, y) => {
+      placeAway(grove.ruin, 55, (x, y) => {
         if (this.textures.exists("ruin_pillar")) this.add.image(x, y - 8, "ruin_pillar").setScale(0.9).setDepth(-13).setTint(theme.tint);
       });
       placeAway(2, 50, (x, y) => {
@@ -1643,6 +1653,47 @@
       vig.fillStyle(0x000000, 0.12);
       vig.fillRect(0, 28, W, 18);
       vig.fillRect(0, H - 46, W, 18);
+    }
+
+    paintMapGround(theme) {
+      const g = this.add.graphics().setDepth(-20.4);
+      const idx = this.mapIndex | 0;
+      if (idx === 0) {
+        g.fillStyle(0x244218, 0.32);
+        for (let i = 0; i < 20; i += 1) {
+          g.fillEllipse((i * 67 + 40) % W, 90 + ((i * 91) % 500), 52 + (i % 4) * 14, 20 + (i % 3) * 9);
+        }
+      } else if (idx === 1) {
+        g.fillStyle(0x5a646c, 0.28);
+        for (let i = 0; i < 16; i += 1) {
+          g.fillRoundedRect((i * 53 + 10) % Math.max(40, W - 80), 85 + ((i * 79) % 470), 46 + (i % 3) * 18, 16, 3);
+        }
+        g.lineStyle(1.6, 0x2a3238, 0.4);
+        for (let i = 0; i < 9; i += 1) {
+          const x = 24 + i * 44;
+          g.lineBetween(x, 110 + (i % 3) * 70, x + 36, 200 + i * 36);
+        }
+      } else if (idx === 2) {
+        g.fillStyle(0x3a1c0c, 0.38);
+        g.fillRect(0, 70, W, H - 70);
+        g.lineStyle(2.2, 0xe05018, 0.42);
+        for (let i = 0; i < 8; i += 1) {
+          const x = 16 + i * 50;
+          g.lineBetween(x, 130 + i * 28, x + 34, 310 + i * 18);
+        }
+        g.fillStyle(0xff6622, 0.22);
+        for (let i = 0; i < 7; i += 1) g.fillEllipse((i * 71 + 12) % W, 150 + ((i * 83) % 400), 18, 8);
+      } else if (idx === 3) {
+        g.fillStyle(0x3d5854, 0.22);
+        for (let i = 0; i < 14; i += 1) g.fillEllipse((i * 61) % W, 100 + ((i * 77) % 460), 74, 15);
+        g.lineStyle(1.3, 0xd4ece6, 0.2);
+        for (let i = 0; i < 11; i += 1) g.lineBetween(0, 88 + i * 46, W, 68 + i * 46);
+      } else {
+        g.fillStyle(0x3a2418, 0.34);
+        g.fillRect(0, 70, W, H - 70);
+        g.fillStyle(0x1a100c, 0.45);
+        for (let i = 0; i < 12; i += 1) g.fillCircle((i * 79 + 20) % W, 120 + ((i * 67) % 440), 7 + (i % 3) * 5);
+      }
     }
 
     strokePath(graphics) {
