@@ -1540,6 +1540,9 @@
       ellipse(ctx, 120, 28, 5, 5, "#f8eeff", "#a070ff", 1);
       ellipse(ctx, 90, 38, 2.2, 2.2, "#ffffff");
       ellipse(ctx, 108, 24, 1.8, 1.8, "#ffe8ff");
+      ellipse(ctx, 105, 28, 1.6, 1.6, "#ffffff");
+      ellipse(ctx, 98, 34, 1.7, 1.7, "#ffe8ff");
+      ellipse(ctx, 115, 24, 1.8, 1.8, "#f8eeff");
     };
 
     const drawMageL2 = (ctx) => {

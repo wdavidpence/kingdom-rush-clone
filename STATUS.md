@@ -3,14 +3,14 @@
 KRC AAA upgrades. Hermes judge only. SWE from antigrav + qwen2735 MoA.
 
 ## Done
-v1.1.3 visor slits (antigrav).
-v1.1.4 archer fire arrow sparks (MoA candidate B). Synth 0.5px specks REJECT.
+v1.1.4 archer sparks (MoA B).
+v1.1.5 mage bolt sparks (MoA B). Synth gold/orange REJECT.
 
 ## Last error / blocker
 None for syntax.
 
 ## Next step
-1.1.5: mage FIRE extra. Still canvas-TD. Not AAA.
+Still canvas-TD. Not AAA. Next: campaign hover biomes or barracks idle visors.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
