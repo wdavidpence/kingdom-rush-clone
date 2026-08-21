@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.2.1";
+  const KRC_VERSION = "1.2.2";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -6366,15 +6366,15 @@ const bannerY = 98;
 
           // Authored Frost Burst sprite (Frame 0 crystal star -> Frame 1 expanding frost nova)
           const iceBurst0 = this.add.image(cx, cy, this.textures.exists("fx_ice_0") ? "fx_ice_0" : "fx_ice")
-            .setScale(0.4)
+            .setScale(0.75)
             .setAlpha(0.95)
             .setDepth(58);
           this.tweens.add({
             targets: iceBurst0,
-            scale: { from: 0.4, to: 1.3 },
+            scale: { from: 0.75, to: 1.3 },
             rotation: 0.3,
             alpha: { from: 1.0, to: 0 },
-            duration: 420,
+            duration: 520,
             ease: "Quad.easeOut",
             onComplete: () => iceBurst0.destroy()
           });

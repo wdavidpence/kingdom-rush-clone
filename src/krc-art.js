@@ -6903,128 +6903,254 @@
       const cx = 64;
       const cy = 64;
 
-      // Sub-zero atmospheric mist aura
-      const mist = radGrad(ctx, cx, cy, 8, 62, [
-        [0, "rgba(210, 245, 255, 0.55)"],
-        [0.45, "rgba(130, 215, 255, 0.3)"],
-        [0.8, "rgba(50, 130, 220, 0.12)"],
-        [1, "rgba(20, 60, 140, 0)"],
-      ]);
-      ellipse(ctx, cx, cy, 60, 60, mist);
+      // Dark navy/black outline color constant for high-contrast crisp crystal definition
+      const outline = "#061224";
 
-      // Concentric frost rune circle
-      ctx.strokeStyle = "rgba(180, 235, 255, 0.6)";
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 38, 0, Math.PI * 2);
-      ctx.stroke();
+      // 1. 6 Primary Glacial Spires with faceted white crystal shards & chevron needles
+      const numArms = 6;
+      for (let i = 0; i < numArms; i += 1) {
+        const a = (i / numArms) * Math.PI * 2 - Math.PI / 2;
+        const cosA = Math.cos(a);
+        const sinA = Math.sin(a);
+        const perpX = -sinA;
+        const perpY = cosA;
 
-      // 8 Primary Glacial Diamond Spires (Cardinal + Diagonal)
-      for (let i = 0; i < 8; i += 1) {
-        const a = (i / 8) * Math.PI * 2;
-        const isCardinal = i % 2 === 0;
-        const len = isCardinal ? 58 : 44;
-        const w = isCardinal ? 8.5 : 6;
-        const tipX = cx + Math.cos(a) * len;
-        const tipY = cy + Math.sin(a) * len;
-        const perpX = -Math.sin(a) * w;
-        const perpY = Math.cos(a) * w;
-        const midLen = len * 0.45;
-        const midX = cx + Math.cos(a) * midLen;
-        const midY = cy + Math.sin(a) * midLen;
+        const tipLen = 58;
+        const tipX = cx + cosA * tipLen;
+        const tipY = cy + sinA * tipLen;
 
-        // Left facet (Light ice)
+        const midLen = 32;
+        const midW = 6.5;
+        const midX = cx + cosA * midLen;
+        const midY = cy + sinA * midLen;
+
+        const baseLen = 14;
+        const baseX = cx + cosA * baseLen;
+        const baseY = cy + sinA * baseLen;
+
+        // Chevron side barb / needle shards branching outward from mid-spire (at ~26px)
+        const barbBaseDist = 26;
+        const barbBaseX = cx + cosA * barbBaseDist;
+        const barbBaseY = cy + sinA * barbBaseDist;
+        for (const dir of [-1, 1]) {
+          const barbAngle = a + dir * (Math.PI * 0.35);
+          const barbLen = 17;
+          const barbTipX = barbBaseX + Math.cos(barbAngle) * barbLen;
+          const barbTipY = barbBaseY + Math.sin(barbAngle) * barbLen;
+          const barbPerpX = -Math.sin(barbAngle) * 3;
+          const barbPerpY = Math.cos(barbAngle) * 3;
+          const barbMidX = barbBaseX + Math.cos(barbAngle) * (barbLen * 0.45);
+          const barbMidY = barbBaseY + Math.sin(barbAngle) * (barbLen * 0.45);
+
+          // Outer Barb Shard (White highlight + Ice Cyan facet)
+          poly(
+            ctx,
+            [
+              [barbBaseX, barbBaseY],
+              [barbMidX + barbPerpX, barbMidY + barbPerpY],
+              [barbTipX, barbTipY],
+              [barbMidX - barbPerpX, barbMidY - barbPerpY],
+            ],
+            linGrad(ctx, barbBaseX, barbBaseY, barbTipX, barbTipY, [
+              [0, "#e8faff"],
+              [0.4, "#ffffff"],
+              [1, "#8be0ff"],
+            ]),
+            outline,
+            1.4
+          );
+
+          // Barb spine ridge
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 1.0;
+          ctx.beginPath();
+          ctx.moveTo(barbBaseX, barbBaseY);
+          ctx.lineTo(barbTipX, barbTipY);
+          ctx.stroke();
+        }
+
+        // Secondary smaller distal chevron barbs near the tip (at ~42px)
+        const subBarbDist = 42;
+        const subBarbBaseX = cx + cosA * subBarbDist;
+        const subBarbBaseY = cy + sinA * subBarbDist;
+        for (const dir of [-1, 1]) {
+          const subAngle = a + dir * (Math.PI * 0.38);
+          const subLen = 10;
+          const subTipX = subBarbBaseX + Math.cos(subAngle) * subLen;
+          const subTipY = subBarbBaseY + Math.sin(subAngle) * subLen;
+          const subPerpX = -Math.sin(subAngle) * 2;
+          const subPerpY = Math.cos(subAngle) * 2;
+
+          poly(
+            ctx,
+            [
+              [subBarbBaseX, subBarbBaseY],
+              [subBarbBaseX + subPerpX, subBarbBaseY + subPerpY],
+              [subTipX, subTipY],
+              [subBarbBaseX - subPerpX, subBarbBaseY - subPerpY],
+            ],
+            "#ffffff",
+            outline,
+            1.2
+          );
+        }
+
+        // Primary Spire: Left facet (Pure White highlight)
         poly(
           ctx,
-          [[cx, cy], [midX + perpX, midY + perpY], [tipX, tipY]],
-          linGrad(ctx, cx, cy, tipX, tipY, [[0, "#ffffff"], [0.4, "#b0f0ff"], [1, "#54b8f0"]]),
-          "#0e3050",
-          1.2
-        );
-        // Right facet (Deep shadow crystal)
-        poly(
-          ctx,
-          [[cx, cy], [tipX, tipY], [midX - perpX, midY - perpY]],
-          linGrad(ctx, cx, cy, tipX, tipY, [[0, "#d8f8ff"], [0.4, "#489cd8"], [1, "#184e80"]]),
-          "#0e3050",
-          1.2
+          [
+            [baseX, baseY],
+            [midX + perpX * midW, midY + perpY * midW],
+            [tipX, tipY],
+            [cx + cosA * 20, cy + sinA * 20],
+          ],
+          linGrad(ctx, baseX, baseY, tipX, tipY, [
+            [0, "#ffffff"],
+            [0.6, "#ffffff"],
+            [1, "#dff6ff"],
+          ]),
+          outline,
+          1.8
         );
 
-        // Center spine glint line
+        // Primary Spire: Right facet (Light Crystalline Ice Blue)
+        poly(
+          ctx,
+          [
+            [baseX, baseY],
+            [tipX, tipY],
+            [midX - perpX * midW, midY - perpY * midW],
+          ],
+          linGrad(ctx, baseX, baseY, tipX, tipY, [
+            [0, "#ffffff"],
+            [0.35, "#b5eeff"],
+            [1, "#4eb8f0"],
+          ]),
+          outline,
+          1.8
+        );
+
+        // Primary Center Spine Ridge (Bright glint)
         ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 1.3;
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * 10, cy + Math.sin(a) * 10);
+        ctx.moveTo(cx + cosA * 12, cy + sinA * 12);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+
+        // Tip Diamond Accent Glint
+        const starTipX = cx + cosA * 61;
+        const starTipY = cy + sinA * 61;
+        poly(
+          ctx,
+          [
+            [starTipX, starTipY - 3],
+            [starTipX + 2, starTipY],
+            [starTipX, starTipY + 3],
+            [starTipX - 2, starTipY],
+          ],
+          "#ffffff",
+          outline,
+          0.8
+        );
+      }
+
+      // 2. 6 Secondary Intermediate Crystal Diamond Shards (between primary spires)
+      for (let i = 0; i < numArms; i += 1) {
+        const a = ((i + 0.5) / numArms) * Math.PI * 2 - Math.PI / 2;
+        const cosA = Math.cos(a);
+        const sinA = Math.sin(a);
+        const perpX = -sinA;
+        const perpY = cosA;
+
+        const tipLen = 38;
+        const tipX = cx + cosA * tipLen;
+        const tipY = cy + sinA * tipLen;
+
+        const midLen = 22;
+        const midW = 4.8;
+        const midX = cx + cosA * midLen;
+        const midY = cy + sinA * midLen;
+
+        const baseLen = 12;
+        const baseX = cx + cosA * baseLen;
+        const baseY = cy + sinA * baseLen;
+
+        // Left facet (White)
+        poly(
+          ctx,
+          [[baseX, baseY], [midX + perpX * midW, midY + perpY * midW], [tipX, tipY]],
+          linGrad(ctx, baseX, baseY, tipX, tipY, [[0, "#ffffff"], [0.5, "#e6faff"], [1, "#a8e8ff"]]),
+          outline,
+          1.5
+        );
+
+        // Right facet (Ice Cyan)
+        poly(
+          ctx,
+          [[baseX, baseY], [tipX, tipY], [midX - perpX * midW, midY - perpY * midW]],
+          linGrad(ctx, baseX, baseY, tipX, tipY, [[0, "#d8f8ff"], [0.5, "#68ccf8"], [1, "#2880c8"]]),
+          outline,
+          1.5
+        );
+
+        // Center spine line
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(baseX, baseY);
         ctx.lineTo(tipX, tipY);
         ctx.stroke();
       }
 
-      // Secondary floating crystal diamonds between spires
-      for (let i = 0; i < 8; i += 1) {
-        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-        const dist = 28;
-        const dx = cx + Math.cos(a) * dist;
-        const dy = cy + Math.sin(a) * dist;
-        poly(
-          ctx,
-          [[dx, dy - 8], [dx + 4.5, dy], [dx, dy + 8], [dx - 4.5, dy]],
-          linGrad(ctx, dx - 4, dy - 8, dx + 4, dy + 8, [[0, "#ffffff"], [0.5, "#80dcff"], [1, "#2868a8"]]),
-          "#0e3050",
-          1
-        );
+      // 3. Central Hexagonal Ice-Blue Gem Core
+      const hexPts = [];
+      for (let i = 0; i < 6; i += 1) {
+        const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+        hexPts.push([cx + Math.cos(a) * 16, cy + Math.sin(a) * 16]);
       }
-
-      // Hexagonal central frost gem cluster
       poly(
         ctx,
-        [
-          [cx, cy - 18],
-          [cx + 15, cy - 9],
-          [cx + 15, cy + 9],
-          [cx, cy + 18],
-          [cx - 15, cy + 9],
-          [cx - 15, cy - 9],
-        ],
-        linGrad(ctx, cx - 15, cy - 18, cx + 15, cy + 18, [
+        hexPts,
+        radGrad(ctx, cx, cy, 2, 16, [
           [0, "#ffffff"],
-          [0.35, "#cbf4ff"],
-          [0.7, "#6ad0f8"],
-          [1, "#2068a0"],
+          [0.3, "#a0f0ff"],
+          [0.65, "#38b0f0"],
+          [1, "#0e4884"],
         ]),
-        "#0c2844",
-        1.6
+        outline,
+        2.0
       );
 
-      // Brilliant diamond core star
+      // Inner 12-point Brilliant White Crystal Star
+      const starPts = [];
+      for (let i = 0; i < 12; i += 1) {
+        const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        const r = i % 2 === 0 ? 12 : 5;
+        starPts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+      }
+      poly(ctx, starPts, "#ffffff", outline, 1.2);
+
+      // Center diamond core jewel
       poly(
         ctx,
         [
-          [cx, cy - 12],
-          [cx + 3, cy - 3],
-          [cx + 12, cy],
-          [cx + 3, cy + 3],
-          [cx, cy + 12],
-          [cx - 3, cy + 3],
-          [cx - 12, cy],
-          [cx - 3, cy - 3],
+          [cx, cy - 5],
+          [cx + 4, cy],
+          [cx, cy + 5],
+          [cx - 4, cy],
         ],
-        "#ffffff"
+        linGrad(ctx, cx - 4, cy - 5, cx + 4, cy + 5, [
+          [0, "#ffffff"],
+          [0.5, "#d8f8ff"],
+          [1, "#60c8f8"],
+        ]),
+        outline,
+        1.0
       );
 
-      // Frost sparkle stars
-      const glints = [
-        [cx + 36, cy - 38],
-        [cx - 38, cy - 34],
-        [cx + 40, cy + 32],
-        [cx - 36, cy + 38],
-        [cx, cy - 54],
-        [cx, cy + 54],
-      ];
-      for (const [gx, gy] of glints) {
-        ellipse(ctx, gx, gy, 2.5, 2.5, "#ffffff");
-        ellipse(ctx, gx, gy, 4, 1, "rgba(220,245,255,0.9)");
-        ellipse(ctx, gx, gy, 1, 4, "rgba(220,245,255,0.9)");
-      }
+      // Central glint dot
+      ellipse(ctx, cx, cy, 1.5, 1.5, "#ffffff");
     };
 
     const drawFxIce1 = (ctx) => {
