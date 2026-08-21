@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.1.9";
+  const KRC_VERSION = "1.2.0";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -369,8 +369,8 @@
         make("tree_pine", 24, 32, (ctx) => { ctx.fillStyle = "#3a6a30"; ctx.fillRect(4,0,16,32); });
         make("rock_moss", 20, 14, (ctx) => { ctx.fillStyle = "#686c64"; ctx.fillRect(0,0,20,14); });
         make("pad_empty", 48, 32, (ctx) => { ctx.fillStyle = "#4a3c2a"; ctx.beginPath(); ctx.ellipse(24,16,20,10,0,0,Math.PI*2); ctx.fill(); });
-        make("gate_arch", 96, 64, (ctx) => { ctx.fillStyle = "#5a4a38"; ctx.fillRect(8,14,80,44); ctx.fillStyle = "#2a1a10"; ctx.fillRect(28,24,40,30); ctx.fillStyle = "#8a2020"; ctx.fillRect(12,18,12,26); ctx.fillRect(72,18,12,26); });
-        make("gate_leak", 96, 64, (ctx) => { ctx.fillStyle = "rgba(255,50,20,0.8)"; ctx.fillRect(24,20,48,36); });
+        make("gate_arch", 128, 96, (ctx) => { ctx.fillStyle = "#6a5a48"; ctx.fillRect(8,14,112,68); ctx.fillStyle = "#0a0806"; ctx.fillRect(38,28,52,54); ctx.fillStyle = "#8a2020"; ctx.fillRect(16,22,18,36); ctx.fillRect(94,22,18,36); });
+        make("gate_leak", 128, 96, (ctx) => { ctx.fillStyle = "rgba(255,50,20,0.8)"; ctx.fillRect(36,26,56,56); });
         make("bush_round", 24, 18, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,24,18); });
         make("flower_patch", 20, 14, (ctx) => { ctx.fillStyle = "#f0d060"; ctx.fillRect(0,0,20,14); });
         make("tree_oak", 32, 32, (ctx) => { ctx.fillStyle = "#4a8030"; ctx.fillRect(0,0,32,32); });
@@ -1498,6 +1498,62 @@
         this.strokePath(center);
       }
 
+      if (this.mapIndex === 0 && this.path && this.path.length >= 2) {
+        const ruts = this.add.graphics().setDepth(-7.5);
+        const normals = [];
+        for (let i = 0; i < this.path.length; i += 1) {
+          if (i === 0) {
+            const dx = this.path[1].x - this.path[0].x;
+            const dy = this.path[1].y - this.path[0].y;
+            const len = Math.hypot(dx, dy) || 1;
+            normals.push({ nx: -dy / len, ny: dx / len });
+          } else if (i === this.path.length - 1) {
+            const dx = this.path[i].x - this.path[i - 1].x;
+            const dy = this.path[i].y - this.path[i - 1].y;
+            const len = Math.hypot(dx, dy) || 1;
+            normals.push({ nx: -dy / len, ny: dx / len });
+          } else {
+            const dx1 = this.path[i].x - this.path[i - 1].x;
+            const dy1 = this.path[i].y - this.path[i - 1].y;
+            const len1 = Math.hypot(dx1, dy1) || 1;
+            const dx2 = this.path[i + 1].x - this.path[i].x;
+            const dy2 = this.path[i + 1].y - this.path[i].y;
+            const len2 = Math.hypot(dx2, dy2) || 1;
+            const n1x = -dy1 / len1;
+            const n1y = dx1 / len1;
+            const n2x = -dy2 / len2;
+            const n2y = dx2 / len2;
+            const mx = n1x + n2x;
+            const my = n1y + n2y;
+            const mlen = Math.hypot(mx, my) || 1;
+            normals.push({ nx: mx / mlen, ny: my / mlen });
+          }
+        }
+
+        const rutOffset = 10;
+        for (const side of [-1, 1]) {
+          const off = side * rutOffset;
+          ruts.lineStyle(3, 0x241508, 0.65);
+          for (let i = 0; i < this.path.length - 1; i += 1) {
+            ruts.lineBetween(
+              this.path[i].x + normals[i].nx * off,
+              this.path[i].y + normals[i].ny * off,
+              this.path[i + 1].x + normals[i + 1].nx * off,
+              this.path[i + 1].y + normals[i + 1].ny * off
+            );
+          }
+          ruts.lineStyle(1.5, 0x140a04, 0.82);
+          for (let i = 0; i < this.path.length - 1; i += 1) {
+            ruts.lineBetween(
+              this.path[i].x + normals[i].nx * off,
+              this.path[i].y + normals[i].ny * off,
+              this.path[i + 1].x + normals[i + 1].nx * off,
+              this.path[i + 1].y + normals[i + 1].ny * off
+            );
+          }
+        }
+      }
+
       if (this.textures.exists("path_mark")) {
         for (let i = 0; i < this.path.length - 1; i += 1) {
           const a = this.path[i];
@@ -1607,17 +1663,21 @@
         }
       });
 
+      const gatePosX = 378;
+      const gatePosY = 520;
+      const gateScale = 1.15;
+
       const gateGlow = this.add.graphics().setDepth(-5.5);
-      gateGlow.fillStyle(0xffaa22, 0.22);
-      gateGlow.fillCircle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY - 4, 30);
-      gateGlow.fillStyle(0xff7700, 0.28);
-      gateGlow.fillCircle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY - 4, 18);
-      gateGlow.fillStyle(0xffd455, 0.65);
-      gateGlow.fillCircle(MAP_LAYOUT.gateX - 20, MAP_LAYOUT.gateY - 10, 3.5);
-      gateGlow.fillCircle(MAP_LAYOUT.gateX + 20, MAP_LAYOUT.gateY - 10, 3.5);
-      gateGlow.fillStyle(0xff8800, 0.45);
-      gateGlow.fillCircle(MAP_LAYOUT.gateX - 20, MAP_LAYOUT.gateY - 10, 6.5);
-      gateGlow.fillCircle(MAP_LAYOUT.gateX + 20, MAP_LAYOUT.gateY - 10, 6.5);
+      gateGlow.fillStyle(0xffaa22, 0.25);
+      gateGlow.fillCircle(gatePosX, gatePosY - 4, 32);
+      gateGlow.fillStyle(0xff7700, 0.3);
+      gateGlow.fillCircle(gatePosX, gatePosY - 4, 20);
+      gateGlow.fillStyle(0xffd455, 0.7);
+      gateGlow.fillCircle(gatePosX - 35 * gateScale, gatePosY - 8 * gateScale, 4);
+      gateGlow.fillCircle(gatePosX + 35 * gateScale, gatePosY - 8 * gateScale, 4);
+      gateGlow.fillStyle(0xff8800, 0.5);
+      gateGlow.fillCircle(gatePosX - 35 * gateScale, gatePosY - 8 * gateScale, 7);
+      gateGlow.fillCircle(gatePosX + 35 * gateScale, gatePosY - 8 * gateScale, 7);
 
       if (!this.settings?.reducedMotion) {
         this.tweens.add({
@@ -1633,13 +1693,13 @@
       }
 
       if (this.textures.exists("gate_arch")) {
-        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
+        this.gateImage = this.add.image(gatePosX, gatePosY, "gate_arch").setDepth(-5).setScale(gateScale);
       } else {
-        this.gateImage = this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
-        this.add.rectangle(MAP_LAYOUT.gateX, MAP_LAYOUT.gateY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
+        this.gateImage = this.add.rectangle(gatePosX, gatePosY, MAP_LAYOUT.gateWidth, MAP_LAYOUT.gateHeight, 0x57402c, 1).setStrokeStyle(3, 0x2d2117).setDepth(-5);
+        this.add.rectangle(gatePosX, gatePosY, MAP_LAYOUT.gateInnerWidth, MAP_LAYOUT.gateInnerHeight, 0x15100c, 0.9).setDepth(-4);
       }
       if (this.textures.exists("gate_leak")) {
-        this.gateLeakOverlay = this.add.image(378, 588, "gate_leak").setDepth(-4.8).setScale(1.58).setAlpha(0);
+        this.gateLeakOverlay = this.add.image(gatePosX, gatePosY, "gate_leak").setDepth(-4.8).setScale(gateScale).setAlpha(0);
       }
       this.dressBattlefield();
 
@@ -4476,8 +4536,8 @@ const bannerY = 98;
     }
 
     triggerGateLeak(enemy) {
-      const gx = MAP_LAYOUT.gateX;
-      const gy = MAP_LAYOUT.gateY;
+      const gx = this.gateImage ? this.gateImage.x : MAP_LAYOUT.gateX;
+      const gy = this.gateImage ? this.gateImage.y : MAP_LAYOUT.gateY;
 
       // 1. Gate leak overlay breach flash directly on the gate art
       if (this.gateLeakOverlay) {
@@ -4495,12 +4555,13 @@ const bannerY = 98;
       if (this.gateImage) {
         this.gateImage.setTint(0xff4444);
         if (!this.settings?.reducedMotion) {
+          const baseScale = this.gateImage.scaleX || 1.15;
           this.tweens.killTweensOf(this.gateImage);
-          this.gateImage.setScale(1.18);
+          this.gateImage.setScale(baseScale * 1.08);
           this.tweens.add({
             targets: this.gateImage,
-            scaleX: 1.05,
-            scaleY: 1.05,
+            scaleX: baseScale,
+            scaleY: baseScale,
             duration: 300,
             ease: "Back.easeOut",
             onComplete: () => {

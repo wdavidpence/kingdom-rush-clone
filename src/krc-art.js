@@ -8178,299 +8178,412 @@
       ellipse(ctx, 8, 2, 3, 3, "#d0a040");
     });
 
-    make("gate_arch", 96, 64, (ctx) => {
+    make("gate_arch", 128, 96, (ctx) => {
       // 1. Foundation plinth & ground shadow
-      shadow(ctx, 48, 60, 44, 4, 0.45);
-      rounded(ctx, 6, 52, 84, 10, 2, linGrad(ctx, 6, 52, 6, 62, [
-        [0, "#4a3c2c"],
-        [0.5, "#34281c"],
-        [1, "#1c140e"]
-      ]), "#120c06", 2);
+      shadow(ctx, 64, 91, 56, 5, 0.5);
+      shadow(ctx, 64, 88, 48, 4, 0.35);
 
-      // Twin keeps for a castle silhouette
-      rounded(ctx, 1, 10, 20, 44, 2, linGrad(ctx, 1, 10, 21, 54, [[0, "#8a7a64"], [0.5, "#5a4a38"], [1, "#24180e"]]), "#100c08", 2.2);
-      rounded(ctx, 75, 10, 20, 44, 2, linGrad(ctx, 75, 10, 95, 54, [[0, "#8a7a64"], [0.5, "#5a4a38"], [1, "#24180e"]]), "#100c08", 2.2);
-      poly(ctx, [[0, 12], [11, 1], [22, 12]], linGrad(ctx, 0, 1, 22, 12, [[0, "#c45a3a"], [1, "#6a2010"]]), "#2a1008", 1.6);
-      poly(ctx, [[74, 12], [85, 1], [96, 12]], linGrad(ctx, 74, 1, 96, 12, [[0, "#c45a3a"], [1, "#6a2010"]]), "#2a1008", 1.6);
-      ellipse(ctx, 11, 28, 3, 4, "#1a1008");
-      ellipse(ctx, 85, 28, 3, 4, "#1a1008");
-      ellipse(ctx, 11, 40, 3, 4, "#1a1008");
-      ellipse(ctx, 85, 40, 3, 4, "#1a1008");
-
-      // Threshold flagstone paving
-      poly(ctx, [[28, 54], [68, 54], [72, 60], [24, 60]], linGrad(ctx, 28, 54, 28, 60, [
-        [0, "#564432"],
+      // Stone plinth base (#6a5a48 mass)
+      rounded(ctx, 6, 80, 116, 12, 3, linGrad(ctx, 6, 80, 6, 92, [
+        [0, "#7e6e5c"],
+        [0.4, "#6a5a48"],
         [1, "#281e14"]
-      ]), "#120c06", 1.2);
+      ]), "#100a06", 2.2);
+
+      // Threshold stone paving
+      poly(ctx, [[34, 79], [94, 79], [98, 88], [30, 88]], linGrad(ctx, 34, 79, 34, 88, [
+        [0, "#7e6c58"],
+        [1, "#342618"]
+      ]), "#120a06", 1.5);
       ctx.strokeStyle = "#1a120a";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(38, 54); ctx.lineTo(36, 60);
-      ctx.moveTo(48, 54); ctx.lineTo(48, 60);
-      ctx.moveTo(58, 54); ctx.lineTo(60, 60);
-      ctx.stroke();
-
-      // 2. Main fortified stone gatehouse masonry body
-      rounded(ctx, 8, 14, 80, 40, 3, linGrad(ctx, 8, 14, 88, 54, [
-        [0, "#7a6b57"],
-        [0.3, "#625342"],
-        [0.7, "#4a3d2f"],
-        [1, "#261e16"]
-      ]), "#140e08", 2.5);
-
-      // Stone ashlar block coursing joints
-      ctx.strokeStyle = "#16100a";
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      // Horizontal mortar lines
-      ctx.moveTo(8, 24); ctx.lineTo(28, 24); ctx.moveTo(68, 24); ctx.lineTo(88, 24);
-      ctx.moveTo(8, 34); ctx.lineTo(28, 34); ctx.moveTo(68, 34); ctx.lineTo(88, 34);
-      ctx.moveTo(8, 44); ctx.lineTo(28, 44); ctx.moveTo(68, 44); ctx.lineTo(88, 44);
-      // Vertical stone joints
-      ctx.moveTo(18, 14); ctx.lineTo(18, 24); ctx.moveTo(78, 14); ctx.lineTo(78, 24);
-      ctx.moveTo(13, 24); ctx.lineTo(13, 34); ctx.moveTo(23, 24); ctx.lineTo(23, 34);
-      ctx.moveTo(73, 24); ctx.lineTo(73, 34); ctx.moveTo(83, 24); ctx.lineTo(83, 34);
-      ctx.moveTo(18, 34); ctx.lineTo(18, 44); ctx.moveTo(78, 34); ctx.lineTo(78, 44);
-      ctx.stroke();
-
-      // Stone top highlight bevels
-      ctx.strokeStyle = "rgba(255,245,220,0.18)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(9, 25.5); ctx.lineTo(27, 25.5); ctx.moveTo(69, 25.5); ctx.lineTo(87, 25.5);
-      ctx.moveTo(9, 35.5); ctx.lineTo(27, 35.5); ctx.moveTo(69, 35.5); ctx.lineTo(87, 35.5);
-      ctx.moveTo(9, 45.5); ctx.lineTo(27, 45.5); ctx.moveTo(69, 45.5); ctx.lineTo(87, 45.5);
-      ctx.stroke();
-
-      // Weathering & moss speckles
-      speckles(ctx, 9, 15, 18, 36, 10, "rgba(0,0,0,0.2)", 1.1);
-      speckles(ctx, 69, 15, 18, 36, 10, "rgba(0,0,0,0.2)", 1.1);
-      speckles(ctx, 9, 15, 18, 36, 6, "rgba(255,240,200,0.16)", 1.0);
-      speckles(ctx, 69, 15, 18, 36, 6, "rgba(255,240,200,0.16)", 1.0);
-      speckles(ctx, 8, 40, 16, 12, 6, "rgba(65,95,45,0.45)", 1.2);
-      speckles(ctx, 72, 40, 16, 12, 6, "rgba(65,95,45,0.45)", 1.2);
-
-      // 3. Parapet cornice ledge & corbel brackets
-      poly(ctx, [[6, 12], [90, 12], [92, 16], [4, 16]], linGrad(ctx, 0, 12, 0, 16, [
-        [0, "#9c8b76"],
-        [0.5, "#6a5948"],
-        [1, "#3c2e22"]
-      ]), "#140e08", 1.8);
-      ctx.strokeStyle = "rgba(255,250,225,0.32)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(6, 13);
-      ctx.lineTo(90, 13);
-      ctx.stroke();
-
-      for (let i = 0; i < 6; i += 1) {
-        const cx = 11 + i * 14.5;
-        poly(ctx, [[cx, 16], [cx + 5, 16], [cx + 3.5, 20], [cx + 1.5, 20]], linGrad(ctx, cx, 16, cx, 20, [
-          [0, "#6a5948"],
-          [1, "#261e16"]
-        ]), "#120c06", 1);
-      }
-
-      // Battlements (crenellated merlons with stone capstones)
-      for (let i = 0; i < 5; i += 1) {
-        const mx = 8 + i * 16.5;
-        rounded(ctx, mx, 3, 13, 10, 1.5, linGrad(ctx, mx, 3, mx, 13, [
-          [0, "#a0907a"],
-          [0.4, "#736350"],
-          [1, "#3c2e20"]
-        ]), "#140e08", 1.5);
-        rounded(ctx, mx - 1, 1.5, 15, 3, 0.8, linGrad(ctx, mx, 1.5, mx, 4.5, [
-          [0, "#b8a892"],
-          [1, "#60503e"]
-        ]), "#161009", 1);
-        if (i === 0 || i === 4) {
-          rounded(ctx, mx + 5.5, 5, 2, 5, 0.5, "#100c08");
-        }
-      }
-
-      // 4. Gothic Arched Portal & Keystone
-      rounded(ctx, 27, 18, 42, 36, 14, "#080604", "#120c06", 2.2);
-      rounded(ctx, 29, 20, 38, 33, 12, linGrad(ctx, 48, 20, 48, 53, [
-        [0, "#080604"],
-        [0.6, "#15100c"],
-        [1, "#1c140e"]
-      ]));
-
-      // Keystone at apex of arch
-      poly(ctx, [[43, 13], [53, 13], [51, 23], [45, 23]], linGrad(ctx, 43, 13, 53, 23, [
-        [0, "#ab9b85"],
-        [0.4, "#7e6e5a"],
-        [1, "#3a2d20"]
-      ]), "#140e08", 1.8);
-      ellipse(ctx, 48, 17.5, 2.5, 2.5, "#d4af37", "#2e2008", 0.8);
-
-      // Portcullis iron grate
-      ctx.strokeStyle = "#2e2a26";
       ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(36, 20); ctx.lineTo(36, 25);
-      ctx.moveTo(42, 19); ctx.lineTo(42, 25);
-      ctx.moveTo(48, 18); ctx.lineTo(48, 25);
-      ctx.moveTo(54, 19); ctx.lineTo(54, 25);
-      ctx.moveTo(60, 20); ctx.lineTo(60, 25);
-      ctx.moveTo(33, 22.5); ctx.lineTo(63, 22.5);
+      ctx.moveTo(48, 79); ctx.lineTo(46, 88);
+      ctx.moveTo(64, 79); ctx.lineTo(64, 88);
+      ctx.moveTo(80, 79); ctx.lineTo(82, 88);
       ctx.stroke();
 
-      // 5. Fortified Oak Double Doors
-      // Left door leaf
-      rounded(ctx, 30, 24, 17, 29, 2, linGrad(ctx, 30, 24, 47, 53, [
-        [0, "#6e4420"],
-        [0.35, "#523216"],
-        [0.8, "#38200c"],
-        [1, "#201206"]
-      ]), "#100a04", 1.5);
-      // Right door leaf
-      rounded(ctx, 49, 24, 17, 29, 2, linGrad(ctx, 49, 24, 66, 53, [
-        [0, "#663e1c"],
-        [0.35, "#4c2c12"],
-        [0.8, "#321c0a"],
-        [1, "#1c0e04"]
-      ]), "#100a04", 1.5);
+      // 2. Flanking Watchtowers (Light stone mass #6a5a48 with strong silhouette)
+      // Left Tower
+      rounded(ctx, 4, 14, 34, 68, 3, linGrad(ctx, 4, 14, 38, 82, [
+        [0, "#8e7e6c"],
+        [0.35, "#6a5a48"],
+        [0.8, "#524436"],
+        [1, "#281e16"]
+      ]), "#100a06", 2.4);
 
-      // Oak timber vertical grain & plank seams
-      ctx.strokeStyle = "rgba(140,85,40,0.4)";
+      // Left tower cornice & merlons
+      poly(ctx, [[2, 14], [40, 14], [38, 19], [4, 19]], linGrad(ctx, 2, 14, 2, 19, [
+        [0, "#a89884"],
+        [1, "#544434"]
+      ]), "#120c08", 1.6);
+      rounded(ctx, 4, 5, 9, 11, 2, linGrad(ctx, 4, 5, 4, 16, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c08", 1.5);
+      rounded(ctx, 16.5, 5, 9, 11, 2, linGrad(ctx, 16.5, 5, 16.5, 16, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c08", 1.5);
+      rounded(ctx, 29, 5, 9, 11, 2, linGrad(ctx, 29, 5, 29, 16, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c08", 1.5);
+
+      // Left conical terracotta roof
+      poly(ctx, [[2, 14], [21, 1], [40, 14]], linGrad(ctx, 2, 1, 40, 14, [
+        [0, "#e25434"],
+        [0.45, "#a8321a"],
+        [1, "#5a1408"]
+      ]), "#1c0604", 1.8);
+      ellipse(ctx, 21, 2, 3.5, 3.5, "#ffd440", "#3e2404", 1);
+      // Left arrow slit
+      rounded(ctx, 18, 32, 6, 15, 3, "#0a0806", "#181008", 1.5);
+      rounded(ctx, 16, 47, 10, 3, 1, "#7a6a58", "#120c06", 1);
+
+      // Right Tower
+      rounded(ctx, 90, 14, 34, 68, 3, linGrad(ctx, 90, 14, 124, 82, [
+        [0, "#8e7e6c"],
+        [0.35, "#6a5a48"],
+        [0.8, "#524436"],
+        [1, "#281e16"]
+      ]), "#100a06", 2.4);
+
+      // Right tower cornice & merlons
+      poly(ctx, [[88, 14], [126, 14], [124, 19], [90, 19]], linGrad(ctx, 88, 14, 88, 19, [
+        [0, "#a89884"],
+        [1, "#544434"]
+      ]), "#120c08", 1.6);
+      rounded(ctx, 90, 5, 9, 11, 2, linGrad(ctx, 90, 5, 90, 16, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c08", 1.5);
+      rounded(ctx, 102.5, 5, 9, 11, 2, linGrad(ctx, 102.5, 5, 102.5, 16, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c08", 1.5);
+      rounded(ctx, 115, 5, 9, 11, 2, linGrad(ctx, 115, 5, 115, 16, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c08", 1.5);
+
+      // Right conical terracotta roof
+      poly(ctx, [[88, 14], [107, 1], [126, 14]], linGrad(ctx, 88, 1, 126, 14, [
+        [0, "#e25434"],
+        [0.45, "#a8321a"],
+        [1, "#5a1408"]
+      ]), "#1c0604", 1.8);
+      ellipse(ctx, 107, 2, 3.5, 3.5, "#ffd440", "#3e2404", 1);
+      // Right arrow slit
+      rounded(ctx, 104, 32, 6, 15, 3, "#0a0806", "#181008", 1.5);
+      rounded(ctx, 102, 47, 10, 3, 1, "#7a6a58", "#120c06", 1);
+
+      // 3. Central Fortified Gatehouse Masonry Wall (#6a5a48 stone mass)
+      rounded(ctx, 28, 18, 72, 64, 3, linGrad(ctx, 28, 18, 100, 82, [
+        [0, "#8a7a68"],
+        [0.35, "#6a5a48"],
+        [0.75, "#4c3e30"],
+        [1, "#261c14"]
+      ]), "#100a06", 2.4);
+
+      // Parapet cornice ledge across central wall
+      poly(ctx, [[30, 18], [98, 18], [96, 23], [32, 23]], linGrad(ctx, 30, 18, 30, 23, [
+        [0, "#aa9a86"],
+        [1, "#584838"]
+      ]), "#120c06", 1.5);
+      ctx.strokeStyle = "rgba(255,248,220,0.4)";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(35.5, 25); ctx.lineTo(35.5, 52);
-      ctx.moveTo(41, 25); ctx.lineTo(41, 52);
-      ctx.moveTo(55, 25); ctx.lineTo(55, 52);
-      ctx.moveTo(60.5, 25); ctx.lineTo(60.5, 52);
+      ctx.moveTo(31, 19); ctx.lineTo(97, 19);
+      ctx.stroke();
+
+      for (let i = 0; i < 5; i += 1) {
+        const cx = 38 + i * 13;
+        poly(ctx, [[cx, 23], [cx + 5, 23], [cx + 3.5, 27], [cx + 1.5, 27]], linGrad(ctx, cx, 23, cx, 27, [
+          [0, "#6a5a48"],
+          [1, "#281e14"]
+        ]), "#100a04", 1);
+      }
+
+      // Central wall crenellations (merlons)
+      for (let i = 0; i < 3; i += 1) {
+        const mx = 37 + i * 20;
+        rounded(ctx, mx, 8, 14, 12, 2, linGrad(ctx, mx, 8, mx, 20, [[0, "#a89884"], [1, "#5a4a3a"]]), "#120c06", 1.5);
+        rounded(ctx, mx - 1, 6.5, 16, 3.5, 1, linGrad(ctx, mx, 6.5, mx, 10, [[0, "#c2b29c"], [1, "#746452"]]), "#140e06", 1);
+      }
+
+      // Ashlar Stone Block Coursing (High contrast joints, NO muddy speckles)
+      ctx.strokeStyle = "#160e06";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      // Left tower courses
+      ctx.moveTo(5, 31); ctx.lineTo(37, 31);
+      ctx.moveTo(5, 48); ctx.lineTo(37, 48);
+      ctx.moveTo(5, 65); ctx.lineTo(37, 65);
+      // Right tower courses
+      ctx.moveTo(91, 31); ctx.lineTo(123, 31);
+      ctx.moveTo(91, 48); ctx.lineTo(123, 48);
+      ctx.moveTo(91, 65); ctx.lineTo(123, 65);
+      // Vertical joints
+      ctx.moveTo(18, 15); ctx.lineTo(18, 31);
+      ctx.moveTo(28, 31); ctx.lineTo(28, 48);
+      ctx.moveTo(14, 48); ctx.lineTo(14, 65);
+      ctx.moveTo(25, 65); ctx.lineTo(25, 80);
+      ctx.moveTo(110, 15); ctx.lineTo(110, 31);
+      ctx.moveTo(100, 31); ctx.lineTo(100, 48);
+      ctx.moveTo(114, 48); ctx.lineTo(114, 65);
+      ctx.moveTo(103, 65); ctx.lineTo(103, 80);
+      ctx.stroke();
+
+      // Stone highlight bevels
+      ctx.strokeStyle = "rgba(255,245,210,0.3)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(6, 32.5); ctx.lineTo(36, 32.5);
+      ctx.moveTo(6, 49.5); ctx.lineTo(36, 49.5);
+      ctx.moveTo(92, 32.5); ctx.lineTo(122, 32.5);
+      ctx.moveTo(92, 49.5); ctx.lineTo(122, 49.5);
+      ctx.stroke();
+
+      // 4. CENTER HOLE ALMOST BLACK (#0a0806) — that hole IS the Wow
+      // Outer stone voussoir arch frame
+      rounded(ctx, 34, 25, 60, 57, 24, linGrad(ctx, 34, 25, 94, 82, [
+        [0, "#7e6e5c"],
+        [0.45, "#6a5a48"],
+        [1, "#2e2216"]
+      ]), "#0c0804", 2.4);
+
+      // Voussoir radiating stones
+      ctx.strokeStyle = "#160e06";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(42, 34); ctx.lineTo(37, 28);
+      ctx.moveTo(52, 27); ctx.lineTo(50, 21);
+      ctx.moveTo(76, 27); ctx.lineTo(78, 21);
+      ctx.moveTo(86, 34); ctx.lineTo(91, 28);
+      ctx.stroke();
+
+      // Deep dark gothic portal arch cavity (almost black #0a0806)
+      rounded(ctx, 38, 29, 52, 53, 20, "#0a0806", "#040201", 2.6);
+
+      // Carved stone keystone at arch apex
+      poly(ctx, [[57, 20], [71, 20], [68, 33], [60, 33]], linGrad(ctx, 57, 20, 71, 33, [
+        [0, "#d8c8b0"],
+        [0.45, "#9e8e78"],
+        [1, "#544432"]
+      ]), "#120a04", 2.0);
+      ellipse(ctx, 64, 26, 3.2, 3.2, "#ffd440", "#382004", 1.2);
+
+      // Portcullis iron grate in upper black cavity
+      ctx.strokeStyle = "#221e1c";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(46, 33); ctx.lineTo(46, 43);
+      ctx.moveTo(55, 30); ctx.lineTo(55, 43);
+      ctx.moveTo(64, 29); ctx.lineTo(64, 43);
+      ctx.moveTo(73, 30); ctx.lineTo(73, 43);
+      ctx.moveTo(82, 33); ctx.lineTo(82, 43);
+      ctx.moveTo(42, 37); ctx.lineTo(86, 37);
+      ctx.stroke();
+
+      // 5. TWO TIMBER DOOR LEAVES IN THE HOLE
+      // Left door leaf
+      rounded(ctx, 41, 39, 22, 43, 3, linGrad(ctx, 41, 39, 63, 82, [
+        [0, "#945428"],
+        [0.35, "#743e1c"],
+        [0.75, "#4e2610"],
+        [1, "#261206"]
+      ]), "#0c0602", 2.0);
+
+      // Right door leaf
+      rounded(ctx, 65, 39, 22, 43, 3, linGrad(ctx, 65, 39, 87, 82, [
+        [0, "#8c4e24"],
+        [0.35, "#6c3818"],
+        [0.75, "#48220e"],
+        [1, "#220e04"]
+      ]), "#0c0602", 2.0);
+
+      // Center dark door divide seam
+      ctx.strokeStyle = "#060302";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(64, 39); ctx.lineTo(64, 82);
+      ctx.stroke();
+
+      // Oak timber vertical planks
+      ctx.strokeStyle = "rgba(30,14,6,0.95)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(48, 40); ctx.lineTo(48, 82);
+      ctx.moveTo(55, 40); ctx.lineTo(55, 82);
+      ctx.moveTo(73, 40); ctx.lineTo(73, 82);
+      ctx.moveTo(80, 40); ctx.lineTo(80, 82);
+      ctx.stroke();
+
+      // Warm wood plank highlights
+      ctx.strokeStyle = "rgba(255,165,80,0.45)";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(43, 40); ctx.lineTo(43, 81);
+      ctx.moveTo(50, 40); ctx.lineTo(50, 81);
+      ctx.moveTo(67, 40); ctx.lineTo(67, 81);
+      ctx.moveTo(75, 40); ctx.lineTo(75, 81);
       ctx.stroke();
 
       // Heavy wrought iron hinge straps
-      rounded(ctx, 30, 28, 17, 3.5, 1, linGrad(ctx, 30, 28, 47, 31.5, [[0, "#484850"], [0.4, "#2a2a30"], [1, "#141418"]]), "#0c0c0e", 1);
-      rounded(ctx, 30, 44, 17, 3.5, 1, linGrad(ctx, 30, 44, 47, 47.5, [[0, "#484850"], [0.4, "#2a2a30"], [1, "#141418"]]), "#0c0c0e", 1);
-      rounded(ctx, 49, 28, 17, 3.5, 1, linGrad(ctx, 49, 28, 66, 31.5, [[0, "#484850"], [0.4, "#2a2a30"], [1, "#141418"]]), "#0c0c0e", 1);
-      rounded(ctx, 49, 44, 17, 3.5, 1, linGrad(ctx, 49, 44, 66, 47.5, [[0, "#484850"], [0.4, "#2a2a30"], [1, "#141418"]]), "#0c0c0e", 1);
+      rounded(ctx, 41, 45, 21, 5, 1.5, linGrad(ctx, 41, 45, 62, 50, [[0, "#606470"], [0.4, "#343842"], [1, "#16181e"]]), "#0a0c0e", 1.4);
+      rounded(ctx, 41, 69, 21, 5, 1.5, linGrad(ctx, 41, 69, 62, 74, [[0, "#606470"], [0.4, "#343842"], [1, "#16181e"]]), "#0a0c0e", 1.4);
+      rounded(ctx, 65, 45, 21, 5, 1.5, linGrad(ctx, 65, 45, 86, 50, [[0, "#606470"], [0.4, "#343842"], [1, "#16181e"]]), "#0a0c0e", 1.4);
+      rounded(ctx, 65, 69, 21, 5, 1.5, linGrad(ctx, 65, 69, 86, 74, [[0, "#606470"], [0.4, "#343842"], [1, "#16181e"]]), "#0a0c0e", 1.4);
 
-      // Iron rivet studs
-      const rivets = [33, 38, 44, 52, 58, 63];
+      // Steel rivet studs
+      const rivets = [44, 51, 58, 70, 77, 84];
       for (let r = 0; r < rivets.length; r += 1) {
         const rx = rivets[r];
-        ellipse(ctx, rx, 29.7, 0.9, 0.9, "#8a96a8", "#121418", 0.5);
-        ellipse(ctx, rx, 45.7, 0.9, 0.9, "#8a96a8", "#121418", 0.5);
+        ellipse(ctx, rx, 47.5, 1.3, 1.3, "#d8e4f2", "#181c20", 0.7);
+        ellipse(ctx, rx, 71.5, 1.3, 1.3, "#d8e4f2", "#181c20", 0.7);
       }
 
-      // Heavy door ring knockers / pull handles
-      ellipse(ctx, 43, 35.5, 1.8, 1.8, "#524018", "#161004", 0.8);
-      ellipse(ctx, 43, 38.5, 2.5, 3.2, null, "#d4af37", 1.3);
-      ellipse(ctx, 53, 35.5, 1.8, 1.8, "#524018", "#161004", 0.8);
-      ellipse(ctx, 53, 38.5, 2.5, 3.2, null, "#d4af37", 1.3);
+      // Brass door ring knockers
+      ellipse(ctx, 57, 57, 2.5, 2.5, "#7a5418", "#1c1004", 1);
+      ellipse(ctx, 57, 62, 3.8, 4.5, null, "#ffd440", 1.8);
+      ellipse(ctx, 71, 57, 2.5, 2.5, "#7a5418", "#1c1004", 1);
+      ellipse(ctx, 71, 62, 3.8, 4.5, null, "#ffd440", 1.8);
 
       // 6. Heraldic Hanging Wall Banners
       // Left Banner
-      rounded(ctx, 9, 17, 16, 2.5, 0.8, "#3c3224", "#120c06", 0.8);
-      ellipse(ctx, 9, 18.2, 1.8, 1.8, "#d4af37");
-      ellipse(ctx, 25, 18.2, 1.8, 1.8, "#d4af37");
-      poly(ctx, [[11, 19], [23, 19], [23, 42], [17, 47], [11, 42]], linGrad(ctx, 11, 19, 23, 47, [
-        [0, "#b82424"],
-        [0.4, "#8a1616"],
-        [0.8, "#5c0e0e"],
-        [1, "#360606"]
-      ]), "#200404", 1.4);
-      ctx.strokeStyle = "#e8b836";
-      ctx.lineWidth = 1.1;
+      rounded(ctx, 21, 26, 13, 3, 1, "#4a3c2a", "#120c06", 0.8);
+      ellipse(ctx, 21, 27.5, 2, 2, "#ffd440");
+      ellipse(ctx, 34, 27.5, 2, 2, "#ffd440");
+      poly(ctx, [[22, 28], [33, 28], [33, 58], [27.5, 63], [22, 58]], linGrad(ctx, 22, 28, 33, 63, [
+        [0, "#dc2c2c"],
+        [0.45, "#a01818"],
+        [0.85, "#580a0a"],
+        [1, "#320404"]
+      ]), "#1c0404", 1.5);
+      ctx.strokeStyle = "#ffd440";
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(12.5, 19.5); ctx.lineTo(21.5, 19.5); ctx.lineTo(21.5, 41); ctx.lineTo(17, 45); ctx.lineTo(12.5, 41); ctx.closePath();
+      ctx.moveTo(24, 29); ctx.lineTo(31, 29); ctx.lineTo(31, 56); ctx.lineTo(27.5, 59.5); ctx.lineTo(24, 56); ctx.closePath();
       ctx.stroke();
-      poly(ctx, [[17, 24], [20, 29], [17, 27.5], [14, 29]], "#fed853", "#744c06", 0.7);
-      ellipse(ctx, 17, 33.5, 1.8, 1.8, "#fed853", "#744c06", 0.6);
+      poly(ctx, [[27.5, 36], [30, 41], [27.5, 39.5], [25, 41]], "#ffd440", "#6c4004", 0.8);
+      ellipse(ctx, 27.5, 46, 2, 2, "#ffd440", "#6c4004", 0.7);
       for (let t = 0; t < 3; t += 1) {
-        rounded(ctx, 14.5 + t * 2, 45, 1.2, 2.5, 0.4, "#e0b028");
+        rounded(ctx, 25.5 + t * 2, 61, 1.3, 3, 0.5, "#e0b028");
       }
 
       // Right Banner
-      rounded(ctx, 71, 17, 16, 2.5, 0.8, "#3c3224", "#120c06", 0.8);
-      ellipse(ctx, 71, 18.2, 1.8, 1.8, "#d4af37");
-      ellipse(ctx, 87, 18.2, 1.8, 1.8, "#d4af37");
-      poly(ctx, [[73, 19], [85, 19], [85, 42], [79, 47], [73, 42]], linGrad(ctx, 73, 19, 85, 47, [
-        [0, "#b82424"],
-        [0.4, "#8a1616"],
-        [0.8, "#5c0e0e"],
-        [1, "#360606"]
-      ]), "#200404", 1.4);
-      ctx.strokeStyle = "#e8b836";
-      ctx.lineWidth = 1.1;
+      rounded(ctx, 94, 26, 13, 3, 1, "#4a3c2a", "#120c06", 0.8);
+      ellipse(ctx, 94, 27.5, 2, 2, "#ffd440");
+      ellipse(ctx, 107, 27.5, 2, 2, "#ffd440");
+      poly(ctx, [[95, 28], [106, 28], [106, 58], [100.5, 63], [95, 58]], linGrad(ctx, 95, 28, 106, 63, [
+        [0, "#dc2c2c"],
+        [0.45, "#a01818"],
+        [0.85, "#580a0a"],
+        [1, "#320404"]
+      ]), "#1c0404", 1.5);
+      ctx.strokeStyle = "#ffd440";
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(74.5, 19.5); ctx.lineTo(83.5, 19.5); ctx.lineTo(83.5, 41); ctx.lineTo(79, 45); ctx.lineTo(74.5, 41); ctx.closePath();
+      ctx.moveTo(97, 29); ctx.lineTo(104, 29); ctx.lineTo(104, 56); ctx.lineTo(100.5, 59.5); ctx.lineTo(97, 56); ctx.closePath();
       ctx.stroke();
-      poly(ctx, [[79, 24], [82, 29], [79, 27.5], [76, 29]], "#fed853", "#744c06", 0.7);
-      ellipse(ctx, 79, 33.5, 1.8, 1.8, "#fed853", "#744c06", 0.6);
+      poly(ctx, [[100.5, 36], [103, 41], [100.5, 39.5], [98, 41]], "#ffd440", "#6c4004", 0.8);
+      ellipse(ctx, 100.5, 46, 2, 2, "#ffd440", "#6c4004", 0.7);
       for (let t = 0; t < 3; t += 1) {
-        rounded(ctx, 76.5 + t * 2, 45, 1.2, 2.5, 0.4, "#e0b028");
+        rounded(ctx, 98.5 + t * 2, 61, 1.3, 3, 0.5, "#e0b028");
       }
 
-      // 7. Wall Lanterns
-      rounded(ctx, 24.5, 27, 3.5, 5.5, 0.8, "#26262a", "#0c0c0e", 0.8);
-      rounded(ctx, 68, 27, 3.5, 5.5, 0.8, "#26262a", "#0c0c0e", 0.8);
-      ellipse(ctx, 26.2, 29.5, 3.5, 4.5, radGrad(ctx, 26.2, 29, 0.5, 4.5, [
-        [0, "#ffffff"],
-        [0.35, "#fff080"],
-        [0.75, "#ff8800"],
-        [1, "rgba(255,100,0,0)"]
+      // 7. TWO LANTERNS AS BRIGHT GOLD ELLIPSES
+      // Left Lantern
+      poly(ctx, [[27, 53], [34, 45], [34, 48], [28, 55]], "#1a1a20", "#0c0c0e", 1);
+      rounded(ctx, 26, 50, 3, 7, 1, "#2a2a32", "#0e0e12", 1);
+      poly(ctx, [[29, 44], [34, 39], [39, 44]], linGrad(ctx, 29, 39, 39, 44, [[0, "#505060"], [1, "#1c1c24"]]), "#0c0c10", 1.2);
+      ellipse(ctx, 34, 38.5, 1.5, 1.5, "#ffd440");
+      rounded(ctx, 30, 44, 8, 10, 1.5, "#2a1e08", "#121216", 1.2);
+      // Bright gold lantern ellipse & glow halo
+      ellipse(ctx, 34, 49, 14, 14, radGrad(ctx, 34, 49, 2, 14, [
+        [0, "rgba(255,235,120,0.7)"],
+        [0.45, "rgba(255,150,30,0.35)"],
+        [1, "rgba(255,80,0,0)"]
       ]));
-      ellipse(ctx, 69.8, 29.5, 3.5, 4.5, radGrad(ctx, 69.8, 29, 0.5, 4.5, [
-        [0, "#ffffff"],
-        [0.35, "#fff080"],
-        [0.75, "#ff8800"],
-        [1, "rgba(255,100,0,0)"]
+      ellipse(ctx, 34, 49, 3.2, 4.2, "#ffd440", "#ffaa00", 1);
+      ellipse(ctx, 34, 49, 1.8, 2.4, "#fffde0");
+      rounded(ctx, 30, 53, 8, 2.5, 0.8, "#282830", "#0e0e12", 1);
+
+      // Right Lantern
+      poly(ctx, [[101, 53], [94, 45], [94, 48], [100, 55]], "#1a1a20", "#0c0c0e", 1);
+      rounded(ctx, 99, 50, 3, 7, 1, "#2a2a32", "#0e0e12", 1);
+      poly(ctx, [[89, 44], [94, 39], [99, 44]], linGrad(ctx, 89, 39, 99, 44, [[0, "#505060"], [1, "#1c1c24"]]), "#0c0c10", 1.2);
+      ellipse(ctx, 94, 38.5, 1.5, 1.5, "#ffd440");
+      rounded(ctx, 90, 44, 8, 10, 1.5, "#2a1e08", "#121216", 1.2);
+      // Bright gold lantern ellipse & glow halo
+      ellipse(ctx, 94, 49, 14, 14, radGrad(ctx, 94, 49, 2, 14, [
+        [0, "rgba(255,235,120,0.7)"],
+        [0.45, "rgba(255,150,30,0.35)"],
+        [1, "rgba(255,80,0,0)"]
       ]));
-      ellipse(ctx, 26, 30, 8, 8, radGrad(ctx, 26, 30, 1, 8, [
-        [0, "rgba(255,180,60,0.3)"],
-        [1, "rgba(255,140,20,0)"]
-      ]));
-      ellipse(ctx, 70, 30, 8, 8, radGrad(ctx, 70, 30, 1, 8, [
-        [0, "rgba(255,180,60,0.3)"],
-        [1, "rgba(255,140,20,0)"]
-      ]));
+      ellipse(ctx, 94, 49, 3.2, 4.2, "#ffd440", "#ffaa00", 1);
+      ellipse(ctx, 94, 49, 1.8, 2.4, "#fffde0");
+      rounded(ctx, 90, 53, 8, 2.5, 0.8, "#282830", "#0e0e12", 1);
+
+      // 8. A LITTLE IVY, NOT SPECKLES COVERING THE ARCH
+      // Crisp vine stems
+      ctx.strokeStyle = "#122a0a";
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      // Left tower corner vine
+      ctx.moveTo(8, 80); ctx.bezierCurveTo(6, 62, 14, 48, 9, 32);
+      // Top arch drape
+      ctx.moveTo(34, 21); ctx.bezierCurveTo(45, 23, 52, 17, 60, 22);
+      // Right tower corner vine
+      ctx.moveTo(120, 80); ctx.bezierCurveTo(122, 62, 114, 48, 119, 32);
+      ctx.stroke();
+
+      // Clean ivy leaf clusters (vibrant greens for clear read at 390px)
+      const ivyLeaves = [
+        // Left tower edge
+        [8, 74, 4.5, 3.2], [12, 65, 4.0, 3.0], [7, 54, 4.2, 3.2],
+        [11, 44, 4.5, 3.2], [8, 34, 4.0, 3.0], [13, 24, 4.2, 3.0],
+        // Left arch corner
+        [36, 22, 4.2, 3.0], [45, 21, 4.5, 3.2], [53, 23, 3.8, 2.8],
+        // Right arch corner
+        [92, 22, 4.2, 3.0], [83, 21, 4.5, 3.2], [75, 23, 3.8, 2.8],
+        // Right tower edge
+        [120, 74, 4.5, 3.2], [116, 65, 4.0, 3.0], [121, 54, 4.2, 3.2],
+        [117, 44, 4.5, 3.2], [120, 34, 4.0, 3.0], [115, 24, 4.2, 3.0]
+      ];
+
+      for (let i = 0; i < ivyLeaves.length; i += 1) {
+        const [lx, ly, rx, ry] = ivyLeaves[i];
+        ellipse(ctx, lx, ly + 0.5, rx, ry, "#102608");
+        ellipse(ctx, lx, ly, rx * 0.85, ry * 0.85, (i % 2 === 0) ? "#42a426" : "#52bc30");
+        ellipse(ctx, lx - 0.5, ly - 0.5, rx * 0.45, ry * 0.45, "#9cf44c");
+      }
     });
 
-    make("gate_leak", 96, 64, (ctx) => {
-      // Searing radial burst centered on the breached doorway
-      ellipse(ctx, 48, 38, 34, 26, radGrad(ctx, 48, 38, 2, 34, [
+    make("gate_leak", 128, 96, (ctx) => {
+      // Searing radial burst centered on the breached doorway (x: 64, y: 55)
+      ellipse(ctx, 64, 55, 46, 36, radGrad(ctx, 64, 55, 2, 46, [
         [0, "rgba(255,255,245,1.0)"],
-        [0.2, "rgba(255,220,100,0.95)"],
-        [0.5, "rgba(255,60,30,0.85)"],
-        [0.8, "rgba(180,10,10,0.4)"],
+        [0.22, "rgba(255,220,100,0.95)"],
+        [0.55, "rgba(255,60,30,0.85)"],
+        [0.8, "rgba(180,10,10,0.45)"],
         [1, "rgba(120,0,0,0)"]
       ]));
 
-      // Fiery breach lightning fissures fracturing the gateway
+      // Fiery breach lightning fissures fracturing through the doors and arch
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      ctx.strokeStyle = "rgba(255,60,20,0.7)";
-      ctx.lineWidth = 4.5;
+      ctx.strokeStyle = "rgba(255,60,20,0.8)";
+      ctx.lineWidth = 5.0;
       ctx.beginPath();
-      ctx.moveTo(48, 54); ctx.lineTo(46, 42); ctx.lineTo(51, 34); ctx.lineTo(44, 26); ctx.lineTo(48, 16);
-      ctx.moveTo(46, 42); ctx.lineTo(34, 38); ctx.lineTo(28, 32);
-      ctx.moveTo(51, 34); ctx.lineTo(62, 38); ctx.lineTo(68, 32);
+      ctx.moveTo(64, 76); ctx.lineTo(61, 58); ctx.lineTo(68, 46); ctx.lineTo(58, 34); ctx.lineTo(64, 22);
+      ctx.moveTo(61, 58); ctx.lineTo(46, 52); ctx.lineTo(36, 44);
+      ctx.moveTo(68, 46); ctx.lineTo(82, 52); ctx.lineTo(92, 44);
       ctx.stroke();
 
       ctx.strokeStyle = "rgba(255,255,255,0.95)";
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(48, 54); ctx.lineTo(46, 42); ctx.lineTo(51, 34); ctx.lineTo(44, 26); ctx.lineTo(48, 16);
-      ctx.moveTo(46, 42); ctx.lineTo(34, 38); ctx.lineTo(28, 32);
-      ctx.moveTo(51, 34); ctx.lineTo(62, 38); ctx.lineTo(68, 32);
+      ctx.moveTo(64, 76); ctx.lineTo(61, 58); ctx.lineTo(68, 46); ctx.lineTo(58, 34); ctx.lineTo(64, 22);
+      ctx.moveTo(61, 58); ctx.lineTo(46, 52); ctx.lineTo(36, 44);
+      ctx.moveTo(68, 46); ctx.lineTo(82, 52); ctx.lineTo(92, 44);
       ctx.stroke();
 
       // Distress glow over walls and banners
-      rounded(ctx, 8, 14, 80, 44, 4, "rgba(255, 30, 20, 0.35)");
-      poly(ctx, [[10, 18], [24, 18], [24, 46], [17, 50], [10, 46]], "rgba(255, 60, 20, 0.45)");
-      poly(ctx, [[72, 18], [86, 18], [86, 46], [79, 50], [72, 46]], "rgba(255, 60, 20, 0.45)");
+      rounded(ctx, 12, 16, 104, 66, 4, "rgba(255, 30, 20, 0.35)");
+      poly(ctx, [[14, 20], [32, 20], [32, 58], [23, 64], [14, 58]], "rgba(255, 60, 20, 0.45)");
+      poly(ctx, [[96, 20], [114, 20], [114, 58], [105, 64], [96, 58]], "rgba(255, 60, 20, 0.45)");
 
       // Shard spark diamonds
-      for (let s = 0; s < 12; s += 1) {
-        const sx = 30 + (s * 31) % 36;
-        const sy = 22 + (s * 19 + 7) % 28;
-        ellipse(ctx, sx, sy, 2.2, 2.2, "#ffffff");
-        ellipse(ctx, sx, sy, 3.8, 3.8, "rgba(255,180,40,0.5)");
+      for (let s = 0; s < 16; s += 1) {
+        const sx = 38 + (s * 37) % 52;
+        const sy = 26 + (s * 23 + 7) % 40;
+        ellipse(ctx, sx, sy, 2.5, 2.5, "#ffffff");
+        ellipse(ctx, sx, sy, 4.5, 4.5, "rgba(255,180,40,0.5)");
       }
     });
 
