@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.2.0";
+  const KRC_VERSION = "1.2.1";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -6272,14 +6272,14 @@ const bannerY = 98;
 
           // Authored meteor impact burst (Frame 0 core detonation -> Frame 1 expanding magma shockwave)
           const burst0 = this.add.image(target.x, target.y, this.textures.exists("fx_meteor_0") ? "fx_meteor_0" : "fx_meteor")
-            .setScale(0.35)
+            .setScale(0.75)
             .setAlpha(0.95)
             .setDepth(58);
           this.tweens.add({
             targets: burst0,
-            scale: { from: 0.35, to: 1.15 },
+            scale: { from: 0.75, to: 1.15 },
             alpha: { from: 1.0, to: 0 },
-            duration: 380,
+            duration: 520,
             ease: "Quad.easeOut",
             onComplete: () => burst0.destroy()
           });

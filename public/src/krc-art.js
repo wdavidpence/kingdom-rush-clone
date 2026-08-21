@@ -6598,119 +6598,223 @@
       const cx = 64;
       const cy = 64;
 
-      // Outer heat haze / volcanic glow
-      const haze = radGrad(ctx, cx, cy, 10, 62, [
-        [0, "rgba(255, 100, 0, 0.45)"],
-        [0.45, "rgba(220, 40, 0, 0.25)"],
-        [0.8, "rgba(140, 10, 0, 0.1)"],
-        [1, "rgba(60, 0, 0, 0)"],
-      ]);
-      ellipse(ctx, cx, cy, 60, 60, haze);
+      // 1. Dark Crater Ring (Charred Basalt Impact Basin & Ground Scorch)
+      shadow(ctx, cx, cy + 3, 44, 40, 0.6);
 
-      // Radiating flame spikes (12 spikes with alternating reach)
+      // Charred outer crater bedrock ring (~80px diameter, radius 42)
+      ellipse(
+        ctx,
+        cx,
+        cy,
+        42,
+        40,
+        linGrad(ctx, cx - 40, cy - 40, cx + 40, cy + 40, [
+          [0, "#2c1c18"],
+          [0.35, "#180e0a"],
+          [0.7, "#0d0604"],
+          [1, "#1c100b"],
+        ]),
+        "#000000",
+        2.2
+      );
+
+      // Jagged basalt slag chunks along the crater rim
+      const rimChunks = 8;
+      for (let i = 0; i < rimChunks; i += 1) {
+        const ca = (i / rimChunks) * Math.PI * 2 + 0.2;
+        const cr = 38 + (i % 2 === 0 ? 3 : -2);
+        const rpx = cx + Math.cos(ca) * cr;
+        const rpy = cy + Math.sin(ca) * (cr * 0.95);
+        poly(
+          ctx,
+          [
+            [rpx - 4, rpy - 2],
+            [rpx + 3, rpy - 4],
+            [rpx + 5, rpy + 3],
+            [rpx - 2, rpy + 4],
+          ],
+          i % 2 === 0 ? "#241610" : "#140a08",
+          "#000000",
+          1.5
+        );
+      }
+
+      // Inner crater depression bed
+      ellipse(
+        ctx,
+        cx,
+        cy,
+        32,
+        30,
+        linGrad(ctx, cx, cy - 30, cx, cy + 30, [
+          [0, "#120806"],
+          [0.5, "#1e0c08"],
+          [1, "#0a0402"],
+        ]),
+        "#000000",
+        1.6
+      );
+
+      // Glowing thermal magma cracks in the crater bed
+      ctx.strokeStyle = "#ff4500";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(cx - 20, cy - 10);
+      ctx.lineTo(cx - 4, cy - 2);
+      ctx.lineTo(cx + 20, cy - 14);
+      ctx.moveTo(cx - 4, cy - 2);
+      ctx.lineTo(cx - 8, cy + 18);
+      ctx.lineTo(cx - 22, cy + 22);
+      ctx.moveTo(cx - 4, cy - 2);
+      ctx.lineTo(cx + 16, cy + 14);
+      ctx.lineTo(cx + 26, cy + 18);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#ffe460";
+      ctx.lineWidth = 1.0;
+      ctx.beginPath();
+      ctx.moveTo(cx - 18, cy - 9);
+      ctx.lineTo(cx - 4, cy - 2);
+      ctx.lineTo(cx + 18, cy - 13);
+      ctx.moveTo(cx - 4, cy - 2);
+      ctx.lineTo(cx - 7, cy + 16);
+      ctx.lineTo(cx - 20, cy + 20);
+      ctx.moveTo(cx - 4, cy - 2);
+      ctx.lineTo(cx + 14, cy + 13);
+      ctx.lineTo(cx + 24, cy + 17);
+      ctx.stroke();
+
+      // Scorch soot speckles around the charred crater ring
+      speckles(ctx, cx - 38, cy - 36, 76, 72, 28, "rgba(0, 0, 0, 0.7)", 1.4);
+
+      // 2. Black-Outlined Fire Spikes (Sharp high-contrast flame explosion)
+      // Primary radiating blast spikes (12 spikes with alternating reach)
       const numSpikes = 12;
       for (let i = 0; i < numSpikes; i += 1) {
-        const angle = (i / numSpikes) * Math.PI * 2 + (i % 2 === 0 ? 0 : 0.1);
-        const len = i % 2 === 0 ? 56 : 42;
-        const width = i % 2 === 0 ? 9 : 6;
+        const angle = (i / numSpikes) * Math.PI * 2 + (i % 2 === 0 ? 0 : 0.08);
+        const len = i % 2 === 0 ? 44 : 34;
+        const width = i % 2 === 0 ? 8.5 : 6;
         const tipX = cx + Math.cos(angle) * len;
         const tipY = cy + Math.sin(angle) * len;
         const perpX = -Math.sin(angle) * width;
         const perpY = Math.cos(angle) * width;
-        const base1X = cx + Math.cos(angle) * 14 + perpX;
-        const base1Y = cy + Math.sin(angle) * 14 + perpY;
-        const base2X = cx + Math.cos(angle) * 14 - perpX;
-        const base2Y = cy + Math.sin(angle) * 14 - perpY;
+        const base1X = cx + Math.cos(angle) * 12 + perpX;
+        const base1Y = cy + Math.sin(angle) * 12 + perpY;
+        const base2X = cx + Math.cos(angle) * 12 - perpX;
+        const base2Y = cy + Math.sin(angle) * 12 - perpY;
 
         poly(
           ctx,
           [[base1X, base1Y], [tipX, tipY], [base2X, base2Y]],
           linGrad(ctx, cx, cy, tipX, tipY, [
-            [0, "#ffe870"],
-            [0.35, "#ff7010"],
-            [0.75, "#c81800"],
-            [1, "#500600"],
+            [0, "#ffffff"],
+            [0.2, "#fff050"],
+            [0.5, "#ff6200"],
+            [0.8, "#c61200"],
+            [1, "#400400"],
           ]),
-          "#280000",
-          1.2
+          "#000000",
+          2.0
         );
       }
 
-      // Swirling molten crater petals / fire blast lobe ring
-      const lobes = 7;
-      for (let i = 0; i < lobes; i += 1) {
-        const a = (i / lobes) * Math.PI * 2;
-        const lx = cx + Math.cos(a) * 22;
-        const ly = cy + Math.sin(a) * 22;
-        ellipse(
+      // Secondary inner fire tongues with black outline for dense layered burst
+      const numInner = 8;
+      for (let i = 0; i < numInner; i += 1) {
+        const angle = ((i + 0.5) / numInner) * Math.PI * 2;
+        const len = 26;
+        const width = 5.5;
+        const tipX = cx + Math.cos(angle) * len;
+        const tipY = cy + Math.sin(angle) * len;
+        const perpX = -Math.sin(angle) * width;
+        const perpY = Math.cos(angle) * width;
+        const base1X = cx + Math.cos(angle) * 8 + perpX;
+        const base1Y = cy + Math.sin(angle) * 8 + perpY;
+        const base2X = cx + Math.cos(angle) * 8 - perpX;
+        const base2Y = cy + Math.sin(angle) * 8 - perpY;
+
+        poly(
           ctx,
-          lx,
-          ly,
-          18,
-          16,
-          radGrad(ctx, lx, ly, 2, 18, [
-            [0, "#fff590"],
-            [0.45, "#ff6010"],
-            [0.85, "#aa1400"],
-            [1, "rgba(80, 8, 0, 0.2)"],
-          ])
+          [[base1X, base1Y], [tipX, tipY], [base2X, base2Y]],
+          linGrad(ctx, cx, cy, tipX, tipY, [
+            [0, "#ffffff"],
+            [0.35, "#fff870"],
+            [0.75, "#ff7400"],
+            [1, "#9e0e00"],
+          ]),
+          "#000000",
+          1.6
         );
       }
 
-      // Blazing fireball core
-      const coreGrad = radGrad(ctx, cx, cy, 0, 26, [
-        [0, "#ffffff"],
-        [0.35, "#fff8b0"],
-        [0.65, "#ff9420"],
-        [0.9, "#e02800"],
-        [1, "#800800"],
-      ]);
-      ellipse(ctx, cx, cy, 26, 26, coreGrad, "#400400", 1.5);
+      // 3. White-Hot Core (Detonation fireball + incandescent flare star)
+      // Molten core fireball with black outline
+      ellipse(
+        ctx,
+        cx,
+        cy,
+        18,
+        18,
+        radGrad(ctx, cx, cy, 0, 18, [
+          [0, "#ffffff"],
+          [0.45, "#ffffff"],
+          [0.75, "#fff070"],
+          [0.92, "#ff7010"],
+          [1, "#ba1400"],
+        ]),
+        "#000000",
+        1.8
+      );
 
-      // Brilliant 4-pointed lens flare cross
+      // Pure white incandescent core disk
+      ellipse(ctx, cx, cy, 9, 9, "#ffffff");
+
+      // Brilliant 4-pointed primary white-hot flare cross
       poly(
         ctx,
         [
-          [cx, cy - 38],
-          [cx + 3, cy - 6],
-          [cx + 38, cy],
-          [cx + 3, cy + 6],
-          [cx, cy + 38],
-          [cx - 3, cy + 6],
-          [cx - 38, cy],
-          [cx - 3, cy - 6],
+          [cx, cy - 30],
+          [cx + 3.5, cy - 4.5],
+          [cx + 30, cy],
+          [cx + 3.5, cy + 4.5],
+          [cx, cy + 30],
+          [cx - 3.5, cy + 4.5],
+          [cx - 30, cy],
+          [cx - 3.5, cy - 4.5],
         ],
         "#ffffff"
       );
+
+      // Secondary 4-pointed diagonal flare star
       poly(
         ctx,
         [
-          [cx, cy - 24],
-          [cx + 2, cy - 4],
-          [cx + 24, cy],
-          [cx + 2, cy + 4],
-          [cx, cy + 24],
-          [cx - 2, cy + 4],
-          [cx - 24, cy],
-          [cx - 2, cy - 4],
+          [cx - 15, cy - 15],
+          [cx, cy - 3],
+          [cx + 15, cy - 15],
+          [cx + 3, cy],
+          [cx + 15, cy + 15],
+          [cx, cy + 3],
+          [cx - 15, cy + 15],
+          [cx - 3, cy],
         ],
-        "#fff4a0"
+        "#fffde0"
       );
 
-      // Molten flying sparks
+      // High-contrast molten flying sparks / incandescent slag shards
       const sparks = [
-        [cx + 42, cy - 32, 2.5],
-        [cx - 36, cy - 38, 2.2],
-        [cx + 38, cy + 36, 2.6],
-        [cx - 44, cy + 28, 2.0],
-        [cx + 10, cy - 50, 1.8],
-        [cx - 18, cy + 48, 2.4],
-        [cx + 52, cy + 6, 2.0],
-        [cx - 52, cy - 8, 2.2],
+        [cx + 36, cy - 26, 2.8],
+        [cx - 32, cy - 30, 2.4],
+        [cx + 34, cy + 30, 2.6],
+        [cx - 36, cy + 24, 2.5],
+        [cx + 8, cy - 38, 2.2],
+        [cx - 14, cy + 38, 2.4],
+        [cx + 40, cy + 4, 2.2],
+        [cx - 40, cy - 6, 2.3],
       ];
       for (const [sx, sy, sr] of sparks) {
-        ellipse(ctx, sx, sy, sr, sr, "#ffe480");
-        ellipse(ctx, sx, sy, sr * 0.5, sr * 0.5, "#ffffff");
+        ellipse(ctx, sx, sy, sr, sr, "#ff9900", "#000000", 1.0);
+        ellipse(ctx, sx, sy, sr * 0.55, sr * 0.55, "#ffffff");
       }
     };
 
