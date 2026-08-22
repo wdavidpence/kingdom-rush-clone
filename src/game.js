@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.3.8";
+  const KRC_VERSION = "1.3.9";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -116,6 +116,7 @@
       this.makeTextures();
       this.drawMap();
       this.createPads();
+      this.createWolfDen();
       this.createHero();
       this.createHud();
       this.createShop();
@@ -362,6 +363,8 @@
         }
         make("soldier_guard_attack", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
         make("soldier_guard_block", 32, 32, (ctx) => { ctx.fillStyle = "#d8c56a"; ctx.fillRect(8,8,16,20); });
+        make("den_wolf", 56, 48, (ctx) => { ctx.fillStyle = "#5a6058"; ctx.fillRect(4, 4, 48, 40); });
+        make("unit_wolf", 48, 40, (ctx) => { ctx.fillStyle = "#7b8896"; ctx.fillRect(4, 4, 40, 32); });
         make("hero_captain", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
         make("hero_captain_idle", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
         make("hero_captain_attack", 32, 32, (ctx) => { ctx.fillStyle = "#3f6fb4"; ctx.fillRect(8,4,16,24); });
@@ -2178,6 +2181,81 @@
           });
         }
       }
+    }
+
+    findDenPosition() {
+      for (let i = 1; i < this.path.length - 2; i += 1) {
+        const p1 = this.path[i];
+        const p2 = this.path[i + 1];
+        for (let t = 0.3; t <= 0.7; t += 0.2) {
+          const px = p1.x + (p2.x - p1.x) * t;
+          const py = p1.y + (p2.y - p1.y) * t;
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const len = Math.hypot(dx, dy);
+          if (len === 0) continue;
+          const nx = -dy / len;
+          const ny = dx / len;
+          for (const side of [-1, 1]) {
+            const x = Math.round(px + nx * 56 * side);
+            const y = Math.round(py + ny * 56 * side);
+            if (x < 36 || x > 384 || y < 110 || y > 550) continue;
+            if (this.buildPads.some((p) => Math.hypot(x - p.x, y - p.y) < 50)) continue;
+            const np = this.nearestPathPoint(x, y);
+            const d = Math.hypot(x - np.x, y - np.y);
+            if (d >= 50 && d <= 62) {
+              return { x, y };
+            }
+          }
+        }
+      }
+      const mid = this.path[Math.floor(this.path.length / 2)];
+      return { x: mid.x + 56, y: mid.y };
+    }
+
+    createWolfDen() {
+      const pos = this.findDenPosition();
+      const den = {
+        x: pos.x,
+        y: pos.y,
+        soldiers: [],
+        level: 0,
+      };
+      this.wolfDen = den;
+      if (this.textures.exists("den_wolf")) {
+        den.sprite = this.add.image(den.x, den.y, "den_wolf").setDepth(14);
+      } else {
+        den.sprite = this.add.rectangle(den.x, den.y, 48, 36, 0x5a6058).setDepth(14);
+      }
+      den.sprite.setInteractive({ useHandCursor: true });
+      den.sprite.on("pointerdown", () => {
+        if (this.overlayActive || this.gameEnded) return;
+        const alive = den.soldiers.filter((s) => !s.dead);
+        if (alive.length >= 2) {
+          this.say("Wolf pack is full (max 2).");
+          return;
+        }
+        if (this.gold < 40) {
+          this.say("Need 40 gold.");
+          this.audio?.playLayered?.("uiError");
+          return;
+        }
+        this.gold -= 40;
+        this.updateHud();
+        this.spawnWolf(den);
+        this.say("Wolf summoned.");
+        this.audio?.play?.("ready", 0.2, 1.2);
+        if (!this.settings?.reducedMotion) {
+          this.tweens.add({
+            targets: den.sprite,
+            scaleX: 1.08,
+            scaleY: 0.92,
+            duration: 80,
+            yoyo: true,
+            ease: "Quad.easeOut",
+          });
+        }
+      });
     }
 
     createHero() {
@@ -6445,6 +6523,37 @@ const bannerY = 98;
       this.soldiers.push(soldier);
     }
 
+    spawnWolf(den) {
+      const point = this.nearestPathPoint(den.x, den.y);
+      const squadOffsets = [[-8, 4], [8, 4]];
+      const aliveCount = (den.soldiers || []).filter((s) => !s.dead).length;
+      const off = squadOffsets[aliveCount % squadOffsets.length] || [0, 0];
+      const homeX = point.x + off[0];
+      const homeY = point.y + off[1];
+      const maxHp = 90;
+      const soldier = this.entityRegistry.create("soldier", {
+        x: homeX,
+        y: homeY,
+        homeX,
+        homeY,
+        hp: maxHp,
+        maxHp,
+        tower: den,
+        attackCooldown: 0.2,
+        attackPoseTime: 0,
+        walkDist: 0,
+        facingLeft: false,
+        wobble: Math.random() * Math.PI * 2,
+        isMoving: false,
+        dead: false,
+      });
+      soldier.sprite = this.add.image(soldier.x, soldier.y - 6, "unit_wolf").setScale(0.98).setDepth(44);
+      this.applyUnitTint(soldier.sprite);
+      soldier.bar = this.add.rectangle(soldier.x - 10, soldier.y - 17, 20, 3, 0x7ee06a).setOrigin(0, 0.5).setDepth(45);
+      den.soldiers.push(soldier);
+      this.soldiers.push(soldier);
+    }
+
     nearestPathPoint(x, y) {
       let best = this.path[1];
       let bestD = Infinity;
@@ -6491,8 +6600,8 @@ const bannerY = 98;
       this.entityRegistry.transition(soldier, "dead");
       soldier.dead = true;
       const tower = soldier.tower;
-      if (tower && window.KRCBarracksReadiness) {
-        const alive = tower.soldiers.filter((s) => s !== soldier && !s.dead).length;
+      if (tower && window.KRCBarracksReadiness && tower.type === "barracks") {
+        const alive = tower.soldiers ? tower.soldiers.filter((s) => s !== soldier && !s.dead).length : 0;
         const wanted = window.KRCBarracksReadiness.wantedCount(tower.level);
         if (alive < wanted && tower.cooldown <= 0) {
           tower.trainMax = window.KRCBarracksReadiness.respawnCooldown(tower.level);
@@ -6505,11 +6614,71 @@ const bannerY = 98;
       soldier.sprite.destroy();
       soldier.bar.destroy();
       this.soldiers = this.soldiers.filter((s) => s !== soldier);
-      soldier.tower.soldiers = soldier.tower.soldiers.filter((s) => s !== soldier);
+      if (soldier.tower?.soldiers) {
+        soldier.tower.soldiers = soldier.tower.soldiers.filter((s) => s !== soldier);
+      }
       this.entityRegistry.transition(soldier, "removed");
     }
 
-    updateSoldiers() {}
+    updateSoldiers(dt) {
+      if (!this.wolfDen) return;
+      const den = this.wolfDen;
+      den.soldiers = den.soldiers.filter((s) => !s.dead);
+      const squadOffsets = [[-8, 4], [8, 4]];
+      for (let i = 0; i < den.soldiers.length; i += 1) {
+        const wolf = den.soldiers[i];
+        const off = squadOffsets[i % squadOffsets.length] || [0, 0];
+        const home = this.nearestPathPoint(den.x, den.y);
+        wolf.homeX = home.x + off[0];
+        wolf.homeY = home.y + off[1];
+        wolf.attackCooldown -= dt;
+        wolf.attackPoseTime = Math.max(0, (wolf.attackPoseTime || 0) - dt);
+        const meleeTarget = this.findEnemyNear(wolf.x, wolf.y, 45, false);
+        if (meleeTarget) {
+          wolf.target = meleeTarget;
+          meleeTarget.blockedBy = wolf;
+          this.moveSoldierToward(wolf, meleeTarget.x, meleeTarget.y, 20, dt);
+          if (wolf.attackCooldown <= 0) {
+            wolf.attackCooldown = 0.65;
+            wolf.attackPoseTime = 0.22;
+            wolf.strikeCount = (wolf.strikeCount || 0) + 1;
+            const damage = 14;
+            this.damageEnemy(meleeTarget, damage, {});
+            this.meleeImpactFx(wolf, meleeTarget, "hit");
+            this.audio.playLayered?.("guardStrike");
+          }
+        } else {
+          wolf.target = null;
+          this.moveSoldierToward(wolf, wolf.homeX, wolf.homeY, 4, dt);
+        }
+
+        if (wolf.target) {
+          const targetDx = wolf.target.x - wolf.x;
+          if (targetDx < -0.5) wolf.facingLeft = true;
+          else if (targetDx > 0.5) wolf.facingLeft = false;
+        }
+
+        if (window.KRCBarracksReadiness) {
+          wolf.hp = window.KRCBarracksReadiness.idleRegen(wolf.hp, wolf.maxHp, dt, !!wolf.target);
+        }
+        if (wolf.sprite) {
+          wolf.sprite.setPosition(wolf.x, wolf.y - 4);
+          wolf.sprite.setFlipX(!!wolf.facingLeft);
+          if (wolf.attackPoseTime > 0) {
+            wolf.sprite.rotation = Math.sin(this.time.now * 0.03) * 0.08;
+          } else if (wolf.target) {
+            wolf.sprite.rotation = Math.sin(this.time.now * 0.015 + (wolf.wobble || 0)) * 0.05;
+          } else {
+            wolf.sprite.rotation = 0;
+          }
+        }
+        if (wolf.bar) {
+          wolf.bar.width = Math.max(1, 20 * (wolf.hp / wolf.maxHp));
+          wolf.bar.setPosition(wolf.x - 10, wolf.y - 17);
+          wolf.bar.fillColor = wolf.target ? 0xf0c35a : 0x7ee06a;
+        }
+      }
+    }
 
     findEnemyNear(x, y, range, includeFlying = true) {
       let best = null;

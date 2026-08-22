@@ -4,24 +4,24 @@
     { x: 292, y: 326 }, { x: 132, y: 372 }, { x: 106, y: 488 }, { x: 276, y: 520 }, { x: 434, y: 596 },
   ];
   const buildPads = [
-    { x: 42, y: 214 }, { x: 180, y: 152 }, { x: 326, y: 176 }, { x: 188, y: 296 },
-    { x: 326, y: 394 }, { x: 60, y: 424 }, { x: 216, y: 450 }, { x: 250, y: 575 },
+    { x: 42, y: 214 }, { x: 180, y: 152 }, { x: 300, y: 189 }, { x: 188, y: 296 },
+    { x: 318, y: 380 }, { x: 60, y: 424 }, { x: 216, y: 450 }, { x: 250, y: 575 },
   ];
 
   const maps = [
     { name: "Forest Gate", grass: 0x273c1f, path, pads: buildPads },
     { name: "Stone Pass", grass: 0x243235,
       path: [{ x: -18, y: 150 }, { x: 122, y: 150 }, { x: 160, y: 258 }, { x: 68, y: 336 }, { x: 210, y: 396 }, { x: 334, y: 330 }, { x: 306, y: 502 }, { x: 426, y: 584 }],
-      pads: [{ x: 74, y: 238 }, { x: 212, y: 172 }, { x: 322, y: 218 }, { x: 84, y: 424 }, { x: 206, y: 304 }, { x: 382, y: 404 }, { x: 176, y: 512 }, { x: 318, y: 574 }], },
+      pads: [{ x: 74, y: 238 }, { x: 195, y: 177 }, { x: 324, y: 271 }, { x: 89, y: 410 }, { x: 206, y: 304 }, { x: 382, y: 404 }, { x: 195, y: 454 }, { x: 318, y: 574 }], },
     { name: "Ember Marsh", grass: 0x2b3024,
       path: [{ x: -18, y: 104 }, { x: 140, y: 144 }, { x: 310, y: 116 }, { x: 334, y: 246 }, { x: 168, y: 288 }, { x: 88, y: 420 }, { x: 248, y: 470 }, { x: 378, y: 570 }, { x: 438, y: 616 }],
-      pads: [{ x: 74, y: 188 }, { x: 220, y: 202 }, { x: 381, y: 180 }, { x: 266, y: 330 }, { x: 74, y: 322 }, { x: 142, y: 518 }, { x: 298, y: 426 }, { x: 283, y: 571 }], },
+      pads: [{ x: 74, y: 188 }, { x: 220, y: 202 }, { x: 381, y: 180 }, { x: 266, y: 330 }, { x: 74, y: 322 }, { x: 147, y: 501 }, { x: 298, y: 426 }, { x: 283, y: 571 }], },
     { name: "Gale Reach", grass: 0x2a3a38,
       path: [{ x: -18, y: 180 }, { x: 110, y: 168 }, { x: 196, y: 250 }, { x: 88, y: 330 }, { x: 220, y: 410 }, { x: 340, y: 360 }, { x: 300, y: 500 }, { x: 430, y: 590 }],
-      pads: [{ x: 70, y: 230 }, { x: 210, y: 168 }, { x: 318, y: 220 }, { x: 80, y: 400 }, { x: 198, y: 318 }, { x: 373, y: 455 }, { x: 168, y: 520 }, { x: 296, y: 568 }], },
+      pads: [{ x: 70, y: 230 }, { x: 210, y: 168 }, { x: 254, y: 235 }, { x: 80, y: 400 }, { x: 198, y: 318 }, { x: 373, y: 455 }, { x: 194, y: 464 }, { x: 296, y: 568 }], },
     { name: "Ash Spire", grass: 0x32281f,
       path: [{ x: -18, y: 220 }, { x: 96, y: 200 }, { x: 170, y: 300 }, { x: 70, y: 380 }, { x: 250, y: 430 }, { x: 350, y: 340 }, { x: 280, y: 510 }, { x: 428, y: 598 }],
-      pads: [{ x: 64, y: 268 }, { x: 198, y: 188 }, { x: 312, y: 248 }, { x: 76, y: 448 }, { x: 205, y: 358 }, { x: 375, y: 428 }, { x: 156, y: 532 }, { x: 270, y: 572 }], },
+      pads: [{ x: 64, y: 268 }, { x: 175, y: 206 }, { x: 329, y: 284 }, { x: 76, y: 448 }, { x: 205, y: 358 }, { x: 375, y: 428 }, { x: 170, y: 470 }, { x: 270, y: 572 }], },
   ];
 
   const towers = {
@@ -40,8 +40,8 @@
     drift: { name: "Drift", hp: 88, speed: 58, armor: 0, bounty: 12, leak: 1, color: 0xb8e8ff, size: 15, phaseWalk: true },
     flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 18, flying: true },
     hexer: { name: "Hexer", hp: 160, speed: 38, armor: 2, bounty: 22, leak: 2, color: 0x9b7cff, size: 18, aura: { radius: 110, fireRatePenalty: 0.35 }, support: true },
-    titan: { name: "Titan", hp: 540, speed: 26, armor: 8, bounty: 48, leak: 4, color: 0x8e8379, size: 24 },
-    boss: { name: "Warden", hp: 1180, speed: 22, armor: 7, bounty: 130, leak: 8, color: 0xcd65e6, size: 30, phases: true },
+    titan: { name: "Titan", hp: 540, speed: 26, armor: 8, bounty: 48, leak: 4, color: 0x8e8379, size: 26 },
+    boss: { name: "Warden", hp: 1180, speed: 22, armor: 7, bounty: 130, leak: 8, color: 0xcd65e6, size: 32, phases: true },
   };
 
   const waves = [
