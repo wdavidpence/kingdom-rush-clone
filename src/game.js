@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.2.3";
+  const KRC_VERSION = "1.3.8";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -1448,8 +1448,12 @@
         (this.mapIndex === 1 || this.mapIndex === 3) ? "tile_stone_edge" :
         "tile_ember_edge";
 
+      const ribbon = this.add.graphics().setDepth(-8.4);
+      ribbon.lineStyle(PATH_WIDTH, theme.road, 1);
+      this.strokePath(ribbon);
+
       if (this.textures.exists(tileKey)) {
-        const stepDist = 22;
+        const stepDist = 14;
         for (let i = 0; i < this.path.length - 1; i += 1) {
           const a = this.path[i];
           const b = this.path[i + 1];
@@ -1462,7 +1466,7 @@
           const steps = Math.max(1, Math.round(len / stepDist));
           const nx = -Math.sin(angle);
           const ny = Math.cos(angle);
-          const edgeOffset = PATH_WIDTH * 0.44;
+          const edgeOffset = PATH_WIDTH * 0.42;
 
           for (let s = 0; s <= steps; s += 1) {
             const t = s / steps;
@@ -1473,21 +1477,15 @@
             const useKey = this.mapIndex === 0 && dirtKeys.length
               ? dirtKeys[(i * 5 + s) % dirtKeys.length]
               : tileKey;
-            const tileImg = this.add.image(px, py, useKey).setAngle(angleDeg).setDepth(-8);
-            if (s % 2 === 1) tileImg.setScale(1.0, -1.0);
+            this.add.image(px, py, useKey).setAngle(angleDeg).setDepth(-8).setScale(1.28, 1.08).setAlpha(0.78);
 
             if (this.textures.exists(edgeKey) && s % 2 === 0) {
               this.add.image(px + nx * edgeOffset, py + ny * edgeOffset, edgeKey)
-                .setAngle(angleDeg).setDepth(-7.8).setScale(0.95).setAlpha(0.75);
+                .setAngle(angleDeg).setDepth(-7.8).setScale(1.05, 0.9).setAlpha(0.55);
               this.add.image(px - nx * edgeOffset, py - ny * edgeOffset, edgeKey)
-                .setAngle(angleDeg + 180).setDepth(-7.8).setScale(0.95).setAlpha(0.75);
+                .setAngle(angleDeg + 180).setDepth(-7.8).setScale(1.05, 0.9).setAlpha(0.55);
             }
           }
-        }
-
-        // Waypoint corner node junctions for smooth turns
-        for (const node of this.path) {
-          this.add.image(node.x, node.y, tileKey).setDepth(-7.9).setAlpha(0.95);
         }
       } else {
         const road = this.add.graphics().setDepth(-8);
@@ -1608,15 +1606,43 @@
         renderPlaque(outX, outY, "OUT");
       }
 
-      const placeAway = (n, minDist, fn) => {
+      const distToPath = (x, y) => {
+        let best = 1e9;
+        for (let i = 0; i < this.path.length - 1; i += 1) {
+          const a = this.path[i];
+          const b = this.path[i + 1];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const l2 = dx * dx + dy * dy || 1;
+          const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l2));
+          const d = Phaser.Math.Distance.Between(x, y, a.x + dx * t, a.y + dy * t);
+          if (d < best) best = d;
+        }
+        return best;
+      };
+
+      const placedDecor = [];
+      const placeAway = (n, minPath, minPeer, preferEdge, fn) => {
         let placed = 0;
-        for (let i = 0; i < n * 4 && placed < n; i += 1) {
-          const x = 20 + ((i * 97 + placed * 13) % 380);
-          const y = 88 + ((i * 131 + placed * 29) % 520);
-          const nearRoad = this.path.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < minDist);
-          const nearPad = this.buildPads.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 40);
-          if (nearRoad || nearPad) continue;
+        for (let i = 0; i < n * 20 && placed < n; i += 1) {
+          let x = 18 + ((i * 67 + placed * 41 + this.mapIndex * 13) % 384);
+          let y = 80 + ((i * 89 + placed * 53 + this.mapIndex * 17) % 520);
+          if (preferEdge) {
+            const ring = (i + placed) % 4;
+            if (ring === 0) x = 14 + ((i * 19) % 52);
+            else if (ring === 1) x = 356 + ((i * 17) % 48);
+            else if (ring === 2) y = 78 + ((i * 13) % 50);
+            else y = 548 + ((i * 11) % 42);
+            x += ((i * 13) % 17) - 8;
+            y += ((i * 11) % 15) - 7;
+          }
+          if (x < 12 || x > 408 || y < 74 || y > 618) continue;
+          if (distToPath(x, y) < minPath) continue;
+          if (this.buildPads.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < 48)) continue;
+          if (Phaser.Math.Distance.Between(x, y, 378, 520) < 72) continue;
+          if (placedDecor.some((p) => Phaser.Math.Distance.Between(x, y, p.x, p.y) < minPeer)) continue;
           fn(x, y, placed);
+          placedDecor.push({ x, y });
           placed += 1;
         }
       };
@@ -1629,24 +1655,24 @@
         { trees: 2, bush: 1, rock: 14, ruin: 3 },
       ][this.mapIndex] || { trees: 10, bush: 8, rock: 10, ruin: 2 };
 
-      placeAway(grove.trees, 48, (x, y, i) => {
+      placeAway(grove.trees, 56, 58, true, (x, y, i) => {
         const key = i % 3 === 0 && this.textures.exists("tree_oak") ? "tree_oak" : "tree_pine";
-        this.add.image(x, y - 18, key).setScale(1.08 + (i % 4) * 0.12).setDepth(-15).setTint(theme.tint);
+        this.add.image(x, y - 18, key).setScale(0.92 + (i % 5) * 0.08).setDepth(-15).setTint(theme.tint);
       });
-      placeAway(grove.bush, 42, (x, y, i) => {
+      placeAway(grove.bush, 50, 46, false, (x, y, i) => {
         if (this.textures.exists("bush_round")) {
-          this.add.image(x, y, "bush_round").setScale(0.7 + (i % 3) * 0.1).setDepth(-14).setTint(theme.tint);
+          this.add.image(x, y, "bush_round").setScale(0.62 + (i % 4) * 0.08).setDepth(-14).setTint(theme.tint);
         }
       });
-      placeAway(grove.rock, 40, (x, y, i) => {
+      placeAway(grove.rock, 46, 42, false, (x, y, i) => {
         if (i % 2 === 0) this.add.image(x, y, "rock_moss").setScale(0.85).setDepth(-6).setTint(theme.tint);
         else if (this.textures.exists("flower_patch") && this.mapIndex === 0) this.add.image(x, y, "flower_patch").setScale(0.85).setDepth(-6);
         else this.add.image(x, y, "rock_moss").setScale(0.7).setDepth(-6).setTint(theme.tint);
       });
-      placeAway(grove.ruin, 55, (x, y) => {
+      placeAway(grove.ruin, 58, 70, true, (x, y) => {
         if (this.textures.exists("ruin_pillar")) this.add.image(x, y - 8, "ruin_pillar").setScale(0.9).setDepth(-13).setTint(theme.tint);
       });
-      placeAway(2, 50, (x, y) => {
+      placeAway(2, 54, 80, true, (x, y) => {
         if (this.textures.exists("banner_flag")) {
           const flag = this.add.image(x, y - 10, "banner_flag").setScale(0.95).setDepth(-12);
           if (!this.settings?.reducedMotion) {
@@ -1723,36 +1749,174 @@
         for (let i = 0; i < 20; i += 1) {
           g.fillEllipse((i * 67 + 40) % W, 90 + ((i * 91) % 500), 52 + (i % 4) * 14, 20 + (i % 3) * 9);
         }
-      } else if (idx === 1) {
-        g.fillStyle(0x5a646c, 0.28);
-        for (let i = 0; i < 16; i += 1) {
-          g.fillRoundedRect((i * 53 + 10) % Math.max(40, W - 80), 85 + ((i * 79) % 470), 46 + (i % 3) * 18, 16, 3);
+        // Stronger warm sun dappled light ellipses (Forest Gate only)
+        g.fillStyle(0xffe08a, 0.22);
+        for (let i = 0; i < 18; i += 1) {
+          const sx = (i * 73 + 55) % (W - 40) + 20;
+          const sy = 95 + ((i * 89 + 30) % 480);
+          g.fillEllipse(sx, sy, 64 + (i % 3) * 18, 24 + (i % 4) * 8);
         }
-        g.lineStyle(1.6, 0x2a3238, 0.4);
+        g.fillStyle(0xfff4b0, 0.14);
+        for (let i = 0; i < 10; i += 1) {
+          const sx = (i * 97 + 80) % (W - 60) + 30;
+          const sy = 120 + ((i * 103) % 430);
+          g.fillEllipse(sx, sy, 40 + (i % 3) * 12, 16 + (i % 2) * 6);
+        }
+      } else if (idx === 1) {
+        // Stone Pass: Cool slate bedrock with cool silver-blue light patches (no olive/green)
+        g.fillStyle(0x3a4854, 0.32);
+        for (let i = 0; i < 16; i += 1) {
+          g.fillRoundedRect((i * 53 + 10) % Math.max(40, W - 80), 85 + ((i * 79) % 470), 48 + (i % 3) * 18, 18, 3);
+        }
+        // Cool slate/granite light dapples hitting the canyon floor
+        g.fillStyle(0x8da6bc, 0.22);
+        for (let i = 0; i < 16; i += 1) {
+          const sx = (i * 67 + 35) % (W - 50) + 25;
+          const sy = 95 + ((i * 83 + 20) % 470);
+          g.fillEllipse(sx, sy, 56 + (i % 3) * 16, 20 + (i % 4) * 6);
+        }
+        g.fillStyle(0xc6d8e8, 0.15);
+        for (let i = 0; i < 10; i += 1) {
+          const sx = (i * 89 + 60) % (W - 60) + 30;
+          const sy = 110 + ((i * 97) % 440);
+          g.fillEllipse(sx, sy, 38 + (i % 3) * 12, 14 + (i % 2) * 6);
+        }
+        // Cool rock strata striations
+        g.lineStyle(1.8, 0x1e2730, 0.45);
         for (let i = 0; i < 9; i += 1) {
           const x = 24 + i * 44;
           g.lineBetween(x, 110 + (i % 3) * 70, x + 36, 200 + i * 36);
         }
+        g.lineStyle(1.1, 0xd0e2f2, 0.18);
+        for (let i = 0; i < 7; i += 1) {
+          const x = 32 + i * 52;
+          g.lineBetween(x, 112 + (i % 3) * 70, x + 34, 198 + i * 36);
+        }
       } else if (idx === 2) {
-        g.fillStyle(0x3a1c0c, 0.38);
+        // Ember Marsh: Scorched peat with radiant ember glow patches
+        g.fillStyle(0x261008, 0.45);
         g.fillRect(0, 70, W, H - 70);
-        g.lineStyle(2.2, 0xe05018, 0.42);
+        // Volcanic fissure fractures
+        g.lineStyle(2.4, 0xcc2c08, 0.55);
         for (let i = 0; i < 8; i += 1) {
           const x = 16 + i * 50;
           g.lineBetween(x, 130 + i * 28, x + 34, 310 + i * 18);
         }
-        g.fillStyle(0xff6622, 0.22);
-        for (let i = 0; i < 7; i += 1) g.fillEllipse((i * 71 + 12) % W, 150 + ((i * 83) % 400), 18, 8);
+        g.lineStyle(1.2, 0xffaa20, 0.7);
+        for (let i = 0; i < 8; i += 1) {
+          const x = 16 + i * 50;
+          g.lineBetween(x + 2, 132 + i * 28, x + 32, 308 + i * 18);
+        }
+        // Deep ember heat aura patches
+        g.fillStyle(0xb81e04, 0.32);
+        for (let i = 0; i < 14; i += 1) {
+          const ex = (i * 71 + 25) % (W - 40) + 20;
+          const ey = 100 + ((i * 79 + 40) % 460);
+          g.fillEllipse(ex, ey, 48 + (i % 3) * 18, 22 + (i % 2) * 8);
+        }
+        // Bright radiant ember glow pools
+        g.fillStyle(0xff5511, 0.35);
+        for (let i = 0; i < 12; i += 1) {
+          const ex = (i * 73 + 30) % (W - 40) + 20;
+          const ey = 105 + ((i * 81 + 35) % 450);
+          g.fillEllipse(ex, ey, 32 + (i % 3) * 12, 14 + (i % 2) * 6);
+        }
+        // Hot molten ember centers
+        g.fillStyle(0xffbb30, 0.26);
+        for (let i = 0; i < 8; i += 1) {
+          const ex = (i * 93 + 50) % (W - 60) + 30;
+          const ey = 125 + ((i * 101) % 420);
+          g.fillEllipse(ex, ey, 18 + (i % 2) * 8, 8 + (i % 2) * 3);
+        }
+        g.fillStyle(0xfff070, 0.16);
+        for (let i = 0; i < 6; i += 1) {
+          const ex = (i * 97 + 65) % (W - 70) + 35;
+          const ey = 135 + ((i * 109) % 400);
+          g.fillEllipse(ex, ey, 8, 4);
+        }
       } else if (idx === 3) {
-        g.fillStyle(0x3d5854, 0.22);
-        for (let i = 0; i < 14; i += 1) g.fillEllipse((i * 61) % W, 100 + ((i * 77) % 460), 74, 15);
-        g.lineStyle(1.3, 0xd4ece6, 0.2);
-        for (let i = 0; i < 11; i += 1) g.lineBetween(0, 88 + i * 46, W, 68 + i * 46);
+        // Gale Reach: Alpine crags with wind-scuffed highlights
+        g.fillStyle(0x283e3c, 0.28);
+        for (let i = 0; i < 14; i += 1) {
+          g.fillEllipse((i * 61) % W, 100 + ((i * 77) % 460), 74, 15);
+        }
+        // Broad wind-scuffed swaths
+        g.fillStyle(0x6eb4ae, 0.20);
+        for (let i = 0; i < 15; i += 1) {
+          const wx = (i * 67 + 20) % (W - 30) + 15;
+          const wy = 95 + ((i * 83 + 15) % 470);
+          g.fillEllipse(wx, wy, 68 + (i % 4) * 16, 18 + (i % 3) * 6);
+        }
+        // Bright wind-scuffed crag highlights
+        g.fillStyle(0xd6f4f2, 0.22);
+        for (let i = 0; i < 12; i += 1) {
+          const wx = (i * 79 + 45) % (W - 50) + 25;
+          const wy = 105 + ((i * 89 + 25) % 450);
+          g.fillEllipse(wx, wy, 44 + (i % 3) * 14, 12 + (i % 2) * 5);
+        }
+        // Frosted wind-sheen glints
+        g.fillStyle(0xf0fcfa, 0.14);
+        for (let i = 0; i < 8; i += 1) {
+          const wx = (i * 93 + 70) % (W - 60) + 30;
+          const wy = 120 + ((i * 103) % 430);
+          g.fillEllipse(wx, wy, 24 + (i % 2) * 8, 7);
+        }
+        // Sweeping wind streaks
+        g.lineStyle(1.8, 0x82c4bd, 0.32);
+        for (let i = 0; i < 11; i += 1) {
+          g.lineBetween(0, 88 + i * 46, W, 68 + i * 46);
+        }
+        g.lineStyle(1.1, 0xdaf8f4, 0.28);
+        for (let i = 0; i < 9; i += 1) {
+          g.lineBetween(0, 92 + i * 52, W, 72 + i * 52);
+        }
       } else {
-        g.fillStyle(0x3a2418, 0.34);
+        // Ash Spire (idx === 4): Basalt crust with smoldering cinder glow
+        g.fillStyle(0x1e120e, 0.48);
         g.fillRect(0, 70, W, H - 70);
-        g.fillStyle(0x1a100c, 0.45);
-        for (let i = 0; i < 12; i += 1) g.fillCircle((i * 79 + 20) % W, 120 + ((i * 67) % 440), 7 + (i % 3) * 5);
+        // Basalt slabs
+        g.fillStyle(0x100806, 0.55);
+        for (let i = 0; i < 14; i += 1) {
+          g.fillCircle((i * 79 + 20) % W, 120 + ((i * 67) % 440), 9 + (i % 3) * 6);
+        }
+        // Smoldering magma cracks
+        g.lineStyle(2.2, 0xba2004, 0.48);
+        for (let i = 0; i < 8; i += 1) {
+          const x = 20 + i * 48;
+          g.lineBetween(x, 115 + i * 32, x + 30, 275 + i * 22);
+        }
+        g.lineStyle(1.1, 0xff8818, 0.60);
+        for (let i = 0; i < 8; i += 1) {
+          const x = 20 + i * 48;
+          g.lineBetween(x + 2, 117 + i * 32, x + 28, 273 + i * 22);
+        }
+        // Deep cinder underglow patches
+        g.fillStyle(0x8a1402, 0.38);
+        for (let i = 0; i < 14; i += 1) {
+          const cx = (i * 67 + 35) % (W - 40) + 20;
+          const cy = 100 + ((i * 81 + 30) % 460);
+          g.fillEllipse(cx, cy, 50 + (i % 3) * 16, 20 + (i % 2) * 8);
+        }
+        // Glowing cinder patches
+        g.fillStyle(0xd83606, 0.32);
+        for (let i = 0; i < 12; i += 1) {
+          const cx = (i * 73 + 45) % (W - 50) + 25;
+          const cy = 110 + ((i * 87 + 25) % 440);
+          g.fillEllipse(cx, cy, 32 + (i % 3) * 12, 14 + (i % 2) * 5);
+        }
+        // Bright cinder hot spots & ember cores
+        g.fillStyle(0xff6e12, 0.25);
+        for (let i = 0; i < 8; i += 1) {
+          const cx = (i * 89 + 60) % (W - 60) + 30;
+          const cy = 125 + ((i * 99) % 420);
+          g.fillEllipse(cx, cy, 18 + (i % 2) * 6, 8 + (i % 2) * 3);
+        }
+        g.fillStyle(0xffca28, 0.18);
+        for (let i = 0; i < 6; i += 1) {
+          const cx = (i * 93 + 75) % (W - 70) + 35;
+          const cy = 135 + ((i * 105) % 400);
+          g.fillEllipse(cx, cy, 8, 4);
+        }
       }
     }
 
@@ -1767,6 +1931,8 @@
       this.worldStains = this.worldStains || [];
       if (!this.path?.length) return;
       const reduced = !!this.settings?.reducedMotion;
+      const idx = this.mapIndex | 0;
+
       for (let i = 0; i < this.path.length; i += 1) {
         const p = this.path[i];
         const n = this.path[Math.min(this.path.length - 1, i + 1)];
@@ -1812,6 +1978,157 @@
             repeat: -1,
             ease: "Sine.easeInOut",
           });
+        }
+      }
+
+      // —— Map-Specific Battlefield Dressings ——
+      if (idx === 0) {
+        // Map 0 (Forest Gate): Extra wild flowers and glowing fireflies
+        const flowerColors = [0xffd54f, 0xeb4d88, 0x4fc3f7, 0xffffff, 0xffca28];
+        for (let i = 0; i < this.path.length; i += 1) {
+          const p = this.path[i];
+          const n = this.path[Math.min(this.path.length - 1, i + 1)];
+          const dx = n.x - p.x;
+          const dy = n.y - p.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = -dy / len;
+          const ny = dx / len;
+          const side = i % 2 === 0 ? -1 : 1;
+          const fx = p.x + nx * (30 + (i % 4) * 6) * side;
+          const fy = p.y + ny * (24 + (i % 3) * 6) * side;
+          if (fy < TOP_H + 12 || fy > SHOP_Y - 20) continue;
+
+          this.add.rectangle(fx, fy + 3, 1.8, 6, 0x3d7024, 0.75).setDepth(-12);
+          const col = flowerColors[i % flowerColors.length];
+          const petal = this.add.circle(fx, fy, 3.2, col, 0.92).setDepth(-11);
+          this.add.circle(fx, fy, 1.2, 0x3d2810, 0.85).setDepth(-10.8);
+          if (!reduced) {
+            this.tweens.add({
+              targets: petal,
+              scale: 1.18,
+              duration: 1800 + i * 120,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+        }
+
+        if (!reduced) {
+          for (let i = 0; i < 7; i += 1) {
+            const p = this.path[Math.min(this.path.length - 1, (i * 2 + 1) % this.path.length)];
+            const ffx = p.x + ((i * 37) % 60 - 30);
+            const ffy = p.y + ((i * 29) % 50 - 25);
+            if (ffy < TOP_H + 15 || ffy > SHOP_Y - 25) continue;
+            const halo = this.add.circle(ffx, ffy, 4.0, 0xb4ff40, 0.22).setDepth(13);
+            const core = this.add.circle(ffx, ffy, 1.6, 0xf6ffb0, 0.95).setDepth(13.1);
+            this.tweens.add({
+              targets: [halo, core],
+              x: ffx + ((i % 2 === 0 ? 1 : -1) * (14 + i * 2)),
+              y: ffy - (12 + (i % 3) * 6),
+              alpha: { from: 0.95, to: 0.25 },
+              duration: 2200 + i * 260,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+        }
+      } else if (idx === 1) {
+        // Map 1 (Stone Pass): Extra rocks, slate boulders, and ruin stones
+        for (let i = 0; i < this.path.length; i += 1) {
+          const p = this.path[i];
+          const n = this.path[Math.min(this.path.length - 1, i + 1)];
+          const dx = n.x - p.x;
+          const dy = n.y - p.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = -dy / len;
+          const ny = dx / len;
+          const side = (i % 3 === 0) ? -1 : 1;
+          const rx = p.x + nx * (28 + (i % 3) * 8) * side;
+          const ry = p.y + ny * (22 + (i % 4) * 6) * side;
+          if (ry < TOP_H + 12 || ry > SHOP_Y - 20) continue;
+
+          this.add.ellipse(rx + 1, ry + 3, 16, 8, 0x10161c, 0.45).setDepth(-13);
+          if (i % 2 === 0) {
+            const stone = this.add.rectangle(rx, ry, 11, 7, 0x627484, 0.88).setStrokeStyle(1.2, 0x1e2832, 0.75).setDepth(-12);
+            stone.setAngle((i * 19) % 30 - 15);
+            this.add.circle(rx - 2, ry - 1, 2.0, 0x547040, 0.65).setDepth(-11.5);
+          } else {
+            this.add.ellipse(rx, ry, 12, 7.5, 0x7c8e9e, 0.9).setDepth(-12);
+            this.add.ellipse(rx - 1, ry - 1.5, 6, 3, 0xc4d8e8, 0.45).setDepth(-11.5);
+          }
+        }
+      } else if (idx === 2) {
+        // Map 2 (Ember Marsh): Extra glowing ember sparks
+        if (!reduced) {
+          for (let i = 0; i < 9; i += 1) {
+            const p = this.path[Math.min(this.path.length - 1, (i * 2) % this.path.length)];
+            const ex = p.x + ((i * 43) % 70 - 35);
+            const ey = p.y + ((i * 31) % 40 - 20);
+            if (ey < TOP_H + 15 || ey > SHOP_Y - 25) continue;
+            const sparkCol = i % 3 === 0 ? 0xffea40 : (i % 2 === 0 ? 0xff7700 : 0xff3300);
+            const spark = this.add.circle(ex, ey, 1.8 + (i % 2) * 0.6, sparkCol, 0.88).setDepth(13);
+            this.tweens.add({
+              targets: spark,
+              x: ex + ((i % 2 === 0 ? 1 : -1) * (10 + (i % 3) * 5)),
+              y: ey - (22 + (i % 4) * 8),
+              alpha: { from: 0.95, to: 0.05 },
+              scale: { from: 1.2, to: 0.4 },
+              duration: 1600 + i * 180,
+              repeat: -1,
+              ease: "Cubic.easeOut",
+            });
+          }
+        }
+      } else if (idx === 3) {
+        // Map 3 (Gale Reach): Extra sweeping wind streaks
+        const windG = this.add.graphics().setDepth(-6.5);
+        windG.lineStyle(1.4, 0xb8e8e4, 0.35);
+        for (let i = 0; i < 6; i += 1) {
+          const wy = 100 + i * 62;
+          windG.lineBetween(20, wy, W - 20, wy - 24);
+        }
+        windG.lineStyle(0.9, 0xe2f8f6, 0.28);
+        for (let i = 0; i < 5; i += 1) {
+          const wy = 125 + i * 68;
+          windG.lineBetween(40, wy, W - 40, wy - 20);
+        }
+        if (!reduced) {
+          for (let i = 0; i < 5; i += 1) {
+            const wy = 110 + i * 72;
+            const streak = this.add.rectangle(0, wy, 48 + i * 10, 1.5, 0xdaf6f4, 0.4).setDepth(-6.4);
+            streak.setAngle(-3.5);
+            this.tweens.add({
+              targets: streak,
+              x: { from: -40, to: W + 40 },
+              alpha: { from: 0.1, to: 0.5 },
+              duration: 2600 + i * 400,
+              repeat: -1,
+              ease: "Linear",
+              delay: i * 380,
+            });
+          }
+        }
+      } else if (idx === 4) {
+        // Map 4 (Ash Spire): Extra smoldering cinder dots
+        const cinderColors = [0xff4400, 0xff8800, 0xffc830, 0xff5511];
+        for (let i = 0; i < 14; i += 1) {
+          const cx = (i * 61 + 30) % (W - 50) + 25;
+          const cy = 95 + ((i * 73 + 15) % (H - 210));
+          const col = cinderColors[i % cinderColors.length];
+          const dot = this.add.circle(cx, cy, 1.5 + (i % 3) * 0.5, col, 0.65).setDepth(-12);
+          if (!reduced) {
+            this.tweens.add({
+              targets: dot,
+              alpha: { from: 0.3, to: 0.95 },
+              scale: { from: 0.85, to: 1.3 },
+              duration: 1300 + i * 140,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
         }
       }
     }
@@ -1892,14 +2209,14 @@
       ringContainer.add([innerDisc, outerRing]);
       this.hero.ring = ringContainer;
       const heroIdleKey = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
-      this.hero.sprite = this.add.image(post.x, post.y - 14, heroIdleKey).setScale(1.42).setDepth(46);
+      this.hero.sprite = this.add.image(post.x, post.y - 18, heroIdleKey).setScale(1.02).setDepth(46);
       if (isSentinel) {
         this.hero.sprite.setTint(0xb8c4c8);
       } else {
         this.applyUnitTint(this.hero.sprite);
       }
-      this.hero.barBg = this.add.rectangle(post.x, post.y - 31, 30, 4, 0x2a120e).setDepth(47);
-      this.hero.bar = this.add.rectangle(post.x - 15, post.y - 31, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
+      this.hero.barBg = this.add.rectangle(post.x, post.y - 58, 30, 4, 0x2a120e).setDepth(47);
+      this.hero.bar = this.add.rectangle(post.x - 15, post.y - 58, 30, 4, 0x5fd86f).setOrigin(0, 0.5).setDepth(48);
       this.hero.levelText = this.add
         .text(post.x, post.y + 18, "", { font: "bold 9px 'Source Sans 3', Arial", color: "#fff2ba" })
         .setOrigin(0.5)
@@ -5901,7 +6218,7 @@ const bannerY = 98;
         this.audio.play("impact", 0.14, 1.1);
       }
       hero.hp = Math.min(hero.maxHp, hero.hp + (4 + hero.level) * dt);
-      hero.sprite.setPosition(hero.x, hero.y - 8);
+      hero.sprite.setPosition(hero.x, hero.y - 18);
 
       const reducedMotion = !!this.settings?.reducedMotion;
       let desiredTexture = this.textures.exists("hero_captain_idle") ? "hero_captain_idle" : "hero_captain";
@@ -5929,8 +6246,9 @@ const bannerY = 98;
       } else {
         hero.ring.setScale(1);
       }
-      hero.barBg.setPosition(hero.x, hero.y - 31);
-      hero.bar.setPosition(hero.x - 15, hero.y - 31);
+      const heroHeadY = hero.sprite.y - hero.sprite.displayHeight * 0.5 - 8;
+      hero.barBg.setPosition(hero.x, heroHeadY);
+      hero.bar.setPosition(hero.x - 15, heroHeadY);
       hero.bar.width = Math.max(1, 30 * (hero.hp / hero.maxHp));
       hero.levelText.setPosition(hero.x, hero.y + 18).setText(hero.kind === "sentinel" ? "HLD" : `H${hero.level}`);
       if (hero && !hero.dead) {
