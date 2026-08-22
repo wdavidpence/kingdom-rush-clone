@@ -3,18 +3,18 @@
 KRC AAA/Wow. Hermes judge only. SWE 100% antigrav + qwen2735 MoA.
 
 ## Done
-v1.2.1 live. Meteor shipped. Combat unshipped.
+v1.2.2 live. Rally + 1.2.10 scorch/corpse judged locally, not pushed.
 
 ## Current
-Pass 1.2.8 launched: frost crystal-star impact.
+1.2.10 antigrav: meteor scorch + scout fade 2200ms. Tests 12/12. Scorch is faint under the burst. Incremental only.
+MoA not launched (terminal background flag). Git ship still blocked.
 
 ## Next step
-Judge frost still. Ship only if shards+navy outline read at 80px.
+Need user: allow git push and/or long background MoA. Or I keep local-only antigrav slices.
 
 ## Do NOT
 - Change Forest Gate (100,375) or bannerY=98
 - Use Claude/Opus
 - Claim AAA
-- Sequential 27b then 35b
-- Hermes-authored game art
-- Campaign-node strokes
+- Retry the blocked git push
+- Fake a MoA pass

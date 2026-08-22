@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.2.2";
+  const KRC_VERSION = "1.2.3";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -4756,14 +4756,7 @@ const bannerY = 98;
               duration: 160,
               ease: "Quad.easeIn",
               onComplete: () => {
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  delay: 720,
-                  duration: 480,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite, 2200);
               },
             });
           }
@@ -6283,6 +6276,14 @@ const bannerY = 98;
             ease: "Quad.easeOut",
             onComplete: () => burst0.destroy()
           });
+
+          const scorch = this.add.ellipse(target.x, target.y + 8, 44, 18, 0x1a1008, 0.45).setDepth(-12);
+          this.worldStains = this.worldStains || [];
+          this.worldStains.push(scorch);
+          if (this.worldStains.length > 12) {
+            const old = this.worldStains.shift();
+            old?.destroy?.();
+          }
 
           if (this.textures.exists("fx_meteor_1")) {
             const burst1 = this.add.image(target.x, target.y, "fx_meteor_1")
