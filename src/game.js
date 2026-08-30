@@ -1,4 +1,5 @@
 (() => {
+  const KRC_SCRIPT = typeof document !== "undefined" ? document.currentScript : null;
   const KRC_VERSION = "1.4.3";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
@@ -124,9 +125,10 @@
       );
       this.map = MAPS[this.mapIndex];
       this.campaign = window.KRCCampaign.load(MAPS.length);
+      this.syncTalentMods();
       this.path = this.map.path;
       this.buildPads = this.map.pads.map((pad) => ({ ...pad, tower: null }));
-      this.gold = this.startData?.gold ?? 280;
+      this.gold = Math.round((this.startData?.gold ?? 280) * (this.talentMods?.gold || 1));
       this.lives = this.startData?.lives ?? 20;
       this.lives += this.starBonusLives();
       let heroPick = this.startData?.heroKind || (typeof localStorage !== "undefined" ? localStorage.krc_hero_pick : null) || "captain";
@@ -3109,7 +3111,7 @@ const bannerY = 98;
       ];
 
       // Short name plaque titles under each node (Forest / Stone / Ember / Gale / Ash)
-      const shortNames = ["Forest", "Stone", "Ember", "Gale", "Ash"];
+      const shortNames = ["Forest", "Stone", "Ember", "Gale", "Ash", "Ford", "Cinder"];
 
       // Node Positions on the painted map board (HARD RULE: Forest Gate stays at { x: 100, y: 375 })
       const nodePositions = [
@@ -3118,6 +3120,8 @@ const bannerY = 98;
         { x: 308, y: 248 }, // Node 2: Ember Marsh
         { x: 338, y: 175 }, // Node 3: Gale Reach
         { x: 148, y: 248 }, // Node 4: Ash Spire, below banner, left of stone
+        { x: 52, y: 290 },  // Node 5: Merewatch Ford (v1.6.5, far-left shore)
+        { x: 218, y: 150 }, // Node 6: Cinderfall Ridge (v1.6.5, high ridge)
       ];
 
       // Draw connecting path segments between nodes
@@ -3163,6 +3167,9 @@ const bannerY = 98;
       drawPathSegment(nodePositions[2], nodePositions[3], !!this.campaign.unlocked[3]);
       // Path 3 -> 4 (unlocked if node 4 is unlocked)
       drawPathSegment(nodePositions[3], nodePositions[4], !!this.campaign.unlocked[4]);
+      // v1.6.5: fork west to the Ford, then up to the Ridge
+      drawPathSegment(nodePositions[4], nodePositions[5], !!this.campaign.unlocked[5]);
+      drawPathSegment(nodePositions[5], nodePositions[6], !!this.campaign.unlocked[6]);
 
       // Render Map Nodes
       MAPS.forEach((map, index) => {
@@ -3397,6 +3404,18 @@ const bannerY = 98;
           .setDepth(504);
         this.overlay.add([spellPlaqueBg, spellPlaqueText]);
       }
+
+      const resetTalents = this.makeButton(
+        W / 2,
+        610,
+        168,
+        28,
+        "RESET TALENTS",
+        0x5a3a32,
+        () => this.confirmTalentReset(),
+        { font: "bold 11px Cinzel", tooltip: () => "Refund all talent ranks.\\nTap twice to confirm." }
+      );
+      this.overlay.add([resetTalents.shadow, resetTalents.bg, resetTalents.shine, resetTalents.lip, resetTalents.text].filter(Boolean));
     }
 
     mapBriefing(index) {
@@ -4096,7 +4115,12 @@ const bannerY = 98;
       const base = cfg[key]?.[tower.level];
       if (base == null) return 0;
       const mul = tower.spec?.bonus?.[key];
-      return typeof mul === "number" ? base * mul : base;
+      let value = typeof mul === "number" ? base * mul : base;
+      const tm = this.talentMods || {};
+      if (key === "damage" && tower.type === "mage") value *= tm.mageDmg || 1;
+      if (key === "rate" && tower.type === "archer") value = Math.max(0.25, value * (tm.rate || 1));
+      if (key === "soldierHp") value *= tm.soldierHp || 1;
+      return value;
     }
 
     drawSpecBadge(tower) {
@@ -4579,7 +4603,7 @@ const bannerY = 98;
         this.waveIndex += 1;
         if (this.waveIndex >= WAVES.length) {
           const stars = this.computeStars();
-          window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
+          this.recordVictory(stars);
           const afterEpilogue = () => {
             if (this.mapIndex < MAPS.length - 1) {
               this.audio.play("ready", 0.45);
@@ -7004,7 +7028,7 @@ const bannerY = 98;
       const hero = this.hero;
       hero.dead = true;
       this.entityRegistry.transition(hero, "dead");
-      hero.respawn = 9;
+      hero.respawn = 9 * (this.talentMods?.heroRespawn || 1);
       hero.hp = 0;
       hero.attackPoseTime = 0;
       hero.abilityPoseTime = 0;
@@ -7056,6 +7080,8 @@ const bannerY = 98;
       let maxHp = TOWERS.barracks.soldierHp[tower.level];
       const hpMul = tower.spec?.bonus?.soldierHp;
       if (typeof hpMul === "number") maxHp = Math.round(maxHp * hpMul);
+      const talentHp = this.talentMods?.soldierHp;
+      if (typeof talentHp === "number") maxHp = Math.round(maxHp * talentHp);
       if (tower.path === "bulwark") maxHp = Math.round(maxHp * 1.28);
       const soldier = this.entityRegistry.create("soldier", {
         x: point.x,
@@ -7392,7 +7418,7 @@ const bannerY = 98;
             });
           }
         }
-        this.explode(target.x, target.y, 72, [270, 320, 370][this.spellRank() - 1], true);
+        this.explode(target.x, target.y, 72, [270, 320, 370][this.spellRank() - 1] * (this.talentMods?.meteor || 1), true);
         this.flashText("METEOR", target.x, target.y - 50, "#ffd37a");
       }
       if (id === "frost") {
@@ -7938,9 +7964,7 @@ const bannerY = 98;
       if (this.gameEnded) return;
       this.gameEnded = true;
       const stars = victory ? this.computeStars() : 0;
-      if (victory) {
-        window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
-      }
+      if (victory) this.recordVictory(stars);
       this.overlayActive = true;
       const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.88).setDepth(600);
       const blocker = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setDepth(600.5).setInteractive();
@@ -8017,7 +8041,7 @@ const bannerY = 98;
         .setDepth(601.3);
       const starLine = victory ? `${"★".repeat(stars)}${"☆".repeat(3 - stars)}  ${stars}/3 stars` : `Reached wave ${this.waveIndex + 1}`;
       const sub = this.add
-        .text(W / 2, 292, victory ? `Campaign complete. ${starLine}` : starLine, {
+        .text(W / 2, victory ? 268 : 292, victory ? `Campaign complete. ${starLine}` : starLine, {
           font: "18px 'Source Sans 3', Arial",
           color: victory ? "#3d2612" : "#e2d2c8",
           stroke: victory ? null : "#140808",
@@ -8027,11 +8051,14 @@ const bannerY = 98;
         .setOrigin(0.5)
         .setDepth(601.3);
 
-      const btnShadow = this.add.rectangle(W / 2, 406, 180, 54, 0x050704, 0.62).setDepth(601.35);
-      const btn = this.add.rectangle(W / 2, 400, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.4);
-      const btnShine = this.add.rectangle(W / 2, 387, 166, 12, 0xffffff, 0.17).setDepth(601.45);
-      const btnLip = this.add.rectangle(W / 2, 418, 166, 9, 0x000000, 0.2).setDepth(601.45);
-      const txt = this.add.text(W / 2, 398, "MAP SELECT", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
+      if (victory) this.mountTalentPanel((obj) => created.push(obj), 318, 602);
+
+      const btnY = victory ? 430 : 400;
+      const btnShadow = this.add.rectangle(W / 2, btnY + 6, 180, 54, 0x050704, 0.62).setDepth(601.35);
+      const btn = this.add.rectangle(W / 2, btnY, 180, 54, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282).setDepth(601.4);
+      const btnShine = this.add.rectangle(W / 2, btnY - 13, 166, 12, 0xffffff, 0.17).setDepth(601.45);
+      const btnLip = this.add.rectangle(W / 2, btnY + 18, 166, 9, 0x000000, 0.2).setDepth(601.45);
+      const txt = this.add.text(W / 2, btnY - 2, "MAP SELECT", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5).setDepth(602);
       btn.setInteractive({ useHandCursor: true });
       btn.on("pointerdown", () => {
         this.audio.stopAll();
@@ -8082,16 +8109,171 @@ const bannerY = 98;
       return 1;
     }
 
+    talentApi() {
+      return window.KRCTalents || null;
+    }
+
+    syncTalentMods() {
+      const api = this.talentApi();
+      const ids = api?.TALENTS?.map((talent) => talent.id);
+      this.talentMods = api?.applyTalents?.(this.campaign, ids) || {
+        gold: 1,
+        soldierHp: 1,
+        rate: 1,
+        mageDmg: 1,
+        meteor: 1,
+        heroRespawn: 1,
+      };
+      return this.talentMods;
+    }
+
+    recordVictory(stars) {
+      if (this._winRecorded) return this.campaign;
+      this.campaign = window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold);
+      window.KRCCampaign.save(this.campaign);
+      this._winRecorded = true;
+      return this.campaign;
+    }
+
+    talentSpendLabel(talent) {
+      const rank = this.campaign?.talents?.[talent.id] || 0;
+      return `${talent.name}\n${talent.cost}★ TAP  ${rank}/${talent.maxRank}`;
+    }
+
+    recommendedTalents(limit = 3) {
+      const talents = this.talentApi()?.TALENTS || [];
+      const ranks = this.campaign?.talents || {};
+      const wallet = this.campaign?.earnedStars || 0;
+      const open = talents.filter((talent) => (ranks[talent.id] || 0) < talent.maxRank);
+      open.sort((a, b) => {
+        const aAff = wallet >= a.cost ? 0 : 1;
+        const bAff = wallet >= b.cost ? 0 : 1;
+        if (aAff !== bAff) return aAff - bAff;
+        return a.cost - b.cost || a.id.localeCompare(b.id);
+      });
+      const picked = open.slice(0, limit);
+      for (const talent of talents) {
+        if (picked.length >= limit) break;
+        if (!picked.some((row) => row.id === talent.id)) picked.push(talent);
+      }
+      return picked;
+    }
+
+    trySpendTalent(talentId) {
+      const api = this.talentApi();
+      if (!api?.spendStar) return;
+      const result = api.spendStar(this.campaign, talentId);
+      if (!result?.ok) {
+        this.say("Cannot spend that star.");
+        this.audio.playLayered?.("uiError");
+        return;
+      }
+      this.campaign = result.state;
+      window.KRCCampaign.save(this.campaign);
+      this.refreshTalentPanel();
+      this.say("Talent ranked up.");
+    }
+
+    confirmTalentReset() {
+      const now = this.time?.now || Date.now();
+      if ((this._talentResetArmedUntil || 0) > now) {
+        this._talentResetArmedUntil = 0;
+        const api = this.talentApi();
+        if (!api?.refundAll) return;
+        this.campaign = api.refundAll(this.campaign);
+        window.KRCCampaign.save(this.campaign);
+        this.syncTalentMods();
+        this.refreshTalentPanel();
+        this.say("Talents refunded.");
+        return;
+      }
+      this._talentResetArmedUntil = now + 2500;
+      this.say("Tap RESET again to refund all stars.");
+    }
+
+    refreshTalentPanel() {
+      const stars = Math.max(0, this.campaign?.earnedStars || 0);
+      this._talentHoardText?.setText?.(`Talent hoard: ${stars} stars`);
+      const recs = this.recommendedTalents(3);
+      (this._talentSpendBtns || []).forEach((chip, index) => {
+        const talent = recs[index] || this.talentApi()?.TALENTS?.find((row) => row.id === chip.talentId);
+        if (talent) {
+          chip.talentId = talent.id;
+          chip.txt?.setText?.(this.talentSpendLabel(talent));
+        }
+      });
+    }
+
+    mountTalentPanel(add, y, depth) {
+      const api = this.talentApi();
+      if (!api) return [];
+      const parts = [];
+      const push = (obj) => {
+        if (!obj) return;
+        parts.push(obj);
+        add(obj);
+      };
+      const stars = Math.max(0, this.campaign?.earnedStars || 0);
+      const hoard = this.add
+        .text(W / 2, y, `Talent hoard: ${stars} stars`, {
+          font: "bold 13px Cinzel",
+          color: "#3d2612",
+        })
+        .setOrigin(0.5)
+        .setDepth(depth);
+      push(hoard);
+      this._talentHoardText = hoard;
+      this._talentSpendBtns = [];
+      const recs = this.recommendedTalents(3);
+      recs.forEach((talent, index) => {
+        const x = W / 2 + (index - 1) * 118;
+        const bg = this.add
+          .rectangle(x, y + 36, 110, 32, 0x4a6238, 1)
+          .setStrokeStyle(2, 0xe6d282)
+          .setDepth(depth)
+          .setInteractive({ useHandCursor: true });
+        const txt = this.add
+          .text(x, y + 36, this.talentSpendLabel(talent), {
+            font: "bold 9px Cinzel",
+            color: "#fff7dc",
+            align: "center",
+          })
+          .setOrigin(0.5)
+          .setDepth(depth + 0.2);
+        const chip = { bg, txt, talentId: talent.id };
+        bg.on("pointerdown", () => this.trySpendTalent(chip.talentId));
+        this._talentSpendBtns.push(chip);
+        push(bg);
+        push(txt);
+      });
+      const resetBg = this.add
+        .rectangle(W / 2, y + 72, 120, 26, 0x5a3a32, 1)
+        .setStrokeStyle(2, 0xe6d282)
+        .setDepth(depth)
+        .setInteractive({ useHandCursor: true });
+      const resetTxt = this.add
+        .text(W / 2, y + 72, "RESET", {
+          font: "bold 11px Cinzel",
+          color: "#fff7dc",
+        })
+        .setOrigin(0.5)
+        .setDepth(depth + 0.2);
+      resetBg.on("pointerdown", () => this.confirmTalentReset());
+      push(resetBg);
+      push(resetTxt);
+      return parts;
+    }
+
     showMapClearOverlay(stars) {
       this.overlayActive = true;
       this.overlay = this.add.container(0, 0).setDepth(580);
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0c120b, 0.86));
       this.overlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.01).setInteractive());
 
-      const panelShadow = this.add.rectangle(W / 2, 351, 416, 336, 0x050704, 0.65);
-      const panelWood = this.add.rectangle(W / 2, 345, 410, 330, 0x2c1f14, 1).setStrokeStyle(4, 0x5a3e26);
-      const panelGold = this.add.rectangle(W / 2, 345, 398, 318).setStrokeStyle(2, 0xe6d282, 0.85);
-      const panelFill = this.add.rectangle(W / 2, 345, 386, 306, 0xf4e6c8, 1).setStrokeStyle(1.5, 0x8a6a42);
+      const panelShadow = this.add.rectangle(W / 2, 361, 416, 376, 0x050704, 0.65);
+      const panelWood = this.add.rectangle(W / 2, 355, 410, 370, 0x2c1f14, 1).setStrokeStyle(4, 0x5a3e26);
+      const panelGold = this.add.rectangle(W / 2, 355, 398, 358).setStrokeStyle(2, 0xe6d282, 0.85);
+      const panelFill = this.add.rectangle(W / 2, 355, 386, 346, 0xf4e6c8, 1).setStrokeStyle(1.5, 0x8a6a42);
 
       const decorG = this.add.graphics();
       decorG.lineStyle(2, 0xc8a450, 0.8);
@@ -8134,7 +8316,7 @@ const bannerY = 98;
       );
       this.overlay.add(
         this.add
-          .text(W / 2, 314, "Next map unlocked. Carry some gold and lives forward.", {
+          .text(W / 2, 292, "Next map unlocked. Carry some gold and lives forward.", {
             font: "14px 'Source Sans 3', Arial",
             color: "#4a321a",
             align: "center",
@@ -8142,8 +8324,9 @@ const bannerY = 98;
           })
           .setOrigin(0.5)
       );
-      const next = this.add.rectangle(W / 2, 400, 200, 52, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
-      const nextText = this.add.text(W / 2, 398, "NEXT MAP", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5);
+      this.mountTalentPanel((obj) => this.overlay.add(obj), 328, 590);
+      const next = this.add.rectangle(W / 2, 448, 200, 52, 0x6a8b42, 1).setStrokeStyle(3, 0xe6d282);
+      const nextText = this.add.text(W / 2, 446, "NEXT MAP", { font: "bold 18px Cinzel", color: "#fff7dc" }).setOrigin(0.5);
       next.setInteractive({ useHandCursor: true });
       next.on("pointerdown", () => {
         this.overlayActive = false;
@@ -8156,8 +8339,8 @@ const bannerY = 98;
           ironMode: this.ironMode,
         });
       });
-      const menu = this.add.rectangle(W / 2, 468, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
-      const menuText = this.add.text(W / 2, 466, "MAP SELECT", { font: "bold 14px Cinzel", color: "#e8f5ff" }).setOrigin(0.5);
+      const menu = this.add.rectangle(W / 2, 508, 200, 40, 0x334657, 1).setStrokeStyle(2, 0xb9d7ec, 0.7);
+      const menuText = this.add.text(W / 2, 506, "MAP SELECT", { font: "bold 14px Cinzel", color: "#e8f5ff" }).setOrigin(0.5);
       menu.setInteractive({ useHandCursor: true });
       menu.on("pointerdown", () => {
         this.overlayActive = false;
@@ -8508,7 +8691,20 @@ const bannerY = 98;
 
   const boot = () => {
     if (window.__KRC_GAME__) return;
-    window.__KRC_GAME__ = new Phaser.Game(config);
+    const start = () => {
+      if (window.__KRC_GAME__) return;
+      window.__KRC_GAME__ = new Phaser.Game(config);
+    };
+    if (window.KRCTalents) {
+      start();
+      return;
+    }
+    const src = KRC_SCRIPT && KRC_SCRIPT.src;
+    const url = src ? new URL("talent-tree.js", src).href : "src/talent-tree.js";
+    import(url).then((mod) => {
+      if (!window.KRCTalents) window.KRCTalents = mod.default || mod;
+      start();
+    }).catch(() => start());
   };
   if (document.readyState === "complete" || document.readyState === "interactive") boot();
   else document.addEventListener("DOMContentLoaded", boot);
