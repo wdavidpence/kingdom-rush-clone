@@ -3120,8 +3120,8 @@ const bannerY = 98;
         { x: 308, y: 248 }, // Node 2: Ember Marsh
         { x: 338, y: 175 }, // Node 3: Gale Reach
         { x: 148, y: 248 }, // Node 4: Ash Spire, below banner, left of stone
-        { x: 52, y: 290 },  // Node 5: Merewatch Ford (v1.6.5, far-left shore)
-        { x: 218, y: 150 }, // Node 6: Cinderfall Ridge (v1.6.5, high ridge)
+        { x: 300, y: 420 }, // Node 5: Merewatch Ford (v1.6.8, SE corridor, clear of Forest 100,375)
+        { x: 372, y: 352 }, // Node 6: Cinderfall Ridge (v1.6.8, E spur, inside frame x<=401)
       ];
 
       // Draw connecting path segments between nodes
@@ -3407,13 +3407,13 @@ const bannerY = 98;
 
       const resetTalents = this.makeButton(
         W / 2,
-        610,
-        168,
-        28,
+        684,
+        116,
+        16,
         "RESET TALENTS",
         0x5a3a32,
         () => this.confirmTalentReset(),
-        { font: "bold 11px Cinzel", tooltip: () => "Refund all talent ranks.\\nTap twice to confirm." }
+        { font: "bold 9px Cinzel", tooltip: () => "Refund all talent ranks.\\nTap twice to confirm." }
       );
       this.overlay.add([resetTalents.shadow, resetTalents.bg, resetTalents.shine, resetTalents.lip, resetTalents.text].filter(Boolean));
     }
