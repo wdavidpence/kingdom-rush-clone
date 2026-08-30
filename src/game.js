@@ -1,5 +1,5 @@
 (() => {
-  const KRC_VERSION = "1.3.9";
+  const KRC_VERSION = "1.4.3";
   window.KRC_VERSION = KRC_VERSION;
   const { width: W, height: H, topHeight: TOP_H, shopY: SHOP_Y, shopHeight: SHOP_H, pathWidth: PATH_WIDTH, map: MAP_LAYOUT } = window.KRCLayout;
   const QA_MODE = new URLSearchParams(window.location.search).has("qa");
@@ -192,6 +192,11 @@
     cleanupScene() {
       this.clearFamilyPathPick?.();
       this.hideTooltip();
+      this.dismissWaveBriefing?.();
+      if (this._cutscene?.destroy) {
+        this._cutscene.destroy();
+        this._cutscene = null;
+      }
       this.input.off("pointerdown", this.handlePointer, this);
       this.audio?.stopAll?.();
       window.KRCSceneCleanup.destroyAll((this.effects || []).map((effect) => effect.obj));
@@ -3330,6 +3335,155 @@ const bannerY = 98;
       this.overlayActive = false;
     }
 
+    _storySeenKey(chapterId) {
+      return `krc_cs_seen_${chapterId}`;
+    }
+
+    _storyWasSeen(chapterId) {
+      try {
+        return !!sessionStorage.getItem(this._storySeenKey(chapterId));
+      } catch {
+        return false;
+      }
+    }
+
+    _markStorySeen(chapterId) {
+      try {
+        sessionStorage.setItem(this._storySeenKey(chapterId), "1");
+      } catch {
+        /* ignore quota / private mode */
+      }
+    }
+
+    _usedChapterIds() {
+      const ids = [];
+      const chapters = window.KRCStoryData?.CHAPTERS || [];
+      for (const ch of chapters) {
+        if (ch?.id && this._storyWasSeen(ch.id)) ids.push(ch.id);
+      }
+      return ids;
+    }
+
+    playCutsceneChapter(chapter, onDone) {
+      const stageApi = window.KRCCutsceneStage;
+      if (!chapter || !stageApi?.play || this._cutscene) {
+        return false;
+      }
+      this.overlayActive = true;
+      this._cutscene = stageApi.play(this, chapter, {
+        reducedMotion: !!this.settings?.reducedMotion,
+        onComplete: () => {
+          this._cutscene = null;
+          this.overlayActive = false;
+          onDone?.();
+        },
+      });
+      return true;
+    }
+
+    playChapterIntro(mapIndex, onDone) {
+      const story = window.KRCStoryData;
+      const chapter = story?.chapterForMap?.(mapIndex, this._usedChapterIds());
+      if (!chapter || this._storyWasSeen(chapter.id)) {
+        onDone?.();
+        return false;
+      }
+      const started = this.playCutsceneChapter(chapter, () => {
+        this._markStorySeen(chapter.id);
+        onDone?.();
+      });
+      if (!started) onDone?.();
+      return started;
+    }
+
+    playWardenIntro(onDone) {
+      const chapters = window.KRCStoryData?.CHAPTERS || [];
+      let chapter = null;
+      for (const ch of chapters) {
+        if (ch.panels?.some((p) => p.art === "warden")) {
+          const wardenPanels = ch.panels.filter((p) => p.art === "warden");
+          chapter = {
+            id: "warden-intro",
+            title: ch.title,
+            narrator: ch.narrator,
+            panels: wardenPanels,
+          };
+          break;
+        }
+      }
+      if (!chapter) {
+        chapter = {
+          id: "warden-intro",
+          title: "The Cinder Warden",
+          narrator: "Captain Alder of the Thornwatch",
+          panels: [
+            {
+              art: "warden",
+              caption: "A towering shape of molten cinder rises. Hold the road.",
+              speak: "The Cinder Warden",
+            },
+          ],
+        };
+      }
+      return this.playCutsceneChapter(chapter, onDone);
+    }
+
+    playEpilogue(onDone) {
+      const chapters = window.KRCStoryData?.CHAPTERS || [];
+      const matches = chapters.filter((ch) => ch.mapIndex === this.mapIndex);
+      const chapter = matches[matches.length - 1];
+      if (!chapter || this._storyWasSeen(chapter.id)) {
+        onDone?.();
+        return false;
+      }
+      const started = this.playCutsceneChapter(chapter, () => {
+        this._markStorySeen(chapter.id);
+        onDone?.();
+      });
+      if (!started) onDone?.();
+      return started;
+    }
+
+    dismissWaveBriefing() {
+      this.waveBriefingTimer?.remove?.();
+      this.waveBriefingTimer = null;
+      if (this.waveBriefing) {
+        this.waveBriefing.destroy(true);
+        this.waveBriefing = null;
+      }
+    }
+
+    showWaveBriefing(wave) {
+      this.dismissWaveBriefing();
+      const line =
+        window.KRCCutsceneStage?.buildBriefingText?.(wave) ||
+        (wave?.label ? String(wave.label) : "Hold the road.");
+      const reduced = !!this.settings?.reducedMotion;
+      if (reduced) {
+        this.waveBriefing = this.add
+          .text(12, 68, line, { font: "11px Arial", color: "#f8f0d8" })
+          .setOrigin(0, 0)
+          .setDepth(140);
+      } else {
+        this.waveBriefing = this.add.container(W / 2, 78).setDepth(140);
+        const card = this.add
+          .rectangle(0, 0, 360, 36, 0xf4e6c8, 0.96)
+          .setStrokeStyle(2, 0x8a6a42, 0.95)
+          .setInteractive({ useHandCursor: true });
+        const txt = this.add
+          .text(0, 0, line, {
+            font: "12px 'Source Sans 3', Arial",
+            color: "#2a1a0c",
+            align: "center",
+            wordWrap: { width: 340 },
+          })
+          .setOrigin(0.5);
+        card.on("pointerdown", () => this.dismissWaveBriefing());
+        this.waveBriefing.add([card, txt]);
+      }
+      this.waveBriefingTimer = this.time.delayedCall(3500, () => this.dismissWaveBriefing());
+    }
+
     setCampaignIntel(index, locked) {
       if (!this.campaignIntelTitle || !this.campaignIntelBody) return;
       const cards = [
@@ -3386,7 +3540,7 @@ const bannerY = 98;
       } else if (mapIndex === 4) {
         this.add.rectangle(W / 2, H / 2, W, H, 0x2a1810, 0.08).setDepth(5);
       }
-      this.showMapBriefing(mapIndex);
+      this.playChapterIntro(mapIndex, () => this.showMapBriefing(mapIndex));
       this.updateHud();
     }
 
@@ -4020,6 +4174,10 @@ const bannerY = 98;
       }
       if (this.waveIndex >= WAVES.length) return;
       const wave = WAVES[this.waveIndex];
+      if (wave.packs.some((pack) => pack[0] === "boss") && !this._wardenIntroPlayed) {
+        this._wardenIntroPlayed = true;
+        if (this.playWardenIntro(() => this.callWave())) return;
+      }
       let bonus = wave.gold;
       if (!this.ironMode && !this.waveActive && this.enemies.length === 0 && this.waveIndex < WAVES.length) {
         const earlyBonus = 8 + this.waveIndex * 2;
@@ -4079,6 +4237,7 @@ const bannerY = 98;
       // Wave label cinematic: large text that fades in then out
       this.flashText(`WAVE ${this.waveIndex + 1}: ${wave.label}`, W / 2, H / 2 - 40, "#ff8a73");
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
+      this.showWaveBriefing(wave);
     }
 
     toggleMuted() {
@@ -4143,12 +4302,15 @@ const bannerY = 98;
         if (this.waveIndex >= WAVES.length) {
           const stars = this.computeStars();
           window.KRCCampaign.save(window.KRCCampaign.recordWin(this.campaign, this.mapIndex, stars, this.gold));
-          if (this.mapIndex < MAPS.length - 1) {
-            this.audio.play("ready", 0.45);
-            this.showMapClearOverlay(stars);
-          } else {
-            this.endGame(true);
-          }
+          const afterEpilogue = () => {
+            if (this.mapIndex < MAPS.length - 1) {
+              this.audio.play("ready", 0.45);
+              this.showMapClearOverlay(stars);
+            } else {
+              this.endGame(true);
+            }
+          };
+          this.playEpilogue(afterEpilogue);
         } else {
           const bonus = this.waveIndex >= 6 ? 32 + this.waveIndex * 5 : 22 + this.waveIndex * 5;
           this.gold += bonus;
