@@ -1293,6 +1293,15 @@
         this.add.rectangle(x, y, 18 + (i % 4) * 7, 3, c, 0.22).setAngle((i * 19) % 180).setDepth(-19);
       }
 
+      // v1.5.1 authored Forest Gate postcard (antigrav art lane)
+      if (this.mapIndex === 0 && window.KRCArt?.composeForestGate) {
+        try {
+          const postcard = window.KRCArt.composeForestGate(this, W, H, 404, { container: true });
+          if (postcard?.setDepth) postcard.setDepth(-20);
+          this._gatePostcard = postcard;
+        } catch { /* keep base map if compose fails */ }
+      }
+
       // Atmospheric effects per map type
       if (!this.settings?.reducedMotion) {
         if (this.mapIndex === 0) {
