@@ -129,7 +129,15 @@
       this.gold = this.startData?.gold ?? 280;
       this.lives = this.startData?.lives ?? 20;
       this.lives += this.starBonusLives();
-      this.heroKind = this.startData?.heroKind === "sentinel" ? "sentinel" : "captain";
+      let heroPick = this.startData?.heroKind || (typeof localStorage !== "undefined" ? localStorage.krc_hero_pick : null) || "captain";
+      try {
+        if (!this.startData?.heroKind && typeof localStorage !== "undefined") {
+          heroPick = localStorage.getItem("krc_hero_pick") || localStorage.krc_hero_pick || heroPick;
+        }
+      } catch {
+        /* ignore */
+      }
+      this.heroKind = heroPick === "sentinel" ? "sentinel" : "captain";
       if (this.qaMode && new URLSearchParams(window.location.search).get("hero") === "sentinel") {
         this.heroKind = "sentinel";
       }
@@ -333,6 +341,14 @@
       const cfg = TOWERS[tower.type];
       const ability = window.KRCTowerAbilities?.getAbility(tower.type);
       const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
+      if (tower.level >= 3 && !tower.spec) {
+        const opts = this.specOptions(tower.type) || [];
+        const names = opts.map((s) => s.name).join(" / ");
+        return `Specialize (260g)\n${names || "Pick a path"}\nReplaces the tier-5 upgrade.`;
+      }
+      if (tower.spec) {
+        return `${cfg.name} — ${tower.spec.name}\nSpecialized. Sell refunds 55% of gold spent.`;
+      }
       if (tower.level >= cfg.upgrades.length) {
         if (unlocked) {
           const cd = Math.ceil(Math.max(0, tower.abilityCooldown || 0));
@@ -353,7 +369,7 @@
       const tower = this.selectedPad?.tower;
       if (!tower) return "Sell Tower (S)\nSelect a placed tower to sell for 55% refund.";
       const cfg = TOWERS[tower.type];
-      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      const spent = this.towerInvestedGold(tower);
       const refund = Math.floor(spent * 0.55);
       return `Sell ${cfg.name} (L${tower.level + 1})\nRefund: +${refund} gold (55% of ${spent}g total invested).`;
     }
@@ -2539,6 +2555,35 @@
           tooltip: () => this.getUpgradeTooltip(),
         }
       );
+      this.specButtons = [];
+      for (let si = 0; si < 2; si += 1) {
+        const idx = si;
+        const specBtn = this.makeButton(
+          328 + si * 58,
+          SHOP_Y + 33,
+          54,
+          54,
+          "SPEC",
+          0x3d5535,
+          () => {
+            const tower = this.selectedPad?.tower;
+            const opts = this.specOptions(tower?.type);
+            if (tower && opts?.[idx]) this.confirmTowerSpec(tower, opts[idx].id);
+          },
+          {
+            font: "bold 9px Cinzel",
+            tooltip: () => {
+              const tower = this.selectedPad?.tower;
+              const opts = this.specOptions(tower?.type);
+              const spec = opts?.[idx];
+              if (!spec) return "Specialization";
+              return `${spec.name} (260g)\nSpecialize this tower.`;
+            },
+          }
+        );
+        specBtn.setVisible(false);
+        this.specButtons.push(specBtn);
+      }
       this.sellButton = this.makeButton(
         370,
         SHOP_Y + 89,
@@ -2868,9 +2913,11 @@
     setHeroPanel(active) {
       const normalButtons = [...(this.shopButtons || []), this.upgradeButton, this.sellButton, ...(this.spellButtons || [])].filter(Boolean);
       for (const btn of normalButtons) btn.setVisible(!active);
+      for (const btn of this.specButtons || []) btn.setVisible(false);
       for (const btn of this.heroButtons || []) btn.setVisible(active);
       for (const btn of this.spellButtons || []) btn.cooldownBar?.setVisible(!active);
       for (const btn of this.heroButtons || []) btn.cooldownBar?.setVisible(active);
+      if (!active) this.updateUpgradeLabel?.();
       if (this.heroPortraitPlate) {
         if (typeof this.heroPortraitPlate.setVisible === "function") {
           this.heroPortraitPlate.setVisible(active);
@@ -2947,6 +2994,7 @@ const bannerY = 98;
       };
       heroPickCaptain = this.makeButton(W / 2 - 80, 618, 120, 32, "CAPTAIN", 0x243548, () => {
         this.heroKind = "captain";
+        window.KRCHeroSelect?.persistHeroPick?.("captain");
         updateHeroPicks();
         this.applyHeroKind();
       }, {
@@ -2955,6 +3003,7 @@ const bannerY = 98;
       });
       heroPickSentinel = this.makeButton(W / 2 + 80, 618, 120, 32, "SENTINEL", 0x334440, () => {
         this.heroKind = "sentinel";
+        window.KRCHeroSelect?.persistHeroPick?.("sentinel");
         updateHeroPicks();
         this.applyHeroKind();
       }, {
@@ -3588,7 +3637,55 @@ const bannerY = 98;
       }
     }
 
+    heroPickerSessionDone() {
+      try {
+        return sessionStorage.getItem("krc_hero_picker_session") === "1";
+      } catch {
+        return true;
+      }
+    }
+
+    markHeroPickerSession() {
+      try {
+        sessionStorage.setItem("krc_hero_picker_session", "1");
+      } catch {
+        /* ignore */
+      }
+    }
+
+    showSessionHeroPicker(onDone) {
+      const api = window.KRCHeroSelect;
+      const host = typeof document !== "undefined"
+        ? (document.querySelector(".shell") || document.getElementById("game") || document.body)
+        : null;
+      if (!api?.renderHeroPicker || !host) {
+        this.markHeroPickerSession();
+        onDone?.();
+        return;
+      }
+      const box = document.createElement("div");
+      box.setAttribute("data-krc-hero-picker", "1");
+      box.style.cssText = "position:absolute;inset:0;z-index:40;background:rgba(8,12,6,0.86);display:flex;align-items:center;justify-content:center;";
+      host.appendChild(box);
+      api.renderHeroPicker(box, (hero) => {
+        this.heroKind = hero?.id === "sentinel" ? "sentinel" : "captain";
+        this.applyHeroKind();
+        this.markHeroPickerSession();
+        box.remove();
+        onDone?.();
+      });
+    }
+
     beginMap(mapIndex) {
+      if (this._awaitingHeroPick) return;
+      if (!this.heroPickerSessionDone()) {
+        this._awaitingHeroPick = true;
+        this.showSessionHeroPicker(() => {
+          this._awaitingHeroPick = false;
+          this.beginMap(mapIndex);
+        });
+        return;
+      }
       this.hideTooltip();
       this.audio.resume();
       this.audio.play("start", 0.45);
@@ -3977,6 +4074,98 @@ const bannerY = 98;
       return table[type] || null;
     }
 
+    towerFamily(type) {
+      return window.KRCTowerSpec?.familyForType?.(type) || (type === "archer" ? "rangers" : type);
+    }
+
+    specOptions(type) {
+      const family = this.towerFamily(type);
+      return window.KRCTowerSpec?.SPEC_TREE?.[family] || null;
+    }
+
+    towerInvestedGold(tower) {
+      const cfg = TOWERS[tower.type];
+      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      if (!tower.spec) return spent;
+      const extra = window.KRCTowerSpec?.specCost?.(this.towerFamily(tower.type), tower.level + 1) ?? 260;
+      return spent + extra;
+    }
+
+    scaledTowerStat(tower, key) {
+      const cfg = TOWERS[tower.type];
+      const base = cfg[key]?.[tower.level];
+      if (base == null) return 0;
+      const mul = tower.spec?.bonus?.[key];
+      return typeof mul === "number" ? base * mul : base;
+    }
+
+    drawSpecBadge(tower) {
+      if (!tower) return;
+      tower.specBadge?.destroy?.();
+      tower.specBadge = null;
+      const paint = window.KRCArt?.paintSpecBadge;
+      if (typeof paint === "function") {
+        try {
+          const mark = paint.call(window.KRCArt, this, tower);
+          if (mark) tower.specBadge = mark;
+          return;
+        } catch {
+          /* art lane missing or signature mismatch */
+        }
+      }
+      tower.specBadge = this.add.circle(tower.x + 16, tower.y - 24, 7, 0xf5c85a, 0.92)
+        .setStrokeStyle(1.5, 0x3a250c)
+        .setDepth(40);
+    }
+
+    syncSpecPanel(tower) {
+      const opts = tower && tower.level >= 3 && !tower.spec ? this.specOptions(tower.type) : null;
+      const showSpec = !!(opts && opts.length >= 2);
+      if (this.upgradeButton) this.upgradeButton.setVisible(!showSpec);
+      for (let i = 0; i < (this.specButtons || []).length; i += 1) {
+        const btn = this.specButtons[i];
+        if (!btn) continue;
+        if (showSpec && opts[i]) {
+          const label = String(opts[i].name).split(" ").join("\n");
+          btn.setLabel(label);
+          btn.setVisible(true);
+        } else {
+          btn.setVisible(false);
+        }
+      }
+    }
+
+    confirmTowerSpec(tower, specId) {
+      if (this.overlayActive || this.gameEnded) return;
+      if (!this.selectedPad || this.selectedPad.tower !== tower) return;
+      const api = window.KRCTowerSpec;
+      const family = this.towerFamily(tower?.type);
+      const tier = (tower?.level ?? 0) + 1;
+      const chosen = api?.chooseSpec?.(family, tower.spec?.id || null, tier, specId);
+      if (!chosen) {
+        this.say("Cannot specialize.");
+        this.audio.playLayered?.("uiError");
+        return;
+      }
+      if (tower.spec?.id === chosen.id) return;
+      const cost = api.specCost(family, tier);
+      if (this.gold < cost) {
+        this.say(`Need ${cost} gold to upgrade.`);
+        this.audio.playLayered?.("uiError");
+        return;
+      }
+      this.gold -= cost;
+      tower.spec = chosen;
+      this.drawSpecBadge(tower);
+      const cfg = TOWERS[tower.type];
+      tower.rangeRing?.setRadius?.(this.scaledTowerStat(tower, "range"));
+      this.flashText(chosen.name, tower.x, tower.y - 42, "#fff2ba");
+      this.say(`${cfg.name} specialized: ${chosen.name}.`);
+      this.audio.playLayered?.("towerUpgrade");
+      this.updateUpgradeLabel();
+      this.updateHud?.();
+    }
+
     showFamilyPathPick(tower) {
       this.clearFamilyPathPick();
       const paths = this.familyPaths(tower?.type);
@@ -4052,9 +4241,14 @@ const bannerY = 98;
         return;
       }
       const cfg = TOWERS[tower.type];
-      if (tower.level >= cfg.upgrades.length) {
+      if (tower.spec || tower.level >= cfg.upgrades.length) {
         this.say("Tower is fully upgraded.");
         this.audio.playLayered?.("uiError");
+        return;
+      }
+      if (tower.level >= 3 && !tower.spec && this.specOptions(tower.type)) {
+        this.syncSpecPanel(tower);
+        this.say("Last upgrade: pick a specialization.");
         return;
       }
       if (tower.level === 3 && !tower.path && this.familyPaths(tower.type)) {
@@ -4168,7 +4362,7 @@ const bannerY = 98;
       const tower = this.selectedPad?.tower;
       if (!tower) return;
       const cfg = TOWERS[tower.type];
-      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      const spent = this.towerInvestedGold(tower);
       const refund = Math.floor(spent * 0.55);
       this.gold += refund;
       this.audio.playLayered("towerSell");
@@ -4186,6 +4380,7 @@ const bannerY = 98;
       tower.readyFill?.destroy();
       tower.hexVeil?.destroy();
       tower.hexSlash?.destroy();
+      tower.specBadge?.destroy?.();
       this.entityRegistry.transition(tower, "removed");
       for (const s of tower.soldiers) this.killSoldier(s);
       this.towers = this.towers.filter((t) => t !== tower);
@@ -4205,6 +4400,7 @@ const bannerY = 98;
       if (!tower) {
         this.upgradeButton.setLabel("UP\n-");
         this.sellButton.setLabel("SELL");
+        this.syncSpecPanel(null);
         for (const t of this.towers) {
           t.rangeRing.setVisible(false);
           t.rangeRing._animated = false;
@@ -4214,13 +4410,16 @@ const bannerY = 98;
       const cfg = TOWERS[tower.type];
       const ability = window.KRCTowerAbilities?.getAbility(tower.type);
       const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
-      if (tower.level >= cfg.upgrades.length && unlocked) {
+      this.syncSpecPanel(tower);
+      if (tower.spec) {
+        this.upgradeButton.setLabel("SPEC\nMAX");
+      } else if (tower.level >= cfg.upgrades.length && unlocked) {
         const cd = Math.ceil(Math.max(0, tower.abilityCooldown || 0));
         this.upgradeButton.setLabel(cd > 0 ? `${ability.name.slice(0, 3).toUpperCase()}\n${cd}s` : `${ability.name.slice(0, 3).toUpperCase()}\nRDY`);
       } else {
         this.upgradeButton.setLabel(tower.level >= cfg.upgrades.length ? "MAX" : `UP\n${cfg.upgrades[tower.level]}`);
       }
-      const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+      const spent = this.towerInvestedGold(tower);
       const refund = Math.floor(spent * 0.55);
       this.sellButton.setLabel(`SELL\n${refund}g`);
       if (tower.rangeRing) {
@@ -5647,10 +5846,12 @@ const bannerY = 98;
           }
         }
         if (tower.cooldown > 0) continue;
-        const target = this.findTarget(tower, cfg.range[tower.level], tower.type !== "artillery");
+        const target = this.findTarget(tower, this.scaledTowerStat(tower, "range"), tower.type !== "artillery");
         if (!target) continue;
-        tower.cooldown = cfg.rate[tower.level];
+        tower.cooldown = this.scaledTowerStat(tower, "rate");
         this.fireTower(tower, target);
+        const extraShots = (tower.spec?.bonus?.shots || 1) - 1;
+        for (let s = 0; s < extraShots; s += 1) this.fireTower(tower, target);
         this.tryTowerAbility(tower, target);
       }
       this.rallyTime = Math.max(0, (this.rallyTime || 0) - dt);
@@ -5930,14 +6131,14 @@ const bannerY = 98;
       const cfg = TOWERS[tower.type];
       const level = tower.level;
       const color = cfg.color;
-      let damage = cfg.damage[level];
+      let damage = this.scaledTowerStat(tower, "damage");
       if (tower.path === "skybit" && target.base?.flying) damage *= 1.28;
       if (tower.path === "pinshot" && (target.base?.armor || 0) >= 3) damage *= 1.22;
       if (tower.path === "shard" && (target.base?.armor || 0) >= 3) damage *= 1.22;
       if (tower.path === "fuse" && !target.base?.flying) damage *= 1.18;
-      let slow = cfg.slow?.[level] || 0;
+      let slow = this.scaledTowerStat(tower, "slow") || cfg.slow?.[level] || 0;
       if (tower.path === "veil") slow *= 1.4;
-      let splash = cfg.splash?.[level] || 0;
+      let splash = this.scaledTowerStat(tower, "splash") || cfg.splash?.[level] || 0;
       if (tower.path === "crater") splash *= 1.3;
       const projectile = this.entityRegistry.create("projectile", {
         x: tower.x,
@@ -5949,7 +6150,7 @@ const bannerY = 98;
         magic: !!cfg.magic,
         slow,
         splash,
-        chain: tower.type === "mage" && level >= 3 ? 2 : 0,
+        chain: (tower.type === "mage" && level >= 3 ? 2 : 0) || (tower.spec?.bonus?.chain ? 2 : 0),
       });
       const key =
         tower.type === "archer" ? "projectile_arrow" : tower.type === "artillery" ? "projectile_bomb" : "projectile_magic";
@@ -6339,16 +6540,16 @@ const bannerY = 98;
         soldier.attackCooldown -= dt;
         soldier.attackPoseTime = Math.max(0, (soldier.attackPoseTime || 0) - dt);
         soldier.arrowCooldown = Math.max(0, (soldier.arrowCooldown || 0) - dt);
-        const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, cfg.range[tower.level] * 0.55, false);
+        const meleeTarget = this.findEnemyNear(soldier.x, soldier.y, this.scaledTowerStat(tower, "range") * 0.55, false);
         if (meleeTarget) {
           soldier.target = meleeTarget;
           meleeTarget.blockedBy = soldier;
           this.moveSoldierToward(soldier, meleeTarget.x, meleeTarget.y, 22, dt);
           if (soldier.attackCooldown <= 0) {
-            soldier.attackCooldown = cfg.rate[tower.level];
+            soldier.attackCooldown = this.scaledTowerStat(tower, "rate");
             soldier.attackPoseTime = 0.24;
             soldier.strikeCount = (soldier.strikeCount || 0) + 1;
-            let attackerDamage = cfg.damage[tower.level];
+            let attackerDamage = this.scaledTowerStat(tower, "damage");
             if (tower.path === "spike") attackerDamage *= 1.25;
             const strike = readiness.meleeStrike({
               attackerDamage,
@@ -6363,10 +6564,10 @@ const bannerY = 98;
           soldier.target = null;
           this.moveSoldierToward(soldier, soldier.homeX, soldier.homeY, 4, dt);
           if (tower.level >= 2 && soldier.arrowCooldown <= 0) {
-            const arrowTarget = this.findTarget(tower, cfg.range[tower.level], true);
+            const arrowTarget = this.findTarget(tower, this.scaledTowerStat(tower, "range"), true);
             if (arrowTarget) {
               soldier.arrowCooldown = 1.15;
-              let arrowDamage = cfg.damage[tower.level] * (this.bannerTime > 0 ? 0.9 : 0.72);
+              let arrowDamage = this.scaledTowerStat(tower, "damage") * (this.bannerTime > 0 ? 0.9 : 0.72);
               if (tower.path === "spike") arrowDamage *= 1.25;
               this.fireGuardArrow(soldier, arrowTarget, arrowDamage);
             }
@@ -6853,6 +7054,8 @@ const bannerY = 98;
       this.flashTowerFirePose(tower, 140);
       const point = { x: tower.rallyX, y: tower.rallyY };
       let maxHp = TOWERS.barracks.soldierHp[tower.level];
+      const hpMul = tower.spec?.bonus?.soldierHp;
+      if (typeof hpMul === "number") maxHp = Math.round(maxHp * hpMul);
       if (tower.path === "bulwark") maxHp = Math.round(maxHp * 1.28);
       const soldier = this.entityRegistry.create("soldier", {
         x: point.x,
@@ -7678,14 +7881,14 @@ const bannerY = 98;
       if (this.selectedPad?.tower) {
         const tower = this.selectedPad.tower;
         const cfg = TOWERS[tower.type];
-        const dmg = cfg.damage[tower.level];
-        const rate = cfg.rate[tower.level];
-        const range = cfg.range[tower.level];
+        const dmg = this.scaledTowerStat(tower, "damage");
+        const rate = this.scaledTowerStat(tower, "rate");
+        const range = this.scaledTowerStat(tower, "range");
         const ability = window.KRCTowerAbilities?.getAbility(tower.type);
         const unlocked = ability && window.KRCTowerAbilities.isUnlocked(tower.type, tower.level);
-        const spent = cfg.cost + cfg.upgrades.slice(0, tower.level).reduce((a, b) => a + b, 0);
+        const spent = this.towerInvestedGold(tower);
         const refund = Math.floor(spent * 0.55);
-        const up = tower.level < cfg.upgrades.length ? `Up ${cfg.upgrades[tower.level]}g` : "MAX";
+        const up = tower.spec ? tower.spec.name : tower.level < cfg.upgrades.length ? `Up ${cfg.upgrades[tower.level]}g` : "MAX";
         const ab = unlocked ? ` · ${ability.name} ${Math.ceil(tower.abilityCooldown || 0) > 0 ? Math.ceil(tower.abilityCooldown) + "s" : "ready"}` : "";
         return `${cfg.name} L${tower.level + 1}: dmg ${dmg} / ${rate.toFixed(2)}s / rng ${range}. ${up}. Sell ${refund}g.${ab}`;
       }
