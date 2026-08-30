@@ -20,6 +20,73 @@
 
   const { maps: MAPS, towers: TOWERS, enemies: ENEMIES, waves: WAVES } = window.KRCGameData;
 
+  const AftermathLedger = window.KRCAftermath?.AftermathLedger || class AftermathLedger {
+    constructor(maxEntries = 48) {
+      const cap = Number(maxEntries);
+      this.maxEntries = Number.isFinite(cap) && cap > 0 ? Math.floor(cap) : 48;
+      this._clock = 0;
+      this.entries = [];
+    }
+    record(event) {
+      if (!event || typeof event !== "object") return null;
+      if (!["corpse", "scorch", "arrow", "crater"].includes(event.kind)) return null;
+      const stored = {
+        kind: event.kind,
+        x: Number(event.x) || 0,
+        y: Number(event.y) || 0,
+        t: Number.isFinite(event.t) ? event.t : this._clock,
+        rot: Number(event.rot) || 0,
+        kind2: event.kind2 == null ? null : String(event.kind2),
+      };
+      if (!Number.isFinite(event.t)) this._clock += 1;
+      else if (event.t >= this._clock) this._clock = event.t + 1;
+      this.entries.push(stored);
+      while (this.entries.length > this.maxEntries) this.evictOldest();
+      return stored;
+    }
+    evictOldest() {
+      if (!this.entries.length) return null;
+      return this.entries.shift();
+    }
+    capTo(maxKeep) {
+      const cap = Math.max(0, Math.floor(Number(maxKeep)));
+      const evicted = [];
+      while (this.entries.length > cap) {
+        const old = this.evictOldest();
+        if (old) evicted.push(old);
+      }
+      return evicted;
+    }
+    snapshot() {
+      return {
+        maxEntries: this.maxEntries,
+        clock: this._clock,
+        entries: this.entries.map((entry) => ({
+          kind: entry.kind, x: entry.x, y: entry.y, t: entry.t, rot: entry.rot, kind2: entry.kind2,
+        })),
+      };
+    }
+    restore(json) {
+      let data = json;
+      if (typeof json === "string") data = JSON.parse(json);
+      this.entries = [];
+      if (!data || typeof data !== "object") {
+        this._clock = 0;
+        return this;
+      }
+      if (Number.isFinite(data.maxEntries) && data.maxEntries > 0) this.maxEntries = Math.floor(data.maxEntries);
+      this._clock = Number.isFinite(data.clock) ? data.clock : 0;
+      const list = Array.isArray(data.entries) ? data.entries : Array.isArray(data) ? data : [];
+      for (const event of list) {
+        const stored = this.record({ ...event, t: Number.isFinite(event?.t) ? event.t : this._clock });
+        if (stored && this.entries.length && this.entries[this.entries.length - 1] !== stored) {
+          /* record already pushed */
+        }
+      }
+      return this;
+    }
+  };
+
   class GameScene extends Phaser.Scene {
     constructor() {
       super("game");
@@ -81,6 +148,8 @@
       this.soldiers = [];
       this.projectiles = [];
       this.effects = [];
+      this.aftermathLedger = new AftermathLedger(48);
+      this.aftermathMarks = [];
       this.killStreak = 0;
       this.killStreakUntil = 0;
       this.entityRegistry = window.KRCEntityState.createRegistry();
@@ -193,6 +262,7 @@
       this.clearFamilyPathPick?.();
       this.hideTooltip();
       this.dismissWaveBriefing?.();
+      this.clearAftermath?.(true);
       if (this._cutscene?.destroy) {
         this._cutscene.destroy();
         this._cutscene = null;
@@ -1221,6 +1291,15 @@
         const y = 76 + ((i * 47) % 545);
         const c = i % 3 === 0 ? theme.accent : i % 2 ? theme.accent2 : grass;
         this.add.rectangle(x, y, 18 + (i % 4) * 7, 3, c, 0.22).setAngle((i * 19) % 180).setDepth(-19);
+      }
+
+      // v1.5.1 authored Forest Gate postcard (antigrav art lane)
+      if (this.mapIndex === 0 && window.KRCArt?.composeForestGate) {
+        try {
+          const postcard = window.KRCArt.composeForestGate(this, W, H, 404, { container: true });
+          if (postcard?.setDepth) postcard.setDepth(-20);
+          this._gatePostcard = postcard;
+        } catch { /* keep base map if compose fails */ }
       }
 
       // Atmospheric effects per map type
@@ -4318,6 +4397,7 @@ const bannerY = 98;
             this.flashText(`+${bonus} LATE`, W / 2, 120, "#fff2ba");
           }
           this.say(`Wave cleared. Prepare for ${WAVES[this.waveIndex].label}.`);
+          this.trimAftermath(24);
           this.beginWaveCalm();
         }
       }
@@ -5196,6 +5276,7 @@ const bannerY = 98;
       if (enemy.type === "titan" || enemy.type === "boss") damage *= 0.86;
       if (enemy.type === "boss" && enemy.phase === 2 && enemy.phaseTimer > 0 && !source.magic) damage *= 0.55;
       enemy.hp -= damage;
+      enemy.lastHit = source;
       // Hit sparks on damage (not for tiny amounts)
       if (damage >= 5 && !enemy.dead) {
         this.createHitSparks(enemy.x, enemy.y - 8, source.magic ? 0xc8b0ff : 0xfff0c0);
@@ -5275,31 +5356,30 @@ const bannerY = 98;
         const sprite = enemy.sprite;
         enemy.sprite = null;
         const family = enemy.type;
+        const isFlyer = family === "flyer" || enemy.base?.flying;
         const deadKey = `enemy_${family}_dead`;
         if (sprite) {
           if (this.textures.exists(deadKey)) {
             sprite.setTexture(deadKey);
           }
           this.applyUnitTint(sprite);
+          if (enemy.base?.color) sprite.setTint(enemy.base.color);
+        }
+        const corpse = this.recordAftermath("corpse", enemy.x, enemy.y, sprite?.rotation || 0, family);
+        if (sprite) this.trackAftermathMark(sprite, "corpse", corpse?.t);
+        if (isFlyer && enemy.lastHit?.family === "archer") {
+          this.stampSpentArrow(enemy.x, enemy.y, enemy.lastHit.rot || sprite?.rotation || 0);
         }
 
         if (this.settings?.reducedMotion) {
           if (sprite) {
             sprite.rotation = 0;
-            this.tweens.add({
-              targets: sprite,
-              alpha: 0,
-              duration: 400,
-              ease: "Linear",
-              onComplete: () => sprite.destroy(),
-            });
+            this.fadeCorpse(sprite);
           } else {
             this.puff(enemy.x, enemy.y, enemy.base?.color);
           }
           return;
         }
-
-        const isFlyer = family === "flyer" || enemy.base?.flying;
         if (family === "scout") {
           if (sprite) {
             const baseScale = (enemy.base?.size || 15) / 30;
@@ -5343,14 +5423,7 @@ const bannerY = 98;
                     vy: -8 - Math.random() * 12,
                   });
                 }
-                this.tweens.add({
-                  targets: sprite,
-                  alpha: 0,
-                  delay: 640,
-                  duration: 480,
-                  ease: "Linear",
-                  onComplete: () => sprite.destroy(),
-                });
+                this.fadeCorpse(sprite);
               },
             });
             if ((enemy.base?.size || 0) >= 20) {
@@ -5584,17 +5657,136 @@ const bannerY = 98;
       if (this.selectedPad?.tower) this.updateUpgradeLabel();
     }
 
-    fadeCorpse(sprite, delay = 640, fade = 480) {
+    fadeCorpse(sprite) {
       if (!sprite) return;
       sprite.setDepth(9);
+      const reduced = !!this.settings?.reducedMotion;
+      const fadeMs = reduced ? 2000 : 4000;
+      const delayMs = reduced ? 2000 : 21000;
+      const sx = sprite.scaleX || 1;
+      const sy = sprite.scaleY || 1;
+      this.tweens.killTweensOf(sprite);
+      this.tweens.add({
+        targets: sprite,
+        scaleX: sx * 0.96,
+        scaleY: sy * 0.72,
+        duration: Math.min(420, delayMs || 200),
+        ease: "Quad.easeOut",
+      });
       this.tweens.add({
         targets: sprite,
         alpha: 0,
-        delay,
-        duration: fade,
+        delay: delayMs,
+        duration: fadeMs,
         ease: "Linear",
         onComplete: () => sprite.destroy(),
       });
+    }
+
+    recordAftermath(kind, x, y, rot, kind2) {
+      if (!this.aftermathLedger) this.aftermathLedger = new AftermathLedger(48);
+      const stored = this.aftermathLedger.record({ kind, x, y, rot: rot || 0, kind2: kind2 || null });
+      this.syncAftermathVisuals();
+      return stored;
+    }
+
+    trackAftermathMark(obj, kind, t) {
+      if (!obj) return;
+      this.aftermathMarks = this.aftermathMarks || [];
+      this.aftermathMarks.push({ obj, kind, t });
+    }
+
+    syncAftermathVisuals() {
+      if (!this.aftermathLedger) return;
+      const live = new Set(this.aftermathLedger.entries.map((entry) => entry.t));
+      const kept = [];
+      for (const mark of this.aftermathMarks || []) {
+        if (mark?.obj && live.has(mark.t) && mark.obj.active !== false) kept.push(mark);
+        else if (mark?.obj && mark.obj.active !== false) mark.obj.destroy?.();
+      }
+      this.aftermathMarks = kept;
+    }
+
+    stampSpellScorch(x, y, kind2) {
+      const reduced = !!this.settings?.reducedMotion;
+      const linger = reduced ? 6000 : 60000;
+      const fadeMs = reduced ? 2000 : 4000;
+      const g = this.add.graphics().setDepth(-12);
+      if (kind2 === "frost" || kind2 === "ice") {
+        g.fillStyle(0x1a3040, 0.42);
+        g.fillEllipse(x, y + 6, 52, 20);
+        g.fillStyle(0x4a7088, 0.16);
+        g.fillEllipse(x, y + 4, 26, 10);
+      } else {
+        g.fillStyle(0x1a1008, 0.5);
+        g.fillEllipse(x, y + 8, 52, 22);
+        g.fillStyle(0x3a2010, 0.22);
+        g.fillEllipse(x, y + 6, 28, 12);
+      }
+      const stored = this.recordAftermath("scorch", x, y, 0, kind2);
+      this.trackAftermathMark(g, "scorch", stored?.t);
+      this.worldStains = this.worldStains || [];
+      this.worldStains.push(g);
+      if (this.worldStains.length > 12) {
+        const old = this.worldStains.shift();
+        old?.destroy?.();
+      }
+      this.tweens.add({
+        targets: g,
+        alpha: 0,
+        delay: Math.max(0, linger - fadeMs),
+        duration: fadeMs,
+        ease: "Linear",
+        onComplete: () => g.destroy(),
+      });
+    }
+
+    stampSpentArrow(x, y, rot) {
+      const reduced = !!this.settings?.reducedMotion;
+      const linger = reduced ? 6000 : 60000;
+      const fadeMs = reduced ? 2000 : 4000;
+      const key = this.textures.exists("projectile_arrow") ? "projectile_arrow" : null;
+      const dart = key
+        ? this.add.image(x, y + 4, key).setDepth(8).setScale(0.42).setRotation(rot || 0).setAlpha(0.9)
+        : this.add.rectangle(x, y + 4, 10, 3, 0xf8e8a0, 0.9).setDepth(8).setRotation(rot || 0);
+      const stored = this.recordAftermath("arrow", x, y, rot || 0, "flyer");
+      this.trackAftermathMark(dart, "arrow", stored?.t);
+      this.tweens.add({
+        targets: dart,
+        alpha: 0,
+        delay: Math.max(0, linger - fadeMs),
+        duration: fadeMs,
+        ease: "Linear",
+        onComplete: () => dart.destroy(),
+      });
+    }
+
+    trimAftermath(maxKeep = 24) {
+      if (!this.aftermathLedger) return;
+      this.aftermathLedger.capTo(maxKeep);
+      this.syncAftermathVisuals();
+      this.accelerateAftermathFades();
+    }
+
+    accelerateAftermathFades() {
+      const dur = this.settings?.reducedMotion ? 400 : 900;
+      for (const mark of this.aftermathMarks || []) {
+        if (!mark?.obj) continue;
+        this.tweens.killTweensOf(mark.obj);
+        this.tweens.add({
+          targets: mark.obj,
+          alpha: 0,
+          duration: dur,
+          ease: "Quad.easeOut",
+          onComplete: () => mark.obj.destroy?.(),
+        });
+      }
+    }
+
+    clearAftermath(resetLedger) {
+      for (const mark of this.aftermathMarks || []) mark?.obj?.destroy?.();
+      this.aftermathMarks = [];
+      if (resetLedger) this.aftermathLedger = new AftermathLedger(48);
     }
 
     flashTowerFirePose(tower, duration) {
@@ -5858,7 +6050,7 @@ const bannerY = 98;
           if (p.splash) {
             this.explode(p.target.x, p.target.y, p.splash, p.damage, false);
           } else {
-            this.damageEnemy(p.target, p.damage, { magic: p.magic, slow: p.slow });
+            this.damageEnemy(p.target, p.damage, { magic: p.magic, slow: p.slow, family, rot: p.sprite?.rotation || 0 });
             if (p.chain) this.chainMagic(hitX, hitY, p.damage, p.chain);
           }
           this.removeProjectile(p);
@@ -6870,6 +7062,7 @@ const bannerY = 98;
           this.audio.playLayered?.("uiError");
           return;
         }
+        this.stampSpellScorch(target.x, target.y, "meteor");
         if (this.settings?.reducedMotion) {
           // reducedMotion: static stamp + fade
           const stamp = this.add.image(target.x, target.y, this.textures.exists("fx_meteor") ? "fx_meteor" : "fx_meteor_0")
@@ -6926,14 +7119,6 @@ const bannerY = 98;
             onComplete: () => burst0.destroy()
           });
 
-          const scorch = this.add.ellipse(target.x, target.y + 8, 44, 18, 0x1a1008, 0.45).setDepth(-12);
-          this.worldStains = this.worldStains || [];
-          this.worldStains.push(scorch);
-          if (this.worldStains.length > 12) {
-            const old = this.worldStains.shift();
-            old?.destroy?.();
-          }
-
           if (this.textures.exists("fx_meteor_1")) {
             const burst1 = this.add.image(target.x, target.y, "fx_meteor_1")
               .setScale(0.6)
@@ -6981,6 +7166,7 @@ const bannerY = 98;
         for (const enemy of this.enemies) {
           enemy.slow = Math.max(enemy.slow, [4.2, 5.0, 5.8][this.spellRank() - 1]);
         }
+        this.stampSpellScorch(W / 2, H / 2, "frost");
         if (this.settings?.reducedMotion) {
           // reducedMotion: static stamp + fade
           const stamp = this.add.image(W / 2, H / 2, this.textures.exists("fx_ice") ? "fx_ice" : "fx_ice_0")

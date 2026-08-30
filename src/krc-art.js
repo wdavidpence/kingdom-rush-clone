@@ -11905,5 +11905,883 @@
     });
   };
 
-  window.KRCArt = { bake };
+  // —— Seeded Local LCG Helper ——
+  const createLcg = (initialSeed = 12345) => {
+    let s;
+    if (typeof initialSeed === "number" && Number.isFinite(initialSeed)) {
+      s = Math.floor(initialSeed) >>> 0;
+    } else {
+      const parsed = Number(initialSeed);
+      s = Number.isFinite(parsed) ? Math.floor(parsed) >>> 0 : 12345;
+    }
+
+    const rng = () => {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+
+    rng.next = rng;
+    rng.random = rng;
+    rng.range = (min, max) => min + rng() * (max - min);
+    rng.int = (min, max) => Math.floor(min + rng() * (max - min + 1));
+    rng.choice = (arr) => arr[Math.floor(rng() * arr.length)];
+    rng.getState = () => s;
+    rng.seed = (newSeed) => {
+      const num = Number(newSeed);
+      s = Number.isFinite(num) ? Math.floor(num) >>> 0 : 12345;
+      return s;
+    };
+
+    return rng;
+  };
+
+  const clampDim = (v) => {
+    const num = Number(v);
+    if (!Number.isFinite(num)) return 1;
+    return Math.max(1, Math.round(num));
+  };
+
+  const resolveGraphics = (scene, target) => {
+    if (target && typeof target === "object") return target;
+    if (scene && scene.add && typeof scene.add.graphics === "function") {
+      return scene.add.graphics();
+    }
+    if (scene && scene.make && typeof scene.make.graphics === "function") {
+      return scene.make.graphics();
+    }
+    if (scene && typeof scene.beginPath === "function" && typeof scene.fillStyle === "function") {
+      return scene;
+    }
+    const dummy = {
+      fillStyle() { return dummy; },
+      lineStyle() { return dummy; },
+      beginPath() { return dummy; },
+      moveTo() { return dummy; },
+      lineTo() { return dummy; },
+      closePath() { return dummy; },
+      fillPath() { return dummy; },
+      strokePath() { return dummy; },
+      fillRect() { return dummy; },
+      strokeRect() { return dummy; },
+      fillRoundedRect() { return dummy; },
+      strokeRoundedRect() { return dummy; },
+      fillCircle() { return dummy; },
+      strokeCircle() { return dummy; },
+      fillEllipse() { return dummy; },
+      fillTriangle() { return dummy; },
+      strokeTriangle() { return dummy; },
+      lineBetween() { return dummy; },
+      arc() { return dummy; },
+      setDepth() { return dummy; },
+      setAlpha() { return dummy; },
+      clear() { return dummy; },
+      destroy() { return dummy; },
+    };
+    return dummy;
+  };
+
+  const safeFillTriangle = (g, x1, y1, x2, y2, x3, y3) => {
+    if (typeof g.fillTriangle === "function") {
+      g.fillTriangle(x1, y1, x2, y2, x3, y3);
+    } else {
+      g.beginPath();
+      g.moveTo(x1, y1);
+      g.lineTo(x2, y2);
+      g.lineTo(x3, y3);
+      g.closePath();
+      g.fillPath();
+    }
+  };
+
+  const safeLineBetween = (g, x1, y1, x2, y2) => {
+    if (typeof g.lineBetween === "function") {
+      g.lineBetween(x1, y1, x2, y2);
+    } else {
+      g.beginPath();
+      g.moveTo(x1, y1);
+      g.lineTo(x2, y2);
+      g.strokePath();
+    }
+  };
+
+  const safeFillCircle = (g, cx, cy, r) => {
+    if (typeof g.fillCircle === "function") {
+      g.fillCircle(cx, cy, r);
+    } else {
+      g.beginPath();
+      if (typeof g.arc === "function") {
+        g.arc(cx, cy, Math.max(0.5, r), 0, Math.PI * 2);
+      }
+      g.fillPath();
+    }
+  };
+
+  const safeFillEllipse = (g, cx, cy, rx, ry) => {
+    if (typeof g.fillEllipse === "function") {
+      g.fillEllipse(cx, cy, rx * 2, ry * 2);
+    } else {
+      safeFillCircle(g, cx, cy, Math.max(rx, ry));
+    }
+  };
+
+  const safeFillPolygon = (g, points) => {
+    if (!points || points.length < 3) return;
+    g.beginPath();
+    g.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i += 1) {
+      g.lineTo(points[i][0], points[i][1]);
+    }
+    g.closePath();
+    g.fillPath();
+  };
+
+  const parseArgs = (seedArg, targetArg, defaultSeed) => {
+    let seedVal = defaultSeed;
+    let targetObj = null;
+    let optsObj = {};
+    if (typeof seedArg === "number" || typeof seedArg === "string") {
+      seedVal = seedArg;
+      if (targetArg && typeof targetArg === "object") {
+        if (typeof targetArg.beginPath === "function" || typeof targetArg.fillStyle === "function") {
+          targetObj = targetArg;
+        } else {
+          optsObj = targetArg;
+          if (targetArg.target !== undefined) targetObj = targetArg.target;
+        }
+      }
+    } else if (seedArg && typeof seedArg === "function") {
+      seedVal = seedArg;
+      if (targetArg && typeof targetArg === "object") {
+        if (typeof targetArg.beginPath === "function" || typeof targetArg.fillStyle === "function") {
+          targetObj = targetArg;
+        } else {
+          optsObj = targetArg;
+          if (targetArg.target !== undefined) targetObj = targetArg.target;
+        }
+      }
+    } else if (seedArg && typeof seedArg === "object") {
+      if (typeof seedArg.beginPath === "function" || typeof seedArg.fillStyle === "function") {
+        targetObj = seedArg;
+      } else {
+        optsObj = seedArg;
+        if (seedArg.seed !== undefined) seedVal = seedArg.seed;
+        if (seedArg.target !== undefined) targetObj = seedArg.target;
+      }
+    }
+    return { seedVal, targetObj, optsObj };
+  };
+
+  // 1) paintRuttedRoad: dirt road with two wheel ruts darker than the bed,
+  //    embedded pebble flecks, soft edges that feather into grass
+  const paintRuttedRoad = (scene, w, h, seedArg, targetArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    const width = clampDim(w);
+    const height = clampDim(h);
+    const { seedVal, targetObj } = parseArgs(seedArg, targetArg, 101);
+    const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+    const g = resolveGraphics(scene, targetObj);
+
+    const slices = Math.max(16, Math.min(32, Math.round(height / 16)));
+    const roadPoints = [];
+
+    for (let i = 0; i <= slices; i += 1) {
+      const t = i / slices;
+      const y = height * (0.36 + 0.64 * t);
+      const x = width * (0.50 + 0.045 * Math.sin(t * 4.2) - 0.025 * (1 - t));
+      const hw = Math.max(3, width * (0.045 + 0.155 * Math.pow(t, 1.35)));
+      roadPoints.push({ t, x, y, hw });
+    }
+
+    // Dirt road bed: foundation layer
+    for (let i = 0; i < slices; i += 1) {
+      const p0 = roadPoints[i];
+      const p1 = roadPoints[i + 1];
+      g.fillStyle(0x422c17, 0.95);
+      safeFillPolygon(g, [
+        [p0.x - p0.hw * 1.04, p0.y],
+        [p1.x - p1.hw * 1.04, p1.y],
+        [p1.x + p1.hw * 1.04, p1.y],
+        [p0.x + p0.hw * 1.04, p0.y],
+      ]);
+    }
+
+    // Dirt road bed: rich warm loam surface
+    const loamTones = [0x6b4a28, 0x76532d, 0x5e3f21, 0x7c5830, 0x6e4d2a];
+    for (let i = 0; i < slices; i += 1) {
+      const p0 = roadPoints[i];
+      const p1 = roadPoints[i + 1];
+      g.fillStyle(rng.choice(loamTones), 0.92);
+      safeFillPolygon(g, [
+        [p0.x - p0.hw, p0.y],
+        [p1.x - p1.hw, p1.y],
+        [p1.x + p1.hw, p1.y],
+        [p0.x + p0.hw, p0.y],
+      ]);
+
+      // Center crown dirt highlight
+      g.fillStyle(0x86633b, 0.40);
+      safeFillPolygon(g, [
+        [p0.x - p0.hw * 0.22, p0.y],
+        [p1.x - p1.hw * 0.22, p1.y],
+        [p1.x + p1.hw * 0.22, p1.y],
+        [p0.x + p0.hw * 0.22, p0.y],
+      ]);
+    }
+
+    // Soft edges that feather into grass
+    const grassFringeColors = [0x446020, 0x384f18, 0x547526, 0x62882c, 0x4d6923];
+    for (let i = 0; i < slices; i += 1) {
+      const p0 = roadPoints[i];
+      const p1 = roadPoints[i + 1];
+
+      // Transitional mossy turf border
+      g.fillStyle(0x3e4f1e, 0.70);
+      safeFillPolygon(g, [
+        [p0.x - p0.hw * 1.10, p0.y],
+        [p1.x - p1.hw * 1.10, p1.y],
+        [p1.x - p1.hw * 0.92, p1.y],
+        [p0.x - p0.hw * 0.92, p0.y],
+      ]);
+      safeFillPolygon(g, [
+        [p0.x + p0.hw * 0.92, p0.y],
+        [p1.x + p1.hw * 0.92, p1.y],
+        [p1.x + p1.hw * 1.10, p1.y],
+        [p0.x + p0.hw * 1.10, p0.y],
+      ]);
+
+      // Feathered grass tufts breaking up hard edge
+      const tuftCount = rng.int(2, 4);
+      for (let j = 0; j < tuftCount; j += 1) {
+        const subT = rng.range(0, 1);
+        const ty = p0.y + (p1.y - p0.y) * subT;
+        const thw = p0.hw + (p1.hw - p0.hw) * subT;
+        const tx = p0.x + (p1.x - p0.x) * subT;
+        const tScale = p0.t + (p1.t - p0.t) * subT;
+        const bl = Math.max(2, width * (0.010 + 0.020 * tScale) * rng.range(0.7, 1.4));
+        const bw = Math.max(1, width * 0.005 * (0.7 + 0.3 * tScale));
+
+        // Left feathering tuft
+        const lx = tx - thw;
+        g.fillStyle(rng.choice(grassFringeColors), rng.range(0.78, 0.96));
+        safeFillTriangle(
+          g,
+          lx - bw, ty - bw,
+          lx - bw, ty + bw,
+          lx + bl, ty + rng.range(-bw, bw)
+        );
+
+        // Right feathering tuft
+        const rx = tx + thw;
+        g.fillStyle(rng.choice(grassFringeColors), rng.range(0.78, 0.96));
+        safeFillTriangle(
+          g,
+          rx + bw, ty - bw,
+          rx + bw, ty + bw,
+          rx - bl, ty + rng.range(-bw, bw)
+        );
+      }
+    }
+
+    // Two wheel ruts darker than the bed
+    for (const side of [-1, 1]) {
+      const rutTrack = roadPoints.map((p) => {
+        const rx = p.x + side * 0.50 * p.hw;
+        const rw = Math.max(2.5, width * (0.008 + 0.020 * p.t));
+        return { rx, rw, y: p.y };
+      });
+
+      for (let i = 0; i < slices; i += 1) {
+        const r0 = rutTrack[i];
+        const r1 = rutTrack[i + 1];
+
+        // Rut furrow trench (compressed soil)
+        g.fillStyle(0x27170a, 0.88);
+        safeFillPolygon(g, [
+          [r0.rx - r0.rw, r0.y],
+          [r1.rx - r1.rw, r1.y],
+          [r1.rx + r1.rw, r1.y],
+          [r0.rx + r0.rw, r0.y],
+        ]);
+
+        // Deepest dark center rut line
+        g.fillStyle(0x130a04, 0.95);
+        safeFillPolygon(g, [
+          [r0.rx - r0.rw * 0.45, r0.y],
+          [r1.rx - r1.rw * 0.45, r1.y],
+          [r1.rx + r1.rw * 0.45, r1.y],
+          [r0.rx + r0.rw * 0.45, r0.y],
+        ]);
+
+        // Sunlit inner edge bevel
+        g.lineStyle(Math.max(1, r1.rw * 0.25), 0x936e44, 0.35);
+        safeLineBetween(
+          g,
+          r0.rx - side * r0.rw * 0.6, r0.y,
+          r1.rx - side * r1.rw * 0.6, r1.y
+        );
+      }
+    }
+
+    // Embedded pebble flecks
+    const pebbleCount = Math.max(35, Math.min(85, Math.round(width * 0.09)));
+    const pebbleColors = [0x877c6e, 0xa19584, 0x5b5247, 0xcabda4, 0x736758, 0xb8ad99];
+
+    for (let i = 0; i < pebbleCount; i += 1) {
+      const tp = rng.range(0.04, 0.98);
+      const py = height * (0.36 + 0.64 * tp);
+      const pxMid = width * (0.50 + 0.045 * Math.sin(tp * 4.2) - 0.025 * (1 - tp));
+      const phw = Math.max(3, width * (0.045 + 0.155 * Math.pow(tp, 1.35)));
+      const u = rng.range(-0.85, 0.85);
+      const px = pxMid + u * phw;
+      const ps = 0.35 + 0.65 * tp;
+      const pr = Math.max(0.8, width * rng.range(0.002, 0.0055) * ps);
+
+      // Shadow underneath pebble
+      g.fillStyle(0x150b05, 0.55);
+      safeFillCircle(g, px + pr * 0.3, py + pr * 0.4, pr * 0.85);
+
+      // Pebble stone body
+      g.fillStyle(rng.choice(pebbleColors), 0.92);
+      safeFillEllipse(g, px, py, pr * 1.1, pr * 0.8);
+
+      // Highlight on larger pebbles
+      if (pr >= 1.4) {
+        g.fillStyle(0xffffff, 0.45);
+        safeFillCircle(g, px - pr * 0.3, py - pr * 0.3, Math.max(0.5, pr * 0.35));
+      }
+    }
+
+    return g;
+  };
+
+  // 2) paintForestLayers: 3 depth layers of trees + 2 god-ray streaks
+  const paintForestLayers = (scene, w, h, seedArg, targetArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    const width = clampDim(w);
+    const height = clampDim(h);
+    const { seedVal, targetObj } = parseArgs(seedArg, targetArg, 202);
+    const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+    const g = resolveGraphics(scene, targetObj);
+
+    // Sky backdrop
+    g.fillStyle(0xa9c2b4, 1);
+    g.fillRect(0, 0, width, height * 0.42);
+
+    // Atmospheric warm haze at horizon
+    g.fillStyle(0xd5e2d0, 0.60);
+    g.fillRect(0, height * 0.18, width, height * 0.24);
+
+    // Forest floor base
+    g.fillStyle(0x354e20, 1);
+    g.fillRect(0, height * 0.38, width, height * 0.62);
+    g.fillStyle(0x486927, 0.50);
+    g.fillRect(0, height * 0.42, width, height * 0.35);
+
+    // 1. Far Layer: pale blue-green haze, simple triangular mass
+    const farCount = Math.max(14, Math.min(28, Math.round(width / 30)));
+    const step = (width * 1.12) / farCount;
+    const farColors = [0x5a867e, 0x4f7b73, 0x66928a, 0x729e96, 0x467069];
+
+    for (let i = 0; i < farCount; i += 1) {
+      const bx = -width * 0.06 + i * step + rng.range(-step * 0.25, step * 0.25);
+      const bw = Math.max(8, step * rng.range(0.9, 1.4));
+      const baseY = height * rng.range(0.36, 0.40);
+      const peakY = height * rng.range(0.18, 0.26);
+
+      g.fillStyle(rng.choice(farColors), 0.95);
+      safeFillTriangle(g, bx, peakY, bx - bw * 0.5, baseY, bx + bw * 0.5, baseY);
+
+      g.fillStyle(0x3b5e58, 0.45);
+      safeFillTriangle(g, bx, peakY, bx, baseY, bx + bw * 0.5, baseY);
+    }
+
+    // Pale blue-green atmospheric haze mist band across the far mass
+    g.fillStyle(0x87aba2, 0.38);
+    g.fillRect(0, height * 0.28, width, height * 0.12);
+
+    // 2. Mid Layer: saturated, varied crown sizes
+    const midColors = [0x2a771e, 0x338927, 0x1f6316, 0x3e9b2e, 0x195111, 0x49a637];
+    const midHighlights = [0x64bf42, 0x54af34];
+    const midTreeCount = Math.max(18, Math.min(36, Math.round(width / 24)));
+
+    for (let i = 0; i < midTreeCount; i += 1) {
+      let tx;
+      if (i % 3 === 0) {
+        tx = width * rng.range(-0.04, 0.35);
+      } else if (i % 3 === 1) {
+        tx = width * rng.range(0.65, 1.04);
+      } else {
+        tx = width * rng.range(0.35, 0.65);
+      }
+
+      const ty = height * rng.range(0.29, 0.48);
+      const sizeType = rng();
+      let cr;
+      if (sizeType < 0.35) {
+        cr = Math.max(8, width * rng.range(0.026, 0.038));
+      } else if (sizeType < 0.72) {
+        cr = Math.max(14, width * rng.range(0.045, 0.065));
+      } else {
+        cr = Math.max(20, width * rng.range(0.075, 0.105));
+      }
+
+      // Mid trunk stem
+      const tw = Math.max(2, cr * 0.20);
+      const th = cr * 0.9;
+      g.fillStyle(0x321e10, 0.90);
+      g.fillRect(tx - tw * 0.5, ty, tw, th);
+
+      // Primary saturated crown
+      g.fillStyle(rng.choice(midColors), 0.96);
+      safeFillCircle(g, tx, ty, cr);
+
+      // Overlapping secondary lobes for varied organic crown silhouette
+      safeFillCircle(g, tx - cr * 0.35, ty - cr * 0.15, cr * 0.75);
+      safeFillCircle(g, tx + cr * 0.35, ty - cr * 0.10, cr * 0.70);
+      safeFillCircle(g, tx, ty - cr * 0.35, cr * 0.65);
+
+      // Sunlit crown highlight bevel
+      g.fillStyle(rng.choice(midHighlights), 0.40);
+      safeFillCircle(g, tx - cr * 0.22, ty - cr * 0.22, cr * 0.55);
+
+      // Crown bottom shade
+      g.fillStyle(0x143c0e, 0.35);
+      safeFillCircle(g, tx + cr * 0.15, ty + cr * 0.25, cr * 0.60);
+    }
+
+    // Exactly 2 god-ray streaks breaking through the canopy, low alpha
+    // Ray 1: upper-left to center
+    const r1TopX = width * 0.20;
+    const r1TopW = width * 0.045;
+    const r1BotX = width * 0.48;
+    const r1BotW = width * 0.17;
+    g.fillStyle(0xfff8d6, 0.12);
+    safeFillPolygon(g, [
+      [r1TopX, height * 0.05],
+      [r1TopX + r1TopW, height * 0.05],
+      [r1BotX + r1BotW, height * 0.88],
+      [r1BotX, height * 0.88],
+    ]);
+
+    // Ray 2: upper-mid to lane right
+    const r2TopX = width * 0.44;
+    const r2TopW = width * 0.055;
+    const r2BotX = width * 0.72;
+    const r2BotW = width * 0.20;
+    g.fillStyle(0xfff8d6, 0.09);
+    safeFillPolygon(g, [
+      [r2TopX, height * 0.03],
+      [r2TopX + r2TopW, height * 0.03],
+      [r2BotX + r2BotW, height * 0.94],
+      [r2BotX, height * 0.94],
+    ]);
+
+    // 3. Near Layer: dark, trunk detail, overlapping crowns
+    const darkNearColors = [0x0b2009, 0x0f290c, 0x071605, 0x143510, 0x040d03];
+
+    // Left detailed heavy trunk
+    const lTrunkX = width * 0.07;
+    const lTrunkW = Math.max(9, width * 0.055);
+    const lTrunkTopY = height * 0.20;
+    const lTrunkBotY = height * 0.98;
+
+    g.fillStyle(0x1d1007, 0.98);
+    safeFillPolygon(g, [
+      [lTrunkX - lTrunkW * 1.2, lTrunkBotY],
+      [lTrunkX - lTrunkW * 0.5, lTrunkBotY - height * 0.12],
+      [lTrunkX + lTrunkW * 0.5, lTrunkBotY - height * 0.12],
+      [lTrunkX + lTrunkW * 1.4, lTrunkBotY],
+    ]);
+
+    g.fillStyle(0x24140a, 0.98);
+    g.fillRect(lTrunkX - lTrunkW * 0.5, lTrunkTopY, lTrunkW, lTrunkBotY - lTrunkTopY);
+
+    g.lineStyle(Math.max(1, lTrunkW * 0.14), 0x110803, 0.88);
+    safeLineBetween(g, lTrunkX - lTrunkW * 0.22, lTrunkTopY + 5, lTrunkX - lTrunkW * 0.25, lTrunkBotY - 2);
+    safeLineBetween(g, lTrunkX + lTrunkW * 0.12, lTrunkTopY + 8, lTrunkX + lTrunkW * 0.16, lTrunkBotY - 2);
+
+    g.lineStyle(Math.max(1, lTrunkW * 0.09), 0x482a16, 0.60);
+    safeLineBetween(g, lTrunkX - lTrunkW * 0.38, lTrunkTopY + 10, lTrunkX - lTrunkW * 0.38, lTrunkBotY - 10);
+
+    g.fillStyle(0x221309, 0.98);
+    safeFillPolygon(g, [
+      [lTrunkX, height * 0.38],
+      [lTrunkX + lTrunkW * 2.2, height * 0.30],
+      [lTrunkX + lTrunkW * 2.2, height * 0.33],
+      [lTrunkX + lTrunkW * 0.5, height * 0.42],
+    ]);
+
+    // Right detailed heavy trunk
+    const rTrunkX = width * 0.93;
+    const rTrunkW = Math.max(9, width * 0.058);
+    const rTrunkTopY = height * 0.18;
+    const rTrunkBotY = height * 0.98;
+
+    g.fillStyle(0x1d1007, 0.98);
+    safeFillPolygon(g, [
+      [rTrunkX - rTrunkW * 1.3, rTrunkBotY],
+      [rTrunkX - rTrunkW * 0.5, rTrunkBotY - height * 0.12],
+      [rTrunkX + rTrunkW * 0.5, rTrunkBotY - height * 0.12],
+      [rTrunkX + rTrunkW * 1.1, rTrunkBotY],
+    ]);
+
+    g.fillStyle(0x24140a, 0.98);
+    g.fillRect(rTrunkX - rTrunkW * 0.5, rTrunkTopY, rTrunkW, rTrunkBotY - rTrunkTopY);
+
+    g.lineStyle(Math.max(1, rTrunkW * 0.14), 0x110803, 0.88);
+    safeLineBetween(g, rTrunkX - rTrunkW * 0.18, rTrunkTopY + 6, rTrunkX - rTrunkW * 0.20, rTrunkBotY - 2);
+    safeLineBetween(g, rTrunkX + rTrunkW * 0.20, rTrunkTopY + 12, rTrunkX + rTrunkW * 0.18, rTrunkBotY - 2);
+
+    g.lineStyle(Math.max(1, rTrunkW * 0.09), 0x482a16, 0.60);
+    safeLineBetween(g, rTrunkX - rTrunkW * 0.36, rTrunkTopY + 10, rTrunkX - rTrunkW * 0.36, rTrunkBotY - 10);
+
+    g.fillStyle(0x221309, 0.98);
+    safeFillPolygon(g, [
+      [rTrunkX, height * 0.34],
+      [rTrunkX - rTrunkW * 2.1, height * 0.27],
+      [rTrunkX - rTrunkW * 2.1, height * 0.30],
+      [rTrunkX - rTrunkW * 0.5, height * 0.38],
+    ]);
+
+    // Overlapping crowns framing the sides
+    const nearLobesLeft = [
+      [-0.04, 0.02, 0.12],
+      [0.08, 0.06, 0.10],
+      [0.18, 0.12, 0.09],
+      [-0.02, 0.18, 0.11],
+      [0.10, 0.24, 0.09],
+      [0.22, 0.28, 0.08],
+      [0.04, 0.36, 0.10],
+    ];
+    for (const [lxFrac, lyFrac, lrFrac] of nearLobesLeft) {
+      const lx = width * lxFrac;
+      const ly = height * lyFrac;
+      const lr = Math.max(16, width * lrFrac);
+      g.fillStyle(rng.choice(darkNearColors), 0.97);
+      safeFillCircle(g, lx, ly, lr);
+      g.fillStyle(0x183e14, 0.30);
+      safeFillCircle(g, lx - lr * 0.2, ly - lr * 0.2, lr * 0.65);
+    }
+
+    const nearLobesRight = [
+      [1.04, 0.02, 0.12],
+      [0.92, 0.05, 0.10],
+      [0.82, 0.10, 0.09],
+      [1.02, 0.17, 0.11],
+      [0.90, 0.22, 0.09],
+      [0.78, 0.27, 0.08],
+      [0.94, 0.35, 0.10],
+    ];
+    for (const [rxFrac, ryFrac, rrFrac] of nearLobesRight) {
+      const rx = width * rxFrac;
+      const ry = height * ryFrac;
+      const rr = Math.max(16, width * rrFrac);
+      g.fillStyle(rng.choice(darkNearColors), 0.97);
+      safeFillCircle(g, rx, ry, rr);
+      g.fillStyle(0x183e14, 0.30);
+      safeFillCircle(g, rx - rr * 0.2, ry - rr * 0.2, rr * 0.65);
+    }
+
+    return g;
+  };
+
+  // 3) paintGateLandmark: unique wooden gatehouse: twin posts, crossbeam,
+  //    hanging lantern, banner strip, plank shadow gaps
+  const paintGateLandmark = (scene, w, h, seedArg, targetArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    const width = clampDim(w);
+    const height = clampDim(h);
+    const { seedVal, targetObj } = parseArgs(seedArg, targetArg, 303);
+    const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+    void rng;
+    const g = resolveGraphics(scene, targetObj);
+
+    const cx = width * 0.50;
+    const groundY = height * 0.65;
+    const postH = Math.max(26, height * 0.22);
+    const topY = groundY - postH;
+    const postW = Math.max(7, width * 0.042);
+    const span = Math.max(32, width * 0.28);
+    const lpX = cx - span * 0.5 - postW * 0.5;
+    const rpX = cx + span * 0.5 - postW * 0.5;
+
+    // Contact shadow
+    g.fillStyle(0x100a05, 0.50);
+    safeFillEllipse(g, cx, groundY + 4, span * 0.85, postW * 0.7);
+
+    // Stone footing plinths
+    for (const px of [lpX, rpX]) {
+      const plinthW = postW * 1.5;
+      const plinthH = Math.max(4, postH * 0.16);
+      g.fillStyle(0x38332c, 1);
+      g.fillRect(px - postW * 0.25, groundY - plinthH * 0.7, plinthW, plinthH);
+
+      g.fillStyle(0x6e6659, 0.75);
+      g.fillRect(px - postW * 0.25, groundY - plinthH * 0.7, plinthW, Math.max(1, plinthH * 0.25));
+    }
+
+    // Twin Posts with plank shadow gaps
+    for (const px of [lpX, rpX]) {
+      g.fillStyle(0x52331b, 1);
+      g.fillRect(px, topY, postW, postH);
+
+      // Vertical wood grain
+      g.lineStyle(Math.max(1, postW * 0.12), 0x361f0e, 0.85);
+      safeLineBetween(g, px + postW * 0.35, topY + 2, px + postW * 0.35, groundY - 2);
+      safeLineBetween(g, px + postW * 0.70, topY + 2, px + postW * 0.70, groundY - 2);
+
+      // Sunlit edge
+      g.fillStyle(0x82542e, 0.65);
+      g.fillRect(px, topY, Math.max(1, postW * 0.22), postH);
+
+      // Plank shadow gaps along posts
+      for (let j = 1; j <= 3; j += 1) {
+        const jy = topY + j * (postH * 0.25);
+        g.lineStyle(Math.max(1.5, postW * 0.15), 0x140a04, 0.95);
+        safeLineBetween(g, px - 1, jy, px + postW + 1, jy);
+        g.lineStyle(Math.max(1, postW * 0.08), 0xa26b3c, 0.60);
+        safeLineBetween(g, px - 1, jy - 1.5, px + postW + 1, jy - 1.5);
+      }
+
+      // Iron reinforcement collars with studs
+      const collarH = Math.max(2.5, postH * 0.06);
+      for (const yFrac of [0.35, 0.75]) {
+        const cyPos = topY + postH * yFrac;
+        g.fillStyle(0x221e1a, 0.95);
+        g.fillRect(px - 1.5, cyPos, postW + 3, collarH);
+
+        g.fillStyle(0xd4a028, 0.95);
+        safeFillCircle(g, px + postW * 0.30, cyPos + collarH * 0.5, Math.max(1, postW * 0.12));
+        safeFillCircle(g, px + postW * 0.70, cyPos + collarH * 0.5, Math.max(1, postW * 0.12));
+      }
+    }
+
+    // Diagonal knee braces
+    const braceSpan = span * 0.22;
+    const braceDrop = postH * 0.35;
+    g.fillStyle(0x442814, 1);
+    safeFillPolygon(g, [
+      [lpX + postW, topY + braceDrop],
+      [lpX + postW + braceSpan, topY],
+      [lpX + postW + braceSpan * 0.7, topY],
+      [lpX + postW, topY + braceDrop * 0.6],
+    ]);
+    safeFillPolygon(g, [
+      [rpX, topY + braceDrop],
+      [rpX - braceSpan, topY],
+      [rpX - braceSpan * 0.7, topY],
+      [rpX, topY + braceDrop * 0.6],
+    ]);
+
+    // Crossbeam with plank shadow gaps
+    const beamX = lpX - postW * 0.6;
+    const beamW = (rpX + postW * 1.6) - beamX;
+    const beamH = Math.max(8, postH * 0.24);
+    const beamY = topY - beamH * 0.35;
+
+    g.fillStyle(0x5c391f, 1);
+    g.fillRect(beamX, beamY, beamW, beamH);
+
+    // Beveled ends
+    const chamferW = postW * 0.5;
+    g.fillStyle(0x422612, 1);
+    safeFillPolygon(g, [
+      [beamX, beamY],
+      [beamX + chamferW, beamY],
+      [beamX, beamY + beamH],
+    ]);
+    safeFillPolygon(g, [
+      [beamX + beamW, beamY],
+      [beamX + beamW - chamferW, beamY],
+      [beamX + beamW, beamY + beamH],
+    ]);
+
+    // Horizontal plank shadow gap across the crossbeam
+    g.lineStyle(Math.max(1.5, beamH * 0.16), 0x140a04, 0.95);
+    safeLineBetween(g, beamX + 2, beamY + beamH * 0.5, beamX + beamW - 2, beamY + beamH * 0.5);
+
+    // Top highlight along beam plank shadow gap
+    g.lineStyle(Math.max(1, beamH * 0.09), 0x986638, 0.65);
+    safeLineBetween(g, beamX + 2, beamY + beamH * 0.5 - 1.5, beamX + beamW - 2, beamY + beamH * 0.5 - 1.5);
+
+    // Sunlit top edge of crossbeam
+    g.fillStyle(0x8f5c32, 0.70);
+    g.fillRect(beamX, beamY, beamW, Math.max(1, beamH * 0.18));
+
+    // Mortise pins
+    const pinR = Math.max(1.2, postW * 0.14);
+    g.fillStyle(0x28160a, 0.95);
+    safeFillCircle(g, lpX + postW * 0.5, beamY + beamH * 0.32, pinR);
+    safeFillCircle(g, lpX + postW * 0.5, beamY + beamH * 0.68, pinR);
+    safeFillCircle(g, rpX + postW * 0.5, beamY + beamH * 0.32, pinR);
+    safeFillCircle(g, rpX + postW * 0.5, beamY + beamH * 0.68, pinR);
+
+    // Protective pitched cedar hood / rooflet over crossbeam
+    const roofPeakY = beamY - beamH * 1.1;
+    const roofBaseW = beamW + postW * 0.6;
+    const roofBaseX = beamX - postW * 0.3;
+
+    g.fillStyle(0x3e2413, 1);
+    safeFillTriangle(g, cx, roofPeakY, roofBaseX, beamY, roofBaseX + roofBaseW, beamY);
+
+    // Shingle plank shadow gaps on rooflet
+    for (let s = 1; s <= 7; s += 1) {
+      const frac = s / 8;
+      const rxBase = roofBaseX + roofBaseW * frac;
+      const rxPeak = cx + (rxBase - cx) * 0.25;
+      g.lineStyle(1.5, 0x150b05, 0.85);
+      safeLineBetween(g, rxBase, beamY, rxPeak, roofPeakY + (beamY - roofPeakY) * 0.3);
+    }
+
+    // Rooflet ridge cap
+    g.fillStyle(0x6e4324, 1);
+    g.fillRect(cx - postW * 0.5, roofPeakY - beamH * 0.15, postW, beamH * 0.3);
+
+    // Hanging Lantern suspended from center of crossbeam
+    const lanternX = cx;
+    const chainTopY = beamY + beamH;
+    const lanternY = chainTopY + postH * 0.18;
+    const lanternW = Math.max(8, postW * 1.25);
+    const lanternH = Math.max(12, postH * 0.22);
+
+    // Suspension iron chain
+    g.lineStyle(Math.max(1.2, postW * 0.12), 0x1c1814, 1);
+    safeLineBetween(g, lanternX, chainTopY, lanternX, lanternY);
+
+    // Lantern iron cap
+    g.fillStyle(0x24201c, 1);
+    safeFillTriangle(
+      g,
+      lanternX, lanternY - lanternH * 0.15,
+      lanternX - lanternW * 0.5, lanternY + lanternH * 0.2,
+      lanternX + lanternW * 0.5, lanternY + lanternH * 0.2
+    );
+
+    // Lantern glowing amber glass
+    g.fillStyle(0xffa818, 0.95);
+    g.fillRect(lanternX - lanternW * 0.35, lanternY + lanternH * 0.2, lanternW * 0.7, lanternH * 0.65);
+
+    // Glowing core flame
+    g.fillStyle(0xffe860, 0.95);
+    safeFillCircle(g, lanternX, lanternY + lanternH * 0.5, lanternW * 0.25);
+    g.fillStyle(0xffffff, 1);
+    safeFillCircle(g, lanternX, lanternY + lanternH * 0.48, Math.max(1, lanternW * 0.12));
+
+    // Lantern iron cage struts
+    g.lineStyle(Math.max(1, lanternW * 0.08), 0x181410, 0.95);
+    safeLineBetween(g, lanternX - lanternW * 0.35, lanternY + lanternH * 0.2, lanternX - lanternW * 0.35, lanternY + lanternH * 0.85);
+    safeLineBetween(g, lanternX + lanternW * 0.35, lanternY + lanternH * 0.2, lanternX + lanternW * 0.35, lanternY + lanternH * 0.85);
+    safeLineBetween(g, lanternX, lanternY + lanternH * 0.2, lanternX, lanternY + lanternH * 0.85);
+
+    // Lantern base
+    g.fillStyle(0x24201c, 1);
+    g.fillRect(lanternX - lanternW * 0.4, lanternY + lanternH * 0.85, lanternW * 0.8, lanternH * 0.15);
+
+    // Lantern warm radiant glow halo
+    g.fillStyle(0xffa010, 0.18);
+    safeFillCircle(g, lanternX, lanternY + lanternH * 0.5, lanternW * 2.8);
+    g.fillStyle(0xffd540, 0.26);
+    safeFillCircle(g, lanternX, lanternY + lanternH * 0.5, lanternW * 1.6);
+
+    // Banner Strip suspended from crossbeam
+    const banX = cx - span * 0.28;
+    const banY = beamY + beamH;
+    const banW = Math.max(8, postW * 1.15);
+    const banH = Math.max(20, postH * 0.52);
+
+    g.fillStyle(0x194d24, 0.95);
+    safeFillPolygon(g, [
+      [banX, banY],
+      [banX + banW, banY],
+      [banX + banW + 1.5, banY + banH],
+      [banX + banW * 0.5, banY + banH - banW * 0.45],
+      [banX - 0.5, banY + banH],
+    ]);
+
+    g.lineStyle(Math.max(1, banW * 0.10), 0xd8ad32, 0.95);
+    safeLineBetween(g, banX + 0.5, banY, banX + 0.5, banY + banH - 1);
+    safeLineBetween(g, banX + banW - 0.5, banY, banX + banW - 0.5, banY + banH - 1);
+    safeLineBetween(g, banX + 0.5, banY + banH - 1, banX + banW * 0.5, banY + banH - banW * 0.45);
+    safeLineBetween(g, banX + banW * 0.5, banY + banH - banW * 0.45, banX + banW - 0.5, banY + banH - 1);
+
+    // Gilded diamond emblem
+    const emX = banX + banW * 0.5;
+    const emY = banY + banH * 0.40;
+    const emR = Math.max(2, banW * 0.28);
+    g.fillStyle(0xffd950, 0.95);
+    safeFillPolygon(g, [
+      [emX, emY - emR],
+      [emX + emR * 0.7, emY],
+      [emX, emY + emR],
+      [emX - emR * 0.7, emY],
+    ]);
+    g.fillStyle(0xffffff, 0.9);
+    safeFillCircle(g, emX, emY, Math.max(0.6, emR * 0.28));
+
+    // Mount ring
+    g.fillStyle(0x221c16, 1);
+    safeFillCircle(g, banX + banW * 0.5, banY, Math.max(1.5, banW * 0.18));
+
+    return g;
+  };
+
+  // 4) composeForestGate: composites layers+road+landmark in correct depth order
+  //    onto a single Graphics or container, returns it.
+  const composeForestGate = (scene, w, h, seedArg, optsArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    const width = clampDim(w);
+    const height = clampDim(h);
+    const { seedVal, optsObj } = parseArgs(seedArg, optsArg, 404);
+
+    if (optsObj && (optsObj.asContainer || optsObj.container) && scene.add && typeof scene.add.container === "function") {
+      const container = scene.add.container(0, 0);
+      const forestG = paintForestLayers(scene, width, height, seedVal);
+      const roadG = paintRuttedRoad(scene, width, height, seedVal);
+      const gateG = paintGateLandmark(scene, width, height, seedVal);
+      if (forestG) container.add(forestG);
+      if (roadG) container.add(roadG);
+      if (gateG) container.add(gateG);
+      return container;
+    }
+
+    const g = resolveGraphics(scene, optsObj && optsObj.target);
+    paintForestLayers(scene, width, height, seedVal, g);
+    paintRuttedRoad(scene, width, height, seedVal, g);
+    paintGateLandmark(scene, width, height, seedVal, g);
+    return g;
+  };
+
+  const KRCArt = {
+    bake,
+    paintRuttedRoad,
+    paintForestLayers,
+    paintGateLandmark,
+    composeForestGate,
+    createLcg,
+    seedLcg: createLcg,
+    lcg: createLcg,
+    seed: (s) => createLcg(s),
+    createRng: createLcg,
+    seedRng: createLcg,
+  };
+
+  if (typeof window !== "undefined") {
+    window.KRCArt = KRCArt;
+    window.paintRuttedRoad = paintRuttedRoad;
+    window.paintForestLayers = paintForestLayers;
+    window.paintGateLandmark = paintGateLandmark;
+    window.composeForestGate = composeForestGate;
+    window.createLcg = createLcg;
+    window.seedLcg = createLcg;
+    window.lcg = createLcg;
+    window.seed = KRCArt.seed;
+    window.createRng = createLcg;
+    window.seedRng = createLcg;
+  }
+  if (typeof globalThis !== "undefined") {
+    globalThis.KRCArt = KRCArt;
+  }
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = KRCArt;
+  }
 })();
