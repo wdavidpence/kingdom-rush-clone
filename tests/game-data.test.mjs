@@ -12,7 +12,7 @@ vm.runInNewContext(source, context, { filename: "game-data.js" });
 
 const data = context.window.KRCGameData;
 assert.ok(data, "game data should be exposed at window.KRCGameData");
-assert.equal(data.maps.length, 5, "campaign should retain all five maps");
+assert.equal(data.maps.length, 7, "campaign retains five original maps plus Merewatch Ford and Cinderfall Ridge");
 assert.equal(data.maps[0].name, "Forest Gate");
 assert.equal(data.maps[3].name, "Gale Reach");
 assert.equal(data.maps[4].name, "Ash Spire");
