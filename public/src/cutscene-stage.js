@@ -102,14 +102,14 @@ export function buildBriefingText(waveComp) {
 }
 
 const ART_PALETTE = Object.freeze({
-  gate: [0x1a2218, 0x3a4a36, 0x6a5a40, 0x2a2014],
-  road: [0x2a2014, 0x5a4030, 0x8a6a45, 0x1a140c],
-  forest: [0x0e1a0c, 0x1e3a18, 0x2a4a20, 0x0a1208],
-  marsh: [0x1a180c, 0x3a2a14, 0x5a3018, 0x2a1008],
-  keep: [0x12141a, 0x2a2c34, 0x4a4440, 0x0c0c10],
-  camp: [0x1a140c, 0x3a2818, 0x5a3a20, 0x2a180c],
-  cliff: [0x1a1c20, 0x3a4048, 0x6a7078, 0x121418],
-  warden: [0x1a0804, 0x4a1808, 0x8a3010, 0x2a0c06],
+  gate: [0x7fa8d0, 0xb8cfa8, 0x8a6f4d, 0x3a4a36],
+  road: [0x9fc2e8, 0xd8c49a, 0x8a6a45, 0x4a5a3e],
+  forest: [0x8fc4e8, 0x548c3a, 0x2f6624, 0x1c3f16],
+  marsh: [0xa8b8c8, 0x6a6a38, 0x8a5a2a, 0x3a4a30],
+  keep: [0x9ab0d0, 0x8a8c96, 0x6a6460, 0x3a3c44],
+  camp: [0xf0c890, 0xc89858, 0x8a5a2a, 0x4a3a24],
+  cliff: [0xb8d0e8, 0x8a94a0, 0x6a7078, 0x3c4048],
+  warden: [0xe88848, 0xb03818, 0x702010, 0x38100a],
 });
 
 function coreApi() {
@@ -140,7 +140,7 @@ function paintSilhouette(g, art, w, h) {
     g.fillStyle(0x6a5038, 0.8);
     g.fillTriangle(w * 0.1, h, w * 0.5, h * 0.38, w * 0.9, h);
   } else if (art === "forest") {
-    g.fillStyle(0x0a1808, 0.9);
+    g.fillStyle(0x2c5220, 0.9);
     g.fillTriangle(w * 0.12, h * 0.85, w * 0.28, h * 0.28, w * 0.44, h * 0.85);
     g.fillTriangle(w * 0.4, h * 0.9, w * 0.62, h * 0.22, w * 0.84, h * 0.9);
     g.fillTriangle(w * 0.7, h * 0.92, w * 0.88, h * 0.4, w * 1.02, h * 0.92);
@@ -249,7 +249,7 @@ export class CutsceneStage {
       this.artLayer.add(this.artGraphics);
     }
 
-    const veil = scene.add.rectangle(W / 2, H / 2, W, H, 0x050804, 0.28);
+    const veil = scene.add.rectangle(W / 2, H / 2, W, H, 0x0a0c06, 0.16);
     const plate = scene.add.rectangle(W / 2, H - 118, W - 28, 168, 0x1a140c, 0.88).setStrokeStyle(2, 0xd8b548, 0.85);
     const plateInner = scene.add.rectangle(W / 2, H - 118, W - 40, 154, 0xf4e6c8, 0.92).setStrokeStyle(1, 0x8a6a42, 0.7);
 
