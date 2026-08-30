@@ -3111,7 +3111,7 @@ const bannerY = 98;
       ];
 
       // Short name plaque titles under each node (Forest / Stone / Ember / Gale / Ash)
-      const shortNames = ["Forest", "Stone", "Ember", "Gale", "Ash"];
+      const shortNames = ["Forest", "Stone", "Ember", "Gale", "Ash", "Ford", "Cinder"];
 
       // Node Positions on the painted map board (HARD RULE: Forest Gate stays at { x: 100, y: 375 })
       const nodePositions = [
@@ -3120,6 +3120,8 @@ const bannerY = 98;
         { x: 308, y: 248 }, // Node 2: Ember Marsh
         { x: 338, y: 175 }, // Node 3: Gale Reach
         { x: 148, y: 248 }, // Node 4: Ash Spire, below banner, left of stone
+        { x: 52, y: 290 },  // Node 5: Merewatch Ford (v1.6.5, far-left shore)
+        { x: 218, y: 150 }, // Node 6: Cinderfall Ridge (v1.6.5, high ridge)
       ];
 
       // Draw connecting path segments between nodes
@@ -3165,6 +3167,9 @@ const bannerY = 98;
       drawPathSegment(nodePositions[2], nodePositions[3], !!this.campaign.unlocked[3]);
       // Path 3 -> 4 (unlocked if node 4 is unlocked)
       drawPathSegment(nodePositions[3], nodePositions[4], !!this.campaign.unlocked[4]);
+      // v1.6.5: fork west to the Ford, then up to the Ridge
+      drawPathSegment(nodePositions[4], nodePositions[5], !!this.campaign.unlocked[5]);
+      drawPathSegment(nodePositions[5], nodePositions[6], !!this.campaign.unlocked[6]);
 
       // Render Map Nodes
       MAPS.forEach((map, index) => {
