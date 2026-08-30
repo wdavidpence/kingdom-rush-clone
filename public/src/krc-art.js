@@ -11935,10 +11935,13 @@
     return rng;
   };
 
-  const clampDim = (v) => {
+  const clampDim = (v, defaultVal = 1) => {
     const num = Number(v);
-    if (!Number.isFinite(num)) return 1;
-    return Math.max(1, Math.round(num));
+    if (!Number.isFinite(num)) {
+      const def = Number(defaultVal);
+      return Number.isFinite(def) ? Math.max(1, Math.min(4096, Math.round(def))) : 1;
+    }
+    return Math.max(1, Math.min(4096, Math.round(num)));
   };
 
   const resolveGraphics = (scene, target) => {
@@ -11978,6 +11981,39 @@
       destroy() { return dummy; },
     };
     return dummy;
+  };
+
+  const createContainerMock = (g) => {
+    const children = g ? [g] : [];
+    const container = {
+      x: 0,
+      y: 0,
+      depth: 0,
+      alpha: 1,
+      visible: true,
+      list: children,
+      add(child) {
+        if (Array.isArray(child)) {
+          for (const c of child) {
+            if (c && !children.includes(c)) children.push(c);
+          }
+        } else if (child && !children.includes(child)) {
+          children.push(child);
+        }
+        return container;
+      },
+      remove(child) {
+        const idx = children.indexOf(child);
+        if (idx !== -1) children.splice(idx, 1);
+        return container;
+      },
+      setDepth(d) { container.depth = d; return container; },
+      setPosition(x, y) { container.x = x; container.y = y; return container; },
+      setVisible(v) { container.visible = v; return container; },
+      setAlpha(a) { container.alpha = a; return container; },
+      destroy() { children.length = 0; },
+    };
+    return container;
   };
 
   const safeFillTriangle = (g, x1, y1, x2, y2, x3, y3) => {
@@ -14274,6 +14310,752 @@
     }
   };
 
+  // =========================================================================
+  // KRC v1.6.6 IRON CHALLENGE + Map Art Theme Extensions
+  // 1) mapArtThemes
+  // 2) paintFordScene(scene, w, h, seed)
+  // 3) paintCinderScene(scene, w, h, seed)
+  // 4) ironChallengePlate(scene, w, h)
+  // =========================================================================
+
+  const mapArtThemes = {
+    3: {
+      name: "Merewatch Ford",
+      grass: 0x2e4a3a,
+      road: 0x8a7a58,
+      accent: 0x6fd0d8,
+      sky: 0xa8d8e8,
+    },
+    4: {
+      name: "Cinderfall Ridge",
+      grass: 0x3a2a24,
+      road: 0x5a4438,
+      accent: 0xff8a4a,
+      sky: 0xe8a87a,
+    },
+  };
+
+  Object.defineProperties(mapArtThemes[3], {
+    accent2: { value: 0x1e3638, enumerable: false, writable: true, configurable: true },
+    roadEdge: { value: 0x483e2c, enumerable: false, writable: true, configurable: true },
+    pathMid: { value: 0xb0a078, enumerable: false, writable: true, configurable: true },
+    tint: { value: 0x6fd0d8, enumerable: false, writable: true, configurable: true },
+    unitTint: { value: 0xe6f4f0, enumerable: false, writable: true, configurable: true },
+    skyTop: { value: 0x78b8d0, enumerable: false, writable: true, configurable: true },
+    skyBot: { value: 0xa8d8e8, enumerable: false, writable: true, configurable: true },
+  });
+
+  Object.defineProperties(mapArtThemes[4], {
+    accent2: { value: 0x241610, enumerable: false, writable: true, configurable: true },
+    roadEdge: { value: 0x382820, enumerable: false, writable: true, configurable: true },
+    pathMid: { value: 0x8c6a58, enumerable: false, writable: true, configurable: true },
+    tint: { value: 0xff8a4a, enumerable: false, writable: true, configurable: true },
+    unitTint: { value: 0xf6e8e2, enumerable: false, writable: true, configurable: true },
+    skyTop: { value: 0xb86840, enumerable: false, writable: true, configurable: true },
+    skyBot: { value: 0xe8a87a, enumerable: false, writable: true, configurable: true },
+  });
+
+  // 2) paintFordScene: Graphics authored scene for Merewatch: reed clusters,
+  //    stepping stones across a lane gap, mist bands, two fork signpost silhouette.
+  const paintFordScene = (scene, w, h, seed, targetArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const width = clampDim(w);
+      const height = clampDim(h);
+      const { seedVal, targetObj } = parseArgs(seed, targetArg, 3301);
+      const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+      const g = resolveGraphics(scene, targetObj);
+
+      // 1. Sky & Distant Atmosphere
+      g.fillStyle(0xa8d8e8, 1);
+      g.fillRect(0, 0, width, height * 0.40);
+
+      // Distant rolling wetland horizon hills
+      const hillSteps = 14;
+      const hillPts = [[0, height * 0.40]];
+      for (let i = 0; i <= hillSteps; i += 1) {
+        const hx = (width * i) / hillSteps;
+        const hy = height * (0.32 + 0.05 * Math.sin(i * 0.75 + 1.2) + 0.02 * Math.cos(i * 1.6));
+        hillPts.push([hx, hy]);
+      }
+      hillPts.push([width, height * 0.40]);
+      g.fillStyle(0x3a5e4a, 0.70);
+      safeFillPolygon(g, hillPts);
+
+      // Distant low mist band at horizon
+      g.fillStyle(0xcce8f0, 0.50);
+      g.fillRect(0, height * 0.30, width, height * 0.12);
+
+      // 2. Wetland Grass Base
+      g.fillStyle(0x2e4a3a, 1);
+      g.fillRect(0, height * 0.38, width, height * 0.62);
+
+      // Wetland mossy sod patches
+      for (let i = 0; i < 8; i += 1) {
+        const px = width * rng.range(0.05, 0.95);
+        const py = height * rng.range(0.42, 0.92);
+        const prx = width * rng.range(0.04, 0.09);
+        const pry = height * rng.range(0.02, 0.045);
+        g.fillStyle(0x3d624c, 0.45);
+        safeFillEllipse(g, px, py, prx, pry);
+      }
+
+      // 3. Ford Trail Approach & Water Lane Gap
+      const roadSlices = 12;
+      const roadPtsLeft = [];
+      const roadPtsRight = [];
+      for (let i = 0; i <= roadSlices; i += 1) {
+        const t = i / roadSlices;
+        const ry = height * (0.38 + 0.62 * t);
+        const rx = width * (0.48 + 0.06 * Math.sin(t * 2.8));
+        const rw = width * (0.09 + 0.16 * t);
+        roadPtsLeft.push([rx - rw * 0.5, ry]);
+        roadPtsRight.unshift([rx + rw * 0.5, ry]);
+      }
+      g.fillStyle(0x564a36, 0.95);
+      safeFillPolygon(g, [...roadPtsLeft, ...roadPtsRight]);
+
+      const innerRoadLeft = roadPtsLeft.map(([x, y]) => [x + 2, y]);
+      const innerRoadRight = roadPtsRight.map(([x, y]) => [x - 2, y]);
+      g.fillStyle(0x8a7a58, 1);
+      safeFillPolygon(g, [...innerRoadLeft, ...innerRoadRight]);
+
+      for (let i = 0; i < 16; i += 1) {
+        const pt = rng.range(0.05, 0.95);
+        const ry = height * (0.38 + 0.62 * pt);
+        const rx = width * (0.48 + 0.06 * Math.sin(pt * 2.8)) + rng.range(-width * 0.04, width * 0.04);
+        g.fillStyle(rng.choice([0x4c4232, 0x9a8a68, 0x6e604a]), 0.85);
+        safeFillCircle(g, rx, ry, rng.range(1.0, 2.2));
+      }
+
+      // Merewatch Ford Water Lane Gap cutting across the road
+      const waterTopY = height * 0.48;
+      const waterBotY = height * 0.68;
+      const waterLeftPts = [];
+      const waterRightPts = [];
+      const waterSlices = 16;
+      for (let i = 0; i <= waterSlices; i += 1) {
+        const t = i / waterSlices;
+        const wx = width * t;
+        const wyTop = waterTopY + height * 0.03 * Math.sin(t * 3.5 + 0.4);
+        const wyBot = waterBotY + height * 0.03 * Math.sin(t * 3.1 + 1.2);
+        waterLeftPts.push([wx, wyTop]);
+        waterRightPts.unshift([wx, wyBot]);
+      }
+
+      g.fillStyle(0x183438, 1);
+      safeFillPolygon(g, [...waterLeftPts, ...waterRightPts]);
+
+      g.fillStyle(0x2c5860, 0.92);
+      safeFillPolygon(g, waterLeftPts.map(([x, y]) => [x, y + 2]).concat(waterRightPts.map(([x, y]) => [x, y - 2])));
+
+      g.fillStyle(0x42767c, 0.65);
+      safeFillPolygon(g, waterLeftPts.map(([x, y]) => [x, y + 4]).concat(waterRightPts.map(([x, y]) => [x, y - 4])));
+
+      for (let i = 0; i < 14; i += 1) {
+        const rpx = width * rng.range(0.04, 0.96);
+        const rpy = height * rng.range(0.50, 0.66);
+        const rlen = width * rng.range(0.04, 0.12);
+        g.lineStyle(1.4, 0x6fd0d8, rng.range(0.45, 0.85));
+        safeLineBetween(g, rpx - rlen * 0.5, rpy, rpx + rlen * 0.5, rpy);
+      }
+
+      // 4. Stepping Stones across the lane gap
+      const numStones = 7;
+      for (let i = 0; i < numStones; i += 1) {
+        const t = i / (numStones - 1);
+        const sx = width * (0.42 + 0.15 * t + 0.035 * Math.sin(t * Math.PI)) + rng.range(-2.5, 2.5);
+        const sy = waterTopY + (waterBotY - waterTopY) * (0.16 + 0.68 * t) + rng.range(-2, 2);
+        const srx = Math.max(5, width * rng.range(0.018, 0.027));
+        const sry = Math.max(3.5, height * rng.range(0.014, 0.021));
+
+        g.fillStyle(0x0e2024, 0.70);
+        safeFillEllipse(g, sx + 2, sy + sry * 0.45, srx * 1.15, sry * 0.95);
+
+        g.lineStyle(1.4, 0x6fd0d8, 0.65);
+        if (typeof g.beginPath === "function") {
+          g.beginPath();
+          if (typeof g.arc === "function") g.arc(sx, sy, srx + 2, Math.PI * 0.85, Math.PI * 1.65);
+          if (typeof g.strokePath === "function") g.strokePath();
+        }
+
+        g.fillStyle(0x364442, 1);
+        safeFillEllipse(g, sx, sy, srx, sry);
+
+        g.fillStyle(0x5a6e6a, 1);
+        safeFillEllipse(g, sx - srx * 0.1, sy - sry * 0.15, srx * 0.82, sry * 0.75);
+
+        g.fillStyle(0x8aa49e, 0.80);
+        safeFillEllipse(g, sx - srx * 0.25, sy - sry * 0.25, srx * 0.45, sry * 0.40);
+      }
+
+      // 5. Reed Clusters
+      const clusterBases = [
+        [width * 0.16, waterTopY + height * 0.02],
+        [width * 0.28, waterBotY + height * 0.03],
+        [width * 0.35, waterTopY - height * 0.01],
+        [width * 0.68, waterBotY + height * 0.02],
+        [width * 0.82, waterTopY + height * 0.04],
+      ];
+
+      for (const [cx, cy] of clusterBases) {
+        const stalkCount = rng.int(7, 11);
+        for (let s = 0; s < stalkCount; s += 1) {
+          const bx = cx + rng.range(-width * 0.035, width * 0.035);
+          const by = cy + rng.range(-height * 0.018, height * 0.018);
+          const sh = height * rng.range(0.09, 0.17);
+          const tilt = rng.range(-0.16, 0.16);
+          const topX = bx + tilt * sh;
+          const topY = by - sh;
+
+          g.lineStyle(1.6, rng.choice([0x26442c, 0x365e38, 0x487a42]), 0.95);
+          safeLineBetween(g, bx, by, topX, topY);
+
+          const leafH = sh * rng.range(0.4, 0.65);
+          const leafSide = s % 2 === 0 ? 1 : -1;
+          const leafTipX = bx + leafSide * rng.range(6, 14);
+          const leafTipY = by - leafH * 0.7;
+          g.lineStyle(1.2, 0x42723a, 0.85);
+          safeLineBetween(g, bx, by - leafH * 0.3, leafTipX, leafTipY);
+
+          if (s % 3 === 0 || s === 1) {
+            const headY = by - sh * 0.82;
+            const headX = bx + tilt * (by - headY);
+            const headW = Math.max(2.4, width * 0.006);
+            const headH = Math.max(7, height * 0.028);
+
+            g.fillStyle(0x3e2212, 1);
+            safeFillRect(g, headX - headW * 0.5, headY - headH * 0.5, headW, headH);
+            g.fillStyle(0x5c361e, 0.85);
+            safeFillRect(g, headX - headW * 0.5, headY - headH * 0.5, headW * 0.45, headH);
+
+            g.lineStyle(1.0, 0x365e38, 0.85);
+            safeLineBetween(g, headX, headY - headH * 0.5, headX, headY - headH * 0.5 - 4);
+          }
+        }
+      }
+
+      // 6. Mist Bands
+      const mistCount = 6;
+      for (let i = 0; i < mistCount; i += 1) {
+        const my = height * (0.42 + 0.055 * i + rng.range(-0.015, 0.015));
+        const mx = width * rng.range(-0.08, 0.22);
+        const mw = width * rng.range(0.55, 0.95);
+        const mh = Math.max(6, height * rng.range(0.028, 0.055));
+        const alpha = rng.range(0.14, 0.26);
+        const mistColor = rng() < 0.45 ? 0x6fd0d8 : 0xd0e8f0;
+        g.fillStyle(mistColor, alpha);
+        if (typeof g.fillRoundedRect === "function") {
+          g.fillRoundedRect(mx, my, mw, mh, mh * 0.5);
+        } else {
+          safeFillEllipse(g, mx + mw * 0.5, my + mh * 0.5, mw * 0.5, mh * 0.5);
+        }
+      }
+
+      // 7. Two-Fork Signpost Silhouette
+      const postX = width * 0.24;
+      const groundY = height * 0.76;
+      const postH = Math.max(34, height * 0.24);
+      const postTopY = groundY - postH;
+      const postW = Math.max(6, width * 0.024);
+
+      g.fillStyle(0x16221a, 0.65);
+      safeFillEllipse(g, postX, groundY + 2, postW * 2.8, postW * 0.9);
+
+      g.fillStyle(0x443a2c, 1);
+      safeFillCircle(g, postX - postW * 0.4, groundY - 1, postW * 0.6);
+      safeFillCircle(g, postX + postW * 0.5, groundY - 1, postW * 0.5);
+
+      g.fillStyle(0x221810, 1);
+      safeFillRect(g, postX - postW * 0.5, postTopY, postW, postH);
+      g.fillStyle(0x463222, 0.85);
+      safeFillRect(g, postX - postW * 0.5, postTopY, postW * 0.35, postH);
+
+      // Upper Sign Arm (pointing right >)
+      const arm1W = Math.max(26, width * 0.095);
+      const arm1H = Math.max(8, height * 0.034);
+      const arm1Y = postTopY + postH * 0.14;
+      const arm1X = postX - postW * 0.2;
+      const arrow1Tip = Math.max(5, arm1W * 0.22);
+      const arm1Poly = [
+        [arm1X, arm1Y],
+        [arm1X + arm1W - arrow1Tip, arm1Y],
+        [arm1X + arm1W, arm1Y + arm1H * 0.5],
+        [arm1X + arm1W - arrow1Tip, arm1Y + arm1H],
+        [arm1X, arm1Y + arm1H],
+      ];
+      g.fillStyle(0x382618, 1);
+      safeFillPolygon(g, arm1Poly);
+      g.lineStyle(1.2, 0x62462e, 0.9);
+      safeLineBetween(g, arm1X, arm1Y, arm1X + arm1W - arrow1Tip, arm1Y);
+      safeLineBetween(g, arm1X + arm1W - arrow1Tip, arm1Y, arm1X + arm1W, arm1Y + arm1H * 0.5);
+      g.fillStyle(0x14100c, 1);
+      safeFillRect(g, postX - postW * 0.6, arm1Y - 1, postW * 1.2, arm1H + 2);
+      g.fillStyle(0xd8a436, 1);
+      safeFillCircle(g, postX, arm1Y + arm1H * 0.5, Math.max(1, postW * 0.2));
+
+      // Lower Sign Arm (pointing left <)
+      const arm2W = Math.max(24, width * 0.088);
+      const arm2H = Math.max(7.5, height * 0.032);
+      const arm2Y = arm1Y + arm1H + 3;
+      const arm2X = postX + postW * 0.2;
+      const arrow2Tip = Math.max(5, arm2W * 0.22);
+      const arm2Poly = [
+        [arm2X, arm2Y],
+        [arm2X - arm2W + arrow2Tip, arm2Y],
+        [arm2X - arm2W, arm2Y + arm2H * 0.5],
+        [arm2X - arm2W + arrow2Tip, arm2Y + arm2H],
+        [arm2X, arm2Y + arm2H],
+      ];
+      g.fillStyle(0x302014, 1);
+      safeFillPolygon(g, arm2Poly);
+      g.lineStyle(1.2, 0x583e28, 0.9);
+      safeLineBetween(g, arm2X, arm2Y, arm2X - arm2W + arrow2Tip, arm2Y);
+      safeLineBetween(g, arm2X - arm2W + arrow2Tip, arm2Y, arm2X - arm2W, arm2Y + arm2H * 0.5);
+      g.fillStyle(0x14100c, 1);
+      safeFillRect(g, postX - postW * 0.6, arm2Y - 1, postW * 1.2, arm2H + 2);
+      g.fillStyle(0xd8a436, 1);
+      safeFillCircle(g, postX, arm2Y + arm2H * 0.5, Math.max(1, postW * 0.2));
+
+      return g;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // 3) paintCinderScene: Graphics authored scene for Cinderfall: scorched ridge contour
+  //    lines, ember specks scatter (seeded), basalt columns silhouette.
+  const paintCinderScene = (scene, w, h, seed, targetArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const width = clampDim(w);
+      const height = clampDim(h);
+      const { seedVal, targetObj } = parseArgs(seed, targetArg, 4401);
+      const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+      const g = resolveGraphics(scene, targetObj);
+
+      // 1. Smoky Amber Twilight Sky
+      g.fillStyle(0x381c16, 1);
+      g.fillRect(0, 0, width, height * 0.16);
+
+      g.fillStyle(0x6a2b1c, 1);
+      g.fillRect(0, height * 0.14, width, height * 0.16);
+
+      g.fillStyle(0xb6582e, 1);
+      g.fillRect(0, height * 0.28, width, height * 0.16);
+
+      g.fillStyle(0xe8a87a, 1);
+      g.fillRect(0, height * 0.40, width, height * 0.10);
+
+      // Volcanic ash haze clouds
+      for (let i = 0; i < 5; i += 1) {
+        const cx = width * (0.2 + i * 0.18);
+        const cy = height * (0.12 + 0.04 * (i % 2));
+        g.fillStyle(0x261612, 0.40);
+        safeFillEllipse(g, cx, cy, width * 0.16, height * 0.05);
+      }
+
+      // 2. Far Volcanic Ridgeline
+      const farRidge = [[0, height * 0.46]];
+      const ridgeSlices = 16;
+      for (let i = 0; i <= ridgeSlices; i += 1) {
+        const rx = (width * i) / ridgeSlices;
+        const ry = height * (0.35 + 0.07 * Math.sin(i * 1.15) + 0.03 * Math.cos(i * 2.2));
+        farRidge.push([rx, ry]);
+      }
+      farRidge.push([width, height * 0.46]);
+      g.fillStyle(0x281814, 1);
+      safeFillPolygon(g, farRidge);
+
+      // 3. Main Scorched Ground Body
+      g.fillStyle(0x3a2a24, 1);
+      g.fillRect(0, height * 0.44, width, height * 0.56);
+
+      // Crushed pumice road / trail
+      const roadPts = [];
+      const roadSlices = 14;
+      for (let i = 0; i <= roadSlices; i += 1) {
+        const t = i / roadSlices;
+        const ry = height * (0.44 + 0.56 * t);
+        const rx = width * (0.50 + 0.08 * Math.sin(t * 3.2));
+        const rw = width * (0.08 + 0.18 * t);
+        roadPts.push({ x: rx, y: ry, w: rw });
+      }
+      const roadLeft = roadPts.map((p) => [p.x - p.w * 0.5, p.y]);
+      const roadRight = [...roadPts].reverse().map((p) => [p.x + p.w * 0.5, p.y]);
+      g.fillStyle(0x241a16, 0.95);
+      safeFillPolygon(g, [...roadLeft, ...roadRight]);
+      g.fillStyle(0x5a4438, 1);
+      safeFillPolygon(
+        g,
+        roadLeft.map(([x, y]) => [x + 2, y]).concat(roadRight.map(([x, y]) => [x - 2, y]))
+      );
+
+      // 4. Scorched Ridge Contour Lines
+      const numContours = 7;
+      for (let c = 0; c < numContours; c += 1) {
+        const cyBase = height * (0.47 + c * 0.075);
+
+        // Dark scorched rock contour ridge
+        g.lineStyle(2.4, 0x18100c, 0.90);
+        g.beginPath();
+        for (let i = 0; i <= 16; i += 1) {
+          const cx = (width * i) / 16;
+          const cy = cyBase + height * 0.022 * Math.sin(i * 0.92 + c * 1.35);
+          if (i === 0) g.moveTo(cx, cy);
+          else g.lineTo(cx, cy);
+        }
+        if (typeof g.strokePath === "function") g.strokePath();
+
+        // Hot scorched magma fracture contour line
+        if (c % 2 === 0 || c === 5) {
+          g.lineStyle(1.6, 0xff8a4a, 0.85);
+          g.beginPath();
+          for (let i = 0; i <= 16; i += 1) {
+            const cx = (width * i) / 16;
+            const cy = cyBase - 1 + height * 0.022 * Math.sin(i * 0.92 + c * 1.35);
+            if (i === 0) g.moveTo(cx, cy);
+            else g.lineTo(cx, cy);
+          }
+          if (typeof g.strokePath === "function") g.strokePath();
+
+          g.lineStyle(0.8, 0xffea78, 0.70);
+          g.beginPath();
+          for (let i = 2; i <= 14; i += 2) {
+            const cx = (width * i) / 16;
+            const cy = cyBase - 1 + height * 0.022 * Math.sin(i * 0.92 + c * 1.35);
+            if (i === 2) g.moveTo(cx, cy);
+            else g.lineTo(cx, cy);
+          }
+          if (typeof g.strokePath === "function") g.strokePath();
+        }
+      }
+
+      // 5. Basalt Columns Silhouette
+      const colStartX = width * 0.67;
+      const colCount = 8;
+      const colW = Math.max(7, width * 0.034);
+      const heightFactors = [0.24, 0.33, 0.39, 0.36, 0.44, 0.31, 0.25, 0.17];
+      const colBaseY = height * 0.70;
+
+      for (let i = 0; i < colCount; i += 1) {
+        const cx = colStartX + i * colW * 0.92;
+        const ch = height * (heightFactors[i] || 0.28);
+        const topY = colBaseY - ch;
+
+        g.fillStyle(0x14100e, 1);
+        safeFillRect(g, cx, topY, colW * 0.48, ch);
+
+        g.fillStyle(0x2a221e, 1);
+        safeFillRect(g, cx + colW * 0.48, topY, colW * 0.52, ch);
+
+        g.lineStyle(1.4, 0x0c0806, 0.95);
+        safeLineBetween(g, cx, topY, cx, colBaseY);
+        safeLineBetween(g, cx + colW * 0.48, topY, cx + colW * 0.48, colBaseY);
+        safeLineBetween(g, cx + colW, topY, cx + colW, colBaseY);
+
+        const capPoly = [
+          [cx, topY],
+          [cx + colW * 0.32, topY - colW * 0.25],
+          [cx + colW * 0.68, topY - colW * 0.25],
+          [cx + colW, topY],
+          [cx + colW * 0.50, topY + colW * 0.20],
+        ];
+        g.fillStyle(0x3e342e, 1);
+        safeFillPolygon(g, capPoly);
+        g.lineStyle(1.0, 0x584c44, 0.75);
+        safeLineBetween(g, cx + colW * 0.32, topY - colW * 0.25, cx + colW * 0.68, topY - colW * 0.25);
+
+        if (i % 2 === 1) {
+          g.fillStyle(0xff6a20, 0.85);
+          safeFillRect(g, cx - 0.5, colBaseY - ch * 0.28, 1.5, ch * 0.28);
+        }
+      }
+
+      // Secondary smaller basalt columns cluster on opposite flank
+      const leftColX = width * 0.14;
+      const leftColCount = 4;
+      const leftColW = Math.max(6, width * 0.030);
+      const leftHeights = [0.18, 0.25, 0.22, 0.15];
+      const leftBaseY = height * 0.66;
+      for (let i = 0; i < leftColCount; i += 1) {
+        const cx = leftColX + i * leftColW * 0.92;
+        const ch = height * leftHeights[i];
+        const topY = leftBaseY - ch;
+
+        g.fillStyle(0x14100e, 1);
+        safeFillRect(g, cx, topY, leftColW * 0.48, ch);
+        g.fillStyle(0x2a221e, 1);
+        safeFillRect(g, cx + leftColW * 0.48, topY, leftColW * 0.52, ch);
+
+        g.lineStyle(1.2, 0x0c0806, 0.95);
+        safeLineBetween(g, cx, topY, cx, leftBaseY);
+        safeLineBetween(g, cx + leftColW * 0.48, topY, cx + leftColW * 0.48, leftBaseY);
+        safeLineBetween(g, cx + leftColW, topY, cx + leftColW, leftBaseY);
+
+        safeFillPolygon(g, [
+          [cx, topY],
+          [cx + leftColW * 0.32, topY - leftColW * 0.22],
+          [cx + leftColW * 0.68, topY - leftColW * 0.22],
+          [cx + leftColW, topY],
+          [cx + leftColW * 0.50, topY + leftColW * 0.18],
+        ]);
+      }
+
+      // 6. Ember Specks Scatter (Seeded)
+      const numEmbers = rng.int(48, 64);
+      for (let i = 0; i < numEmbers; i += 1) {
+        const ex = width * rng();
+        const ey = height * rng.range(0.08, 0.92);
+        const er = rng.range(0.9, 2.7);
+        const glowAlpha = rng.range(0.25, 0.55);
+
+        g.fillStyle(0xff5518, glowAlpha);
+        safeFillCircle(g, ex, ey, er * 2.2);
+
+        g.fillStyle(0xff8a4a, 0.95);
+        safeFillCircle(g, ex, ey, er);
+
+        if (er > 1.6) {
+          g.fillStyle(0xfff6c0, 0.95);
+          safeFillCircle(g, ex, ey, er * 0.45);
+        }
+      }
+
+      return g;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // 4) ironChallengePlate: Graphics+container: dark obsidian plate + white rule +
+  //    crown spike motif for Iron mode (no text — labels come from game layer).
+  const ironChallengePlate = (scene, w, h, opts) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const width = clampDim(w, 240);
+      const height = clampDim(h, 60);
+      const g = resolveGraphics(scene, opts && opts.target);
+
+      let container;
+      if (opts && opts.container && typeof opts.container === "object") {
+        container = opts.container;
+      } else if (scene.add && typeof scene.add.container === "function") {
+        container = scene.add.container(0, 0);
+      } else {
+        container = createContainerMock(g);
+      }
+
+      if (typeof container.add === "function") {
+        if (container.list) {
+          if (!container.list.includes(g)) container.add(g);
+        } else {
+          container.add(g);
+        }
+      }
+
+      // 1. Dark Obsidian Plate Geometry
+      const px = 0;
+      const py = 0;
+      const chamfer = Math.min(10, Math.max(3, Math.round(Math.min(width, height) * 0.14)));
+
+      // Drop shadow
+      g.fillStyle(0x000000, 0.60);
+      const shadowPoly = [
+        [px + chamfer, py + 4],
+        [px + width - chamfer, py + 4],
+        [px + width + 2, py + chamfer + 4],
+        [px + width + 2, py + height - chamfer + 4],
+        [px + width - chamfer, py + height + 4],
+        [px + chamfer, py + height + 4],
+        [px - 2, py + height - chamfer + 4],
+        [px - 2, py + chamfer + 4],
+      ];
+      safeFillPolygon(g, shadowPoly);
+
+      // Outer heavy iron/obsidian bezel
+      const platePoly = [
+        [px + chamfer, py],
+        [px + width - chamfer, py],
+        [px + width, py + chamfer],
+        [px + width, py + height - chamfer],
+        [px + width - chamfer, py + height],
+        [px + chamfer, py + height],
+        [px, py + height - chamfer],
+        [px, py + chamfer],
+      ];
+      g.fillStyle(0x0a0c10, 1);
+      safeFillPolygon(g, platePoly);
+
+      // Bezel highlight & shadow bevel lines
+      g.lineStyle(1.8, 0x2e3644, 0.95);
+      safeLineBetween(g, px + chamfer, py, px + width - chamfer, py);
+      safeLineBetween(g, px, py + chamfer, px + chamfer, py);
+      safeLineBetween(g, px, py + height - chamfer, px, py + chamfer);
+
+      g.lineStyle(1.8, 0x06080a, 0.95);
+      safeLineBetween(g, px + chamfer, py + height, px + width - chamfer, py + height);
+      safeLineBetween(g, px + width - chamfer, py + height, px + width, py + height - chamfer);
+      safeLineBetween(g, px + width, py + height - chamfer, px + width, py + chamfer);
+
+      // Inner Obsidian Glass Body
+      const border = Math.max(2, Math.round(height * 0.05));
+      const ix = px + border;
+      const iy = py + border;
+      const iw = width - border * 2;
+      const ih = height - border * 2;
+      const ic = Math.max(2, chamfer - border);
+
+      const innerPoly = [
+        [ix + ic, iy],
+        [ix + iw - ic, iy],
+        [ix + iw, iy + ic],
+        [ix + iw, iy + ih - ic],
+        [ix + iw - ic, iy + ih],
+        [ix + ic, iy + ih],
+        [ix, iy + ih - ic],
+        [ix, iy + ic],
+      ];
+      g.fillStyle(0x13161c, 1);
+      safeFillPolygon(g, innerPoly);
+
+      // Dark lustrous slate-violet obsidian facet
+      g.fillStyle(0x181e28, 1);
+      safeFillPolygon(g, [
+        [ix + ic, iy],
+        [ix + iw * 0.5, iy],
+        [ix + iw * 0.25, iy + ih],
+        [ix + ic, iy + ih],
+      ]);
+
+      // Polished Obsidian Diagonal Specular Sheen
+      const sheenPoly = [
+        [ix + iw * 0.15, iy],
+        [ix + iw * 0.42, iy],
+        [ix + iw * 0.22, iy + ih],
+        [ix + iw * 0.05, iy + ih],
+      ];
+      g.fillStyle(0x2c3848, 0.35);
+      safeFillPolygon(g, sheenPoly);
+
+      const gleamPoly = [
+        [ix + iw * 0.44, iy],
+        [ix + iw * 0.48, iy],
+        [ix + iw * 0.28, iy + ih],
+        [ix + iw * 0.24, iy + ih],
+      ];
+      g.fillStyle(0x5c728c, 0.22);
+      safeFillPolygon(g, gleamPoly);
+
+      // 2. White Rule (crisp dividing/framing rule)
+      const ruleY = py + height * 0.72;
+      const rx0 = px + width * 0.08;
+      const rx1 = px + width * 0.92;
+
+      g.lineStyle(2.0, 0x06080c, 0.85);
+      safeLineBetween(g, rx0, ruleY + 1.2, rx1, ruleY + 1.2);
+
+      g.lineStyle(1.5, 0xffffff, 0.92);
+      safeLineBetween(g, rx0, ruleY, rx1, ruleY);
+
+      const midX = px + width * 0.5;
+      const pipR = Math.max(2.5, height * 0.045);
+      g.fillStyle(0xffffff, 1);
+      safeFillPolygon(g, [
+        [midX, ruleY - pipR],
+        [midX + pipR, ruleY],
+        [midX, ruleY + pipR],
+        [midX - pipR, ruleY],
+      ]);
+
+      safeFillCircle(g, rx0, ruleY, 1.8);
+      safeFillCircle(g, rx1, ruleY, 1.8);
+
+      // 3. Crown Spike Motif for Iron Mode
+      const crownCX = px + width * 0.5;
+      const crownBaseY = py + height * 0.24;
+      const crownW = Math.max(28, width * 0.22);
+      const crownHW = crownW * 0.5;
+
+      const spikeXOffsets = [-crownHW, -crownHW * 0.5, 0, crownHW * 0.5, crownHW];
+      const spikeHOffsets = [
+        height * 0.16,
+        height * 0.26,
+        height * 0.38,
+        height * 0.26,
+        height * 0.16,
+      ];
+      const spikeWidths = [
+        crownW * 0.14,
+        crownW * 0.16,
+        crownW * 0.20,
+        crownW * 0.16,
+        crownW * 0.14,
+      ];
+
+      for (let i = 0; i < 5; i += 1) {
+        const sx = crownCX + spikeXOffsets[i];
+        const sh = spikeHOffsets[i];
+        const sw = spikeWidths[i] * 0.5;
+        const tipY = crownBaseY - sh;
+
+        g.fillStyle(0x181e26, 1);
+        safeFillPolygon(g, [
+          [sx, tipY],
+          [sx + sw, crownBaseY],
+          [sx, crownBaseY],
+        ]);
+
+        g.fillStyle(0x3e4a5c, 1);
+        safeFillPolygon(g, [
+          [sx, tipY],
+          [sx - sw, crownBaseY],
+          [sx, crownBaseY],
+        ]);
+
+        g.lineStyle(1.0, 0x6e829c, 0.90);
+        safeLineBetween(g, sx, tipY, sx, crownBaseY);
+
+        g.fillStyle(0xffffff, 0.95);
+        safeFillCircle(g, sx, tipY + 0.5, 1.2);
+      }
+
+      const bandH = Math.max(3, height * 0.05);
+      g.fillStyle(0x1a202a, 1);
+      safeFillRect(g, crownCX - crownHW - 2, crownBaseY - bandH * 0.5, crownW + 4, bandH);
+      g.lineStyle(1.0, 0x54667a, 0.85);
+      safeLineBetween(g, crownCX - crownHW - 2, crownBaseY - bandH * 0.5, crownCX + crownHW + 2, crownBaseY - bandH * 0.5);
+
+      for (let i = 0; i < 5; i += 1) {
+        const rx = crownCX + spikeXOffsets[i];
+        g.fillStyle(0xd8e4f0, 1);
+        safeFillCircle(g, rx, crownBaseY, 1.2);
+      }
+
+      container.graphics = g;
+      container.plate = g;
+      container.container = container;
+      g.container = container;
+      g.graphics = g;
+
+      const gMethods = [
+        "fillStyle", "lineStyle", "beginPath", "moveTo", "lineTo",
+        "closePath", "fillPath", "strokePath", "fillRect", "strokeRect",
+        "fillRoundedRect", "strokeRoundedRect", "fillCircle", "strokeCircle",
+        "fillEllipse", "fillTriangle", "strokeTriangle", "lineBetween", "arc", "clear",
+      ];
+      for (const m of gMethods) {
+        if (typeof g[m] === "function" && typeof container[m] !== "function") {
+          container[m] = (...args) => { g[m](...args); return container; };
+        }
+      }
+
+      return container;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const KRCArt = {
     bake,
     paintRuttedRoad,
@@ -14290,6 +15072,10 @@
     paintSpecBadge,
     paintRubble,
     paintTowerDeath,
+    mapArtThemes,
+    paintFordScene,
+    paintCinderScene,
+    ironChallengePlate,
   };
 
   if (typeof window !== "undefined") {
@@ -14308,9 +15094,17 @@
     window.paintSpecBadge = paintSpecBadge;
     window.paintRubble = paintRubble;
     window.paintTowerDeath = paintTowerDeath;
+    window.mapArtThemes = mapArtThemes;
+    window.paintFordScene = paintFordScene;
+    window.paintCinderScene = paintCinderScene;
+    window.ironChallengePlate = ironChallengePlate;
   }
   if (typeof globalThis !== "undefined") {
     globalThis.KRCArt = KRCArt;
+    globalThis.mapArtThemes = mapArtThemes;
+    globalThis.paintFordScene = paintFordScene;
+    globalThis.paintCinderScene = paintCinderScene;
+    globalThis.ironChallengePlate = ironChallengePlate;
   }
   if (typeof module !== "undefined" && module.exports) {
     module.exports = KRCArt;
