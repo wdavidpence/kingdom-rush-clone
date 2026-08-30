@@ -12751,6 +12751,1529 @@
     return g;
   };
 
+  // =========================================================================
+  // KRC v1.6.1 Tower Spec Art Extensions
+  // 1) paintTowerTier(scene, family, tier, opts)
+  // 2) paintSpecBadge(scene, family, specIndex, opts)
+  // 3) paintRubble(scene, x, y, seed, opts) / paintTowerDeath
+  // =========================================================================
+
+  const safeFillRect = (g, x, y, w, h) => {
+    if (typeof g.fillRect === "function") {
+      g.fillRect(x, y, w, h);
+    } else if (typeof g.beginPath === "function" && typeof g.moveTo === "function") {
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + w, y);
+      g.lineTo(x + w, y + h);
+      g.lineTo(x, y + h);
+      g.closePath();
+      if (typeof g.fillPath === "function") g.fillPath();
+    }
+  };
+
+  const normalizeFamily = (f) => {
+    const s = String(f || "").toLowerCase().trim();
+    if (s.includes("rang") || s.includes("arch")) return "rangers";
+    if (s.includes("mag") || s.includes("rune") || s.includes("wiz")) return "mage";
+    if (s.includes("art") || s.includes("mort") || s.includes("bomb") || s.includes("cann")) return "artillery";
+    if (s.includes("bar") || s.includes("guar") || s.includes("sold")) return "barracks";
+    return "rangers";
+  };
+
+  // 1) paintTowerTier: Graphics 32..96px footprint
+  //    tier 1-3: blocky silhouette per family with scaling/crown growth
+  //    tier 4+: DISTINCT silhouette per family:
+  //      - rangers: tall falconer roost with bow rail
+  //      - mage: floating rune ring crown
+  //      - artillery: wide double-barrel bastion
+  //      - barracks: palisade gate with spear rack
+  const paintTowerTier = (scene, familyArg, tierArg, optsArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const family = normalizeFamily(familyArg);
+      let tier = Math.round(Number(tierArg));
+      if (!Number.isFinite(tier) || tier < 1) tier = 1;
+      if (tier > 5) tier = 5;
+
+      let opts = {};
+      if (optsArg && typeof optsArg === "object") {
+        opts = optsArg;
+      } else if (typeof optsArg === "number") {
+        opts = { size: optsArg };
+      }
+
+      const rawSize = opts.size ?? opts.footprint ?? opts.width ?? opts.w ?? opts.height ?? opts.h ?? 64;
+      const footprint = Math.max(32, Math.min(96, Math.round(Number(rawSize) || 64)));
+      const w = Math.max(32, Math.min(96, Math.round(Number(opts.width ?? opts.w ?? footprint))));
+      const h = Math.max(32, Math.min(96, Math.round(Number(opts.height ?? opts.h ?? footprint))));
+
+      const originX = Number(opts.x) || 0;
+      const originY = Number(opts.y) || 0;
+
+      const g = resolveGraphics(scene, opts.target);
+
+      let seedVal = opts.seed;
+      if (seedVal === undefined) {
+        let hash = 1000 + tier * 53;
+        for (let i = 0; i < family.length; i += 1) {
+          hash = (hash * 37 + family.charCodeAt(i)) >>> 0;
+        }
+        seedVal = hash;
+      }
+      const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+
+      const cx = originX + w * 0.5;
+      const groundY = originY + h * 0.86;
+      const s = w / 64;
+      const sy = h / 64;
+
+      if (family === "rangers") {
+        // --- Rangers Base Shadow & Plinth ---
+        g.fillStyle(0x10140a, 0.45);
+        safeFillEllipse(g, cx, groundY + 3 * sy, 22 * s, 6 * sy);
+
+        const plinthW = (24 + tier * 1.5) * s;
+        const plinthH = (6 + tier * 1.2) * sy;
+        const plinthTop = groundY - plinthH;
+
+        g.fillStyle(0x525c40, 1);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, plinthH);
+        g.fillStyle(0x7e8a6a, 0.85);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, 1.5 * sy);
+
+        g.lineStyle(1 * s, 0x222a18, 0.85);
+        safeLineBetween(g, cx - plinthW * 0.5, groundY, cx + plinthW * 0.5, groundY);
+        safeLineBetween(g, cx - plinthW * 0.15, plinthTop, cx - plinthW * 0.15, groundY);
+        safeLineBetween(g, cx + plinthW * 0.25, plinthTop, cx + plinthW * 0.25, groundY);
+
+        if (tier >= 2) {
+          // Ivy tendril climbing corner
+          g.lineStyle(1.2 * s, 0x2e541a, 0.95);
+          safeLineBetween(g, cx - plinthW * 0.45, groundY, cx - plinthW * 0.38, plinthTop - 2 * sy);
+          g.fillStyle(0x56a42a, 1);
+          safeFillCircle(g, cx - plinthW * 0.42, groundY - 3 * sy, 1.5 * s);
+          safeFillCircle(g, cx - plinthW * 0.36, plinthTop, 1.6 * s);
+        }
+
+        if (tier <= 3) {
+          // Tiers 1-3: Blocky watchtower silhouette, crown detail grows with tier
+          const cabW = (18 + tier * 1.8) * s;
+          const cabH = (14 + tier * 2.8) * sy;
+          const cabTop = plinthTop - cabH;
+
+          // Timber cabin walls
+          g.fillStyle(0x7a4c22, 1);
+          safeFillRect(g, cx - cabW * 0.5, cabTop, cabW, cabH);
+          g.fillStyle(0x9e6834, 0.65);
+          safeFillRect(g, cx - cabW * 0.5, cabTop, 2.5 * s, cabH);
+
+          // Vertical planks & window slit
+          g.lineStyle(1 * s, 0x3c200c, 0.75);
+          safeLineBetween(g, cx - cabW * 0.16, cabTop, cx - cabW * 0.16, plinthTop);
+          safeLineBetween(g, cx + cabW * 0.16, cabTop, cx + cabW * 0.16, plinthTop);
+
+          g.fillStyle(0x1c1006, 0.95);
+          safeFillRect(g, cx - 1.2 * s, cabTop + 4 * sy, 2.4 * s, 5.5 * sy);
+
+          // Platform rim beam
+          g.fillStyle(0x543214, 1);
+          safeFillRect(g, cx - cabW * 0.58, cabTop - 2 * sy, cabW * 1.16, 2.8 * sy);
+
+          if (tier === 1) {
+            // Tier 1: Low 3-notch rail + simple pennant
+            g.fillStyle(0x8c5828, 1);
+            safeFillRect(g, cx - cabW * 0.5, cabTop - 6 * sy, cabW, 4 * sy);
+            g.fillStyle(0x281608, 1);
+            safeFillRect(g, cx - cabW * 0.22, cabTop - 6 * sy, cabW * 0.14, 3 * sy);
+            safeFillRect(g, cx + cabW * 0.08, cabTop - 6 * sy, cabW * 0.14, 3 * sy);
+            // Pennant
+            safeFillPolygon(g, [
+              [cx - cabW * 0.5, cabTop - 11 * sy],
+              [cx - cabW * 0.5 - 6 * s, cabTop - 8.5 * sy],
+              [cx - cabW * 0.5, cabTop - 6 * sy],
+            ]);
+          } else if (tier === 2) {
+            // Tier 2: Cantilever corbels, 4 crenellations, side quiver
+            g.fillStyle(0x44220a, 1);
+            safeFillPolygon(g, [[cx - cabW * 0.55, cabTop], [cx - cabW * 0.35, cabTop + 4 * sy], [cx - cabW * 0.35, cabTop]]);
+            safeFillPolygon(g, [[cx + cabW * 0.55, cabTop], [cx + cabW * 0.35, cabTop + 4 * sy], [cx + cabW * 0.35, cabTop]]);
+
+            g.fillStyle(0x945e2a, 1);
+            safeFillRect(g, cx - cabW * 0.55, cabTop - 7 * sy, cabW * 1.1, 5 * sy);
+            g.fillStyle(0x241408, 1);
+            safeFillRect(g, cx - cabW * 0.28, cabTop - 7 * sy, cabW * 0.16, 3.5 * sy);
+            safeFillRect(g, cx + cabW * 0.12, cabTop - 7 * sy, cabW * 0.16, 3.5 * sy);
+
+            // Side quiver
+            g.fillStyle(0x5a3418, 1);
+            safeFillRect(g, cx + cabW * 0.45, cabTop - 8 * sy, 2.5 * s, 6 * sy);
+            g.fillStyle(0xffffff, 0.9);
+            safeFillCircle(g, cx + cabW * 0.45 + 1.2 * s, cabTop - 8.5 * sy, 1 * s);
+          } else {
+            // Tier 3: High blockhouse with shake shingle gable roof crown & finial
+            g.fillStyle(0x8a4e22, 1);
+            safeFillPolygon(g, [
+              [cx - cabW * 0.65, cabTop - 2 * sy],
+              [cx, cabTop - 15 * sy],
+              [cx + cabW * 0.65, cabTop - 2 * sy],
+            ]);
+            g.fillStyle(0xa8642e, 0.7);
+            safeFillPolygon(g, [
+              [cx - cabW * 0.6, cabTop - 2 * sy],
+              [cx, cabTop - 14 * sy],
+              [cx, cabTop - 2 * sy],
+            ]);
+            // Brass finial
+            g.fillStyle(0xffd700, 1);
+            safeFillPolygon(g, [
+              [cx, cabTop - 19 * sy],
+              [cx + 1.8 * s, cabTop - 14 * sy],
+              [cx - 1.8 * s, cabTop - 14 * sy],
+            ]);
+            // Archery parapet in front
+            g.fillStyle(0x6a3c18, 1);
+            safeFillRect(g, cx - cabW * 0.5, cabTop - 5 * sy, cabW, 4 * sy);
+          }
+        } else {
+          // Tier 4+: DISTINCT SILHOUETTE — tall falconer roost with bow rail
+          const platY = groundY - 32 * sy;
+          const platW = 32 * s;
+
+          // Elevated stilt posts
+          g.fillStyle(0x4c2a12, 1);
+          safeFillRect(g, cx - 13 * s, platY, 3.5 * s, plinthTop - platY);
+          safeFillRect(g, cx + 9.5 * s, platY, 3.5 * s, plinthTop - platY);
+
+          // Diagonal cross braces (X-timbers)
+          g.lineStyle(2.2 * s, 0x6e421e, 1);
+          safeLineBetween(g, cx - 11 * s, plinthTop, cx + 11 * s, platY);
+          safeLineBetween(g, cx + 11 * s, plinthTop, cx - 11 * s, platY);
+          g.fillStyle(0x221a12, 1);
+          safeFillCircle(g, cx, (plinthTop + platY) * 0.5, 2.2 * s);
+
+          // High platform deck & cantilever corbels
+          g.fillStyle(0x42240e, 1);
+          safeFillPolygon(g, [[cx - 15 * s, platY], [cx - 10 * s, platY + 5 * sy], [cx - 10 * s, platY]]);
+          safeFillPolygon(g, [[cx + 15 * s, platY], [cx + 10 * s, platY + 5 * sy], [cx + 10 * s, platY]]);
+
+          g.fillStyle(0x7e4c22, 1);
+          safeFillRect(g, cx - platW * 0.5, platY - 2 * sy, platW, 3 * sy);
+
+          // --- Bow Rail ---
+          const railTop = platY - 7 * sy;
+          g.fillStyle(0xa46c36, 1);
+          safeFillRect(g, cx - platW * 0.48, railTop, platW * 0.96, 1.8 * sy);
+
+          // Baluster posts
+          g.fillStyle(0x603616, 1);
+          for (let i = -2; i <= 2; i += 1) {
+            safeFillRect(g, cx + i * 6 * s - 0.8 * s, railTop, 1.6 * s, 6 * sy);
+          }
+
+          // Notched bow rail rests & mounted recurve bows
+          g.lineStyle(1.4 * s, 0x5a2e10, 1);
+          safeLineBetween(g, cx - 10 * s, railTop + 2 * sy, cx - 6 * s, railTop - 6 * sy);
+          safeLineBetween(g, cx - 6 * s, railTop - 6 * sy, cx - 4 * s, railTop + 2 * sy);
+          g.lineStyle(0.8 * s, 0xffffff, 0.95);
+          safeLineBetween(g, cx - 10 * s, railTop + 2 * sy, cx - 4 * s, railTop + 2 * sy);
+
+          g.lineStyle(1.4 * s, 0x5a2e10, 1);
+          safeLineBetween(g, cx + 4 * s, railTop + 2 * sy, cx + 6 * s, railTop - 6 * sy);
+          safeLineBetween(g, cx + 6 * s, railTop - 6 * sy, cx + 10 * s, railTop + 2 * sy);
+          g.lineStyle(0.8 * s, 0xffffff, 0.95);
+          safeLineBetween(g, cx + 4 * s, railTop + 2 * sy, cx + 10 * s, railTop + 2 * sy);
+
+          if (tier === 5) {
+            g.fillStyle(0x80ff60, 0.8);
+            safeFillCircle(g, cx + 6 * s, railTop - 6 * sy, 1.8 * s);
+          }
+
+          // --- Falconer Roost Mast & Perch ---
+          const roostPeak = groundY - 54 * sy;
+          const roostY = groundY - 48 * sy;
+
+          // Tall center timber mast
+          g.fillStyle(0x563016, 1);
+          safeFillRect(g, cx - 1.8 * s, roostPeak, 3.6 * s, platY - roostPeak);
+          g.fillStyle(0x28180c, 1);
+          safeFillRect(g, cx - 2.2 * s, roostY + 3 * sy, 4.4 * s, 1.6 * sy);
+
+          // Horizontal padded cross-perch
+          g.fillStyle(0x845026, 1);
+          safeFillRect(g, cx - 9 * s, roostY, 18 * s, 2.4 * sy);
+          g.fillStyle(0xba8040, 1);
+          safeFillRect(g, cx - 4 * s, roostY, 8 * s, 2.4 * sy);
+
+          // Perched hunting falcon
+          g.fillStyle(0x281c12, 1);
+          safeFillPolygon(g, [
+            [cx - 2.5 * s, roostY],
+            [cx + 1.2 * s, roostY - 7 * sy],
+            [cx + 3.8 * s, roostY - 6.5 * sy],
+            [cx + 3.0 * s, roostY - 1.5 * sy],
+          ]);
+          // Ivory chest feathers
+          g.fillStyle(0xf5edd8, 1);
+          safeFillPolygon(g, [
+            [cx - 0.5 * s, roostY - 1 * sy],
+            [cx + 1.2 * s, roostY - 6 * sy],
+            [cx + 2.4 * s, roostY - 3 * sy],
+          ]);
+          // Spread hunting wings
+          g.fillStyle(0x382618, 1);
+          safeFillPolygon(g, [
+            [cx - 1.5 * s, roostY - 3 * sy],
+            [cx - 6.5 * s, roostY - 8.5 * sy],
+            [cx - 3.5 * s, roostY - 4.5 * sy],
+          ]);
+          safeFillPolygon(g, [
+            [cx + 1.5 * s, roostY - 3 * sy],
+            [cx + 5.5 * s, roostY - 7.5 * sy],
+            [cx + 3.0 * s, roostY - 4.0 * sy],
+          ]);
+          // Hooked golden beak
+          g.fillStyle(0xffd54f, 1);
+          safeFillPolygon(g, [
+            [cx + 3.2 * s, roostY - 7.0 * sy],
+            [cx + 4.8 * s, roostY - 6.2 * sy],
+            [cx + 3.0 * s, roostY - 5.8 * sy],
+          ]);
+          g.fillStyle(0xffffff, 1);
+          safeFillCircle(g, cx + 2.5 * s, roostY - 6.4 * sy, 0.6 * s);
+
+          // Cedar roost canopy hood
+          g.fillStyle(0x8c5226, 1);
+          safeFillPolygon(g, [
+            [cx - 11 * s, roostPeak + 3 * sy],
+            [cx, roostPeak - 2 * sy],
+            [cx + 11 * s, roostPeak + 3 * sy],
+            [cx + 9 * s, roostPeak + 5 * sy],
+            [cx, roostPeak + 1 * sy],
+            [cx - 9 * s, roostPeak + 5 * sy],
+          ]);
+
+          // Fluttering swallowtail streamer
+          g.fillStyle(0x286e32, 1);
+          safeFillPolygon(g, [
+            [cx + 1.8 * s, roostPeak - 1 * sy],
+            [cx + 14 * s, roostPeak - 4 * sy],
+            [cx + 9 * s, roostPeak + 2 * sy],
+            [cx + 14 * s, roostPeak + 8 * sy],
+            [cx + 1.8 * s, roostPeak + 5 * sy],
+          ]);
+          g.lineStyle(1 * s, 0xffd700, 0.9);
+          safeLineBetween(g, cx + 1.8 * s, roostPeak - 1 * sy, cx + 14 * s, roostPeak - 4 * sy);
+          safeLineBetween(g, cx + 1.8 * s, roostPeak + 5 * sy, cx + 14 * s, roostPeak + 8 * sy);
+
+          if (tier === 5) {
+            // Second falcon perch on left
+            g.fillStyle(0x382618, 1);
+            safeFillPolygon(g, [
+              [cx - 7 * s, roostY],
+              [cx - 5 * s, roostY - 5 * sy],
+              [cx - 9 * s, roostY - 5.5 * sy],
+            ]);
+            g.fillStyle(0xffd54f, 1);
+            safeFillCircle(g, cx, roostPeak - 2 * sy, 1.8 * s);
+          }
+        }
+      } else if (family === "mage") {
+        // --- Mage Base Shadow & Mystic Plinth ---
+        g.fillStyle(0x120c22, 0.50);
+        safeFillEllipse(g, cx, groundY + 3 * sy, 22 * s, 6 * sy);
+
+        const plinthW = (22 + tier * 1.5) * s;
+        const plinthH = (6 + tier * 1.2) * sy;
+        const plinthTop = groundY - plinthH;
+
+        g.fillStyle(0x2e2648, 1);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, plinthH);
+        g.fillStyle(0x524676, 0.85);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, 1.5 * sy);
+
+        if (tier >= 2) {
+          // Inlaid glowing runic channel
+          g.fillStyle(0x50e0ff, 0.9);
+          safeFillRect(g, cx - 1 * s, plinthTop + 1.5 * sy, 2 * s, plinthH - 2.5 * sy);
+        }
+
+        if (tier <= 3) {
+          // Tiers 1-3: Blocky stone spire body & growing crystal crown
+          const spW0 = (16 + tier * 1.4) * s;
+          const spW1 = (11 + tier * 1.2) * s;
+          const spH = (18 + tier * 3.5) * sy;
+          const spTop = plinthTop - spH;
+
+          // Tapered stone spire
+          g.fillStyle(0x3a3258, 1);
+          safeFillPolygon(g, [
+            [cx - spW0 * 0.5, plinthTop],
+            [cx - spW1 * 0.5, spTop],
+            [cx + spW1 * 0.5, spTop],
+            [cx + spW0 * 0.5, plinthTop],
+          ]);
+          g.fillStyle(0x584c7e, 0.65);
+          safeFillPolygon(g, [
+            [cx - spW0 * 0.5, plinthTop],
+            [cx - spW1 * 0.5, spTop],
+            [cx, spTop],
+            [cx, plinthTop],
+          ]);
+
+          // Arcane window slit with violet glow
+          g.fillStyle(0xba60ff, 0.95);
+          safeFillRect(g, cx - 1.2 * s, spTop + 6 * sy, 2.4 * s, 6 * sy);
+
+          // Crown Cornice
+          g.fillStyle(0x261e3e, 1);
+          safeFillRect(g, cx - spW1 * 0.65, spTop - 2 * sy, spW1 * 1.3, 2.5 * sy);
+
+          if (tier === 1) {
+            // Tier 1: 4 stone merlons with raw mana crystal atop
+            g.fillStyle(0x423864, 1);
+            safeFillRect(g, cx - spW1 * 0.6, spTop - 5 * sy, 2.5 * s, 3 * sy);
+            safeFillRect(g, cx + spW1 * 0.6 - 2.5 * s, spTop - 5 * sy, 2.5 * s, 3 * sy);
+
+            // Raw crystal
+            g.fillStyle(0x8a6aff, 1);
+            safeFillPolygon(g, [
+              [cx, spTop - 8 * sy],
+              [cx + 3 * s, spTop - 3 * sy],
+              [cx, spTop - 1 * sy],
+              [cx - 3 * s, spTop - 3 * sy],
+            ]);
+            g.fillStyle(0xffffff, 0.9);
+            safeFillCircle(g, cx, spTop - 4.5 * sy, 1 * s);
+          } else if (tier === 2) {
+            // Tier 2: Flared cornice, cut amethyst prism, 2 motes
+            g.fillStyle(0xa26aff, 1);
+            safeFillPolygon(g, [
+              [cx, spTop - 12 * sy],
+              [cx + 4 * s, spTop - 5 * sy],
+              [cx, spTop - 1 * sy],
+              [cx - 4 * s, spTop - 5 * sy],
+            ]);
+            g.fillStyle(0xffffff, 0.9);
+            safeFillCircle(g, cx, spTop - 6.5 * sy, 1.4 * s);
+
+            g.fillStyle(0x50e0ff, 0.95);
+            safeFillCircle(g, cx - 6 * s, spTop - 7 * sy, 1.2 * s);
+            safeFillCircle(g, cx + 6 * s, spTop - 5 * sy, 1.2 * s);
+          } else {
+            // Tier 3: Double-deck stone spire crown, 4 claws, levitating prismatic core
+            g.fillStyle(0x7e68b4, 1);
+            safeFillPolygon(g, [
+              [cx, spTop - 16 * sy],
+              [cx + 5 * s, spTop - 8 * sy],
+              [cx, spTop - 3 * sy],
+              [cx - 5 * s, spTop - 8 * sy],
+            ]);
+            g.fillStyle(0xffffff, 0.95);
+            safeFillCircle(g, cx, spTop - 9.5 * sy, 1.8 * s);
+
+            // 3 orbiting mana orbs
+            g.fillStyle(0x50e0ff, 1);
+            safeFillCircle(g, cx - 8 * s, spTop - 10 * sy, 1.5 * s);
+            safeFillCircle(g, cx + 8 * s, spTop - 7 * sy, 1.5 * s);
+            safeFillCircle(g, cx, spTop - 19 * sy, 1.5 * s);
+          }
+        } else {
+          // Tier 4+: DISTINCT SILHOUETTE — floating rune ring crown
+          const pinY = groundY - 32 * sy;
+
+          // Slender soaring spire shaft
+          g.fillStyle(0x2a2244, 1);
+          safeFillPolygon(g, [
+            [cx - 9 * s, plinthTop],
+            [cx - 2 * s, pinY],
+            [cx + 2 * s, pinY],
+            [cx + 9 * s, plinthTop],
+          ]);
+          g.fillStyle(0x4c3e72, 0.75);
+          safeFillPolygon(g, [
+            [cx - 9 * s, plinthTop],
+            [cx - 2 * s, pinY],
+            [cx, pinY],
+            [cx, plinthTop],
+          ]);
+
+          // Glowing mana fissures running up the shaft
+          g.lineStyle(1.2 * s, 0x50e0ff, 0.95);
+          safeLineBetween(g, cx - 1.5 * s, plinthTop, cx - 0.5 * s, pinY + 3 * sy);
+          safeLineBetween(g, cx + 1.5 * s, plinthTop, cx + 0.5 * s, pinY + 3 * sy);
+
+          // Sweeping flying buttress ribs at base
+          g.fillStyle(0x221a38, 1);
+          safeFillPolygon(g, [[cx - 9 * s, plinthTop], [cx - 15 * s, plinthTop], [cx - 4 * s, plinthTop - 12 * sy]]);
+          safeFillPolygon(g, [[cx + 9 * s, plinthTop], [cx + 15 * s, plinthTop], [cx + 4 * s, plinthTop - 12 * sy]]);
+
+          // Needle pinnacle cap
+          g.fillStyle(0xffd700, 1);
+          safeFillPolygon(g, [[cx - 2 * s, pinY], [cx, pinY - 4 * sy], [cx + 2 * s, pinY]]);
+
+          // --- Floating Rune Ring Crown ---
+          const cenY = groundY - 45 * sy;
+          const rx = 14 * s;
+          const ry = 5.5 * sy;
+
+          // Central levitating radiant mana beacon
+          g.fillStyle(0x8a5aff, 0.45);
+          safeFillCircle(g, cx, cenY, 5.5 * s);
+          g.fillStyle(0x50e0ff, 0.9);
+          safeFillCircle(g, cx, cenY, 3.8 * s);
+          g.fillStyle(0xffffff, 1);
+          safeFillCircle(g, cx, cenY, 2.0 * s);
+
+          // Orbital energy ring trajectory
+          g.lineStyle(1.4 * s, 0x7d75ff, 0.4);
+          safeFillEllipse(g, cx, cenY, rx, ry);
+
+          // Orbiting floating rune stones
+          const numRunes = tier === 5 ? 7 : 5;
+          for (let i = 0; i < numRunes; i += 1) {
+            const angle = i * (Math.PI * 2 / numRunes);
+            const rpx = cx + Math.cos(angle) * rx;
+            const rpy = cenY + Math.sin(angle) * ry;
+
+            // Mana tether to core
+            g.lineStyle(0.8 * s, 0x64e8ff, 0.35);
+            safeLineBetween(g, cx, cenY, rpx, rpy);
+
+            // Floating faceted rune tablet
+            g.fillStyle(0x201836, 1);
+            safeFillPolygon(g, [
+              [rpx, rpy - 2.8 * sy],
+              [rpx + 2.4 * s, rpy],
+              [rpx, rpy + 2.8 * sy],
+              [rpx - 2.4 * s, rpy],
+            ]);
+            // Gilded border
+            g.lineStyle(0.8 * s, 0xd8b048, 0.9);
+            safeLineBetween(g, rpx, rpy - 2.8 * sy, rpx + 2.4 * s, rpy);
+            safeLineBetween(g, rpx + 2.4 * s, rpy, rpx, rpy + 2.8 * sy);
+            safeLineBetween(g, rpx, rpy + 2.8 * sy, rpx - 2.4 * s, rpy);
+            safeLineBetween(g, rpx - 2.4 * s, rpy, rpx, rpy - 2.8 * sy);
+
+            // Inscribed glowing glyph dot
+            g.fillStyle(0x50e0ff, 1);
+            safeFillCircle(g, rpx, rpy, 1.1 * s);
+            g.fillStyle(0xffffff, 0.9);
+            safeFillCircle(g, rpx, rpy, 0.5 * s);
+          }
+
+          if (tier === 5) {
+            // Second counter-rotating spark motes
+            for (let i = 0; i < 4; i += 1) {
+              const ang = i * (Math.PI * 0.5) + 0.4;
+              const spx = cx + Math.cos(ang) * (rx * 1.25);
+              const spy = cenY + Math.sin(ang) * (ry * 1.25);
+              g.fillStyle(0xffffff, 0.95);
+              safeFillCircle(g, spx, spy, 1.2 * s);
+            }
+          }
+        }
+      } else if (family === "artillery") {
+        // --- Artillery Base Shadow & Heavy Granite Revetment ---
+        g.fillStyle(0x140e08, 0.55);
+        safeFillEllipse(g, cx, groundY + 3 * sy, 26 * s, 7 * sy);
+
+        const plinthW = (28 + tier * 2.2) * s;
+        const plinthH = (7 + tier * 1.2) * sy;
+        const plinthTop = groundY - plinthH;
+
+        g.fillStyle(0x423c36, 1);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, plinthH);
+        g.fillStyle(0x726c64, 0.85);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, 1.6 * sy);
+
+        if (tier <= 3) {
+          // Tiers 1-3: Squat stone redoubt, single cannon barrel
+          const redW = (24 + tier * 2.0) * s;
+          const redH = (13 + tier * 2.4) * sy;
+          const redTop = plinthTop - redH;
+
+          g.fillStyle(0x36302a, 1);
+          safeFillRect(g, cx - redW * 0.5, redTop, redW, redH);
+          g.fillStyle(0x5c544c, 0.7);
+          safeFillRect(g, cx - redW * 0.5, redTop, redW * 0.5, redH);
+
+          // Parapet rim
+          g.fillStyle(0x28221c, 1);
+          safeFillRect(g, cx - redW * 0.55, redTop - 2 * sy, redW * 1.1, 2.5 * sy);
+
+          if (tier === 1) {
+            // Tier 1: Single stubby cast iron mortar barrel & 3 cannonballs
+            g.fillStyle(0x201e1c, 1);
+            safeFillPolygon(g, [
+              [cx - 3 * s, redTop + 2 * sy],
+              [cx + 5 * s, redTop - 8 * sy],
+              [cx + 9 * s, redTop - 5 * sy],
+              [cx + 1 * s, redTop + 5 * sy],
+            ]);
+            // Bore opening
+            g.fillStyle(0x0a0808, 1);
+            safeFillCircle(g, cx + 7 * s, redTop - 6.5 * sy, 2.2 * s);
+            g.fillStyle(0xe0541c, 0.9);
+            safeFillCircle(g, cx + 7 * s, redTop - 6.5 * sy, 1.0 * s);
+
+            // Cannonballs
+            g.fillStyle(0x181614, 1);
+            safeFillCircle(g, cx - 6 * s, redTop + 1 * sy, 2 * s);
+            safeFillCircle(g, cx - 3 * s, redTop + 1 * sy, 2 * s);
+            safeFillCircle(g, cx - 4.5 * s, redTop - 2 * sy, 2 * s);
+          } else if (tier === 2) {
+            // Tier 2: Heavier gun tube with bronze reinforce ring & powder keg
+            g.fillStyle(0x22201e, 1);
+            safeFillPolygon(g, [
+              [cx - 4 * s, redTop + 3 * sy],
+              [cx + 6 * s, redTop - 11 * sy],
+              [cx + 11 * s, redTop - 7 * sy],
+              [cx + 1 * s, redTop + 7 * sy],
+            ]);
+            g.fillStyle(0xd4a030, 1);
+            safeFillPolygon(g, [
+              [cx + 4 * s, redTop - 9 * sy],
+              [cx + 7 * s, redTop - 11.5 * sy],
+              [cx + 9 * s, redTop - 10 * sy],
+              [cx + 6 * s, redTop - 7.5 * sy],
+            ]);
+            g.fillStyle(0x0a0808, 1);
+            safeFillCircle(g, cx + 8.5 * s, redTop - 9 * sy, 2.6 * s);
+
+            // Powder keg
+            g.fillStyle(0x6e421e, 1);
+            safeFillRect(g, cx - 9 * s, redTop - 3 * sy, 4.5 * s, 6 * sy);
+            g.fillStyle(0x201c18, 1);
+            safeFillRect(g, cx - 9 * s, redTop - 1 * sy, 4.5 * s, 1.2 * sy);
+          } else {
+            // Tier 3: Reinforced bastion parapet, swivel siege mortar, brass elevation arc
+            g.fillStyle(0x22201e, 1);
+            safeFillPolygon(g, [
+              [cx - 5 * s, redTop + 3 * sy],
+              [cx + 6 * s, redTop - 14 * sy],
+              [cx + 12 * s, redTop - 9 * sy],
+              [cx + 1 * s, redTop + 8 * sy],
+            ]);
+            g.fillStyle(0xd4a030, 1);
+            safeFillPolygon(g, [
+              [cx + 4.5 * s, redTop - 12 * sy],
+              [cx + 7.5 * s, redTop - 14.5 * sy],
+              [cx + 10 * s, redTop - 12.5 * sy],
+              [cx + 7 * s, redTop - 10 * sy],
+            ]);
+            g.fillStyle(0x0a0808, 1);
+            safeFillCircle(g, cx + 9 * s, redTop - 11.5 * sy, 3.2 * s);
+
+            // Ammo crate with mortar shells
+            g.fillStyle(0x5a3418, 1);
+            safeFillRect(g, cx - 11 * s, redTop - 4 * sy, 6 * s, 7 * sy);
+            g.fillStyle(0xffe090, 1);
+            safeFillCircle(g, cx - 8 * s, redTop - 5 * sy, 1.5 * s);
+          }
+        } else {
+          // Tier 4+: DISTINCT SILHOUETTE — wide double-barrel bastion
+          const bastionW = (tier === 5 ? 54 : 48) * s;
+          const deckY = groundY - 18 * sy;
+
+          // Wide battered fortress cheeks flaring out
+          g.fillStyle(0x3c3630, 1);
+          safeFillPolygon(g, [
+            [cx - bastionW * 0.42, deckY],
+            [cx - bastionW * 0.5, groundY],
+            [cx + bastionW * 0.5, groundY],
+            [cx + bastionW * 0.42, deckY],
+          ]);
+          g.fillStyle(0x665e56, 0.7);
+          safeFillPolygon(g, [
+            [cx - bastionW * 0.42, deckY],
+            [cx - bastionW * 0.5, groundY],
+            [cx, groundY],
+            [cx, deckY],
+          ]);
+
+          // Heavy iron mantlet plate with rivets
+          g.fillStyle(0x282420, 1);
+          safeFillRect(g, cx - bastionW * 0.38, deckY, bastionW * 0.76, 12 * sy);
+          g.fillStyle(0xd4d8dc, 0.95);
+          for (let i = -3; i <= 3; i += 1) {
+            safeFillCircle(g, cx + i * 5 * s, deckY + 3 * sy, 1.1 * s);
+            safeFillCircle(g, cx + i * 5 * s, deckY + 9 * sy, 1.1 * s);
+          }
+
+          // Iron turntable chassis
+          g.fillStyle(0x181614, 1);
+          safeFillRect(g, cx - 18 * s, deckY - 3 * sy, 36 * s, 4 * sy);
+
+          // --- Wide Double Barrels ---
+          // Left heavy barrel (cx - 7 * s)
+          const b1X = cx - 7 * s;
+          g.fillStyle(0x201e1c, 1);
+          safeFillPolygon(g, [
+            [b1X - 3.2 * s, deckY + 2 * sy],
+            [b1X - 2.5 * s, deckY - 15 * sy],
+            [b1X + 2.5 * s, deckY - 15 * sy],
+            [b1X + 3.2 * s, deckY + 2 * sy],
+          ]);
+          g.fillStyle(0x5c5650, 0.65);
+          safeFillRect(g, b1X - 1.2 * s, deckY - 15 * sy, 1.5 * s, 17 * sy);
+          // Left brass muzzle ring & bore opening
+          g.fillStyle(0xd4a030, 1);
+          safeFillRect(g, b1X - 3.5 * s, deckY - 16.5 * sy, 7 * s, 2 * sy);
+          g.fillStyle(0x0a0808, 1);
+          safeFillEllipse(g, b1X, deckY - 16.5 * sy, 2.6 * s, 1.4 * sy);
+          g.fillStyle(0xe05018, 0.9);
+          safeFillCircle(g, b1X, deckY - 16.5 * sy, 1.0 * s);
+
+          // Right heavy barrel (cx + 7 * s)
+          const b2X = cx + 7 * s;
+          g.fillStyle(0x201e1c, 1);
+          safeFillPolygon(g, [
+            [b2X - 3.2 * s, deckY + 2 * sy],
+            [b2X - 2.5 * s, deckY - 15 * sy],
+            [b2X + 2.5 * s, deckY - 15 * sy],
+            [b2X + 3.2 * s, deckY + 2 * sy],
+          ]);
+          g.fillStyle(0x5c5650, 0.65);
+          safeFillRect(g, b2X - 1.2 * s, deckY - 15 * sy, 1.5 * s, 17 * sy);
+          // Right brass muzzle ring & bore opening
+          g.fillStyle(0xd4a030, 1);
+          safeFillRect(g, b2X - 3.5 * s, deckY - 16.5 * sy, 7 * s, 2 * sy);
+          g.fillStyle(0x0a0808, 1);
+          safeFillEllipse(g, b2X, deckY - 16.5 * sy, 2.6 * s, 1.4 * sy);
+          g.fillStyle(0xe05018, 0.9);
+          safeFillCircle(g, b2X, deckY - 16.5 * sy, 1.0 * s);
+
+          // Flanking shell troughs
+          g.fillStyle(0xffe090, 1);
+          safeFillCircle(g, cx - 16 * s, deckY - 2 * sy, 2 * s);
+          safeFillCircle(g, cx - 16 * s, deckY - 6 * sy, 2 * s);
+          safeFillCircle(g, cx + 16 * s, deckY - 2 * sy, 2 * s);
+          safeFillCircle(g, cx + 16 * s, deckY - 6 * sy, 2 * s);
+
+          // Cooling vents emitting gunsmoke
+          g.fillStyle(0x322820, 0.4);
+          safeFillCircle(g, b1X, deckY - 20 * sy, 3.5 * s);
+          safeFillCircle(g, b2X, deckY - 20 * sy, 3.5 * s);
+
+          if (tier === 5) {
+            // Twin rear exhaust stacks & golden fortress crest
+            g.fillStyle(0x1a1816, 1);
+            safeFillRect(g, cx - 20 * s, deckY - 14 * sy, 3 * s, 12 * sy);
+            safeFillRect(g, cx + 17 * s, deckY - 14 * sy, 3 * s, 12 * sy);
+            g.fillStyle(0xffd700, 1);
+            safeFillPolygon(g, [
+              [cx, deckY + 2 * sy],
+              [cx + 3 * s, deckY + 7 * sy],
+              [cx, deckY + 10 * sy],
+              [cx - 3 * s, deckY + 7 * sy],
+            ]);
+          }
+        }
+      } else if (family === "barracks") {
+        // --- Barracks Base Shadow & Fieldstone Foundation ---
+        g.fillStyle(0x14100a, 0.45);
+        safeFillEllipse(g, cx, groundY + 3 * sy, 24 * s, 6 * sy);
+
+        const plinthW = (26 + tier * 1.8) * s;
+        const plinthH = (6 + tier * 1.2) * sy;
+        const plinthTop = groundY - plinthH;
+
+        g.fillStyle(0x524c42, 1);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, plinthH);
+        g.fillStyle(0x80786a, 0.85);
+        safeFillRect(g, cx - plinthW * 0.5, plinthTop, plinthW, 1.5 * sy);
+
+        if (tier <= 3) {
+          // Tiers 1-3: Timber log guardhouse, door & crenellations
+          const keepW = (20 + tier * 1.8) * s;
+          const keepH = (15 + tier * 2.8) * sy;
+          const keepTop = plinthTop - keepH;
+
+          // Cedar logs
+          g.fillStyle(0x6a3e20, 1);
+          safeFillRect(g, cx - keepW * 0.5, keepTop, keepW, keepH);
+          g.lineStyle(1 * s, 0x381e0c, 0.85);
+          for (let i = 1; i <= 3; i += 1) {
+            const ly = keepTop + i * (keepH * 0.25);
+            safeLineBetween(g, cx - keepW * 0.5, ly, cx + keepW * 0.5, ly);
+          }
+
+          // Plank door with iron latch
+          g.fillStyle(0x321a0a, 1);
+          safeFillRect(g, cx - 3.5 * s, plinthTop - 9 * sy, 7 * s, 9 * sy);
+          g.fillStyle(0xd0d4d8, 0.9);
+          safeFillCircle(g, cx + 2 * s, plinthTop - 4.5 * sy, 0.8 * s);
+
+          if (tier === 1) {
+            // Tier 1: Low shingle roof, sentry bell, single shield
+            g.fillStyle(0x563016, 1);
+            safeFillPolygon(g, [
+              [cx - keepW * 0.6, keepTop],
+              [cx, keepTop - 7 * sy],
+              [cx + keepW * 0.6, keepTop],
+            ]);
+            // Shield on wall
+            g.fillStyle(0x8c96a0, 1);
+            safeFillCircle(g, cx - keepW * 0.32, keepTop + 5 * sy, 2.4 * s);
+            g.fillStyle(0xd8b038, 1);
+            safeFillCircle(g, cx - keepW * 0.32, keepTop + 5 * sy, 1.0 * s);
+          } else if (tier === 2) {
+            // Tier 2: Crenellated battlements, two shields, torch sconce
+            g.fillStyle(0x7a4624, 1);
+            safeFillRect(g, cx - keepW * 0.55, keepTop - 6 * sy, keepW * 1.1, 4 * sy);
+            g.fillStyle(0x281408, 1);
+            safeFillRect(g, cx - keepW * 0.15, keepTop - 6 * sy, keepW * 0.3, 3 * sy);
+
+            g.fillStyle(0x8c96a0, 1);
+            safeFillCircle(g, cx - keepW * 0.32, keepTop + 5 * sy, 2.5 * s);
+            safeFillCircle(g, cx + keepW * 0.32, keepTop + 5 * sy, 2.5 * s);
+            // Torch
+            g.fillStyle(0xff8820, 1);
+            safeFillCircle(g, cx + 4.5 * s, plinthTop - 7 * sy, 1.2 * s);
+          } else {
+            // Tier 3: Twin-turreted gatehouse keep, portcullis grill, dual banners
+            g.fillStyle(0x48423a, 1);
+            safeFillRect(g, cx - keepW * 0.6, keepTop - 8 * sy, 5 * s, 10 * sy);
+            safeFillRect(g, cx + keepW * 0.6 - 5 * s, keepTop - 8 * sy, 5 * s, 10 * sy);
+
+            g.fillStyle(0x9e2424, 1);
+            safeFillPolygon(g, [
+              [cx - keepW * 0.6, keepTop - 6 * sy],
+              [cx - keepW * 0.6 - 5 * s, keepTop - 3 * sy],
+              [cx - keepW * 0.6, keepTop],
+            ]);
+            safeFillPolygon(g, [
+              [cx + keepW * 0.6, keepTop - 6 * sy],
+              [cx + keepW * 0.6 + 5 * s, keepTop - 3 * sy],
+              [cx + keepW * 0.6, keepTop],
+            ]);
+          }
+        } else {
+          // Tier 4+: DISTINCT SILHOUETTE — palisade gate with spear rack
+          const palisadeW = 44 * s;
+          const numLogs = 9;
+
+          // Vertical sharpened wooden logs of varied heights
+          for (let i = 0; i < numLogs; i += 1) {
+            const lx = cx - palisadeW * 0.5 + i * (palisadeW / (numLogs - 1));
+            // Height varies: higher near gateposts, jagged crest
+            const hVar = Math.sin(i * 1.1) * 4 * sy + (i % 2 === 0 ? 2 * sy : 0);
+            const logTop = groundY - 26 * sy - hVar;
+
+            g.fillStyle(0x563016, 1);
+            safeFillRect(g, lx - 2.2 * s, logTop, 4.4 * s, plinthTop - logTop);
+
+            // Sharpened stake point
+            g.fillStyle(0xb88850, 1);
+            safeFillPolygon(g, [
+              [lx - 2.2 * s, logTop],
+              [lx, logTop - 5 * sy],
+              [lx + 2.2 * s, logTop],
+            ]);
+            g.fillStyle(0xd8a870, 0.7);
+            safeFillPolygon(g, [
+              [lx - 2.2 * s, logTop],
+              [lx, logTop - 5 * sy],
+              [lx, logTop],
+            ]);
+          }
+
+          // Horizontal timber cross-ties with iron spike heads
+          g.fillStyle(0x72401c, 1);
+          safeFillRect(g, cx - palisadeW * 0.48, groundY - 14 * sy, palisadeW * 0.96, 2.5 * sy);
+          safeFillRect(g, cx - palisadeW * 0.48, groundY - 22 * sy, palisadeW * 0.96, 2.5 * sy);
+          g.fillStyle(0x221c16, 1);
+          for (let i = -3; i <= 3; i += 1) {
+            safeFillCircle(g, cx + i * 6 * s, groundY - 12.8 * sy, 0.9 * s);
+            safeFillCircle(g, cx + i * 6 * s, groundY - 20.8 * sy, 0.9 * s);
+          }
+
+          // Central Fortified Gateway Archway
+          const gateW = 19 * s;
+          const postW = 3.6 * s;
+          const lintelY = groundY - 25 * sy;
+
+          // Heavy gateposts
+          g.fillStyle(0x44240e, 1);
+          safeFillRect(g, cx - gateW * 0.5 - postW, lintelY, postW, plinthTop - lintelY);
+          safeFillRect(g, cx + gateW * 0.5, lintelY, postW, plinthTop - lintelY);
+
+          // Heavy cross-timber lintel
+          g.fillStyle(0x784420, 1);
+          safeFillRect(g, cx - gateW * 0.5 - postW * 1.3, lintelY - 2.5 * sy, gateW + postW * 2.6, 3.5 * sy);
+
+          // Iron portcullis grill & dark gateway portal
+          g.fillStyle(0x181008, 0.95);
+          safeFillRect(g, cx - gateW * 0.5, lintelY + 1 * sy, gateW, plinthTop - (lintelY + 1 * sy));
+          g.lineStyle(1.4 * s, 0x5a5c60, 1);
+          for (let i = -2; i <= 2; i += 1) {
+            safeLineBetween(g, cx + i * 3.2 * s, lintelY + 1 * sy, cx + i * 3.2 * s, plinthTop);
+          }
+          safeLineBetween(g, cx - gateW * 0.48, lintelY + 8 * sy, cx + gateW * 0.48, lintelY + 8 * sy);
+          safeLineBetween(g, cx - gateW * 0.48, lintelY + 15 * sy, cx + gateW * 0.48, lintelY + 15 * sy);
+
+          // --- Spear Rack ---
+          const rackX = cx + 11.5 * s;
+          const rackY = groundY - 14 * sy;
+          const rackW = 8.5 * s;
+          const rackH = 13 * sy;
+
+          // Slotted wooden weapon rack frame
+          g.fillStyle(0x5a3418, 1);
+          safeFillRect(g, rackX, rackY, rackW, rackH);
+          g.fillStyle(0x845028, 0.8);
+          safeFillRect(g, rackX + 0.6 * s, rackY + 0.6 * sy, rackW - 1.2 * s, rackH - 1.2 * sy);
+          g.fillStyle(0x281608, 1);
+          safeFillRect(g, rackX + 1.5 * s, rackY + 1.5 * sy, rackW - 3 * s, rackH - 3 * sy);
+
+          // 4 Upright polearms in rack
+          for (let i = 0; i < 4; i += 1) {
+            const spX = rackX + 1.6 * s + i * 1.8 * s;
+            // Ash haft
+            g.lineStyle(1.1 * s, 0x8a5428, 1);
+            safeLineBetween(g, spX, rackY + rackH, spX, rackY - 8 * sy);
+            // Golden brass collar
+            g.fillStyle(0xd4a030, 1);
+            safeFillCircle(g, spX, rackY - 8 * sy, 0.9 * s);
+            // Steel spearhead
+            g.fillStyle(0xf4f6f8, 1);
+            safeFillPolygon(g, [
+              [spX, rackY - 13 * sy],
+              [spX + 1.2 * s, rackY - 9 * sy],
+              [spX, rackY - 8 * sy],
+              [spX - 1.2 * s, rackY - 9 * sy],
+            ]);
+            g.fillStyle(0xffffff, 0.9);
+            safeFillCircle(g, spX, rackY - 11 * sy, 0.5 * s);
+          }
+
+          // Mounted garrison shields on gateposts
+          g.fillStyle(0x3e3832, 1);
+          safeFillCircle(g, cx - gateW * 0.5 - postW * 0.5, lintelY + 7 * sy, 3.2 * s);
+          safeFillCircle(g, cx + gateW * 0.5 + postW * 0.5, lintelY + 7 * sy, 3.2 * s);
+          g.fillStyle(0xd8e0e8, 1);
+          safeFillCircle(g, cx - gateW * 0.5 - postW * 0.5, lintelY + 7 * sy, 1.4 * s);
+          safeFillCircle(g, cx + gateW * 0.5 + postW * 0.5, lintelY + 7 * sy, 1.4 * s);
+
+          // Hanging lantern / brazier
+          g.fillStyle(0xff7718, 1);
+          safeFillCircle(g, cx, lintelY + 3.5 * sy, 1.8 * s);
+          g.fillStyle(0xfff080, 1);
+          safeFillCircle(g, cx, lintelY + 3.5 * sy, 0.9 * s);
+
+          // Swallowtail garrison standard
+          g.fillStyle(0x9e2424, 1);
+          safeFillPolygon(g, [
+            [cx - gateW * 0.5 - postW * 0.5, lintelY - 2 * sy],
+            [cx - gateW * 0.5 - postW * 0.5 - 9 * s, lintelY - 7 * sy],
+            [cx - gateW * 0.5 - postW * 0.5 - 6 * s, lintelY - 3 * sy],
+            [cx - gateW * 0.5 - postW * 0.5 - 9 * s, lintelY + 1 * sy],
+            [cx - gateW * 0.5 - postW * 0.5, lintelY + 3 * sy],
+          ]);
+
+          if (tier === 5) {
+            // Second spear rack on left side!
+            const rackL = cx - 11.5 * s - rackW;
+            g.fillStyle(0x5a3418, 1);
+            safeFillRect(g, rackL, rackY, rackW, rackH);
+            for (let i = 0; i < 4; i += 1) {
+              const spX = rackL + 1.6 * s + i * 1.8 * s;
+              g.lineStyle(1.1 * s, 0x8a5428, 1);
+              safeLineBetween(g, spX, rackY + rackH, spX, rackY - 8 * sy);
+              g.fillStyle(0xf4f6f8, 1);
+              safeFillPolygon(g, [
+                [spX, rackY - 13 * sy],
+                [spX + 1.2 * s, rackY - 9 * sy],
+                [spX, rackY - 8 * sy],
+                [spX - 1.2 * s, rackY - 9 * sy],
+              ]);
+            }
+          }
+        }
+      }
+
+      return g;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // 2) paintSpecBadge: Graphics 18px circular badge, specIndex 0|1:
+  //    two distinct glyphs per family:
+  //      - rangers: [falcon, sharpshooter-eye]
+  //      - mage: [chain-bolt, frost-rune]
+  //      - artillery: [big-shell, cluster-bombs]
+  //      - barracks: [iron-shield, dual-spear]
+  //    Gold ring, family base color fill, contrast glyph.
+  const paintSpecBadge = (scene, familyArg, specIndexArg, optsArg) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const family = normalizeFamily(familyArg);
+      let specIndex = 0;
+      if (
+        specIndexArg === 1 ||
+        specIndexArg === "1" ||
+        (typeof specIndexArg === "string" &&
+          (specIndexArg.includes("eye") ||
+            specIndexArg.includes("frost") ||
+            specIndexArg.includes("cluster") ||
+            specIndexArg.includes("dual") ||
+            specIndexArg.includes("spear")))
+      ) {
+        specIndex = 1;
+      }
+
+      let opts = {};
+      if (optsArg && typeof optsArg === "object") {
+        opts = optsArg;
+      } else if (typeof optsArg === "number") {
+        opts = { size: optsArg };
+      }
+
+      const rawSize = opts.size ?? (opts.radius ? opts.radius * 2 : 18);
+      const badgeSize = Math.max(12, Math.min(36, Math.round(Number(rawSize) || 18)));
+      const r = badgeSize * 0.5;
+      const cx = opts.x !== undefined ? Number(opts.x) : r;
+      const cy = opts.y !== undefined ? Number(opts.y) : r;
+      const s = r / 9;
+
+      const g = resolveGraphics(scene, opts.target);
+
+      // Outer drop shadow
+      g.fillStyle(0x080604, 0.45);
+      safeFillCircle(g, cx, cy + 0.8 * s, r);
+
+      // Gold Ring
+      g.fillStyle(0x6e4812, 1);
+      safeFillCircle(g, cx, cy, r);
+      g.fillStyle(0xf5d448, 1);
+      safeFillCircle(g, cx, cy, Math.max(1, r - 0.7 * s));
+      g.fillStyle(0xb5821c, 1);
+      safeFillCircle(g, cx, cy, Math.max(1, r - 1.4 * s));
+
+      // Family base color fill
+      const rInner = Math.max(1, r - 2.0 * s);
+      let baseColor = 0x1b4a24;
+      let hiColor = 0x2d763a;
+      if (family === "rangers") {
+        baseColor = 0x1b4a24;
+        hiColor = 0x2d763a;
+      } else if (family === "mage") {
+        baseColor = 0x241852;
+        hiColor = 0x463286;
+      } else if (family === "artillery") {
+        baseColor = 0x4e2210;
+        hiColor = 0x7c381a;
+      } else if (family === "barracks") {
+        baseColor = 0x382c16;
+        hiColor = 0x584624;
+      }
+
+      g.fillStyle(baseColor, 1);
+      safeFillCircle(g, cx, cy, rInner);
+      g.fillStyle(hiColor, 0.4);
+      safeFillCircle(g, cx, cy - 1.2 * s, Math.max(0.5, rInner * 0.75));
+
+      // Contrast glyphs
+      if (family === "rangers") {
+        if (specIndex === 0) {
+          // falcon
+          g.fillStyle(0xffffff, 1);
+          safeFillPolygon(g, [
+            [cx - 0.5 * s, cy - 0.8 * s],
+            [cx - 4.2 * s, cy - 5.0 * s],
+            [cx - 1.8 * s, cy - 2.8 * s],
+          ]);
+          safeFillPolygon(g, [
+            [cx + 1.0 * s, cy - 0.5 * s],
+            [cx + 4.8 * s, cy - 4.5 * s],
+            [cx + 2.5 * s, cy - 1.8 * s],
+          ]);
+          safeFillPolygon(g, [
+            [cx - 2.8 * s, cy + 1.8 * s],
+            [cx + 0.5 * s, cy - 1.0 * s],
+            [cx + 3.4 * s, cy - 2.2 * s],
+            [cx + 2.2 * s, cy + 0.8 * s],
+          ]);
+          safeFillPolygon(g, [
+            [cx - 2.2 * s, cy + 1.2 * s],
+            [cx - 4.8 * s, cy + 4.2 * s],
+            [cx - 3.2 * s, cy + 4.5 * s],
+          ]);
+          // Golden beak
+          g.fillStyle(0xffd950, 1);
+          safeFillPolygon(g, [
+            [cx + 3.2 * s, cy - 2.5 * s],
+            [cx + 5.0 * s, cy - 1.8 * s],
+            [cx + 3.0 * s, cy - 1.2 * s],
+          ]);
+          // Eye dot
+          g.fillStyle(0x102010, 1);
+          safeFillCircle(g, cx + 2.4 * s, cy - 1.8 * s, 0.5 * s);
+        } else {
+          // sharpshooter-eye
+          g.fillStyle(0xffffff, 1);
+          safeFillPolygon(g, [
+            [cx - 5.0 * s, cy],
+            [cx - 2.5 * s, cy - 2.8 * s],
+            [cx, cy - 3.4 * s],
+            [cx + 2.5 * s, cy - 2.8 * s],
+            [cx + 5.0 * s, cy],
+            [cx + 2.5 * s, cy + 2.8 * s],
+            [cx, cy + 3.4 * s],
+            [cx - 2.5 * s, cy + 2.8 * s],
+          ]);
+          g.fillStyle(0x101a12, 1);
+          safeFillPolygon(g, [
+            [cx - 4.0 * s, cy],
+            [cx, cy - 2.4 * s],
+            [cx + 4.0 * s, cy],
+            [cx, cy + 2.4 * s],
+          ]);
+          // Iris
+          g.fillStyle(0xffc830, 1);
+          safeFillCircle(g, cx, cy, 2.2 * s);
+          // Pupil
+          g.fillStyle(0x080c08, 1);
+          safeFillCircle(g, cx, cy, 1.1 * s);
+          // Catchlight
+          g.fillStyle(0xffffff, 1);
+          safeFillCircle(g, cx + 0.6 * s, cy - 0.6 * s, 0.5 * s);
+          // Crosshair ticks
+          g.lineStyle(1.1 * s, 0xffffff, 0.95);
+          safeLineBetween(g, cx, cy - 3.4 * s, cx, cy - 5.5 * s);
+          safeLineBetween(g, cx, cy + 3.4 * s, cx, cy + 5.5 * s);
+          safeLineBetween(g, cx - 5.0 * s, cy, cx - 6.6 * s, cy);
+          safeLineBetween(g, cx + 5.0 * s, cy, cx + 6.6 * s, cy);
+        }
+      } else if (family === "mage") {
+        if (specIndex === 0) {
+          // chain-bolt
+          g.fillStyle(0x64e8ff, 0.45);
+          safeFillCircle(g, cx, cy, 5.0 * s);
+          // Main jagged bolt
+          g.fillStyle(0xffffff, 1);
+          safeFillPolygon(g, [
+            [cx + 1.8 * s, cy - 5.4 * s],
+            [cx + 3.6 * s, cy - 5.0 * s],
+            [cx - 0.2 * s, cy - 0.6 * s],
+            [cx + 2.4 * s, cy - 0.4 * s],
+            [cx - 3.6 * s, cy + 5.4 * s],
+            [cx - 1.2 * s, cy + 1.0 * s],
+            [cx - 3.2 * s, cy + 0.8 * s],
+          ]);
+          // Chain branch
+          g.lineStyle(1.4 * s, 0x64e8ff, 1);
+          safeLineBetween(g, cx - 0.2 * s, cy - 0.6 * s, cx + 2.4 * s, cy + 1.0 * s);
+          safeLineBetween(g, cx + 2.4 * s, cy + 1.0 * s, cx + 4.2 * s, cy + 2.8 * s);
+          // Spark motes
+          g.fillStyle(0xffffff, 1);
+          safeFillCircle(g, cx - 3.5 * s, cy - 2.5 * s, 0.7 * s);
+          safeFillCircle(g, cx + 3.2 * s, cy + 4.0 * s, 0.7 * s);
+        } else {
+          // frost-rune
+          g.fillStyle(0x94edff, 0.35);
+          safeFillCircle(g, cx, cy, 4.8 * s);
+          // Central diamond
+          g.fillStyle(0xffffff, 1);
+          safeFillPolygon(g, [
+            [cx, cy - 1.6 * s],
+            [cx + 1.4 * s, cy],
+            [cx, cy + 1.6 * s],
+            [cx - 1.4 * s, cy],
+          ]);
+          // 6 crystalline arms
+          g.lineStyle(1.2 * s, 0xffffff, 0.95);
+          for (let i = 0; i < 6; i += 1) {
+            const rad = i * (Math.PI / 3);
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+            const x2 = cx + cos * 5.2 * s;
+            const y2 = cy + sin * 5.2 * s;
+            safeLineBetween(g, cx, cy, x2, y2);
+            // V-barbs
+            const mx = cx + cos * 3.2 * s;
+            const my = cy + sin * 3.2 * s;
+            const bcos = Math.cos(rad + Math.PI * 0.28);
+            const bsin = Math.sin(rad + Math.PI * 0.28);
+            const bcos2 = Math.cos(rad - Math.PI * 0.28);
+            const bsin2 = Math.sin(rad - Math.PI * 0.28);
+            safeLineBetween(g, mx, my, mx + bcos * 1.5 * s, my + bsin * 1.5 * s);
+            safeLineBetween(g, mx, my, mx + bcos2 * 1.5 * s, my + bsin2 * 1.5 * s);
+          }
+        }
+      } else if (family === "artillery") {
+        if (specIndex === 0) {
+          // big-shell
+          g.fillStyle(0xf0f4f8, 1);
+          safeFillRect(g, cx - 2.4 * s, cy - 1.4 * s, 4.8 * s, 5.0 * s);
+          safeFillPolygon(g, [
+            [cx - 2.4 * s, cy - 1.4 * s],
+            [cx, cy - 5.5 * s],
+            [cx + 2.4 * s, cy - 1.4 * s],
+          ]);
+          // Brass rifling band
+          g.fillStyle(0xffd54f, 1);
+          safeFillRect(g, cx - 2.4 * s, cy + 2.2 * s, 4.8 * s, 1.4 * s);
+          // Steel fuse tip
+          g.fillStyle(0xffffff, 1);
+          safeFillCircle(g, cx, cy - 5.5 * s, 0.8 * s);
+          // Specular streak
+          g.fillStyle(0xffffff, 0.85);
+          safeFillRect(g, cx - 1.2 * s, cy - 3.2 * s, 1.0 * s, 6.2 * s);
+          // Dark base rim
+          g.fillStyle(0x201610, 1);
+          safeFillRect(g, cx - 2.2 * s, cy + 3.6 * s, 4.4 * s, 0.6 * s);
+        } else {
+          // cluster-bombs
+          const bombs = [
+            [cx, cy - 2.8 * s],
+            [cx - 2.8 * s, cy + 2.4 * s],
+            [cx + 2.8 * s, cy + 2.4 * s],
+          ];
+          for (const [bx, by] of bombs) {
+            g.fillStyle(0x241e1a, 1);
+            safeFillCircle(g, bx, by, 1.9 * s);
+            g.fillStyle(0xffffff, 0.8);
+            safeFillCircle(g, bx - 0.6 * s, by - 0.6 * s, 0.6 * s);
+            g.fillStyle(0xffd54f, 1);
+            safeFillRect(g, bx - 0.7 * s, by - 2.4 * s, 1.4 * s, 0.8 * s);
+            g.fillStyle(0xff5511, 1);
+            safeFillCircle(g, bx, by - 2.8 * s, 0.7 * s);
+          }
+          // Connecting flash sparks
+          g.lineStyle(1.0 * s, 0xffea40, 0.8);
+          safeLineBetween(g, cx, cy - 1.0 * s, cx - 1.4 * s, cy + 1.0 * s);
+          safeLineBetween(g, cx, cy - 1.0 * s, cx + 1.4 * s, cy + 1.0 * s);
+          safeLineBetween(g, cx - 1.4 * s, cy + 1.0 * s, cx + 1.4 * s, cy + 1.0 * s);
+        }
+      } else if (family === "barracks") {
+        if (specIndex === 0) {
+          // iron-shield
+          g.fillStyle(0xd8e0e8, 1);
+          safeFillPolygon(g, [
+            [cx - 4.4 * s, cy - 4.8 * s],
+            [cx + 4.4 * s, cy - 4.8 * s],
+            [cx + 4.0 * s, cy + 0.5 * s],
+            [cx, cy + 5.4 * s],
+            [cx - 4.0 * s, cy + 0.5 * s],
+          ]);
+          // Left dark shaded half
+          g.fillStyle(0x8c9aa6, 1);
+          safeFillPolygon(g, [
+            [cx - 3.8 * s, cy - 4.2 * s],
+            [cx, cy - 4.2 * s],
+            [cx, cy + 4.6 * s],
+            [cx - 3.4 * s, cy + 0.5 * s],
+          ]);
+          // Right bright half
+          g.fillStyle(0xf2f6fa, 1);
+          safeFillPolygon(g, [
+            [cx, cy - 4.2 * s],
+            [cx + 3.8 * s, cy - 4.2 * s],
+            [cx + 3.4 * s, cy + 0.5 * s],
+            [cx, cy + 4.6 * s],
+          ]);
+          // Center iron boss
+          g.fillStyle(0x3a424a, 1);
+          safeFillCircle(g, cx, cy - 0.5 * s, 1.7 * s);
+          g.fillStyle(0xffffff, 1);
+          safeFillCircle(g, cx - 0.4 * s, cy - 0.9 * s, 0.6 * s);
+          // Rivets
+          safeFillCircle(g, cx - 3.2 * s, cy - 3.6 * s, 0.4 * s);
+          safeFillCircle(g, cx + 3.2 * s, cy - 3.6 * s, 0.4 * s);
+        } else {
+          // dual-spear
+          // Shafts
+          g.lineStyle(1.4 * s, 0x9e5e2a, 1);
+          safeLineBetween(g, cx - 4.6 * s, cy + 4.8 * s, cx + 4.6 * s, cy - 4.8 * s);
+          safeLineBetween(g, cx + 4.6 * s, cy + 4.8 * s, cx - 4.6 * s, cy - 4.8 * s);
+          // Diamond spearheads
+          g.fillStyle(0xffffff, 1);
+          safeFillPolygon(g, [
+            [cx + 4.6 * s, cy - 4.8 * s],
+            [cx + 3.2 * s, cy - 3.6 * s],
+            [cx + 4.0 * s, cy - 2.8 * s],
+            [cx + 5.4 * s, cy - 4.0 * s],
+          ]);
+          safeFillPolygon(g, [
+            [cx - 4.6 * s, cy - 4.8 * s],
+            [cx - 3.2 * s, cy - 3.6 * s],
+            [cx - 4.0 * s, cy - 2.8 * s],
+            [cx - 5.4 * s, cy - 4.0 * s],
+          ]);
+          // Gold collars
+          g.fillStyle(0xffd700, 1);
+          safeFillCircle(g, cx + 3.6 * s, cy - 3.2 * s, 0.8 * s);
+          safeFillCircle(g, cx - 3.6 * s, cy - 3.2 * s, 0.8 * s);
+          // Center leather lashing
+          g.fillStyle(0x3a2010, 1);
+          safeFillCircle(g, cx, cy, 1.4 * s);
+          g.fillStyle(0xffd700, 1);
+          safeFillCircle(g, cx, cy, 0.5 * s);
+        }
+      }
+
+      return g;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // 3) Helper: parse rubble arguments flexibly
+  const parseRubbleArgs = (a, b, c, d, e) => {
+    let posX = 0;
+    let posY = 0;
+    let seedVal = 555;
+    let family = "barracks";
+    let targetObj = null;
+    let radius = 18;
+
+    const rawArgs = [a, b, c, d, e].filter((v) => v !== undefined);
+    const numArgs = [];
+
+    for (const arg of rawArgs) {
+      if (typeof arg === "string") {
+        family = normalizeFamily(arg);
+      } else if (typeof arg === "number") {
+        numArgs.push(arg);
+      } else if (typeof arg === "function") {
+        seedVal = arg;
+      } else if (typeof arg === "object" && arg !== null) {
+        if (typeof arg.beginPath === "function" || typeof arg.fillStyle === "function") {
+          targetObj = arg;
+        } else {
+          if (arg.x !== undefined) posX = Number(arg.x) || posX;
+          if (arg.y !== undefined) posY = Number(arg.y) || posY;
+          if (arg.seed !== undefined) seedVal = arg.seed;
+          if (arg.radius !== undefined) radius = Number(arg.radius) || radius;
+          if (arg.size !== undefined) radius = (Number(arg.size) || 36) * 0.5;
+          if (arg.target !== undefined) targetObj = arg.target;
+          if (arg.family !== undefined) family = normalizeFamily(arg.family);
+        }
+      }
+    }
+
+    if (numArgs.length >= 1 && posX === 0) posX = numArgs[0];
+    if (numArgs.length >= 2 && posY === 0) posY = numArgs[1];
+    if (numArgs.length >= 3 && seedVal === 555) seedVal = numArgs[2];
+
+    radius = Math.max(8, Math.min(48, Math.round(Number(radius) || 18)));
+    return { posX, posY, seedVal, family, targetObj, radius };
+  };
+
+  // 3) paintRubble: small stone/wood rubble cluster matching family color,
+  //    with soft smoke puff helper, used when towers sell/fall
+  const paintRubble = (scene, a, b, c, d, e) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const { posX, posY, seedVal, family, targetObj, radius } = parseRubbleArgs(a, b, c, d, e);
+      const g = resolveGraphics(scene, targetObj);
+      const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+
+      // Contact earth shadow
+      g.fillStyle(0x120c08, 0.45);
+      safeFillEllipse(g, posX, posY + 2, radius * 1.3, radius * 0.55);
+
+      // Stone blocks
+      const numStones = rng.int(5, 7);
+      for (let i = 0; i < numStones; i += 1) {
+        const ox = rng.range(-radius * 0.75, radius * 0.75);
+        const oy = rng.range(-radius * 0.35, radius * 0.35);
+        const sw = rng.range(4, 9);
+        const sh = rng.range(3, 7);
+        g.fillStyle(0x322e2a, 1);
+        safeFillRect(g, posX + ox, posY + oy, sw, sh);
+        g.fillStyle(0x625c54, 1);
+        safeFillRect(g, posX + ox + 0.6, posY + oy + 0.6, sw - 1.2, sh - 1.2);
+        g.fillStyle(0x948c82, 0.75);
+        safeFillRect(g, posX + ox + 0.6, posY + oy + 0.6, sw - 1.2, Math.max(1, sh * 0.3));
+      }
+
+      // Splintered timber beams
+      const numPlanks = rng.int(2, 4);
+      for (let i = 0; i < numPlanks; i += 1) {
+        const px = posX + rng.range(-radius * 0.65, radius * 0.65);
+        const py = posY + rng.range(-radius * 0.3, radius * 0.3);
+        const pw = rng.range(7, 14);
+        const ph = rng.range(2.2, 4);
+        const tilt = rng.range(-0.5, 0.5);
+        g.fillStyle(0x281608, 1);
+        safeFillPolygon(g, [
+          [px, py],
+          [px + pw, py + tilt * 4],
+          [px + pw - 1.5, py + ph + tilt * 4],
+          [px - 1, py + ph],
+        ]);
+        g.fillStyle(0x7e4a22, 1);
+        safeFillPolygon(g, [
+          [px + 0.5, py + 0.5],
+          [px + pw - 0.5, py + 0.5 + tilt * 4],
+          [px + pw - 1.8, py + ph - 0.5 + tilt * 4],
+          [px - 0.5, py + ph - 0.5],
+        ]);
+      }
+
+      // Family matching debris
+      if (family === "rangers") {
+        // Moss & leaves & bow fragment
+        for (let i = 0; i < 4; i += 1) {
+          const mx = posX + rng.range(-radius * 0.6, radius * 0.6);
+          const my = posY + rng.range(-radius * 0.3, radius * 0.3);
+          g.fillStyle(0x3e7424, 0.85);
+          safeFillCircle(g, mx, my, rng.range(1.5, 3.2));
+        }
+        for (let i = 0; i < 3; i += 1) {
+          const lx = posX + rng.range(-radius * 0.7, radius * 0.7);
+          const ly = posY + rng.range(-radius * 0.35, radius * 0.35);
+          g.fillStyle(0x6ec238, 0.9);
+          safeFillEllipse(g, lx, ly, 2.5, 1.4);
+        }
+        // Bow fragment
+        g.lineStyle(1.4, 0x8a4c1c, 1);
+        safeLineBetween(g, posX - 6, posY - 2, posX + 4, posY + 4);
+      } else if (family === "mage") {
+        // Glowing mana crystal shards & mystic glow
+        for (let i = 0; i < 4; i += 1) {
+          const mx = posX + rng.range(-radius * 0.6, radius * 0.6);
+          const my = posY + rng.range(-radius * 0.35, radius * 0.35);
+          const cr = rng.range(2.0, 3.8);
+          g.fillStyle(0x7d75ff, 0.35);
+          safeFillCircle(g, mx, my, cr * 1.8);
+          g.fillStyle(0x946aff, 1);
+          safeFillPolygon(g, [
+            [mx, my - cr],
+            [mx + cr * 0.7, my],
+            [mx, my + cr],
+            [mx - cr * 0.7, my],
+          ]);
+          g.fillStyle(0xffffff, 0.9);
+          safeFillCircle(g, mx, my, cr * 0.35);
+        }
+      } else if (family === "artillery") {
+        // Scorched soot & brass casing & sparks
+        g.fillStyle(0x14100c, 0.6);
+        safeFillEllipse(g, posX, posY, radius * 0.8, radius * 0.4);
+        // Brass casing fragments
+        for (let i = 0; i < 2; i += 1) {
+          const bx = posX + rng.range(-radius * 0.5, radius * 0.5);
+          const by = posY + rng.range(-radius * 0.25, radius * 0.25);
+          g.fillStyle(0xd4a030, 1);
+          safeFillRect(g, bx, by, 4.5, 2.5);
+          g.fillStyle(0x8a6218, 1);
+          safeFillRect(g, bx + 3.2, by, 1.3, 2.5);
+        }
+        // Embers
+        for (let i = 0; i < 5; i += 1) {
+          const ex = posX + rng.range(-radius * 0.7, radius * 0.7);
+          const ey = posY + rng.range(-radius * 0.4, radius * 0.4);
+          g.fillStyle(0xff6218, 0.9);
+          safeFillCircle(g, ex, ey, 1.1);
+        }
+      } else if (family === "barracks") {
+        // Shield rim & spear tip & red cloth scrap
+        const sx = posX + rng.range(-radius * 0.4, radius * 0.4);
+        const sy = posY + rng.range(-radius * 0.25, radius * 0.25);
+        g.fillStyle(0xd8e0e8, 1);
+        safeFillCircle(g, sx, sy, 3.8);
+        g.fillStyle(0x444c54, 1);
+        safeFillCircle(g, sx, sy, 2.4);
+        g.fillStyle(0xffffff, 1);
+        safeFillCircle(g, sx, sy, 1.0);
+        // Broken spear tip
+        g.fillStyle(0xf0f4f8, 1);
+        safeFillPolygon(g, [
+          [posX - 4, posY + 2],
+          [posX - 8, posY - 4],
+          [posX - 1, posY - 3],
+        ]);
+        // Red banner scrap
+        g.fillStyle(0x9e2424, 0.9);
+        safeFillPolygon(g, [
+          [posX + 3, posY - 3],
+          [posX + 8, posY - 1],
+          [posX + 6, posY + 4],
+        ]);
+      }
+
+      // Small pebbles
+      const numPebbles = rng.int(8, 12);
+      for (let i = 0; i < numPebbles; i += 1) {
+        const px = posX + rng.range(-radius * 0.85, radius * 0.85);
+        const py = posY + rng.range(-radius * 0.45, radius * 0.45);
+        g.fillStyle(0x4a443c, 0.85);
+        safeFillCircle(g, px, py, rng.range(0.8, 1.6));
+      }
+
+      // Soft smoke puff helper
+      let smokeColor = 0x8c7864;
+      if (family === "rangers") smokeColor = 0x7a8c66;
+      else if (family === "mage") smokeColor = 0x8878b4;
+      else if (family === "artillery") smokeColor = 0x3e3630;
+      else if (family === "barracks") smokeColor = 0x9e9482;
+
+      const numPuffs = rng.int(4, 6);
+      for (let i = 0; i < numPuffs; i += 1) {
+        const pfx = posX + rng.range(-radius * 0.5, radius * 0.5);
+        const pfy = posY - 3 + rng.range(-radius * 0.4, 0);
+        const pfr = rng.range(5, 11);
+        g.fillStyle(smokeColor, rng.range(0.2, 0.38));
+        safeFillCircle(g, pfx, pfy, pfr);
+      }
+
+      return g;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  // paintTowerDeath: smoke puff + rubble composite helper
+  const paintTowerDeath = (scene, a, b, c, d, e) => {
+    if (!scene || typeof scene !== "object") return null;
+    try {
+      const { posX, posY, seedVal, family, targetObj, radius } = parseRubbleArgs(a, b, c, d, e);
+      const g = resolveGraphics(scene, targetObj);
+      const rng = typeof seedVal === "function" ? seedVal : createLcg(seedVal);
+
+      let smokeTone = 0x82705e;
+      let cloudLight = 0xdad0c2;
+      if (family === "rangers") {
+        smokeTone = 0x6e7e58;
+        cloudLight = 0xd0dec0;
+      } else if (family === "mage") {
+        smokeTone = 0x6e5c94;
+        cloudLight = 0xd8c8f4;
+      } else if (family === "artillery") {
+        smokeTone = 0x2e2622;
+        cloudLight = 0xb4a89c;
+      } else if (family === "barracks") {
+        smokeTone = 0x8e8270;
+        cloudLight = 0xe4dac8;
+      }
+
+      const cloudLobes = [
+        [posX - radius * 0.45, posY - radius * 0.6, radius * 0.75],
+        [posX + radius * 0.45, posY - radius * 0.65, radius * 0.8],
+        [posX, posY - radius * 0.95, radius * 0.9],
+        [posX - radius * 0.25, posY - radius * 1.3, radius * 0.7],
+        [posX + radius * 0.25, posY - radius * 1.25, radius * 0.75],
+      ];
+
+      for (const [lx, ly, lr] of cloudLobes) {
+        g.fillStyle(smokeTone, 0.32);
+        safeFillCircle(g, lx, ly, lr);
+        g.fillStyle(cloudLight, 0.45);
+        safeFillCircle(g, lx - lr * 0.2, ly - lr * 0.2, lr * 0.65);
+      }
+
+      paintRubble(scene, posX, posY, rng, { family, radius, target: g });
+      return g;
+    } catch (e) {
+      return null;
+    }
+  };
+
   const KRCArt = {
     bake,
     paintRuttedRoad,
@@ -12763,6 +14286,10 @@
     seed: (s) => createLcg(s),
     createRng: createLcg,
     seedRng: createLcg,
+    paintTowerTier,
+    paintSpecBadge,
+    paintRubble,
+    paintTowerDeath,
   };
 
   if (typeof window !== "undefined") {
@@ -12777,6 +14304,10 @@
     window.seed = KRCArt.seed;
     window.createRng = createLcg;
     window.seedRng = createLcg;
+    window.paintTowerTier = paintTowerTier;
+    window.paintSpecBadge = paintSpecBadge;
+    window.paintRubble = paintRubble;
+    window.paintTowerDeath = paintTowerDeath;
   }
   if (typeof globalThis !== "undefined") {
     globalThis.KRCArt = KRCArt;
