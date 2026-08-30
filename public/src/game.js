@@ -7251,6 +7251,40 @@ const bannerY = 98;
       return best;
     }
 
+    playSpellFxStages(spellKey, x, y) {
+      const fx = window.KRCSpellFx?.SPELL_FX?.[spellKey];
+      if (!fx?.stages) return false;
+      const reduced = Boolean(this.settings?.reducedMotion);
+      for (const st of fx.stages) {
+        const delay = reduced ? 0 : st.t;
+        this.time.delayedCall(delay, () => {
+          if (!this.scene?.isActive?.()) return;
+          const g = this.add.graphics().setDepth(58);
+          const color = st.color ?? 0xffffff;
+          const alpha = st.alpha ?? 0.8;
+          if (st.kind === "ring" || st.kind === "hornRings" || st.kind === "bannerPulse") {
+            g.lineStyle(3, color, alpha);
+            g.strokeCircle(x, y, reduced ? st.r : 6);
+            this.tweens.add({
+              targets: g, alpha: 0, scaleX: reduced ? 1 : st.r / 6, scaleY: reduced ? 1 : st.r / 6,
+              duration: reduced ? 200 : 520, ease: "Cubic.easeOut", onComplete: () => g.destroy(),
+            });
+          } else if (st.kind === "shards" || st.kind === "cluster" || st.kind === "smoke" || st.kind === "dustFeet") {
+            const pts = window.KRCSpellFx?.trailPoints?.("arrow", st.count ?? 6) || [];
+            const spread = (st.r ?? 24) / 26 || 1;
+            g.fillStyle(color, alpha);
+            for (const p of pts) g.fillCircle(x + (p.x ?? 0) * spread - 13 * spread, y + (p.y ?? 0), 2.5);
+            this.tweens.add({ targets: g, alpha: 0, duration: reduced ? 260 : 700, onComplete: () => g.destroy() });
+          } else {
+            g.fillStyle(color, alpha);
+            g.fillCircle(x, y, Math.min(st.r ?? 20, 40));
+            this.tweens.add({ targets: g, alpha: 0, duration: reduced ? 240 : 620, onComplete: () => g.destroy() });
+          }
+        });
+      }
+      return true;
+    }
+
     castSpell(id) {
       if (this.overlayActive || this.gameEnded) return;
       const spell = this.spells[id];
@@ -7265,6 +7299,7 @@ const bannerY = 98;
           this.audio.playLayered?.("uiError");
           return;
         }
+        this.playSpellFxStages?.("meteor", target.x, target.y);
         this.stampSpellScorch(target.x, target.y, "meteor");
         if (this.settings?.reducedMotion) {
           // reducedMotion: static stamp + fade
@@ -7369,6 +7404,7 @@ const bannerY = 98;
         for (const enemy of this.enemies) {
           enemy.slow = Math.max(enemy.slow, [4.2, 5.0, 5.8][this.spellRank() - 1]);
         }
+        this.playSpellFxStages?.("frost", W / 2, H / 2);
         this.stampSpellScorch(W / 2, H / 2, "frost");
         if (this.settings?.reducedMotion) {
           // reducedMotion: static stamp + fade
@@ -7495,6 +7531,7 @@ const bannerY = 98;
       }
       if (id === "rally") {
         this.rallyTime = [7, 8.5, 10][this.spellRank() - 1];
+        this.playSpellFxStages?.("rally", W / 2, H / 2);
         if (this.settings?.reducedMotion) {
           // reducedMotion: static stamp + fade
           const stamp = this.add.image(W / 2, H / 2, this.textures.exists("fx_rally") ? "fx_rally" : "fx_rally_0")

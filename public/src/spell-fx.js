@@ -72,6 +72,10 @@ export const trailPoints = (trailKey, steps = 8) => {
   }));
 };
 
+if (typeof window !== "undefined") {
+  window.KRCSpellFx = Object.freeze({ SPELL_FX, projectileTrails, trailPoints, stageEvents, createLcg });
+}
+
 export function stageEvents(spellKey, nowMs, elapsedMs = 0) {
   const spell = SPELL_FX[spellKey];
   if (!spell) return [];
