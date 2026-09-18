@@ -1,0 +1,32 @@
+
+
+```diff:public/src/krc-art.js
+-    make("gate_arch", 96, 64, (ctx) => {
++    make("gate_arch", 128, 96, (ctx) => {
++        const g = linGrad(ctx, 0, 0, 128, 96, [[0, "#3a3a3a"], [0.5, "#1a1a1a"], [1, "#0d0d0d"]]);
++        poly(ctx, [[0, 96], [0, 40], [20, 15], [64, 5], [108, 15], [128, 40], [128, 96]], g, "#111", 2);
++        poly(ctx, [[30, 96], [30, 55], [48, 35], [64, 28], [80, 35], [98, 55], [98, 96]], "#2b1d0e", "#4a3520", 2);
++        rounded(ctx, 38, 60, 14, 25, 3, "#1e140a", "#5c4025", 1);
++        rounded(ctx, 76, 60, 14, 25, 3, "#1e140a", "#5c4025", 1);
++        ellipse(ctx, 28, 45, 6, 9, "#d4a017", "#8b6508", 1);
++        ellipse(ctx, 100, 45, 6, 9, "#d4a017", "#8b6508", 1);
++        shadow(ctx, 28, 45, 12, 18, 0.6);
++        shadow(ctx, 100, 45, 12, 18, 0.6);
++        speckles(ctx, 15, 20, 30, 60, 18, "#2d4a1e", 2);
++        speckles(ctx, 83, 20, 30, 60, 15, "#2d4a1e", 2);
+         })
+
+```diff:public/src/game.js
+-        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
++        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.0);
++        if (this.mapIndex === 0) {
++            const ruts = this.add.graphics();
++            for (let i = 0; i < this.path.length - 1; i++) {
++                const a = this.path[i];
++                const b = this.path[i + 1];
++                ruts.lineStyle(2, 0x3d2b1f, 0.7);
++                ruts.lineBetween(a.x - 5, a.y, b.x - 5, b.y);
++                ruts.lineBetween(a.x + 5, a.y, b.x + 5, b.y);
++            }
++        }
+```

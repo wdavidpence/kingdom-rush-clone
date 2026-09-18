@@ -1,0 +1,33 @@
+{
+  "name": "qwen35ud",
+  "plan": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 45.55,
+    "text": "\n\n**1. Asset Redesign (`krc-art.js`)**\n- Resize `gate_arch` factory to 128\u00d796.\n- Enforce high-contrast palette: stone `#6a5a48`, void `#0a0806`, gold lanterns, timber doors.\n- Layer draw sequence: `shadow` base \u2192 hole \u2192 stone arch frame \u2192 timber doors \u2192 lanterns.\n- Apply `speckles` for stone texture, `linGrad`/`poly`/`rounded`/`ellipse` for structural geometry.\n- Audit all fills/strokes to guarantee zero gray-on-gray or low-contrast overlaps.\n\n**2. Scene Integration (`game.js`)**\n- Update gate instantiation: reposition to `(378, 520)`, scale to `1.15`.\n- Implement ruts: initialize graphics object, iterate path points where `mapIndex===0`, draw lines offset \u00b15 along path tangent.\n- Enforce hard constraints: anchor at `{x: 100, y: 375}`, set `bannerY=98`, strip campaign/version logic.\n- Verify compliance: no canvas ctx in Scene, zero placeholders, `renderSetPiece` excluded.\n\n**3. Validation & QA**\n- Confirm asset dimensions align with scene scaling/positioning bounds.\n- Test contrast ratios and verify all helper parameter signatures match API.\n- Validate ruts render exclusively on primary path (`mapIndex===0`) and sit correctly on the lane.\n- Final audit against forbidden list and hard constraints before commit.",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 411,
+      "completion_tokens": 2355,
+      "total_tokens": 2766,
+      "completion_tokens_details": {
+        "reasoning_tokens": 2014
+      }
+    },
+    "ok": true
+  },
+  "code": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 94.68,
+    "text": "\n\n```diff\n--- a/public/src/krc-art.js\n+++ b/public/src/krc-art.js\n@@ -1,3 +1,74 @@\n-// [REPLACE] make(\"gate_arch\", 96, 64, (ctx) => { ... });\n-// [FAIL] Gray blob. Low contrast.\n+make(\"gate_arch\", 128, 96, (ctx) => {\n+    const stone = \"#6a5a48\";\n+    const hole = \"#0a0806\";\n+    const timber = \"#4a3520\";\n+    \n+    // Shadow base for depth\n+    shadow(ctx, 8, 92, 112, 4, 0.4);\n+    \n+    // Stone Arch Frame (High contrast against hole)\n+    poly(ctx, [\n+        [0, 96], [128, 96], [128, 32], // Right outer\n+        [96, 32], [96, 16], [80, 8],   // Arch top right\n+        [64, 4], [48, 8],              // Arch top center\n+        [32, 16], [32, 32],            // Arch top left\n+        [0, 32], [0, 96]               // Left outer\n+    ], stone);\n+    \n+    // Stone texture speckles (Varied brightness, no gray-on-gray)\n+    speckles(ctx, 0, 32, 128, 64, 60, \"#5a4a38\", 1.2);\n+    speckles(ctx, 0, 32, 128, 64, 60, \"#7a6a58\", 1.2);\n+    \n+    // Void Hole (Background of arch)\n-    // [PLACEHOLDER] Render logic missing.\n+    poly(ctx, [\n+        [32, 96], [96, 96],            // Hole bottom\n+        [96, 16], [80, 8],             // Hole top right\n+        [64, 4], [48, 8],              // Hole top center\n+        [32, 16]                       // Hole top left\n+    ], hole);\n+    \n+    // Timber Doors (Darker than stone for contrast)\n-    // [PLACEHOLDER] Door geometry.\n+    rounded(ctx, 32, 40, 32, 56, 2, timber);\n+    rounded(ctx, 64, 40, 32, 56, 2, timber);\n+    \n+    // Door Planks (Vertical lines)\n-    // [PLACEHOLDER] Door details.\n+    for (let i = 0; i < 4; i++) {\n+        linGrad(ctx, 32 + (i * 8), 40, 32 + (i * 8) + 6, 96, \n-            [[0, '#5a4530'], [1, '#3a2510']], 2\n+        );\n-            [[0, '#5a4530'], [1, '#3a2510']], 2\n+        );\n+    }\n+    \n+    // Gold Lanterns (Pop against dark hole/stone)\n-    // [PLACEHOLDER] Lanterns.\n+    ellipse(ctx, 16, 28, 4, 6, \"#ffd700\");\n+    ellipse(ctx, 112, 28, 4, 6, \"#ffd700\");\n+    \n+    // Lantern Glow (Subtle)\n-    // [PLACEHOLDER] Glow.\n+    ellipse(ctx, 16, 28, 9, 11, \"rgba(255,215,0,0.15)\");\n+    ellipse(ctx, 112, 28, 9, 11, \"rgba(255,215,0,0.15)\");\n+    \n+    // Lantern Chains (Thin lines from arch top)\n-    // [PLACEHOLDER] Chains.\n+    linGrad(ctx, 16, 12, 16, 22, [[0, '#8a7a68'], [1, '#ffd700']], 1);\n+    linGrad(ctx, 112, 12, 112, 22, [[0, '#8a7a68'], [1, '#ffd700']], 1);\n+});\n```\n\n```diff\n--- a/public/src/game.js\n+++ b/public/src/game.js\n@@ -1,3 +1,15 @@\n-        this.gateImage = this.add.image(378, 588, \"gate_arch\").setDepth(-5).setScale(1.58);\n+        this.gateImage = this.add.image(378, 520, \"gate_arch\").setDepth(-5).setScale(1.15);\n+        \n+        // Ruts on primary path (mapIndex===0)\n-        // [PLACEHOLDER] No ruts.\n+        const g = this.add.graphics();\n+        for (let i = 1; i < this.path.length - 1; i++) {\n+            if (this.path[i].mapIndex === 0) {\n+                const p = this.path[i];\n+                const prev = this.path[i-1];\n+                // Tangent and perpendicular for offset \u00b15\n+                const dx = p.x - prev.x;\n-                const dy = p.y - prev.y;\n+                const dy = p.y - prev.y;\n+                const len = Math.hypot(dx, dy) || 1;\n-                g.lineStyle(2, 0x2a2015, 0.6);\n+                g.lineStyle(2, 0x2a2015, 0.6);\n-                g.lineBetween(p.x - (dy/len)*5, p.y + (dx/len)*5, p.x + (dy/len)*5, p.y - (dx/len)*5);\n+                g.lineBetween(p.x - (dy/len)*5, p.y + (dx/len)*5, p.x + (dy/len)*5, p.y - (dx/len)*5);\n+            }\n+        }\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 810,
+      "completion_tokens": 4893,
+      "total_tokens": 5703,
+      "completion_tokens_details": {
+        "reasoning_tokens": 3382
+      }
+    },
+    "ok": true
+  }
+}

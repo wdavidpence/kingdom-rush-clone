@@ -1,0 +1,33 @@
+{
+  "name": "qwen35ud",
+  "plan": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 85.9,
+    "text": "\n\n```diff:public/src/krc-art.js\n--- a/public/src/krc-art.js\n+++ b/public/src/krc-art.js\n@@ -120,145 +120,148 @@ const drawHeroCaptainAbility = (ctx) => {\n-      shadow(ctx, 32, 66, 28, 7.5, 0.5);\n+      shadow(ctx, 32, 68, 24, 5, 0.4);\n       const OUT = \"#141008\";\n \n-      // Radiating Golden Holy Nova Aura\n-      ellipse(ctx, 32, 24, 29, 23, radGrad(ctx, 32, 24, 6, 29, [[0, \"rgba",
+    "finish": "length",
+    "usage": {
+      "prompt_tokens": 3466,
+      "completion_tokens": 3999,
+      "total_tokens": 7465,
+      "completion_tokens_details": {
+        "reasoning_tokens": 3816
+      }
+    },
+    "ok": true
+  },
+  "code": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 135.0,
+    "text": "\n\n```diff:public/src/krc-art.js\n--- a/public/src/krc-art.js\n+++ b/public/src/krc-art.js\n@@ -120,6 +120,7 @@ const drawHeroCaptainAbility = (ctx) => {\n-      shadow(ctx, 32, 66, 28, 7.5, 0.5);\n+      shadow(ctx, 32, 68, 14, 4.5, 0.4);\n       const OUT = \"#141008\";\n\n       const capeG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, \"#8ec0f8\"], [0.45, \"#2a62a8\"], [1, \"#0c1830\"]]);\n@@ -210,9 +211,9 @@ const drawHeroCaptainAbility = (ctx) => {\n \n       // Shield held proudly on left arm\n-      poly(ctx, [[2, 21], [20, 19], [22, 49], [12, 56], [1, 46]], goldG(1, 19, 22, 56), OUT, 2.6);\n-      poly(ctx, [[11, 29], [16, 35], [11, 43], [6, 35]], linGrad(ctx, 6, 29, 16, 43, [[0, \"#4a82cc\"], [1, \"#14284c\"]]), OUT, 1.6);\n-      ellipse(ctx, 11, 35, 2.2, 2.2, \"#fff2a0\", OUT, 1.0);\n+      // Shield down/back for two-handed rally stance\n+      poly(ctx, [[-2, 31], [16, 29], [18, 59], [8, 66], [-3, 56]], goldG(-2, 29, 18, 66), OUT, 2.6);\n+      poly(ctx, [[7, 39], [12, 45], [7, 53], [2, 45]], linGrad(ctx, 2, 39, 12, 53, [[0, \"#4a82cc\"], [1, \"#14284c\"]]), OUT, 1.6);\n+      ellipse(ctx, 7, 45, 2.2, 2.2, \"#fff2a0\", OUT, 1.0);\n \n       // Sword Raised High Overhead for Rally (Contained within canvas y: 4..24)\n@@ -219,6 +220,8 @@ const drawHeroCaptainAbility = (ctx) => {\n       ctx.lineWidth = 5.6;\n       ctx.beginPath();\n       ctx.moveTo(48, 22);\n+      // Two-handed overhead rally grip\n+      ellipse(ctx, 45.5, 19, 3.2, 3.2, skinG(40, 15, 50, 23), OUT, 1.6);\n       ctx.lineTo(48, 4);\n@@ -235,6 +238,9 @@ const drawHeroCaptainAbility = (ctx) => {\n       ellipse(ctx, 48, 26, 2.8, 2.8, goldG(45, 23, 51, 29), OUT, 1.2);\n \n       // Gleaming Rally Starburst at Blade Tip (y: 1..10, x: 42..54)\n+      // Ground Gold Rally Ring\n+      ellipse(ctx, 32, 67.5, 18, 4.5, linGrad(ctx, 14, 67.5, 50, 67.5, [[0, \"#dca828\"], [0.3, \"#fff6b8\"], [1, \"#dca828\"]]), OUT, 2.0);\n+      ellipse(ctx, 32, 67.5, 14, 3.0, \"rgba(255,246,184,0.3)\", OUT, 0);\n       poly(ctx, [[48, 1], [50, 3], [54, 4], [50, 5], [48, 7], [46, 5], [42, 4], [46, 3]], \"#ffffff\", goldG(42, 1, 54, 7), 1.2);\n       ellipse(ctx, 48, 4, 2.2, 2.2, \"#ffffff\");\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 3831,
+      "completion_tokens": 6397,
+      "total_tokens": 10228,
+      "completion_tokens_details": {
+        "reasoning_tokens": 5267
+      }
+    },
+    "ok": true
+  }
+}

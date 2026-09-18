@@ -1,0 +1,18 @@
+
+
+```diff:public/src/game.js
+@@ -X,Y +X,Z @@
+           for (let i = 0; i < 7; i += 1) {
+             const spark = this.textures.exists("fx_spark")
+               ? this.add.image(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, "fx_spark").setScale(0.35 + Math.random() * 0.2).setTint(0xffe066).setAlpha(0.95).setDepth(61)
+-            : this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
++            : this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
++           }
++          for (let i = 0; i < 8; i += 1) {
++            const splinter = this.textures.exists("fx_dust")
++              ? this.add.image(gx, gy, "fx_dust").setTint(0x6a4428).setScale(0.3 + Math.random() * 0.4)
++              : this.add.rectangle(gx, gy, 6 + Math.random() * 4, 2 + Math.random(), 0x6a4428);
++            this.tweens.add({ targets: splinter, x: gx - 30 - Math.random() * 20, duration: 400 + Math.random() * 200, ease: 'Power1', onComplete: () => splinter.destroy() });
++            this.effects.push(splinter.setDepth(61));
+           }
+```

@@ -1,0 +1,57 @@
+A
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -142,8 +142,12 @@ make("projectile_magic", 24, 24, (ctx) => {
+-  ctx.fillStyle = "#9c27b0"
+-  ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill()
++  const fill = linGrad(ctx, 0, 0, 24, 24, [[0, "#1a0b2e"], [0.6, "#7b42f6"], [1, "#00d4ff"]])
++  const stroke = linGrad(ctx, 24, 0, 0, 24, [[0, "#ffffff"], [1, "#8a2be2"]])
++  shadow(ctx, 0, 0, 5, "rgba(138, 43, 226, 0.7)")
++  poly(ctx, [[12,0], [18,9], [14,9], [24,24], [12,15], [0,24], [-6,9], [6,9]], fill, stroke, 3)
++  speckles(ctx, [[2,3], [9,5], [17,4], [21,8], [6,19], [20,21], [11,11]], "#c8a0ff", 1.5)
+ })
+```
+
+```diff:public/src/game.js
+--- a/public/src/game.js
++++ b/public/src/game.js
+@@ -87,7 +87,7 @@ const CONFIG = {
+   projectileScale: {
+     arrow: 1.0,
+-    mage: 0.9,
++    mage: 1.2,
+     fireball: 1.5
+   },
+```
+B
+
+
+```diff:public/src/krc-art.js
+@@ -142,7 +142,16 @@ const art = {
+-  make("projectile_magic", function(ctx) {
++  make("projectile_magic", (ctx, scale) => {
+     ctx.save();
+-    ctx.translate(0, 24);
++    const t = (scale || 1) * (24 / 16);
++    ctx.scale(t, t);
+-    // legacy drawing steps removed for clarity
+-    ctx.restore();
++    const bolt = [[0,-8], [3,2], [10,4], [3,6], [0,8], [-3,6], [-10,4], [-3,2]];
++    const grad = linGrad(ctx, -8, 0, 8, 0, [[0, '#4a9eff'], [1, '#7b2ff7']]);
++    poly(ctx, bolt, grad, '#ffffff', 1.5);
++    const core = radGrad(ctx, 0, 0, 1, 4, [[0.3, '#ffffff'], [1, 'transparent']]);
++    poly(ctx, bolt, core, null, 0);
++    ctx.restore();
+   })
+
+```diff:public/src/game.js
+@@ -89,7 +89,7 @@ const settings = {
+   mage: {
+-    projectileScale: 0.9,
++    projectileScale: 1.2,
+     // ...
+   }
+```

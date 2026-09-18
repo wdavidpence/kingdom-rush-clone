@@ -1,0 +1,44 @@
+A
+
+
+```diff:public/src/game.js
+@@ -campaign node forEach context @@
+ // Inject local biome array inside the existing forEach scope:
++ const biomeStroke = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
+    campaignNodes.forEach((node, i) => {
+      // ... existing node/label instantiation ...
+-     const onOver = () => {
+-       nodeBg.setStrokeStyle(3.5, 0xfff0a0, 1);
+-       labelBg.setStrokeStyle(2, 0xfff0a0, 1);
+-     };
++     const onOver = () => {
++       nodeBg.setStrokeStyle(3.5, biomeStroke[i], 1);
++       labelBg.setStrokeStyle(2, biomeStroke[i], 1);
++     };
+      const onOut = () => {
+        nodeBg.setStrokeStyle(3, 0xf5c85a, 1);
+        labelBg.setStrokeStyle(1.5, 0xd8b548, 1);
+      };
+      // ... rest of loop unchanged (coordinates, listeners, etc.) ...
+    });
+```
+B
+
+
+```diff:public/src/game.js
+@@ ... @@ campaignNodes.forEach(node => {
+-  const onOver = () => {
+-    nodeBg.setStrokeStyle(3.5, 0xfff0a0, 1);
+-    labelBg.setStrokeStyle(2, 0xfff0a0, 1);
+-  };
++  const biomeStroke = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
++  if (node.x === 100 && node.y === 375) return;
++  const onOver = () => {
++    nodeBg.setStrokeStyle(3.5, biomeStroke[node.biomeIndex], 1);
++    labelBg.setStrokeStyle(2, biomeStroke[node.biomeIndex], 1);
++  };
+   const onOut = () => {
+     nodeBg.setStrokeStyle(3, 0xf5c85a, 1);
+     labelBg.setStrokeStyle(1.5, 0xd8b548, 1);
+   };
+```

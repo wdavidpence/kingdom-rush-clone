@@ -1,0 +1,11 @@
+
+
+```diff:public/src/krc-art.js
+        ellipse(ctx, 106, 43, 1.4, 0.8, "rgba(255, 248, 200, 0.75)");
++       ellipse(ctx, 100, 42, 0.6, 0.5, "#ffcc00", "#ffffff", 0.8);
++       ellipse(ctx, 107, 43, 0.5, 0.6, "#ffe066", "#ffaa00", 0.7);
++       ellipse(ctx, 113, 41, 0.7, 0.5, "#ffdd44", "#ffffff", 0.9);
++       ellipse(ctx, 120, 44, 0.5, 0.5, "#ffbb00", "#ffffff", 0.6);
+
+        // Structure overlays
+```

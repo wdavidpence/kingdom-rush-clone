@@ -1,0 +1,134 @@
+
+
+```diff:public/src/krc-art.js
+@@ -1,54 +1,54 @@
+     make("projectile_magic", 36, 36, (ctx) => {
+       const cx = 18;
+       const cy = 18;
+
+       // 1. Soft radiant plasma aura (multi-stop violet & cyan)
+-      const aura = radGrad(ctx, cx, cy, 2, 17, [
+-        [0, "rgba(255, 255, 255, 0.95)"],
+-        [0.22, "rgba(215, 160, 255, 0.8)"],
+-        [0.5, "rgba(130, 70, 255, 0.45)"],
+-        [0.8, "rgba(40, 190, 255, 0.2)"],
++      const aura = radGrad(ctx, cx, cy, 2, 18, [
++        [0, "rgba(255, 255, 255, 1)"],
++        [0.2, "rgba(215, 160, 255, 0.9)"],
++        [0.45, "rgba(130, 70, 255, 0.6)"],
++        [0.8, "rgba(40, 190, 255, 0.3)"],
+         [1, "rgba(20, 10, 80, 0)"],
+       ]);
+-      ellipse(ctx, cx, cy, 17, 17, aura);
++      ellipse(ctx, cx, cy, 18, 18, aura);
+
+       // 2. Trailing comet plasma wisps (pointing left / backward)
+-      ctx.strokeStyle = "rgba(190, 140, 255, 0.6)";
+-      ctx.lineWidth = 2;
++      ctx.strokeStyle = "rgba(190, 140, 255, 0.75)";
++      ctx.lineWidth = 3;
+       ctx.lineCap = "round";
+       ctx.beginPath();
+-      ctx.moveTo(cx - 2, cy - 7);
+-      ctx.quadraticCurveTo(cx - 10, cy - 10, cx - 15, cy - 6);
++      ctx.moveTo(cx - 2, cy - 8);
++      ctx.quadraticCurveTo(cx - 11, cy - 12, cx - 17, cy - 7);
+-      ctx.moveTo(cx - 2, cy + 7);
+-      ctx.quadraticCurveTo(cx - 10, cy + 10, cx - 15, cy + 6);
++      ctx.moveTo(cx - 2, cy + 8);
++      ctx.quadraticCurveTo(cx - 11, cy + 12, cx - 17, cy + 7);
+-      ctx.moveTo(cx - 4, cy);
+-      ctx.lineTo(cx - 16, cy);
++      ctx.moveTo(cx - 5, cy);
++      ctx.lineTo(cx - 18, cy);
+       ctx.stroke();
+
+       // 3. Primary Arcane Rune Diamond Core
+       const diamondOuter = [
+-        [cx + 14, cy],
+-        [cx, cy - 10],
+-        [cx - 11, cy],
+-        [cx, cy + 10],
++        [cx + 15, cy],
++        [cx, cy - 12],
++        [cx - 13, cy],
++        [cx, cy + 12],
+       ];
+       poly(
+         ctx,
+         diamondOuter,
+-        linGrad(ctx, cx - 11, cy, cx + 14, cy, [
++        linGrad(ctx, cx - 13, cy, cx + 15, cy, [
+           [0, "#5b15d9"],
+           [0.35, "#9333ea"],
+           [0.7, "#38bdf8"],
+           [1, "#ffffff"],
+         ]),
+         "#180638",
+-        1.5
++        2.5
+       );
+
+       // 4. Inner Crystalline Rune Core
+       const diamondInner = [
+-        [cx + 8, cy],
+-        [cx, cy - 6],
+-        [cx - 6, cy],
+-        [cx, cy + 6],
++        [cx + 10, cy],
++        [cx, cy - 7],
++        [cx - 8, cy],
++        [cx, cy + 7],
+       ];
+       poly(
+         ctx,
+         diamondInner,
+-        linGrad(ctx, cx - 6, cy - 6, cx + 8, cy + 6, [
++        linGrad(ctx, cx - 8, cy - 7, cx + 10, cy + 7, [
+           [0, "#ffffff"],
+           [0.4, "#e0f2fe"],
+           [0.75, "#a855f7"],
+           [1, "#6366f1"],
+         ]),
+         "#311068",
+-        1
++        2
+       );
+
+       // 5. Orbiting Arcane Runes / Energy Motes
+       const motes = [
+-        { x: cx + 6, y: cy - 9, r: 2.2, c: "#38bdf8" },
+-        { x: cx + 6, y: cy + 9, r: 2.2, c: "#38bdf8" },
+-        { x: cx - 8, y: cy - 7, r: 1.8, c: "#c084fc" },
+-        { x: cx - 8, y: cy + 7, r: 1.8, c: "#c084fc" },
++        { x: cx + 7, y: cy - 10, r: 2.8, c: "#38bdf8" },
++        { x: cx + 7, y: cy + 10, r: 2.8, c: "#38bdf8" },
++        { x: cx - 9, y: cy - 8, r: 2.4, c: "#c084fc" },
++        { x: cx - 9, y: cy + 8, r: 2.4, c: "#c084fc" },
+       ];
+       for (const m of motes) {
+-        ellipse(ctx, m.x, m.y, m.r, m.r, m.c, "#1a0836", 0.8);
++        ellipse(ctx, m.x, m.y, m.r, m.r, m.c, "#1a0836", 1);
+         ellipse(ctx, m.x, m.y, m.r * 0.45, m.r * 0.45, "#ffffff");
+       }
+
+       // 6. Arcane Cross-Spark / White-Hot Star Glint
+       ctx.strokeStyle = "#ffffff";
+-      ctx.lineWidth = 1.4;
++      ctx.lineWidth = 2.5;
+       ctx.beginPath();
+-      ctx.moveTo(cx + 1, cy - 7); ctx.lineTo(cx + 1, cy + 7);
+-      ctx.moveTo(cx - 6, cy); ctx.lineTo(cx + 8, cy);
++      ctx.moveTo(cx + 1, cy - 8); ctx.lineTo(cx + 1, cy + 8);
++      ctx.moveTo(cx - 7, cy); ctx.lineTo(cx + 9, cy);
+       ctx.stroke();
+
+-      ellipse(ctx, cx + 1, cy, 2.5, 2.5, "#ffffff");
++      ellipse(ctx, cx + 1, cy, 3.5, 3.5, "#ffffff");
+     });
+
+diff:public/src/game.js
+@@ -1,1 +1,1 @@
+-      projectile.sprite.setScale(tower.type === "artillery" ? 1.1 : 0.9);
++      projectile.sprite.setScale(tower.type === "artillery" ? 1.1 : tower.type === "mage" ? 1.2 : 0.9);
+```

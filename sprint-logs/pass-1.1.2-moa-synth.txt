@@ -1,0 +1,19 @@
+
+
+```diff:public/src/krc-art.js
+@@ -138,7 +138,7 @@ function drawBarracksGate(ctx) {
+     ctx.fillRect(36, 104, 24, 44); // torso
+     ctx.fillRect(39, 80, 18, 24); // head
+-    ctx.fillRect(69, 50, 3, 72); // spear
++    ctx.fillRect(52, 50, 3, 72); // spear
+     ctx.fillRect(38, 148, 10, 20); // legs
+     ctx.fillRect(28, 108, 6, 24); // shield
+     
+@@ -149,7 +149,7 @@ function drawBarracksGate(ctx) {
+     ctx.fillRect(72, 104, 26, 44); // torso
+     ctx.fillRect(75, 80, 20, 24); // head
+-    ctx.fillRect(79, 50, 3, 72); // spear
++    ctx.fillRect(84, 50, 3, 72); // spear
+     ctx.fillRect(74, 148, 10, 20); // legs
+     ctx.fillRect(92, 108, 6, 24); // shield
+```

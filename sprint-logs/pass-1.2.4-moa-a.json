@@ -1,0 +1,33 @@
+{
+  "name": "qwen27",
+  "plan": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 358.98,
+    "text": "\n\n**public/src/krc-art.js**\n1. Locate the live frame registration block.\n2. Register a new sprite frame named `enemy_scout_hit` with dimensions 80x72.\n3. Implement the flinch pose callback using only the provided helpers: use `ellipse` for head and torso, `poly` or `rounded` for limbs/armor, `linGrad` for shading, `shadow` for ground projection, and `speckles` for impact debris.\n4. Insert this registration immediately before the existing `enemy_scout_dead` frame definition.\n5. (Optional) Find `drawArcherFire` and increase the line width parameter for the bow path to visually thicken it.\n\n**public/src/game.js**\n1. Locate the hit initialization block containing `hitFlash = 0.09` and the tint assignment.\n2. Add a conditional check verifying the enemy type is scout and the hit texture exists in the asset registry.\n3. If true, apply `setTexture(\"enemy_scout_hit\")` immediately after the tint call.\n4. Locate the hitFlash decay loop where it is compared to zero.\n5. Add a conditional check for scout units when `hitFlash <= 0`.\n6. If true, restore the default walking texture (`enemy_scout_w0`) to reset the visual state.\n7. Verify strict compliance: leave `{ x: 100, y: 375 }`, `bannerY=98`, `campaign`, and `version` completely untouched.\n8. Confirm Scene initialization uses no placeholders and excludes context objects.",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 363,
+      "completion_tokens": 2369,
+      "total_tokens": 2732,
+      "completion_tokens_details": {
+        "reasoning_tokens": 2026
+      }
+    },
+    "ok": true
+  },
+  "code": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 344.11,
+    "text": "\n\n```diff:public/src/krc-art.js\n make(\"enemy_scout_w1\", 80, 72, (ctx) => drawScoutWalk(ctx));\n+make(\"enemy_scout_hit\", 80, 72, (ctx) => {\n+  shadow(ctx, 40, 68, 25, 6, 0.3);\n+  const g = linGrad(ctx, 25, 10, 55, 65, [[0, \"#5a4d3e\"], [1, \"#2b2218\"]]);\n+  ellipse(ctx, 40, 22, 13, 15, g, \"#1a140e\", 2);\n+  rounded(ctx, 32, 36, 16, 24, 5, g, \"#1a140e\", 2);\n+  poly(ctx, [[34, 40], [18, 56], [24, 60], [38, 46]], \"#4a3e31\", null, 0);\n+  poly(ctx, [[46, 40], [62, 52], [56, 58], [42, 46]], \"#4a3e31\", null, 0);\n+  speckles(ctx, 10, 15, 35, 40, 6, \"#e8dcc8\", 2);\n+});\n make(\"enemy_scout_dead\", 80, 72, (ctx) => drawScoutDead(ctx));\n```\n\n```diff:public/src/game.js\n           enemy.hitFlash = 0.09;\n           enemy.sprite.setTint(0xfff3d6);\n+        if (enemy.type === \"scout\" && assets.enemy_scout_hit) {\n+          enemy.sprite.setTexture(\"enemy_scout_hit\");\n+        }\n           if (enemy.hitFlash > 0) {\n             enemy.hitFlash -= dt;\n+          if (enemy.hitFlash <= 0 && enemy.type === \"scout\") {\n+            enemy.sprite.setTexture(\"enemy_scout_w0\");\n+          }\n           } else {\n             enemy.sprite.clearTint();\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 764,
+      "completion_tokens": 4522,
+      "total_tokens": 5286,
+      "completion_tokens_details": {
+        "reasoning_tokens": 4002
+      }
+    },
+    "ok": true
+  }
+}

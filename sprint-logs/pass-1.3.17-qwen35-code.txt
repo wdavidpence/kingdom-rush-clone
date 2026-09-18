@@ -1,0 +1,164 @@
+
+
+```diff
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -1,0 +1 @@
+- const drawHeroCaptainAttack = (ctx) => {
++ const drawHeroCaptainAttack = (ctx) => {
+       shadow(ctx, 32, 68, 24, 5, 0.5);
+       const OUT = "#141008";
+
+       const capeG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#8ec0f8"], [0.45, "#2a62a8"], [1, "#0c1830"]]);
+       const armorG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#ffffff"], [0.4, "#bcd2e8"], [1, "#546e88"]]);
+       const goldG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#fff6b8"], [0.5, "#dca828"], [1, "#6a4a08"]]);
+       const skinG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#fff4dc"], [0.5, "#e2aa70"], [1, "#8e5628"]]);
+       const bootG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#324458"], [1, "#0e141c"]]);
+       const legG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#7eaadc"], [1, "#182c44"]]);
+       const shieldG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#fff2a0"], [1, "#dca828"]]);
+
+       // Swept-back cape billowing with momentum
+-      poly(ctx, [[6, 23], [42, 25], [34, 60], [8, 64], [0, 44]], capeG(0, 23, 42, 64), OUT, 2.8);
+-      poly(ctx, [[0, 44], [8, 64], [34, 60], [31, 56], [9, 59], [3, 42]], goldG(0, 42, 34, 64), OUT, 1.4);
++      poly(ctx, [[20, 25], [32, 27], [16, 58], [4, 50], [1, 36]], capeG(20, 20, 32, 58), OUT, 2.6);
++      poly(ctx, [[1, 36], [4, 50], [32, 27], [29, 24], [6, 30], [1, 48]], goldG(1, 24, 32, 58), OUT, 1.6);
+
+       // Lunging Legs (Deep dynamic lunge)
+-      poly(ctx, [[14, 40], [24, 40], [12, 60], [4, 58]], linGrad(ctx, 4, 40, 24, 60, [[0, "#7eaadc"], [1, "#182c44"]]), OUT, 2.6);
+-      rounded(ctx, 2, 55, 14, 8.5, 3, linGrad(ctx, 2, 55, 2, 64, [[0, "#324458"], [1, "#0e141c"]]), OUT, 2.2);
++      poly(ctx, [[14, 42], [26, 42], [20, 58], [10, 56]], legG(14, 42, 20, 58), OUT, 2.6);
++      rounded(ctx, 4, 54, 14, 7.5, 3, bootG(4, 54, 18, 60), OUT, 2.2);
+
+-      poly(ctx, [[34, 40], [46, 40], [50, 60], [38, 60]], linGrad(ctx, 34, 40, 50, 60, [[0, "#7eaadc"], [1, "#182c44"]]), OUT, 2.6);
+-      rounded(ctx, 38, 55, 15, 8.5, 3, linGrad(ctx, 38, 55, 38, 64, [[0, "#324458"], [1, "#0e141c"]]), OUT, 2.2);
++      poly(ctx, [[38, 42], [50, 42], [56, 62], [48, 62]], legG(38, 42, 56, 62), OUT, 2.6);
++      rounded(ctx, 46, 58, 14, 7.5, 3, bootG(46, 58, 60, 64), OUT, 2.2);
+
+       // Torso turned in aggressive forward swing
+-      rounded(ctx, 18, 23, 32, 26, 7, armorG(18, 23, 50, 49), OUT, 3.0);
++      rounded(ctx, 14, 23, 30, 28, 7, armorG(14, 23, 44, 51), OUT, 3.0);
+       // Gold trim & royal crest
+-      ctx.strokeStyle = goldG(18, 23, 50, 49);
++      ctx.strokeStyle = goldG(14, 23, 44, 51);
+       ctx.lineWidth = 2.4;
+       ctx.beginPath();
+-      ctx.moveTo(21, 30); ctx.lineTo(34, 40); ctx.lineTo(47, 30);
++      ctx.moveTo(17, 30); ctx.lineTo(29, 40); ctx.lineTo(41, 30);
+       ctx.stroke();
+-      poly(ctx, [[34, 31], [38, 37], [34, 43], [30, 37]], goldG(30, 31, 38, 43), OUT, 1.8);
+-      ellipse(ctx, 34, 37, 2, 2, "#4a78c0");
++      poly(ctx, [[29, 31], [33, 37], [29, 43], [25, 37]], goldG(25, 31, 33, 43), OUT, 1.8);
++      ellipse(ctx, 29, 37, 2.2, 2.2, "#4a78c0");
+
+       // Pauldrons
+-      ellipse(ctx, 18, 28, 8.5, 7.5, armorG(10, 21, 26, 36), OUT, 2.4);
+-      ellipse(ctx, 45, 29, 9, 8, armorG(36, 21, 54, 37), OUT, 2.4);
++      ellipse(ctx, 16, 28, 7.5, 6.5, armorG(8, 21, 24, 35), OUT, 2.4);
++      ellipse(ctx, 46, 28, 8, 7, armorG(38, 21, 54, 36), OUT, 2.4);
+
+       // Head & Helm angled forward
+-      ellipse(ctx, 34, 15, 12.5, 11.5, skinG(22, 3, 46, 27), OUT, 2.6);
+-      rounded(ctx, 19, 3, 29, 11.5, 4, goldG(19, 3, 48, 15), OUT, 2.6);
+-      poly(ctx, [[34, 0], [26, 6], [42, 6]], goldG(26, 0, 42, 6), OUT, 2.0);
+-      poly(ctx, [[19, 5], [12, 1], [16, 9]], goldG(12, 1, 19, 9), OUT, 1.8);
+-      poly(ctx, [[48, 5], [55, 1], [51, 9]], goldG(48, 1, 55, 9), OUT, 1.8);
+-      ellipse(ctx, 34, 5.5, 3.2, 3.2, "#ff2233", OUT, 1.5);
+-      ellipse(ctx, 33.5, 4.8, 1, 1, "#ffffff");
++      ellipse(ctx, 30, 14, 12.5, 11.5, skinG(18, 2, 42, 26), OUT, 2.6);
++      rounded(ctx, 15, 3, 30, 12.5, 4, goldG(15, 3, 45, 16), OUT, 2.6);
++      poly(ctx, [[30, 0], [22, 7], [38, 7]], goldG(22, 0, 38, 7), OUT, 2.0);
++      poly(ctx, [[15, 6], [8, 1], [12, 9]], goldG(8, 1, 15, 9), OUT, 1.8);
++      poly(ctx, [[45, 6], [52, 1], [48, 9]], goldG(45, 1, 52, 9), OUT, 1.8);
++      ellipse(ctx, 30, 5.5, 3.2, 3.2, "#ff2233", OUT, 1.5);
++      ellipse(ctx, 29.5, 4.8, 1.0, 1.0, "#ffffff");
+
+       // Fierce Attack Eyes
+-      ellipse(ctx, 29, 15, 3.2, 3.6, "#fffbe0", OUT, 2.0);
+-      ellipse(ctx, 39, 15, 3.2, 3.6, "#fffbe0", OUT, 2.0);
+-      ellipse(ctx, 29.5, 15.3, 1.6, 2.0, "#0e1828");
+-      ellipse(ctx, 39.5, 15.3, 1.6, 2.0, "#0e1828");
+-      ellipse(ctx, 29.5, 15.3, 0.9, 1.2, "#3a70b0");
+-      ellipse(ctx, 39.5, 15.3, 0.9, 1.2, "#3a70b0");
+-      ellipse(ctx, 28.6, 14.2, 0.9, 0.9, "#ffffff");
+-      ellipse(ctx, 38.6, 14.2, 0.9, 0.9, "#ffffff");
++      ellipse(ctx, 25.5, 14, 3.6, 4.0, "#fffbe0", OUT, 2.0);
++      ellipse(ctx, 35.5, 14, 3.6, 4.0, "#fffbe0", OUT, 2.0);
++      ellipse(ctx, 26.0, 14.3, 1.8, 2.4, "#0e1828");
++      ellipse(ctx, 36.0, 14.3, 1.8, 2.4, "#0e1828");
++      ellipse(ctx, 26.0, 14.3, 1.0, 1.4, "#3a70b0");
++      ellipse(ctx, 36.0, 14.3, 1.0, 1.4, "#3a70b0");
++      ellipse(ctx, 25.2, 13.0, 1.0, 1.0, "#ffffff");
++      ellipse(ctx, 35.2, 13.0, 1.0, 1.0, "#ffffff");
+
+       // Determined attack brow
+       ctx.strokeStyle = OUT;
+       ctx.lineWidth = 2.0;
+       ctx.beginPath();
+-      ctx.moveTo(26, 12.5); ctx.lineTo(31, 14.5);
+-      ctx.moveTo(42, 12.5); ctx.lineTo(37, 14.5);
++      ctx.moveTo(21, 11.5); ctx.lineTo(27, 13.5);
++      ctx.moveTo(40, 11.5); ctx.lineTo(34, 13.5);
+       ctx.stroke();
+
+       // Shield pulled back
+-      poly(ctx, [[1, 25], [18, 23], [20, 51], [10, 57], [0, 47]], goldG(0, 23, 20, 57), OUT, 2.6);
+-      poly(ctx, [[9, 31], [14, 37], [9, 45], [4, 37]], linGrad(ctx, 4, 31, 14, 45, [[0, "#4a82cc"], [1, "#14284c"]]), OUT, 1.6);
+-      ellipse(ctx, 9, 37, 2.2, 2.2, "#fff2a0", OUT, 1.0);
++      poly(ctx, [[1, 26], [18, 24], [20, 52], [9, 56], [2, 48]], shieldG(1, 24, 20, 56), OUT, 2.6);
++      poly(ctx, [[7, 30], [12, 36], [7, 44], [2, 36]], linGrad(ctx, 2, 30, 12, 44, [[0, "#4a82cc"], [1, "#14284c"]]), OUT, 1.6);
++      ellipse(ctx, 7, 36, 2.0, 2.0, "#fff2a0", OUT, 1.0);
+
+       // Sword Hilt & Guard
+-      rounded(ctx, 40, 34, 8, 4.5, 1.5, goldG(40, 34, 48, 38.5), OUT, 1.6);
++      rounded(ctx, 42, 30, 8, 5.5, 1.5, goldG(42, 30, 50, 36), OUT, 1.8);
+
+       // Sword Blade - Raised & swinging down-right
+-      ctx.strokeStyle = OUT;
+-      ctx.lineWidth = 5.4;
+-      ctx.beginPath();
+-      ctx.moveTo(44, 34);
+-      ctx.lineTo(60, 18);
+-      ctx.stroke();
++      poly(ctx, [[42, 26], [58, 10], [57, 9.5], [41, 25.5]], OUT, null, 5.4);
+
+-      ctx.strokeStyle = linGrad(ctx, 44, 34, 60, 18, [[0, "#88b4e0"], [0.5, "#d8ecff"], [1, "#ffffff"]]);
+-      ctx.lineWidth = 3.6;
+-      ctx.beginPath();
+-      ctx.moveTo(44, 34);
+-      ctx.lineTo(60, 18);
+-      ctx.stroke();
++      poly(ctx, [[42, 26], [58, 10], [57, 9.5], [41, 25.5]], linGrad(ctx, 42, 26, 58, 10, [[0, "#88b4e0"], [0.5, "#d8ecff"], [1, "#ffffff"]]), OUT, 2.0);
+
+-      ctx.strokeStyle = "#ffffff";
+-      ctx.lineWidth = 1.4;
+-      ctx.beginPath();
+-      ctx.moveTo(43, 33);
+-      ctx.lineTo(59, 17);
+-      ctx.stroke();
++      poly(ctx, [[42, 26], [58, 10], [57.5, 9.5], [41.5, 25]], "#ffffff", null, 1.4);
+
+       // Slash Arc Trail (Translucent cyan/white)
+       ctx.beginPath();
+-      ctx.arc(36, 36, 24, -Math.PI * 0.6, Math.PI * 0.15);
+-      ctx.strokeStyle = "rgba(180,225,255,0.7)";
+-      ctx.lineWidth = 5.5;
++      ctx.arc(46, 28, 16, -Math.PI * 0.7, Math.PI * 0.2);
++      ctx.strokeStyle = "rgba(180,225,255,0.7)";
++      ctx.lineWidth = 5.0;
+       ctx.stroke();
+
+       ctx.beginPath();
+-      ctx.arc(36, 36, 24, -Math.PI * 0.45, Math.PI * 0.1);
++      ctx.arc(46, 28, 16, -Math.PI * 0.55, Math.PI * 0.15);
+       ctx.strokeStyle = "#ffffff";
+       ctx.lineWidth = 2.4;
+       ctx.stroke();
+
+-      // Slash Impact Sparkle at tip (within bounds)
+-      poly(ctx, [[59, 14], [61, 18], [63, 18], [61, 20], [62, 23], [59, 21], [56, 23], [57, 20], [55, 18], [58, 18]], "#ffffff");
+-      ellipse(ctx, 59, 18, 1.5, 1.5, "#ffe875");
++      // Slash Impact Sparkle at tip (within bounds)
++      speckles(ctx, 52, 4, 12, 10, 6, "#ffffff", 2.5);
++      ellipse(ctx, 57, 10, 1.8, 1.8, "#ffe875");
+     };
+```

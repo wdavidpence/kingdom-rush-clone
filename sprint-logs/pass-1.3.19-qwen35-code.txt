@@ -1,0 +1,40 @@
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -120,6 +120,7 @@ const drawHeroCaptainAbility = (ctx) => {
+-      shadow(ctx, 32, 66, 28, 7.5, 0.5);
++      shadow(ctx, 32, 68, 14, 4.5, 0.4);
+       const OUT = "#141008";
+
+       const capeG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#8ec0f8"], [0.45, "#2a62a8"], [1, "#0c1830"]]);
+@@ -210,9 +211,9 @@ const drawHeroCaptainAbility = (ctx) => {
+ 
+       // Shield held proudly on left arm
+-      poly(ctx, [[2, 21], [20, 19], [22, 49], [12, 56], [1, 46]], goldG(1, 19, 22, 56), OUT, 2.6);
+-      poly(ctx, [[11, 29], [16, 35], [11, 43], [6, 35]], linGrad(ctx, 6, 29, 16, 43, [[0, "#4a82cc"], [1, "#14284c"]]), OUT, 1.6);
+-      ellipse(ctx, 11, 35, 2.2, 2.2, "#fff2a0", OUT, 1.0);
++      // Shield down/back for two-handed rally stance
++      poly(ctx, [[-2, 31], [16, 29], [18, 59], [8, 66], [-3, 56]], goldG(-2, 29, 18, 66), OUT, 2.6);
++      poly(ctx, [[7, 39], [12, 45], [7, 53], [2, 45]], linGrad(ctx, 2, 39, 12, 53, [[0, "#4a82cc"], [1, "#14284c"]]), OUT, 1.6);
++      ellipse(ctx, 7, 45, 2.2, 2.2, "#fff2a0", OUT, 1.0);
+ 
+       // Sword Raised High Overhead for Rally (Contained within canvas y: 4..24)
+@@ -219,6 +220,8 @@ const drawHeroCaptainAbility = (ctx) => {
+       ctx.lineWidth = 5.6;
+       ctx.beginPath();
+       ctx.moveTo(48, 22);
++      // Two-handed overhead rally grip
++      ellipse(ctx, 45.5, 19, 3.2, 3.2, skinG(40, 15, 50, 23), OUT, 1.6);
+       ctx.lineTo(48, 4);
+@@ -235,6 +238,9 @@ const drawHeroCaptainAbility = (ctx) => {
+       ellipse(ctx, 48, 26, 2.8, 2.8, goldG(45, 23, 51, 29), OUT, 1.2);
+ 
+       // Gleaming Rally Starburst at Blade Tip (y: 1..10, x: 42..54)
++      // Ground Gold Rally Ring
++      ellipse(ctx, 32, 67.5, 18, 4.5, linGrad(ctx, 14, 67.5, 50, 67.5, [[0, "#dca828"], [0.3, "#fff6b8"], [1, "#dca828"]]), OUT, 2.0);
++      ellipse(ctx, 32, 67.5, 14, 3.0, "rgba(255,246,184,0.3)", OUT, 0);
+       poly(ctx, [[48, 1], [50, 3], [54, 4], [50, 5], [48, 7], [46, 5], [42, 4], [46, 3]], "#ffffff", goldG(42, 1, 54, 7), 1.2);
+       ellipse(ctx, 48, 4, 2.2, 2.2, "#ffffff");
+```

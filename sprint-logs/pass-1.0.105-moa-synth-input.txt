@@ -1,0 +1,36 @@
+A
+
+
+```diff:public/src/game.js
+           for (let i = 0; i < 7; i += 1) {
+             const spark = this.textures.exists("fx_spark")
+               ? this.add.image(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, "fx_spark").setScale(0.35 + Math.random() * 0.2).setTint(0xffe066).setAlpha(0.95).setDepth(61)
+               : this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
+           }
++        for (let i = 0; i < 8; i += 1) {
++          const splinter = this.textures.exists("fx_dust")
++            ? this.add.image(gx, gy, "fx_dust").setTint(0x6a4428).setScale(0.5 + Math.random() * 0.3)
++            : this.add.rectangle(gx, gy, 8 + Math.random() * 6, 2 + Math.random(), 0x6a4428);
++          this.effects.push(splinter.setDepth(61));
++        }
+```
+B
+
+
+```diff:public/src/game.js
+@@ -10,6 +10,23 @@
+           for (let i = 0; i < 7; i += 1) {
+             const spark = this.textures.exists("fx_spark")
+               ? this.add.image(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, "fx_spark").setScale(0.35 + Math.random() * 0.2).setTint(0xffe066)
+-         : this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
++         : this.add.circle(gx - 6 + (Math.random() - 0.5) * 12, gy + (Math.random() - 0.5) * 12, 1.8 + Math.random() * 1.6, 0xffe066, 0.95).setDepth(61);
++       }
++       for (let j = 0; j < 8; j += 1) {
++         const splinter = this.textures.exists("fx_dust")
++           ? this.add.image(gx, gy, "fx_dust").setTint(0x6a4428).setScale(0.15 + Math.random() * 0.15).setAlpha(0.9).setDepth(58)
++           : this.add.rectangle(gx, gy, 2 + Math.random() * 3, 1.5 + Math.random() * 1.5, 0x6a4428, 0.9).setDepth(58);
++         this.tweens.add({ targets: splinter, x: gx - 40 - Math.random() * 25, duration: 300 + Math.random() * 150, ease: 'Power2', onComplete: () => splinter.destroy() });
++         this.effects.push(splinter);
++       }
+             // ... existing tail code continues ...
+```

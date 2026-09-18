@@ -1,0 +1,29 @@
+
+
+```diff:public/src/krc-art.js
+ make("enemy_scout_dead", 80, 72, (ctx) => drawScoutDead(ctx));
++make("enemy_scout_hit", 80, 72, (ctx) => {
++  shadow(ctx, 40, 68, 25, 6, 0.3);
++  const g = linGrad(ctx, 25, 10, 55, 65, [[0, "#5a4d3e"], [1, "#2b2218"]]);
++  ellipse(ctx, 40, 22, 13, 15, g, "#1a140e", 2);
++  rounded(ctx, 32, 36, 16, 24, 5, g, "#1a140e", 2);
++  poly(ctx, [[34, 40], [18, 56], [24, 60], [38, 46]], "#4a3e31", null, 0);
++  poly(ctx, [[46, 40], [62, 52], [56, 58], [42, 46]], "#4a3e31", null, 0);
++  speckles(ctx, 10, 15, 35, 40, 6, "#e8dcc8", 2);
++});
+ make("enemy_scout_w1", 80, 72, (ctx) => drawScoutWalk(ctx));
+```
+
+```diff:public/src/game.js
+           enemy.hitFlash = 0.09;
+           enemy.sprite.setTint(0xfff3d6);
++        if (enemy.type === "scout" && assets.enemy_scout_hit) {
++          enemy.sprite.setTexture("enemy_scout_hit");
++        }
+           if (enemy.hitFlash > 0) {
+             enemy.hitFlash -= dt;
++        } else if (enemy.type === "scout") {
++          enemy.sprite.setTexture("enemy_scout_w0");
+           } else {
+             enemy.sprite.clearTint();
+```

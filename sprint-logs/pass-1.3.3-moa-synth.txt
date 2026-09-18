@@ -1,0 +1,297 @@
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -120, 185 +120, 168 @@
+     const drawBrute = (ctx, frame = 0) => {
+-      shadow(ctx, 40, 62, 24, 7, 0.42);
++      shadow(ctx, 40, 62, 24, 7, 0.45);
+       const f = frame % 4;
+
+-      const bodyX = f === 0 ? 21 : f === 2 ? 23 : 22;
+-      const bodyY = (f === 1 || f === 3) ? 24 : 26;
+-      const headX = f === 0 ? 39 : f === 2 ? 41 : 40;
+-      const headY = (f === 1 || f === 3) ? 16 : 18;
+-      const headTilt = f === 0 ? -0.05 : f === 2 ? 0.05 : 0;
++      const bodyX = f === 0 ? 19 : f === 2 ? 23 : 21;
++      const bodyY = (f === 1 || f === 3) ? 24 : 26;
++      const headX = f === 0 ? 39 : f === 2 ? 41 : 40;
++      const headY = (f === 1 || f === 3) ? 14 : 16;
++      const headTilt = f === 0 ? -0.05 : f === 2 ? 0.05 : 0;
+
+-      const outline = "#3a2010";
++      const OUT = "#141008";
++      const thick = 3.0;
+
+-      // 3-stop warm orc / brute hide gradients
+-      const bruteSkinLit = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#f8d2a6"], [0.45, "#c4763e"], [1, "#662e14"]]);
+-      const bruteSkinShaded = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#a4582a"], [0.5, "#6e3216"], [1, "#3c1608"]]);
+-      const bruteBootGrad = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#563018"], [0.5, "#361a0c"], [1, "#1c0c04"]]);
++      // Orange-brown hide vs dark iron palette
++      const hideLit = (x0,y0,x1,y1) => linGrad(ctx, x0,y0,x1,y1, [[0,"#e8a86c"], [0.5,"#b8642a"], [1,"#5e2810"]]);
++      const hideShd = (x0,y0,x1,y1) => linGrad(ctx, x0,y0,x1,y1, [[0,"#8a461c"], [0.5,"#52260c"], [1,"#2a1004"]]);
++      const ironGrad = (x0,y0,x1,y1) => linGrad(ctx, x0,y0,x1,y1, [[0,"#3a3c42"], [0.5,"#1e1f24"], [1,"#0a0b0e"]]);
++      const bootGrad = (x0,y0,x1,y1) => linGrad(ctx, x0,y0,x1,y1, [[0,"#4a382c"], [0.5,"#2e1e14"], [1,"#140c08"]]);
+
+-      // Contact AO under heavy brute feet
++      // Contact AO (simplified for readability)
+       if (f === 0) { ellipse(ctx, 23.5, 56, 8, 2.5, "rgba(14,8,4,0.7)"); ellipse(ctx, 56.5, 53, 6, 2, "rgba(14,8,4,0.5)"); }
+       else if (f === 1) { ellipse(ctx, 30.5, 57, 8, 2.6, "rgba(14,8,4,0.75)"); ellipse(ctx, 52.5, 48, 5, 1.6, "rgba(14,8,4,0.3)"); }
+       else if (f === 2) { ellipse(ctx, 20.5, 53, 6, 2, "rgba(14,8,4,0.5)"); ellipse(ctx, 54.5, 56, 8, 2.5, "rgba(14,8,4,0.7)"); }
+       else { ellipse(ctx, 32.5, 48, 5, 1.6, "rgba(14,8,4,0.3)"); ellipse(ctx, 48.5, 57, 8, 2.6, "rgba(14,8,4,0.75)"); }
+
+-      // Far fist / arm (Left side)
++      // Far arm/fist
+       let fArmX = 16, fArmY = bodyY + 12, fArmR = 7;
+       if (f===1) { fArmX=18; fArmY=bodyY+10; fArmR=6.5; }
+       else if (f===2) { fArmX=22; fArmY=bodyY+9; fArmR=6; }
+       else if (f===3) { fArmX=19; fArmY=bodyY+10; fArmR=6.5; }
+-      ellipse(ctx, fArmX, fArmY, fArmR, fArmR, bruteSkinShaded(fArmX - fArmR, fArmY - fArmR, fArmX + fArmR, fArmY + fArmR), outline, 2.2);
+-      // Arm hide wrap cross-straps
+-      ctx.strokeStyle = "#4e2a14";
+-      ctx.lineWidth = 1.0;
+-      ctx.beginPath();
+-      ctx.moveTo(fArmX - 4, fArmY + 2); ctx.lineTo(fArmX + 4, fArmY - 2);
+-      ctx.moveTo(fArmX - 4, fArmY - 2); ctx.lineTo(fArmX + 4, fArmY + 2);
+-      ctx.stroke();
+-      // Contact AO behind far arm
+-      ellipse(ctx, fArmX + 3, fArmY, 3, 4, "rgba(24, 10, 4, 0.5)");
++      ellipse(ctx, fArmX, fArmY, fArmR, fArmR, hideShd(fArmX-fArmR, fArmY-fArmR, fArmX+fArmR, fArmY+fArmR), OUT, thick);
+
+-      // Legs: heavy stride vs passing with 3-stop muscular shading
++      // Legs (simplified heavy shapes)
+       if (f === 0) {
+-        // Left forward heavy plant
+-        poly(ctx, [[25, 43], [34, 43], [28, 55], [19, 54]], bruteSkinLit(25, 43, 19, 55), outline, 1.6);
+-        rounded(ctx, 17, 52, 13, 6.5, 2.5, bruteBootGrad(17, 52, 17, 58), outline, 1.2);
+-        // Cool rim on left forward leg
+-        ctx.strokeStyle = "rgba(205, 240, 255, 0.4)";
+-        ctx.lineWidth = 1.2;
+-        ctx.beginPath();
+-        ctx.moveTo(25, 44);
+-        ctx.lineTo(19, 54);
+-        ctx.stroke();
+-        // Right trailing back
+-        poly(ctx, [[46, 43], [54, 43], [59, 52], [52, 53]], bruteSkinShaded(46, 43, 59, 52), outline, 1.6);
+-        rounded(ctx, 51, 50, 11, 6, 2.5, bruteBootGrad(51, 50, 51, 56), outline, 1.2);
++        poly(ctx, [[25, 43], [36, 43], [28, 56], [19, 55]], hideLit(25,43,19,55), OUT, thick);
++        rounded(ctx, 17, 52, 14, 6.5, 2.5, bootGrad(17,52,17,58), OUT, thick-0.2);
++        poly(ctx, [[46, 43], [56, 43], [60, 53], [52, 54]], hideShd(46,43,60,53), OUT, thick);
++        rounded(ctx, 51, 50, 12, 6, 2.5, bootGrad(51,50,51,56), OUT, thick-0.2);
+       } else if (f === 1) {
+-        // Left planted straight
+-        rounded(ctx, 26, 41, 9, 15, 4, bruteSkinLit(26, 41, 35, 56), outline, 1.6);
+-        rounded(ctx, 24, 53, 13, 6.5, 2.5, bruteBootGrad(24, 53, 24, 59), outline, 1.2);
+-        // Cool rim on left leg
+-        ctx.strokeStyle = "rgba(205, 240, 255, 0.4)";
+-        ctx.lineWidth = 1.2;
+-        ctx.beginPath();
+-        ctx.moveTo(26, 42);
+-        ctx.lineTo(26, 53);
+-        ctx.stroke();
+-        // Right lifted passing
+-        poly(ctx, [[46, 41], [54, 41], [55, 47], [48, 48]], bruteSkinShaded(46, 41, 55, 47), outline, 1.6);
+-        rounded(ctx, 47, 45, 11, 6, 2.5, bruteBootGrad(47, 45, 47, 51), outline, 1.2);
++        rounded(ctx, 26, 41, 10, 16, 4, hideLit(26,41,35,57), OUT, thick);
++        rounded(ctx, 24, 53, 14, 6.5, 2.5, bootGrad(24,53,24,59), OUT, thick-0.2);
++        poly(ctx, [[46, 41], [54, 41], [56, 48], [48, 49]], hideShd(46,41,56,48), OUT, thick);
++        rounded(ctx, 47, 45, 12, 6, 2.5, bootGrad(47,45,47,51), OUT, thick-0.2);
+       } else if (f === 2) {
+-        // Left trailing back
+-        poly(ctx, [[26, 43], [34, 43], [22, 52], [16, 51]], bruteSkinShaded(26, 43, 22, 52), outline, 1.6);
+-        rounded(ctx, 15, 50, 11, 6, 2.5, bruteBootGrad(15, 50, 15, 56), outline, 1.2);
+-        // Right forward heavy plant
+-        poly(ctx, [[45, 43], [54, 43], [58, 55], [49, 54]], bruteSkinLit(45, 43, 58, 55), outline, 1.6);
+-        rounded(ctx, 48, 52, 13, 6.5, 2.5, bruteBootGrad(48, 52, 48, 58), outline, 1.2);
++        poly(ctx, [[26, 43], [36, 43], [22, 53], [16, 52]], hideShd(26,43,22,53), OUT, thick);
++        rounded(ctx, 15, 50, 12, 6, 2.5, bootGrad(15,50,15,56), OUT, thick-0.2);
++        poly(ctx, [[45, 43], [56, 43], [60, 56], [49, 55]], hideLit(45,43,60,56), OUT, thick);
++        rounded(ctx, 48, 52, 14, 6.5, 2.5, bootGrad(48,52,48,58), OUT, thick-0.2);
+       } else {
+-        // Left lifted passing
+-        poly(ctx, [[26, 41], [34, 41], [35, 47], [28, 48]], bruteSkinShaded(26, 41, 35, 47), outline, 1.6);
+-        rounded(ctx, 27, 45, 11, 6, 2.5, bruteBootGrad(27, 45, 27, 51), outline, 1.2);
+-        // Right planted straight
+-        rounded(ctx, 44, 41, 9, 15, 4, bruteSkinLit(44, 41, 53, 56), outline, 1.6);
+-        rounded(ctx, 42, 53, 13, 6.5, 2.5, bruteBootGrad(42, 53, 42, 59), outline, 1.2);
++        poly(ctx, [[26, 41], [36, 41], [35, 48], [28, 49]], hideShd(26,41,35,48), OUT, thick);
++        rounded(ctx, 27, 45, 12, 6, 2.5, bootGrad(27,45,27,51), OUT, thick-0.2);
++        rounded(ctx, 44, 41, 10, 16, 4, hideLit(44,41,53,57), OUT, thick);
++        rounded(ctx, 42, 53, 14, 6.5, 2.5, bootGrad(42,53,42,59), OUT, thick-0.2);
+       }
+
+-      // Contact AO under groin / pelvis onto thighs
++      // Pelvis AO
+       ellipse(ctx, bodyX + 18, bodyY + 26, 15, 3.5, "rgba(24, 10, 4, 0.55)");
+
+-      // Heavy leather war-kilt cloth & hide folds
++      // Kilt (simplified bold read)
+       poly(ctx, [[bodyX + 7, bodyY + 20], [bodyX + 29, bodyY + 20], [bodyX + 31, bodyY + 27], [bodyX + 5, bodyY + 27]], linGrad(ctx, bodyX + 5, bodyY + 20, bodyX + 31, bodyY + 27, [[0, "#5a341a"], [1, "#261208"]]), OUT, thick-0.5);
+-      // Vertical hide tension fold creases
+-      ctx.strokeStyle = "rgba(18, 6, 2, 0.55)";
+-      ctx.lineWidth = 1.2;
+-      ctx.beginPath();
+-      ctx.moveTo(bodyX + 13, bodyY + 20); ctx.lineTo(bodyX + 12, bodyY + 27);
+-      ctx.moveTo(bodyX + 19, bodyY + 20); ctx.lineTo(bodyX + 19, bodyY + 27);
+-      ctx.moveTo(bodyX + 24, bodyY + 20); ctx.lineTo(bodyX + 25, bodyY + 27);
+-      ctx.stroke();
+-      // Fold crest highlights
+-      ctx.strokeStyle = "rgba(230, 180, 130, 0.35)";
+-      ctx.lineWidth = 0.8;
+-      ctx.beginPath();
+-      ctx.moveTo(bodyX + 14, bodyY + 20); ctx.lineTo(bodyX + 13, bodyY + 26);
+-      ctx.moveTo(bodyX + 20, bodyY + 20); ctx.lineTo(bodyX + 20, bodyY + 26);
+-      ctx.stroke();
+-      // Frayed hide bottom cut notches
+-      poly(ctx, [[bodyX + 10, bodyY + 26], [bodyX + 12, bodyY + 29], [bodyX + 14, bodyY + 26]], "#1c0c04");
+-      poly(ctx, [[bodyX + 22, bodyY + 26], [bodyX + 24, bodyY + 29], [bodyX + 26, bodyY + 26]], "#1c0c04");
+
+-      // Torso with 3-stop muscular volume
+-      rounded(ctx, bodyX, bodyY, 36, 26, 10, linGrad(ctx, bodyX, bodyY, bodyX + 36, bodyY + 26, [[0, "#fae0bc"], [0.42, "#c8783c"], [1, "#5e2810"]]), outline, 2.2);
++      // Torso (bold volume)
++      rounded(ctx, bodyX, bodyY, 38, 28, 10, hideLit(bodyX,bodyY,bodyX+38,bodyY+28), OUT, thick);
+
+-      // Cool rim on upper-left torso flank
+-      ctx.strokeStyle = "rgba(205, 240, 255, 0.4)";
+-      ctx.lineWidth = 1.4;
+-      ctx.beginPath();
+-      ctx.moveTo(bodyX + 1, bodyY + 12);
+-      ctx.lineTo(bodyX + 1, bodyY + 22);
+-      ctx.stroke();
++      // Iron Chest Plate (high contrast vs hide)
++      poly(ctx, [[bodyX+5, bodyY+4], [bodyX+33, bodyY+4], [bodyX+31, bodyY+20], [bodyX+7, bodyY+20]], ironGrad(bodyX+5,bodyY+4,bodyX+33,bodyY+20), OUT, thick);
++      for(const [rx,ry] of [[bodyX+10,bodyY+8],[bodyX+28,bodyY+8],[bodyX+19,bodyY+15]]) {
++        ellipse(ctx, rx, ry, 1.8, 1.8, "#e0d8c4", OUT, 0);
++      }
+
+-      // Chest muscle lines with deep crease AO in sternum and under pecs
+-      ctx.strokeStyle = "rgba(40, 14, 6, 0.48)";
+-      ctx.lineWidth = 1.6;
+-      ctx.beginPath();
+-      ctx.moveTo(bodyX + 18, bodyY + 6);
+-      ctx.lineTo(bodyX + 18, bodyY + 18);
+-      ctx.moveTo(bodyX + 10, bodyY + 12);
+-      ctx.quadraticCurveTo(bodyX + 18, bodyY + 16, bodyX + 26, bodyY + 12);
+-      ctx.stroke();
+
+       // Shoulders with spherical 3D volume
+-      const leftShX = bodyX + 2;
+-      const leftShY = bodyY + 6;
+-      const rightShX = bodyX + 34;
+-      const rightShY = bodyY + 6;
++      const lShX = bodyX - 2, lShY = bodyY + 6;
++      const rShX = bodyX + 38, rShY = bodyY + 6;
+
+-      // Shoulder attachment contact AO
+-      ellipse(ctx, leftShX + 3, leftShY + 2, 4, 5, "rgba(24, 10, 4, 0.45)");
+-      ellipse(ctx, rightShX - 3, rightShY + 2, 4, 5, "rgba(24, 10, 4, 0.45)");
+-
+-      ellipse(ctx, leftShX, leftShY, 8.5, 8.5, radGrad(ctx, leftShX - 2.5, leftShY - 2.5, 1, 9, [[0, "#fce4c4"], [0.45, "#c8783c"], [1, "#5e2810"]]), outline, 1.5);
+-      ellipse(ctx, rightShX, rightShY, 8.5, 8.5, radGrad(ctx, rightShX - 2.5, rightShY - 2.5, 1, 9, [[0, "#fce4c4"], [0.45, "#c8783c"], [1, "#5e2810"]]), outline, 1.5);
++      ellipse(ctx, lShX, lShY, 10.5, 9.5, ironGrad(lShX,lShY,lShX+21,lShY+19), OUT, thick);
++      ellipse(ctx, rShX, rShY, 10.5, 9.5, ironGrad(rShX,rShY,rShX+21,rShY+19), OUT, thick);
++      poly(ctx, [[lShX-4,lShY-6],[lShX+2,lShY-10],[lShX+8,lShY-6]], ironGrad(lShX-4,lShY-10,lShX+8,lShY-6), OUT, thick-0.2);
++      poly(ctx, [[rShX-4,rShY-6],[rShX+2,rShY-10],[rShX+8,rShY-6]], ironGrad(rShX-4,rShY-10,rShX+8,rShY-6), OUT, thick-0.2);
+
+-      // Cool rim light on left shoulder
+-      ctx.strokeStyle = "rgba(205, 240, 255, 0.55)";
+-      ctx.lineWidth = 1.8;
+-      ctx.beginPath();
+-      ctx.arc(leftShX, leftShY, 7.5, -Math.PI * 0.9, -Math.PI * 0.25);
+-      ctx.stroke();
+
+-      // Warm highlight on right shoulder
+-      ctx.strokeStyle = "rgba(255, 240, 200, 0.35)";
+-      ctx.lineWidth = 1.2;
+-      ctx.beginPath();
+-      ctx.arc(rightShX, rightShY, 6.5, -Math.PI * 0.8, -Math.PI * 0.2);
+-      ctx.stroke();
+
+-      // Contact AO under massive jaw onto upper chest
++      // Jaw guard (iron vs hide)
+-      ellipse(ctx, headX, headY + 13, 13.5, 4.2, "rgba(24, 10, 4, 0.65)");
++      poly(ctx, [[headX-12, headY+6],[headX-8, headY+14],[headX, headY+16],[headX+8, headY+14],[headX+12, headY+6]], ironGrad(headX-12,headY+6,headX+12,headY+16), OUT, thick-0.2);
+
+       // Head
+       ctx.save();
+@@ -315, 60 +298, 45 @@
+       ctx.rotate(headTilt);
+
+-      // Topknot & coarse orc hair crest strands
+-      poly(ctx, [[-4, -13], [0, -22], [4, -13]], linGrad(ctx, -4, -22, 4, -13, [[0, "#2c1808"], [1, "#140a04"]]), outline, 1.0);
+-      poly(ctx, [[0, -22], [-2, -26], [3, -22]], "#140a04");
+-      // Leather cord wrapping on topknot
+-      rounded(ctx, -3, -16, 6, 2.5, 1, "#b48a4c", "#3a2010", 0.6);
+-      // Hair strand specular highlights
+-      ctx.strokeStyle = "rgba(215, 165, 115, 0.45)";
+-      ctx.lineWidth = 0.8;
+-      ctx.beginPath();
+-      ctx.moveTo(-1, -14); ctx.lineTo(-1, -24);
+-      ctx.moveTo(1, -14); ctx.lineTo(2, -23);
+-      ctx.stroke();
++      // Bold topknot (no fine strands)
++      poly(ctx, [[-3,-14],[0,-22],[3,-14]], ironGrad(-3,-22,3,-14), OUT, thick-0.5);
+
+-      ellipse(ctx, 0, 0, 15, 14, linGrad(ctx, -12, -11, 12, 13, [[0, "#fce4c4"], [0.45, "#cc7a3e"], [1, "#662e14"]]), outline, 2);
++      ellipse(ctx, 0, 0, 17, 15.5, hideLit(-14,-13,14,12), OUT, thick);
+
+-      // Cool rim light on upper-left curve of head
+-      ctx.strokeStyle = "rgba(205, 240, 255, 0.55)";
+-      ctx.lineWidth = 1.6;
+-      ctx.beginPath();
+-      ctx.arc(0, 0, 13.5, -Math.PI * 0.95, -Math.PI * 0.35);
+-      ctx.stroke();
+
+-      // Brow ridge highlight
+-      ctx.strokeStyle = "rgba(255, 245, 210, 0.38)";
+-      ctx.lineWidth = 1.5;
+-      ctx.beginPath();
+-      ctx.moveTo(-10, -6);
+-      ctx.lineTo(10, -6);
+-      ctx.stroke();
+
+       // Brow & chin bristle tufts
+-      ctx.strokeStyle = "rgba(24, 10, 4, 0.65)";
+-      ctx.lineWidth = 0.9;
++      ctx.strokeStyle = OUT;
++      ctx.lineWidth = thick-0.5;
+       ctx.beginPath();
+       ctx.moveTo(-4, 10); ctx.lineTo(-3, 13);
+@@ -378, 25 +346, 30 @@
+       ctx.moveTo(4, 10); ctx.lineTo(3, 13);
+       ctx.stroke();
+
+-      // Tusks / Horns with 3-stop ivory gradient
+-      ellipse(ctx, -14, -8, 5, 7.5, linGrad(ctx, -17, -12, -11, -2, [[0, "#ffffff"], [0.5, "#faecc8"], [1, "#8c6c44"]]), "#4a3018", 1.2);
+-      ellipse(ctx, 14, -8, 5, 7.5, linGrad(ctx, 11, -12, 17, -2, [[0, "#ffffff"], [0.5, "#faecc8"], [1, "#8c6c44"]]), "#4a3018", 1.2);
+-      ellipse(ctx, -14.5, -9, 2, 4, "#ffffff");
+-      ellipse(ctx, 13.5, -9, 2, 4, "#ffffff");
+-
++      // Huge Eyes (explicit for 48px readability)
++      ellipse(ctx, -6, 0, 5.5, 4.2, "#f8f0c8", OUT, thick-1.5);
++      ellipse(ctx, 6, 0, 5.5, 4.2, "#f8f0c8", OUT, thick-1.5);
+       face(ctx, 0, 0, "#f8f0c8", "#101008", true);
++
++      // Tusks (bold, high contrast)
++      ellipse(ctx, -14, -8, 5.5, 8, linGrad(ctx,-17,-13,-10,-4,[ [0,'#fff'],[0.5,'#f0e6d2'],[1,'#8c7a54'] ]), OUT, thick-0.5);
++      ellipse(ctx, 14, -8, 5.5, 8, linGrad(ctx,10,-13,17,-4,[ [0,'#fff'],[0.5,'#f0e6d2'],[1,'#8c7a54'] ]), OUT, thick-0.5);
+       ctx.restore();
+
+-      // Club & Right Arm
++      // Right Arm & Club (Foreground, bold silhouette)
+       let clubX, clubY, clubRot;
+-      if (f === 0) { clubX = 61; clubY = bodyY + 2; clubRot = -0.15; }
+-      else if (f === 1) { clubX = 62; clubY = bodyY + 4; clubRot = 0.05; }
+-      else if (f === 2) { clubX = 63; clubY = bodyY + 7; clubRot = 0.25; }
+-      else { clubX = 61; clubY = bodyY + 3; clubRot = -0.05; }
++      if (f === 0) { clubX = bodyX + 36; clubY = bodyY + 4; clubRot = -0.2; }
++      else if (f === 1) { clubX = bodyX + 36; clubY = bodyY + 4; clubRot = 0.05; }
++      else if (f === 2) { clubX = bodyX + 36; clubY = bodyY + 4; clubRot = 0.3; }
++      else { clubX = bodyX + 36; clubY = bodyY + 4; clubRot = -0.05; }
+
+       ctx.save();
+       ctx.translate(clubX, clubY);
+-      ctx.rotate(clubRot);
+-      // Shaft / handle
+-      rounded(ctx, -4, 0, 8, 26, 3, linGrad(ctx, -4, 0, 4, 26, [[0, "#9c6e48"], [0.5, "#6a4022"], [1, "#2e1608"]]), "#1

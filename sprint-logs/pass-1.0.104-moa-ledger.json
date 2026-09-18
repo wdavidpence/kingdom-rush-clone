@@ -1,0 +1,89 @@
+{
+  "protocol": "PenceMOA qwen2735 plan+candidates+synth",
+  "a": {
+    "name": "qwen27",
+    "plan": {
+      "model": "qwen3.6-27b-mlx",
+      "seconds": 206.15,
+      "text_len": 0,
+      "text_head": "",
+      "finish": "length",
+      "usage": {
+        "prompt_tokens": 426,
+        "completion_tokens": 3999,
+        "total_tokens": 4425,
+        "completion_tokens_details": {
+          "reasoning_tokens": 3999
+        }
+      },
+      "ok": false
+    },
+    "code": {
+      "model": "qwen3.6-27b-mlx",
+      "seconds": 514.98,
+      "text_len": 1353,
+      "text_head": "\n\n```diff:public/src/krc-art.js\n@@ -... +... @@\n         poly(ctx, [[48, 63], [54, 65], [54, 88], [48, 86]], \"#2c160a\", \"#0c0400\", 1.2);\n         poly(ctx, [[80, 63], [74, 65], [74, 88], [80, 86]], \"#241006\", \"#0c0400\", 1.2);\n+        poly(ctx, [[49, 109], [52.5, 109], [52.5, 121], [49, 121]], \"#d4af37\", \"#0e1e0c\", 1.2);\n+        poly(ctx, [[61, 105], [62.5, 105], [63.5, 128], [62, 128]], \"#8b0000",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 436,
+        "completion_tokens": 9950,
+        "total_tokens": 10386,
+        "completion_tokens_details": {
+          "reasoning_tokens": 9057
+        }
+      },
+      "ok": true
+    }
+  },
+  "b": {
+    "name": "qwen35ud",
+    "plan": {
+      "model": "qwen3.6-35b-a3b-ud-mlx",
+      "seconds": 82.83,
+      "text_len": 0,
+      "text_head": "",
+      "finish": "length",
+      "usage": {
+        "prompt_tokens": 426,
+        "completion_tokens": 3999,
+        "total_tokens": 4425,
+        "completion_tokens_details": {
+          "reasoning_tokens": 3999
+        }
+      },
+      "ok": false
+    },
+    "code": {
+      "model": "qwen3.6-35b-a3b-ud-mlx",
+      "seconds": 166.23,
+      "text_len": 1588,
+      "text_head": "\n\n```diff:public/src/krc-art.js\n@@ -148,2 +148,20 @@\n            poly(ctx, [[80, 63], [74, 65], [74, 88], [80, 86]], \"#241006\", \"#0c0400\", 1.2);\n+        // Left Guard (x=56)\n+        poly(ctx, [[54, 60], [62, 60], [63, 65], [57, 65]], \"#d4a373\", \"#0e1e0c\", 1);\n+        poly(ctx, [[53, 66], [63, 66], [64, 78], [52, 78]], \"#8b1c1c\", \"#0e1e0c\", 1);\n+        poly(ctx, [[54, 79], [58, 79], [57, 88], [",
+      "finish": "stop",
+      "usage": {
+        "prompt_tokens": 436,
+        "completion_tokens": 7898,
+        "total_tokens": 8334,
+        "completion_tokens_details": {
+          "reasoning_tokens": 6890
+        }
+      },
+      "ok": true
+    }
+  },
+  "synth": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 410.87,
+    "text_len": 1406,
+    "text_head": "\n\n```diff:public/src/krc-art.js\n@@ -... +... @@\n         poly(ctx, [[80, 63], [74, 65], [74, 88], [80, 86]], \"#241006\", \"#0c0400\", 1.2);\n+        // Left Guard (x=56)\n+        poly(ctx, [[54, 60], [62, 60], [63, 64], [57, 64]], \"#d4af37\", \"#0e1e0c\", 1);\n+        poly(ctx, [[53, 65], [63, 65], [64, 76], [52, 76]], \"#8b0000\", \"#0e1e0c\", 1);\n+        poly(ctx, [[54, 77], [58, 77], [57, 86], [53, 86]]",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 2395,
+      "completion_tokens": 7793,
+      "total_tokens": 10188,
+      "completion_tokens_details": {
+        "reasoning_tokens": 6918
+      }
+    },
+    "ok": true
+  }
+}

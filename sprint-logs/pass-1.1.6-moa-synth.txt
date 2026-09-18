@@ -1,0 +1,17 @@
+
+
+```diff:public/src/game.js
+ campaignNodes.forEach((node, i) => {
++  const biomeStroke = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
+-  const onOver = () => {
+-    nodeBg.setStrokeStyle(3.5, 0xfff0a0, 1);
+-    labelBg.setStrokeStyle(2, 0xfff0a0, 1);
+-  };
++  const onOver = () => {
++    nodeBg.setStrokeStyle(3.5, biomeStroke[i], 1);
++    labelBg.setStrokeStyle(2, biomeStroke[i], 1);
++  };
+   const onOut = () => {
+     nodeBg.setStrokeStyle(3, 0xf5c85a, 1);
+     labelBg.setStrokeStyle(1.5, 0xd8b548, 1);
+   };

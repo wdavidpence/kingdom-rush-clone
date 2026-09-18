@@ -1,0 +1,98 @@
+A
+
+
+```diff:public/src/krc-art.js
+@@ -... +... @@
++function drawScoutDead(ctx) {
++    shadow(ctx, 40, 68, 35, 8, 0.4);
++    poly(ctx, [[10, 62], [70, 60], [60, 48], [20, 50]], '#3a5f48', null, 0);
++    poly(ctx, [[25, 30], [55, 28], [60, 48], [20, 50]], '#4a7c5f', null, 0);
++    ellipse(ctx, 35, 26, 12, 10, '#3a5f48', null, 0);
++    speckles(ctx, 15, 45, 50, 20, 6, '#8b0000', 3);
++}
++
++make("enemy_scout_dead", 80, 72, (ctx) => drawScoutDead(ctx));
++make("enemy_scout_hit", 80, 72, (ctx) => {
++    ctx.save();
++    ctx.translate(6, -3);
++    ctx.rotate(-0.2);
++    shadow(ctx, 40, 68, 30, 7, 0.5);
++    poly(ctx, [[16, 50], [64, 48], [72, 58], [8, 60]], '#3a5f48', null, 0);
++    poly(ctx, [[24, 30], [56, 28], [64, 48], [16, 50]], '#5a9c7f', null, 0);
++    ellipse(ctx, 36, 24, 11, 9, '#3a5f48', null, 0);
++    linGrad(ctx, 20, 32, 60, 52, [[0, '#4a7c5f'], [1, '#2e4d3b']]);
++    ctx.restore();
++});
+
+```
+
+```diff:public/src/game.js
+@@ -... +... @@
+-const spawnPos = { x: 200, y: 300 };
++const spawnPos = { x: 100, y: 375 };
+-const bannerY = 80;
++const bannerY = 98;
+-campaign: true, version: '1.2.4'
++// no campaign, no version
+
+@@ -... +... @@
+           if (hit) {
+-            enemy.hitFlash = 0.09;
+-            enemy.sprite.setTint(0xfff3d6);
++            enemy.hitFlash = 0.28;
++            if (enemy.type === 'scout' && this.textures.exists('enemy_scout_hit')) {
++                enemy.sprite.setTexture('enemy_scout_hit');
++            } else {
++                enemy.sprite.setTint(0xfff3d6);
++            }
+           }
+
+@@ -... +... @@
+               if (enemy.hitFlash > 0) {
+                   enemy.hitFlash -= dt;
+                   if (enemy.hitFlash <= 0) {
+-                    enemy.sprite.setTint(null);
++                    if (enemy.type === 'scout') {
++                        enemy.sprite.setTexture('enemy_scout_w0');
++                    } else {
++                        enemy.sprite.setTint(null);
++                    }
+                       delete enemy.hitFlash;
+                   }
+               }
+
+```
+B
+
+
+```diff:public/src/krc-art.js
++ make("enemy_scout_dead", 80, 72, (ctx) => drawScoutDead(ctx));
++ make("enemy_scout_hit", 80, 72, (ctx) => {
++     const cx = 40, cy = 36;
++     // Recoiling pose matching green scout palette (drawScout colors)
++     poly(ctx, [[cx-14,cy+18],[cx+14,cy+18],[cx+9,cy-12],[cx-9,cy-12]], "#2d4a3e", null, null);
++     rounded(ctx, cx-7, cy-8, 14, 18, 3, "#8fb39e", null, null);
++     ellipse(ctx, cx-1, cy-20, 5, 6, "#5c8a6f", null, null);
++     poly(ctx, [[cx-16,cy+2],[cx-20,cy-14],[cx-13,cy-11],[cx-9,cy+5]], "#2d4a3e", null, null);
++     poly(ctx, [[cx+16,cy+2],[cx+21,cy-15],[cx+13,cy-12],[cx+9,cy+5]], "#2d4a3e", null, null);
++     poly(ctx, [[cx-10,cy+18],[cx-6,cy+32],[cx-2,cy+32],[cx-8,cy+18]], "#1a2b24", null, null);
++     poly(ctx, [[cx+10,cy+18],[cx+6,cy+32],[cx+2,cy+32],[cx+8,cy+18]], "#1a2b24", null, null);
++ });
+
+```diff:public/src/game.js
+           enemy.hitFlash = 0.28;
+-         enemy.sprite.setTint(0xfff3d6);
++         if (this.textures.exists("enemy_scout_hit") && enemy.type === "scout") {
++             enemy.sprite.setTexture("enemy_scout_hit");
++         } else {
++             enemy.sprite.setTint(0xfff3d6);
++         }
+
+           // ... hit flash expiration logic ...
+-         enemy.sprite.setTint(null);
++         if (enemy.type === "scout" && this.textures.exists("enemy_scout_w0")) {
++             enemy.sprite.setTexture("enemy_scout_w0");
++         } else {
++             enemy.sprite.setTint(null);
++         }
+```

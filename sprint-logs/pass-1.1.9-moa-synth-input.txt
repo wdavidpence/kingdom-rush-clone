@@ -1,0 +1,60 @@
+A
+
+
+```diff:public/src/game.js
+           if (nodeData.unlocked) {
+             // ... existing unlocked logic ...
+           } else {
+-            nodeBg.setStrokeStyle(4, 0x4a554a);
++            nodeBg.setInteractive({ useHandCursor: true });
++            const biomeColors = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
++            
++            nodeBg.on("pointerover", () => {
++              const strokeColor = biomeColors[index] || 0x7ec86a;
++              nodeBg.setStrokeStyle(4, strokeColor);
++              this.showTooltip(nx, ny - 50, `${map.name}\nLOCKED — Clear previous map to unlock!`);
++              this.setCampaignIntel(index, true);
++            });
++            
++            nodeBg.on("pointerout", () => {
++              nodeBg.setStrokeStyle(4, 0x4a554a);
++              this.hideTooltip();
++            });
+           }
+         });
+```
+B
+
+
+```diff:public/src/game.js
+--- a/public/src/game.js
++++ b/public/src/game.js
+@@ -45,12 +45,26 @@ export default class GameScene extends Phaser.Scene {
+         MAPS.forEach((map, index) => {
+           const nx = map.x;
+           const ny = map.y;
+-        } else {
+-          nodeBg.setInteractive({ useHandCursor: true });
+-          nodeBg.on("pointerover", () => {
+-            this.showTooltip(nx, ny - 50, `${map.name}\\nLOCKED`);
++        if (index === 0 || !map.unlocked) {
++          nodeBg.setInteractive({ useHandCursor: true });
++          const BIOME_COLORS = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
++          const stroke = BIOME_COLORS[index % BIOME_COLORS.length];
++          nodeBg.on("pointerover", () => {
++            this.showTooltip(nx, ny - 50, `${map.name}\\nLOCKED — Clear previous map to unlock!`);
++            this.setCampaignIntel(index, true);
++            nodeBg.setStrokeStyle(2, stroke);
+           });
+-          nodeBg.on("pointerout", () => {
++          nodeBg.on("pointerout", () => {
+             this.hideTooltip();
+-          });
++            nodeBg.setStrokeStyle(2, 0x4a554a);
++          });
+-        } else {
++          nodeBg.setStrokeStyle(2, 0x4a554a);
++        } else {
+           // ... existing unlocked logic remains unchanged ...
+         }
+```

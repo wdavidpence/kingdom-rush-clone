@@ -1,0 +1,99 @@
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -8178,20 +8178,64 @@ const atlas = {
+     // ... existing atlas entries ...
+
+-    make("gate_arch", function(ctx, w=96, h=64) {
+-        ctx.fillStyle = "#3a2e1f";
+-        ctx.fillRect(0, 0, w, h);
+-        // muddy stamp placeholder logic removed
++    make("gate_arch", function(ctx, w=128, h=96) {
++        // Base timber & stone foundation
++        ctx.fillStyle = "#1a1815";
++        ctx.fillRect(0, 0, w, h);
+
+-        // ... old muddy rendering ...
++        // Dark stone archway
++        ctx.beginPath();
++        ctx.moveTo(24, h);
++        ctx.lineTo(24, 36);
++        ctx.bezierCurveTo(24, 12, w-24, 12, w-24, 36);
++        ctx.lineTo(w-24, h);
++        ctx.closePath();
++        ctx.fillStyle = "#2c2824";
++        ctx.fill();
+
+-    }),
++        // Timber doors with iron bands
++        ctx.fillStyle = "#3b2a1d";
++        ctx.fillRect(28, 40, w/2 - 16, h-40);
++        ctx.fillRect(w/2 + 8, 40, w/2 - 16, h-40);
++        ctx.strokeStyle = "#1a1510";
++        ctx.lineWidth = 3;
++        [48, w/2+16].forEach(x => {
++            ctx.beginPath(); ctx.moveTo(x, 48); ctx.lineTo(x, h-8); ctx.stroke();
++            ctx.beginPath(); ctx.moveTo(x+16, 48); ctx.lineTo(x+16, h-8); ctx.stroke();
++        });
+
+-    make("next_asset", ...),
++        // Hanging lanterns
++        [[20, 32], [w-20, 32]].forEach(([lx, ly]) => {
++            ctx.fillStyle = "#0d0b09";
++            ctx.fillRect(lx-4, ly, 8, 12);
++            ctx.fillStyle = "#f5c542";
++            ctx.globalAlpha = 0.8;
++            ctx.fillRect(lx-2, ly+4, 4, 6);
++            ctx.globalAlpha = 1;
++        });
+
+-    // ...
++        // Ivy vines & leaves (deterministic)
++        ctx.strokeStyle = "#2a4b1c";
++        ctx.lineWidth = 2;
++        [[16,0,28,25,20,50],[w-16,0,w-24,30,w-20,55],[w/2,12,w/2+10,30,w/2-5,60]].forEach(v => {
++            ctx.beginPath(); ctx.moveTo(v[0],v[1]); ctx.bezierCurveTo(v[2],v[3],v[4],v[5],v[0]+(w>64?12:-8),h); ctx.stroke();
++        });
++        ctx.fillStyle = "#3a6b28";
++        [[24,15],[w-22,20],[36,40],[w-30,45],[w/2+8,28]].forEach(([lx,ly]) => {
++            ctx.beginPath(); ctx.ellipse(lx, ly, 4, 2.5, 0.8, 0, Math.PI*2); ctx.fill();
++        });
++    }),
++
++    make("gate_leak", function(ctx, w=128, h=96) {
++        // Ground stain & water leak aligned to arch opening
++        ctx.fillStyle = "rgba(20, 35, 50, 0.6)";
++        ctx.beginPath();
++        ctx.ellipse(w/2, h-4, 36, 8, 0, 0, Math.PI*2);
++        ctx.fill();
++        // Dripping effect from keystone
++        ctx.fillStyle = "rgba(100, 140, 180, 0.7)";
++        ctx.fillRect(w/2-1, 18, 2, 24);
++        ctx.beginPath(); ctx.arc(w/2, 42, 3, 0, Math.PI*2); ctx.fill();
++    }),
+```
+
+```diff:public/src/game.js
+--- a/public/src/game.js
++++ b/public/src/game.js
+@@ -3102,9 +3102,17 @@ function strokePath(ctx, mapIndex) {
+         // ... existing path logic ...
+
+     if (mapIndex === 0) {
+-        // Forest Gate placement
++        // Forest Gate path ruts (mapIndex===0)
+         ctx.save();
+-        renderSetPiece(ctx, "gate_arch", 378, 588);
++        ctx.lineWidth = 4;
++        ctx.strokeStyle = "#1e1812";
++        [[350, 690], [406, 685]].forEach(([x,y]) => {
++            ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(378, 640, 378, 595); ctx.stroke();
++        });
+
++        renderSetPiece(ctx, "gate_arch", 378, 588);
++        renderSetPiece(ctx, "gate_leak", 378, 588);
+         ctx.restore();
+     }
+```

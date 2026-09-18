@@ -1,0 +1,33 @@
+{
+  "name": "qwen35ud",
+  "plan": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 52.38,
+    "text": "\n\n```diff:public/src/krc-art.js\n- Update dimensions to 128\u00d796.\n- Replace callback body with layered rendering: base dark arch via `rounded`, timber doors using vertical/horizontal `poly` or `rounded`, lanterns on arch shoulders with `ellipse` + `linGrad` + `shadow`.\n- Overlay ivy along edges/doors using organic `poly` coordinates and `speckles` for texture.\n- Enforce explicit gradient stops, non-flat poly arrays, and strict 128\u00d796 coordinate bounds.\n- Preserve all surrounding imports/exports and metadata unchanged.\n\n```diff:public/src/game.js\n- Locate `this.gateImage` instantiation and change `.setScale(1.58)` to `.setScale(1.0)`.\n- Add conditional graphics layer triggered when `mapIndex === 0`.\n- Instantiate `this.add.graphics()` and draw rut lines following existing path coordinates using standard scene primitives.\n- Verify zero `ctx` references in Scene methods and confirm `{ x: 100, y: 375 }`, `bannerY = 98`, `campaign`, and `version` remain untouched.\n- Validate against forbidden patterns (`addColorStop` on omitted stops, flat poly arrays, `...data...`, `renderSetPiece`).",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 383,
+      "completion_tokens": 2720,
+      "total_tokens": 3103,
+      "completion_tokens_details": {
+        "reasoning_tokens": 2438
+      }
+    },
+    "ok": true
+  },
+  "code": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 140.14,
+    "text": "\n\n```diff:public/src/krc-art.js\n-    make(\"gate_arch\", 96, 64, (ctx) => {\n+    make(\"gate_arch\", 128, 96, (ctx) => {\n         // Base dark arch structure\n-        rounded(ctx, 16, 8, 64, 56, 10, \"#3a3530\", null);\n-        rounded(ctx, 24, 16, 48, 40, 8, \"#5a524a\", null);\n-        poly(ctx, [[20, 64], [38, 64], [38, 16], [20, 16]], \"#4a3f35\", null);\n-        poly(ctx, [[50, 64], [68, 64], [68, 16], [50, 16]], \"#3d342b\", null);\n-        ellipse(ctx, 14, 36, 4, 5, null, \"#d49a1e\", 2);\n-        ellipse(ctx, 82, 36, 4, 5, null, \"#d49a1e\", 2);\n-        speckles(ctx, 18, 56, 10, 4, 20, \"#4a7c59\", 2);\n-        speckles(ctx, 70, 56, 10, 4, 20, \"#4a7c59\", 2);\n-    }),\n+        rounded(ctx, 10, 10, 108, 76, 12, \"#3a3530\", null);\n+        rounded(ctx, 24, 24, 80, 62, 10, \"#5a524a\", null);\n+        \n+        // Timber doors\n+        poly(ctx, [[30, 86], [54, 86], [54, 24], [30, 24]], \"#4a3f35\", null);\n+        poly(ctx, [[74, 86], [98, 86], [98, 24], [74, 24]], \"#3d342b\", null);\n+        // Door planks & detail\n+        for(let i=0; i<4; i++) {\n+            rounded(ctx, 32 + i*6, 26, 4, 58, 1, \"#3a2f25\", null);\n+            rounded(ctx, 76 + i*6, 26, 4, 58, 1, \"#302720\", null);\n+        }\n+        \n+        // Lanterns on shoulders\n+        const lg1 = linGrad(ctx, 18, 34, 18, 50, [[0,\"#f7c948\"],[1,\"#e6a820\"]]);\n+        shadow(ctx, 18, 40, 6, 6, 0.5);\n+        ellipse(ctx, 18, 42, 5, 7, null, \"#d49a1e\", 2);\n+        ellipse(ctx, 18, 42, 3, 5, lg1, null);\n+        \n+        const lg2 = linGrad(ctx, 110, 34, 110, 50, [[0,\"#f7c948\"],[1,\"#e6a820\"]]);\n+        shadow(ctx, 110, 40, 6, 6, 0.5);\n+        ellipse(ctx, 110, 42, 5, 7, null, \"#d49a1e\", 2);\n+        ellipse(ctx, 110, 42, 3, 5, lg2, null);\n+        \n+        // Ivy overlay along edges\n+        speckles(ctx, 20, 80, 16, 10, 30, \"#4a7c59\", 2);\n+        speckles(ctx, 92, 80, 16, 10, 30, \"#4a7c59\", 2);\n+        poly(ctx, [[16, 84], [20, 70], [24, 84]], \"#3d6b4e\", null);\n+        poly(ctx, [[108, 84], [112, 70], [116, 84]], \"#3d6b4e\", null);\n+    }),\n```\n\n```diff:public/src/game.js\n-        this.gateImage = this.add.image(378, 588, \"gate_arch\").setDepth(-5).setScale(1.58);\n+        this.gateImage = this.add.image(378, 588, \"gate_arch\").setDepth(-5).setScale(1.0);\n+        \n+        if (this.mapIndex === 0) {\n+            const ruts = this.add.graphics();\n+            ruts.lineStyle(2, 0x1a1510, 0.5);\n+            ruts.strokePath(this.path);\n+        }\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 723,
+      "completion_tokens": 7213,
+      "total_tokens": 7936,
+      "completion_tokens_details": {
+        "reasoning_tokens": 5949
+      }
+    },
+    "ok": true
+  }
+}

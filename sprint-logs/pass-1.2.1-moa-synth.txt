@@ -1,0 +1,57 @@
+
+
+```diff:public/src/krc-art.js
+-    make("gate_arch", 96, 64, (ctx) => {
++    make("gate_arch", 128, 96, (ctx) => {
++      const w = 128, h = 96;
++      const stoneGrad = linGrad(ctx, 0, 0, w, h);
++      stoneGrad.addColorStop(0, "#2b2622");
++      stoneGrad.addColorStop(1, "#151311");
++      poly(ctx, [0, h, 0, h-42, 22, h-65, 44, h-78, 64, h-82, 84, h-78, 106, h-65, 128, h-42, w, h], stoneGrad);
++      poly(ctx, [22, h-65, 44, h-88, 64, h-92, 84, h-88, 106, h-65, 106, h, 22, h], "#0d0c0b");
++      const woodGrad = linGrad(ctx, 26, h-60, 102, h);
++      woodGrad.addColorStop(0, "#3a281d");
++      woodGrad.addColorStop(1, "#1c100a");
++      rounded(ctx, 26, h-58, 34, 50, 3, woodGrad);
++      rounded(ctx, 68, h-58, 34, 50, 3, woodGrad);
++      shadow(ctx, 26, h-58, 34, 50, 2, "#000", 0.5);
++      shadow(ctx, 68, h-58, 34, 50, 2, "#000", 0.5);
++      ctx.fillStyle = "#241710";
++      rounded(ctx, 32, h-50, 22, 10, 2);
++      rounded(ctx, 32, h-28, 22, 10, 2);
++      rounded(ctx, 74, h-50, 22, 10, 2);
++      rounded(ctx, 74, h-28, 22, 10, 2);
++      const lanternGrad = linGrad(ctx, 0, 0, 0, 20);
++      lanternGrad.addColorStop(0, "#ffdd88");
++      lanternGrad.addColorStop(1, "#aa6600");
++      ellipse(ctx, 14, h-72, 9, 15, lanternGrad);
++      ellipse(ctx, 114, h-72, 9, 15, lanternGrad);
++      const glowGrad = linGrad(ctx, 0, h-85, w, h);
++      glowGrad.addColorStop(0, "rgba(255,170,60,0.25)");
++      glowGrad.addColorStop(1, "rgba(255,170,60,0)");
++      ctx.fillStyle = glowGrad;
++      ctx.fillRect(0, h-85, w, 28);
++      const ivyBase = "#1f3b21";
++      poly(ctx, [0, h-48, 9, h-68, 20, h-52, 28, h-72, 38, h-62], ivyBase);
++      poly(ctx, [w, h-48, w-9, h-68, w-20, h-52, w-28, h-72, w-38, h-62], ivyBase);
++      poly(ctx, [12, 4, 28, -6, 32, 9, 16, 16], ivyBase);
++      poly(ctx, [w-12, 4, w-28, -6, w-32, 9, w-16, 16], ivyBase);
++      speckles(ctx, 0, h-75, w, 32, "#2e4c2b", 18);
+     });
+```
+
+```diff:public/src/game.js
+-        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
++        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.0);
+ ...
+   if (mapIndex === 0) {
+         // tile_dirt loop preserved
++        for (let i = 0; i < this.path.length - 1; i++) {
++            const p1 = this.path[i], p2 = this.path[i + 1];
++            ctx.beginPath(); ctx.moveTo(p1.x - 3, p1.y); ctx.lineTo(p2.x - 3, p2.y);
++            ctx.strokeStyle = "#1c1610"; ctx.lineWidth = 2; ctx.stroke();
++            ctx.beginPath(); ctx.moveTo(p1.x + 3, p1.y); ctx.lineTo(p2.x + 3, p2.y);
++            ctx.stroke();
++        }
+       }
+```

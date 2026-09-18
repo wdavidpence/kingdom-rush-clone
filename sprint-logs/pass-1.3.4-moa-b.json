@@ -1,0 +1,33 @@
+{
+  "name": "qwen35ud",
+  "plan": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 82.02,
+    "text": "",
+    "finish": "length",
+    "usage": {
+      "prompt_tokens": 2319,
+      "completion_tokens": 3999,
+      "total_tokens": 6318,
+      "completion_tokens_details": {
+        "reasoning_tokens": 3999
+      }
+    },
+    "ok": false
+  },
+  "code": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 127.86,
+    "text": "\n\n```diff\n--- a/public/src/krc-art.js\n+++ b/public/src/krc-art.js\n@@ -142,68 +142,53 @@ const drawFlyer = (ctx, frame = 0) => {\n \n       // Tail\n-      ctx.strokeStyle = \"#48a0c0\";\n-      ctx.lineWidth = 3;\n+      ctx.strokeStyle = \"#141008\";\n+      ctx.lineWidth = 3.2;\n       ctx.beginPath();\n       ctx.moveTo(40, bodyY + 14);\n       ctx.quadraticCurveTo(tailQuad[0], tailQuad[1], tailQuad[2], tailQuad[3]);\n       ctx.stroke();\n \n-      // Body\n-      ellipse(ctx, 40, bodyY, 14, 16, linGrad(ctx, 28, bodyY - 14, 52, bodyY + 14, [[0, \"#e0f8ff\"], [0.5, \"#60c0e0\"], [1, \"#206080\"]]), \"#184858\", 2);\n-      // Belly plates\n-      ellipse(ctx, 40, bodyY + 3, 7, 9, \"rgba(255,255,255,.3)\");\n-\n-      // Head\n-      ellipse(ctx, 40, headY, 10, 10, linGrad(ctx, 32, headY - 8, 48, headY + 8, [[0, \"#f0fcff\"], [1, \"#48a0c0\"]]), \"#184858\", 1.8);\n-      face(ctx, 40, headY, \"#e8f8ff\", \"#082028\");\n-\n-      // Horn crest\n-      poly(ctx, [[40, headY - 14], [34, headY - 6], [46, headY - 6]], \"#a0e0f0\", \"#184858\", 1.2);\n+      // Core/Aura - radial gradient for pop at play scale\n+      const aura = radGrad(ctx, 40, bodyY - 2, 3, 16, [[0, \"rgba(255,255,255,.8)\"], [0.3, \"rgba(160,240,255,.4)\"], [1, \"rgba(40,160,200,0)\"]]);\n+      ellipse(ctx, 40, bodyY - 2, 15, 17, aura, \"#141008\", 3);\n+\n+      // Body - bright cyan core with dark outline for readability\n+      const bodyFill = linGrad(ctx, 28, bodyY - 14, 52, bodyY + 14, [[0, \"#f8fcff\"], [0.5, \"#30b8e0\"], [1, \"#207090\"]]);\n+      ellipse(ctx, 40, bodyY + 2, 13.5, 15.5, bodyFill, \"#141008\", 3);\n+\n+      // Belly plates\n+      ellipse(ctx, 40, bodyY + 5, 6.5, 8.5, \"rgba(255,255,255,.35)\", \"#141008\", 1.5);\n+\n+      // Head\n+      const headFill = linGrad(ctx, 32, headY - 8, 48, headY + 8, [[0, \"#ffffff\"], [1, \"#50c4e4\"]]);\n+      ellipse(ctx, 40, headY, 9.5, 9.5, headFill, \"#141008\", 3);\n+\n+      // Face - stark contrast\n+      face(ctx, 40, headY, \"#ffffff\", \"#141008\");\n+\n+      // Horn crest\n+      poly(ctx, [[40, headY - 13], [35, headY - 6], [45, headY - 6]], \"#c0f0ff\", \"#141008\", 2.5);\n     };\n \n   ```\n\n```diff\n--- a/public/src/game-data.js\n+++ b/public/src/game-data.js\n@@ -1,7 +1,7 @@\n     flyer: { name: \"Wisp\", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },\n \n-    flyer: { name: \"Wisp\", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },\n+    flyer: { name: \"Wisp\", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 18, flying: true },\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 2494,
+      "completion_tokens": 6292,
+      "total_tokens": 8786,
+      "completion_tokens_details": {
+        "reasoning_tokens": 5055
+      }
+    },
+    "ok": true
+  }
+}

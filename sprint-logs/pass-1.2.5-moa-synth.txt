@@ -1,0 +1,60 @@
+
+
+```diff:public/src/krc-art.js
+@@ -... +... @@
++function drawScoutDead(ctx) {
++    shadow(ctx, 40, 68, 35, 8, 0.4);
++    poly(ctx, [[10, 62], [70, 60], [60, 48], [20, 50]], '#3a5f48', null, 0);
++    poly(ctx, [[25, 30], [55, 28], [60, 48], [20, 50]], '#4a7c5f', null, 0);
++    ellipse(ctx, 35, 26, 12, 10, '#3a5f48', null, 0);
++    speckles(ctx, 15, 45, 50, 20, 6, '#8b0000', 3);
++}
++
++make("enemy_scout_dead", 80, 72, (ctx) => drawScoutDead(ctx));
++make("enemy_scout_hit", 80, 72, (ctx) => {
++    ctx.save();
++    ctx.translate(5, -4);
++    ctx.rotate(-0.15);
++    shadow(ctx, 38, 66, 28, 7, 0.5);
++    poly(ctx, [[14, 52], [66, 50], [74, 60], [10, 62]], '#3a5f48', null, 0);
++    poly(ctx, [[22, 32], [58, 30], [66, 50], [14, 52]], '#5a9c7f', null, 0);
++    ellipse(ctx, 34, 28, 10, 9, '#3a5f48', null, 0);
++    rounded(ctx, 26, 34, 18, 22, 4, '#4a7c5f', null, 0);
++    ctx.restore();
++});
+
+```diff:public/src/game.js
+@@ -... +... @@
+-const spawnPos = { x: 200, y: 300 };
++const spawnPos = { x: 100, y: 375 };
+-const bannerY = 80;
++const bannerY = 98;
+-    campaign: true, version: '1.2.4',
++// no campaign, no version
+
+@@ -... +... @@
+                   if (hit) {
+-            enemy.hitFlash = 0.09;
+-            enemy.sprite.setTint(0xfff3d6);
++            enemy.hitFlash = 0.28;
++            if (enemy.type === 'scout' && this.textures.exists("enemy_scout_hit")) {
++                enemy.sprite.setTexture("enemy_scout_hit");
++            } else {
++                enemy.sprite.setTint(0xfff3d6);
++            }
+                   }
+
+@@ -... +... @@
+                       if (enemy.hitFlash > 0) {
+                           enemy.hitFlash -= dt;
+                           if (enemy.hitFlash <= 0) {
+-                    enemy.sprite.setTint(null);
++                    if (enemy.type === 'scout') {
++                        enemy.sprite.setTexture("enemy_scout_w0");
++                    } else {
++                        enemy.sprite.setTint(null);
++                    }
+                               delete enemy.hitFlash;
+                           }
+                       }
+```

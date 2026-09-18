@@ -1,0 +1,92 @@
+A
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -102,8 +102,26 @@
+     const drawArcherFire = (ctx) => {
+         drawArcherTowerBody128(ctx);
+-        ctx.fillStyle = '#DAA520';
+-        ctx.fillRect(48, 32, 32, 64);
++        const cx = ctx.canvas.width / 2;
++        const cy = ctx.canvas.height / 2;
++        const s = 36;
++
++        shadow(ctx, cx + s * 0.5, cy - s, s * 2, s * 4, 'rgba(0,0,0,0.3)');
++        const staveG = linGrad(ctx, cx - s * 0.2, cy - s * 1.5, cx + s * 0.2, cy + s * 1.5, [[0,'#8B4513'],[0.5,'#A0522D'],[1,'#654321']]);
++        poly(ctx, [[cx - s * 0.15, cy - s], [cx + s * 0.15, cy - s], [cx + s * 0.25, cy], [cx + s * 0.15, cy + s], [cx - s * 0.15, cy + s], [cx - s * 0.25, cy]], staveG, '#3E2723', 2);
++        poly(ctx, [[cx, cy - s], [cx - s * 0.6, cy], [cx, cy + s]], null, '#F5F5DC', 2);
++        ellipse(ctx, cx - s * 0.4, cy - s * 0.2, s * 0.25, s * 0.3, '#D2B48C', '#5C4033', 1);
++        poly(ctx, [[cx - s * 0.25, cy], [cx - s * 0.5, cy + s * 0.8], [cx - s * 0.3, cy + s], [cx - s * 0.1, cy + s * 0.2]], '#2F4F4F', null, 1);
++        poly(ctx, [[cx - s * 0.2, cy + s * 0.1], [cx - s * 0.5, cy - s * 0.3], [cx - s * 0.4, cy - s * 0.2], [cx - s * 0.15, cy]], '#2F4F4F', null, 1);
++        speckles(ctx, cx - s * 0.3, cy, s * 0.2, '#FF6347', 10);
+     };
+```
+
+```diff:public/src/game.js
+--- a/public/src/game.js
++++ b/public/src/game.js
+@@ -215,7 +215,7 @@
+     towerStates: {
+         flashTowerFirePose: {
+             setTexture(fireKey),
+-            bloomCircle: 14,
++            bloomCircle: 0,
+         }
+     },
+```
+B
+
+
+```diff:public/src/krc-art.js
+@@ -142,6 +142,38 @@
+     const drawArcherFire = (ctx) => {
+         drawArcherTowerBody128(ctx);
++        ctx.save();
++        
++        // 36px thick stave (curved arc approximation)
++        const stavePts = [[2,10], [8,34], [26,34], [32,10]];
++        const woodGrad = linGrad(ctx, 2,2,34,34, [[0,'#5c3a21'],[0.6,'#8b5a2b'],[1,'#4a2c17']]);
++        poly(ctx, stavePts, null, woodGrad, 3);
++        
++        // V-string connecting stave tips to center nock
++        const vString = [[2,10], [17, 26], [32,10]];
++        poly(ctx, vString, null, '#e8dcc8', 1.2);
++        
++        // Leaning archer figure anchored to bow base
++        ctx.save();
++        shadow(ctx, 3, 2, '#00000045');
++        
++        // Torso & lower limbs in dynamic draw pose
++        poly(ctx, [[10,2], [18,4], [22,16], [14,18]], '#3a506b', null, 0);
++        poly(ctx, [[14,18], [22,16], [20,30], [12,30]], '#2a3a4b', null, 0);
++        
++        // Head & arms reaching for bow
++        ellipse(ctx, 14, -2, 3.5, 4, '#d4b09a');
++        poly(ctx, [[18,6], [24,10], [30,8], [24,4]], '#3a506b', null, 0);
++        poly(ctx, [[14,8], [6,12], [4,18], [10,16]], '#3a506b', null, 0);
++        
++        // Texture speckles for fabric/armor detail
++        speckles(ctx, [[10,2], [18,4], [22,16], [14,18]], '#00000035', 0.6);
++        
++        ctx.restore();
++        ctx.restore();
+     };
+```
+
+```diff:public/src/game.js
+@@ -218,9 +218,7 @@
+     const flashTowerFirePose = (ctx, x, y) => {
+         setTexture(fireKey);
+-        ctx.shadowBlur = 24;
+-        ctx.fillStyle = '#ffcc66';
+-        ctx.beginPath();
+-        ctx.arc(x, y, 18, 0, Math.PI * 2);
+-        ctx.fill();
++        // bloom circle removed/zeroed per request
++        const _bloomRadius = 0;
++        ctx.shadowBlur = 0;
+         // ... rest of pose logic preserved
+     };
+```

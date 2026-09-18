@@ -1,0 +1,116 @@
+A
+
+
+```diff:public/src/krc-art.js
+ make("gate_arch", 96, 64, (ctx) => {
++make("gate_arch", 128, 96, (ctx) => {
++  const w = 128, h = 96;
++  const stoneGrad = linGrad(ctx, 0, 0, w, h);
++  stoneGrad.addColorStop(0, "#2b2622");
++  stoneGrad.addColorStop(1, "#151311");
++  poly(ctx, [0, h, 0, h-42, 22, h-65, 44, h-78, 64, h-82, 84, h-78, 106, h-65, 128, h-42, w, h], stoneGrad);
++  poly(ctx, [22, h-65, 44, h-88, 64, h-92, 84, h-88, 106, h-65, 106, h, 22, h], "#0d0c0b");
++  const woodGrad = linGrad(ctx, 26, h-60, 102, h);
++  woodGrad.addColorStop(0, "#3a281d");
++  woodGrad.addColorStop(1, "#1c100a");
++  rounded(ctx, 26, h-58, 34, 50, 3, woodGrad);
++  rounded(ctx, 68, h-58, 34, 50, 3, woodGrad);
++  shadow(ctx, 26, h-58, 34, 50, 2, "#000", 0.5);
++  shadow(ctx, 68, h-58, 34, 50, 2, "#000", 0.5);
++  ctx.fillStyle = "#241710";
++  rounded(ctx, 32, h-50, 22, 10, 2);
++  rounded(ctx, 32, h-28, 22, 10, 2);
++  rounded(ctx, 74, h-50, 22, 10, 2);
++  rounded(ctx, 74, h-28, 22, 10, 2);
++  const lanternGrad = linGrad(ctx, 0, 0, 0, 20);
++  lanternGrad.addColorStop(0, "#ffdd88");
++  lanternGrad.addColorStop(1, "#aa6600");
++  ellipse(ctx, 14, h-72, 9, 15, lanternGrad);
++  ellipse(ctx, 114, h-72, 9, 15, lanternGrad);
++  const glowGrad = linGrad(ctx, 0, h-85, w, h);
++  glowGrad.addColorStop(0, "rgba(255,170,60,0.25)");
++  glowGrad.addColorStop(1, "rgba(255,170,60,0)");
++  ctx.fillStyle = glowGrad;
++  ctx.fillRect(0, h-85, w, 28);
++  const ivyBase = "#1f3b21";
++  poly(ctx, [0, h-48, 9, h-68, 20, h-52, 28, h-72, 38, h-62], ivyBase);
++  poly(ctx, [w, h-48, w-9, h-68, w-20, h-52, w-28, h-72, w-38, h-62], ivyBase);
++  poly(ctx, [12, 4, 28, -6, 32, 9, 16, 16], ivyBase);
++  poly(ctx, [w-12, 4, w-28, -6, w-32, 9, w-16, 16], ivyBase);
++  speckles(ctx, 0, h-75, w, 32, "#2e4c2b", 18);
+   });
+```
+
+```diff:public/src/game.js
+-        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
++        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.0);
+ ...
+   if (mapIndex === 0) {
+         // tile_dirt loop preserved
++        for (let i = 0; i < this.path.length - 1; i++) {
++            const p1 = this.path[i], p2 = this.path[i+1];
++            ctx.beginPath(); ctx.moveTo(p1.x - 3, p1.y); ctx.lineTo(p2.x - 3, p2.y);
++            ctx.strokeStyle = "#1c1610"; ctx.lineWidth = 2; ctx.stroke();
++            ctx.beginPath(); ctx.moveTo(p1.x + 3, p1.y); ctx.lineTo(p2.x + 3, p2.y);
++            ctx.stroke();
++        }
+       }
+```
+B
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -1,4 +1,25 @@
+-    make("gate_arch", 96, 64, (ctx) => {
+-        // legacy placeholder
++    make("gate_arch", 128, 96, (ctx) => {
++        const w = 128, h = 96;
++        // Stone archway base
++        shadow(ctx, 0, 4, 8, 'rgba(0,0,0,0.6)');
++        rounded(ctx, 18, 25, w - 36, h - 30, 6);
++        linGrad(ctx, '#2c2c2c', '#1a1a1a');
++        // Arch top dome
++        ellipse(ctx, w/2, 24, 38, 16);
++        linGrad(ctx, '#3a3a3a', '#222');
++        // Timber doors
++        poly(ctx, [[24, 38], [24, h-16], [62, h-16], [62, 38]], '#4a3020');
++        poly(ctx, [[66, 38], [66, h-16], [104, h-16], [104, 38]], '#3b2517');
++        // Door panels & iron bands
++        for(let i=0; i<3; i++) { poly(ctx, [[27+i*11, 42], [36+i*11, 42], [36+i*11, h-20], [27+i*11, h-20]], '#5c3a24'); }
++        for(let i=0; i<3; i++) { poly(ctx, [[69+i*11, 42], [78+i*11, 42], [78+i*11, h-20], [69+i*11, h-20]], '#4e3020']; }
++        // Lanterns
++        ellipse(ctx, 32, 34, 7, 9, '#111');
++        ellipse(ctx, 96, 34, 7, 9, '#111');
++        linGrad(ctx, '#ffdd88', '#cc6600');
++        ellipse(ctx, 32, 34, 5, 7);
++        ellipse(ctx, 96, 34, 5, 7);
++        // Ivy vines & leaves
++        speckles(ctx, [[12, 30], [85, 18], [42, 75], [95, 60]], '#3a6b28', 4);
++        speckles(ctx, [[15, 40], [82, 25], [38, 65]], '#2d4f1e', 3);
++    })
+```
+
+```diff:public/src/game.js
+--- a/public/src/game.js
++++ b/public/src/game.js
+@@ -45,7 +45,19 @@ export class GameScene extends Phaser.Scene {
+-        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
++        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.0);
++        if (this.mapIndex === 0 && this.path) {
++            ctx.save();
++            for (let i = 1; i < this.path.length; i++) {
++                const prev = this.path[i-1], curr = this.path[i];
++                const dx = curr.x - prev.x, dy = curr.y - prev.y;
++                const len = Math.hypot(dx, dy) || 1;
++                const nx = -dy/len * 5, ny = dx/len * 5;
++                ctx.beginPath(); ctx.moveTo(prev.x+nx, prev.y+ny); ctx.lineTo(curr.x+nx, curr.y+ny);
++                ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.stroke();
++                ctx.beginPath(); ctx.moveTo(prev.x-nx, prev.y-ny); ctx.lineTo(curr.x-nx, curr.y-ny);
++                ctx.stroke();
++            }
++            ctx.restore();
++        }
+         // tile_dirt loop preserved below...
+```

@@ -1,0 +1,33 @@
+{
+  "name": "qwen27",
+  "plan": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 97.28,
+    "text": "\n\n**public/src/krc-art.js**\n- Clear canvas to transparent.\n- Draw dark crater base using `ellipse` or `poly` with a near-black fill and subtle `shadow` for depth.\n- Create white-hot core using `radGrad` (center \u2192 edge: pure white to pale blue/gray) applied to a central circle; avoid any warm/orange tones.\n- Generate 6\u20138 radiating spike paths using `poly`; fill with dark charcoal, stroke black (`line: 2\u20133`) to guarantee sharp silhouettes.\n- Add perimeter debris with `speckles` (low count, high contrast) to avoid visual noise.\n- Verify geometry remains crisp and high-contrast so details resolve clearly when scaled down to 80px.\n\n**public/src/game.js**\n- Locate the `burst0` instantiation block.\n- Change initial scale parameter from 0.35 to 0.75.\n- Update the associated tween/animation duration target to ~520ms.\n- Retain existing texture key fallback logic (`this.textures.exists(...) ? \"fx_meteor_0\" : \"fx_meteor\"`).\n- Run a targeted diff check to confirm `{ x: 100, y: 375 }`, `bannerY=98`, `campaign`, `version`, `scout`, and `ranger` remain completely untouched.",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 407,
+      "completion_tokens": 1877,
+      "total_tokens": 2284,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1577
+      }
+    },
+    "ok": true
+  },
+  "code": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 416.95,
+    "text": "\n\n```diff:public/src/krc-art.js\n--- a/public/src/krc-art.js\n+++ b/public/src/krc-art.js\n@@ -... +... @@\n     const drawFxMeteor0 = (ctx) => {\n+    ctx.clearRect(0, 0, 128, 128);\n       const cx = 64;\n-    const cy = 64;\n+    const cy = 64;\n+\n+    shadow(ctx, cx, cy + 15, 30, 12, 0.5);\n+    ellipse(ctx, cx, cy + 12, 36, 18, '#0b0c10', null, 0);\n+\n+    const core = radGrad(ctx, cx, cy - 5, 0, 26, [[0, '#ffffff'], [0.4, '#d0e8ff'], [1, 'rgba(200,230,255,0)']]);\n+    ellipse(ctx, cx, cy - 5, 22, 18, core, null, 0);\n+\n+    const spikes = [\n+      [[cx, cy-5], [cx-18, cy-40], [cx-5, cy-65], [cx+12, cy-42]],\n+      [[cx, cy-5], [cx+10, cy-58], [cx+28, cy-35], [cx+14, cy-5]],\n+      [[cx, cy-5], [cx+38, cy-10], [cx+42, cy+15], [cx+20, cy-5]],\n+      [[cx, cy-5], [cx+30, cy+25], [cx+10, cy+45], [cx-8, cy+20]],\n+      [[cx, cy-5], [cx-15, cy+48], [cx-35, cy+25], [cx-10, cy+5]],\n+      [[cx, cy-5], [cx-42, cy+10], [cx-38, cy-15], [cx-20, cy-2]],\n+      [[cx, cy-5], [cx-35, cy-28], [cx-15, cy-45], [cx-5, cy-20]],\n+      [[cx, cy-5], [cx+5, cy-48], [cx+20, cy-30], [cx+15, cy-8]]\n+    ];\n+    spikes.forEach(pts => poly(ctx, pts, '#16171a', '#000000', 2));\n+\n+    speckles(ctx, cx - 45, cy - 45, 90, 90, 10, '#ffffff', 3);\n+    speckles(ctx, cx - 45, cy - 45, 90, 90, 5, '#8cb4d9', 2);\n+  };\n```\n\n```diff:public/src/game.js\n--- a/public/src/game.js\n+++ b/public/src/game.js\n@@ -... +... @@\n           const burst0 = this.add.image(target.x, target.y, this.textures.exists(\"fx_meteor_0\") ? \"fx_meteor_0\" : \"fx_meteor\")\n-            .setScale(0.35)\n+            .setScale(0.75)\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 765,
+      "completion_tokens": 8039,
+      "total_tokens": 8804,
+      "completion_tokens_details": {
+        "reasoning_tokens": 7222
+      }
+    },
+    "ok": true
+  }
+}

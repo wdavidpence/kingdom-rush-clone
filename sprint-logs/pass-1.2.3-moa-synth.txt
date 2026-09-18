@@ -1,0 +1,47 @@
+
+
+```diff:public/src/krc-art.js
+@@ -... +... @@
+ 	// ... asset registry ...
+-	make("gate_arch", 96, 64, (ctx) => {
+-		// fallback placeholder
+-	});
++	make("gate_arch", 128, 96, (ctx) => {
++		poly(ctx, [[0, 96], [128, 96], [128, 30], [96, 30], [96, 12], [80, 4], [64, 2], [48, 4], [32, 12], [32, 30], [0, 30]], "#6a5a48", null, null);
++		speckles(ctx, 0, 20, 128, 76, 40, "#5a4a38", 1.5);
++		speckles(ctx, 0, 20, 128, 76, 40, "#7a6a58", 1.2);
++		poly(ctx, [[32, 96], [96, 96], [96, 12], [80, 4], [64, 2], [48, 4], [32, 12]], "#0a0806", null, null);
++		rounded(ctx, 34, 45, 28, 51, 2, "#5c3a21", null, null);
++		rounded(ctx, 66, 45, 28, 51, 2, "#3a2415", null, null);
++		poly(ctx, [[38, 50], [62, 50]], null, "#2a1a0e", 1.5);
++		poly(ctx, [[38, 65], [62, 65]], null, "#2a1a0e", 1.5);
++		poly(ctx, [[66, 50], [90, 50]], null, "#2a1a0e", 1.5);
++		poly(ctx, [[66, 65], [90, 65]], null, "#2a1a0e", 1.5);
++		ellipse(ctx, 20, 40, 5, 7, "#d4af37", null, null);
++		shadow(ctx, 20, 45, 8, 10, 0.6);
++		ellipse(ctx, 108, 40, 5, 7, "#d4af37", null, null);
++		shadow(ctx, 108, 45, 8, 10, 0.6);
++	});
+ 	// ... remaining assets ...
+
+```diff:public/src/game.js
+@@ -... +... @@
+ 		// ... scene initialization ...
+-        this.gateImage = this.add.image(378, 588, "gate_arch").setDepth(-5).setScale(1.58);
++        this.gateImage = this.add.image(378, 520, "gate_arch").setDepth(-5).setScale(1.15);
++        if (this.mapIndex === 0) {
++            this.ruts = this.add.graphics();
++            const pts = this.path;
++            for (let i = 0; i < pts.length - 1; i++) {
++                const dx = pts[i+1].x - pts[i].x;
++                const dy = pts[i+1].y - pts[i].y;
++                const len = Math.hypot(dx, dy) || 1;
++                const nx = -dy / len * 5;
++                const ny = dx / len * 5;
++                this.ruts.lineStyle(2, 0x3a2a1a, 0.8);
++                this.ruts.lineBetween(pts[i].x + nx, pts[i].y + ny, pts[i+1].x + nx, pts[i+1].y + ny);
++                this.ruts.lineBetween(pts[i].x - nx, pts[i].y - ny, pts[i+1].x - nx, pts[i+1].y - ny);
++            }
++        }
+ 		// ... remaining setup ...
+```

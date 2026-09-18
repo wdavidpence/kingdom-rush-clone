@@ -1,0 +1,64 @@
+A
+
+B
+
+
+```diff
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -142,68 +142,53 @@ const drawFlyer = (ctx, frame = 0) => {
+ 
+       // Tail
+-      ctx.strokeStyle = "#48a0c0";
+-      ctx.lineWidth = 3;
++      ctx.strokeStyle = "#141008";
++      ctx.lineWidth = 3.2;
+       ctx.beginPath();
+       ctx.moveTo(40, bodyY + 14);
+       ctx.quadraticCurveTo(tailQuad[0], tailQuad[1], tailQuad[2], tailQuad[3]);
+       ctx.stroke();
+ 
+-      // Body
+-      ellipse(ctx, 40, bodyY, 14, 16, linGrad(ctx, 28, bodyY - 14, 52, bodyY + 14, [[0, "#e0f8ff"], [0.5, "#60c0e0"], [1, "#206080"]]), "#184858", 2);
+-      // Belly plates
+-      ellipse(ctx, 40, bodyY + 3, 7, 9, "rgba(255,255,255,.3)");
+-
+-      // Head
+-      ellipse(ctx, 40, headY, 10, 10, linGrad(ctx, 32, headY - 8, 48, headY + 8, [[0, "#f0fcff"], [1, "#48a0c0"]]), "#184858", 1.8);
+-      face(ctx, 40, headY, "#e8f8ff", "#082028");
+-
+-      // Horn crest
+-      poly(ctx, [[40, headY - 14], [34, headY - 6], [46, headY - 6]], "#a0e0f0", "#184858", 1.2);
++      // Core/Aura - radial gradient for pop at play scale
++      const aura = radGrad(ctx, 40, bodyY - 2, 3, 16, [[0, "rgba(255,255,255,.8)"], [0.3, "rgba(160,240,255,.4)"], [1, "rgba(40,160,200,0)"]]);
++      ellipse(ctx, 40, bodyY - 2, 15, 17, aura, "#141008", 3);
++
++      // Body - bright cyan core with dark outline for readability
++      const bodyFill = linGrad(ctx, 28, bodyY - 14, 52, bodyY + 14, [[0, "#f8fcff"], [0.5, "#30b8e0"], [1, "#207090"]]);
++      ellipse(ctx, 40, bodyY + 2, 13.5, 15.5, bodyFill, "#141008", 3);
++
++      // Belly plates
++      ellipse(ctx, 40, bodyY + 5, 6.5, 8.5, "rgba(255,255,255,.35)", "#141008", 1.5);
++
++      // Head
++      const headFill = linGrad(ctx, 32, headY - 8, 48, headY + 8, [[0, "#ffffff"], [1, "#50c4e4"]]);
++      ellipse(ctx, 40, headY, 9.5, 9.5, headFill, "#141008", 3);
++
++      // Face - stark contrast
++      face(ctx, 40, headY, "#ffffff", "#141008");
++
++      // Horn crest
++      poly(ctx, [[40, headY - 13], [35, headY - 6], [45, headY - 6]], "#c0f0ff", "#141008", 2.5);
+     };
+ 
+   ```
+
+```diff
+--- a/public/src/game-data.js
++++ b/public/src/game-data.js
+@@ -1,7 +1,7 @@
+     flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },
+ 
+-    flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 15, flying: true },
++    flyer: { name: "Wisp", hp: 104, speed: 72, armor: 0, bounty: 14, leak: 1, color: 0x73d9ff, size: 18, flying: true },
+```

@@ -1,0 +1,183 @@
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -142,89 +142,75 @@
+-    const drawBossIdle = (ctx) => {
++    const drawBossIdle = (ctx, frame = 0) => {
+       shadow(ctx, 48, 76, 38, 10, 0.48);
+       const OUT = "#141008";
+
+       const capeG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#c080f0"], [0.45, "#7a249c"], [1, "#200630"]]);
+       const armorG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#eeb8ff"], [0.45, "#9830ba"], [1, "#3c0c50"]]);
+       const goldG = (x0, y0, x1, y1) => linGrad(ctx, x0, y0, x1, y1, [[0, "#fff4a8"], [0.5, "#e0ac2c"], [1, "#70500a"]]);
+
+-      // Royal Flowing Amethyst Cape
+-      poly(
+-        ctx,
+-        [[16, 26], [80, 26], [92, 72], [48, 81], [4, 72]],
+-        capeG(16, 26, 80, 81),
+-        OUT,
+-        3.2
+-      );
+-      // Gold hem trim on cape
+-      poly(ctx, [[4, 72], [48, 81], [92, 72], [90, 68], [48, 76], [6, 68]], goldG(4, 68, 92, 81), OUT, 1.8);
++      // 1. Royal Flowing Amethyst Cape (Background layer)
++      poly(ctx, [[16, 26], [80, 26], [94, 74], [48, 83], [2, 74]], capeG(16, 26, 80, 83), OUT, 3.4);
++      // Gold hem trim on cape
++      poly(ctx, [[2, 74], [48, 83], [94, 74], [91, 69], [48, 77], [5, 69]], goldG(2, 69, 94, 83), OUT, 2.0);
+
+-      // Heavy Armored Torso Cuirass
+-      rounded(ctx, 26, 26, 44, 38, 9, armorG(26, 26, 70, 64), OUT, 3.2);
++      // 2. Heavy Armored Torso Cuirass (Mid layer, separated from cape)
++      rounded(ctx, 28, 28, 40, 36, 10, armorG(28, 28, 68, 64), OUT, 3.4);
++      // Chest plate seam & core gem
++      poly(ctx, [[48, 36], [55, 47], [48, 55], [41, 47]], goldG(41, 36, 55, 55), OUT, 2.2);
++      ellipse(ctx, 48, 46, 4.5, 4.5, "#ff40b0", OUT, 2.0);
++      ellipse(ctx, 47, 45, 1.6, 1.6, "#ffffff");
+
+-      // Ornate Gold Chest Chevron & Core Arcane Gem
+-      poly(ctx, [[48, 34], [56, 46], [48, 56], [40, 46]], goldG(40, 34, 56, 56), OUT, 2.0);
+-      ellipse(ctx, 48, 45, 4.0, 4.0, "#ff40b0", OUT, 1.8);
+-      ellipse(ctx, 47, 44, 1.4, 1.4, "#ffffff");
++      // 3. Curved Royal Pauldrons & Shoulder Guards
++      ellipse(ctx, 20, 34, 15, 13, armorG(6, 22, 34, 47), OUT, 3.0);
++      ellipse(ctx, 76, 34, 15, 13, armorG(62, 22, 90, 47), OUT, 3.0);
++      // Gold pauldron rims
++      ctx.strokeStyle = goldG(6, 22, 34, 47);
++      ctx.lineWidth = 2.6;
++      ctx.beginPath(); ctx.arc(20, 34, 10, Math.PI * 0.75, Math.PI * 1.8); ctx.stroke();
++      ctx.beginPath(); ctx.arc(76, 34, 10, Math.PI * 1.2, Math.PI * 2.25); ctx.stroke();
+
+-      // Curved Royal Pauldrons
+-      ellipse(ctx, 22, 33, 14, 12, armorG(8, 21, 36, 45), OUT, 2.8);
+-      ellipse(ctx, 74, 33, 14, 12, armorG(60, 21, 88, 45), OUT, 2.8);
+-      // Gold pauldron rims
+-      ctx.strokeStyle = goldG(8, 21, 36, 45);
+-      ctx.lineWidth = 2.4;
+-      ctx.beginPath();
+-      ctx.arc(22, 33, 9, Math.PI * 0.75, Math.PI * 1.8);
+-      ctx.stroke();
+-      ctx.beginPath();
+-      ctx.arc(74, 33, 9, Math.PI * 1.2, Math.PI * 2.25);
+-      ctx.stroke();
++      // 4. Royal Head & Helm Base
++      ellipse(ctx, 48, 20, 16, 15, armorG(32, 5, 64, 35), OUT, 3.2);
+
+-      // Royal Head
+-      ellipse(ctx, 48, 20, 17, 16, armorG(31, 4, 65, 36), OUT, 3.0);
++      // 5. Huge Cream Eyes (Menacing Warlord gaze)
++      ellipse(ctx, 41, 20, 5.0, 5.8, "#fffbe0", OUT, 2.6);
++      ellipse(ctx, 55, 20, 5.0, 5.8, "#fffbe0", OUT, 2.6);
++      // Intense amethyst pupil core
++      ellipse(ctx, 41.5, 20.8, 2.8, 3.4, "#4a0660");
++      ellipse(ctx, 54.5, 20.8, 2.8, 3.4, "#4a0660");
++      ellipse(ctx, 41.5, 20.8, 1.4, 1.8, "#e860ff");
++      ellipse(ctx, 54.5, 20.8, 1.4, 1.8, "#e860ff");
++      // White glint
++      ellipse(ctx, 40.0, 19.2, 1.6, 1.6, "#ffffff");
++      ellipse(ctx, 53.8, 19.2, 1.6, 1.6, "#ffffff");
++      // Furious Brow
++      ctx.strokeStyle = OUT; ctx.lineWidth = 2.8;
++      ctx.beginPath(); ctx.moveTo(34, 14); ctx.lineTo(46, 17.5);
++      ctx.moveTo(62, 14); ctx.lineTo(50, 17.5);
++      ctx.stroke();
+
+-      // Huge Cream Eyes (Menacing Warlord gaze)
+-      ellipse(ctx, 42, 20, 4.5, 5.2, "#fffbe0", OUT, 2.4);
+-      ellipse(ctx, 54, 20, 4.5, 5.2, "#fffbe0", OUT, 2.4);
+-      // Intense amethyst pupil core
+-      ellipse(ctx, 42.5, 20.5, 2.5, 3.0, "#4a0660");
+-      ellipse(ctx, 53.5, 20.5, 2.5, 3.0, "#4a0660");
+-      ellipse(ctx, 42.5, 20.5, 1.2, 1.6, "#e860ff");
+-      ellipse(ctx, 53.5, 20.5, 1.2, 1.6, "#e860ff");
+-      // White glint
+-      ellipse(ctx, 41.2, 18.8, 1.4, 1.4, "#ffffff");
+-      ellipse(ctx, 52.8, 18.8, 1.4, 1.4, "#ffffff");
+-      // Furious Brow
+-      ctx.strokeStyle = OUT;
+-      ctx.lineWidth = 2.6;
+-      ctx.beginPath();
+-      ctx.moveTo(36, 15); ctx.lineTo(45, 18);
+-      ctx.moveTo(60, 15); ctx.lineTo(51, 18);
+-      ctx.stroke();
++      // 6. 5-Spire Grand Crown (Sits atop helm)
++      poly(ctx, [[28, 12], [32, 0], [39, 8], [48, -1], [57, 8], [64, 0], [68, 12]], goldG(28, -1, 68, 12), OUT, 2.4);
++      ellipse(ctx, 48, 6.5, 5.2, 5.2, "#ff20a0", OUT, 2.0);
++      ellipse(ctx, 47, 5.5, 1.8, 1.8, "#ffffff");
+
+-      // 5-Spire Grand Crown
+-      poly(
+-        ctx,
+-        [[26, 13], [30, 2], [37, 10], [48, -1], [59, 10], [66, 2], [70, 13]],
+-        goldG(26, -1, 70, 13),
+-        OUT,
+-        2.2
+-      );
+-      ellipse(ctx, 48, 6.5, 5.0, 5.0, "#ff20a0", OUT, 1.8);
+-      ellipse(ctx, 47, 5.5, 1.5, 1.5, "#ffffff");
++      // 7. Heavy Golden Arcane Staff (Angled forward)
++      ctx.strokeStyle = OUT; ctx.lineWidth = 6.0;
++      ctx.beginPath(); ctx.moveTo(72, 74); ctx.lineTo(86, 10); ctx.stroke();
++      ctx.strokeStyle = goldG(72, 74, 86, 10); ctx.lineWidth = 3.8;
++      ctx.beginPath(); ctx.moveTo(72, 74); ctx.lineTo(86, 10); ctx.stroke();
+
+-      // Heavy Golden Arcane Staff
+-      ctx.strokeStyle = OUT;
+-      ctx.lineWidth = 5.6;
+-      ctx.beginPath();
+-      ctx.moveTo(74, 72);
+-      ctx.lineTo(84, 14);
+-      ctx.stroke();
++      // Dragon Prongs grasping orb
++      poly(ctx, [[76, 15], [84, 22], [92, 15]], goldG(76, 15, 92, 22), OUT, 2.2);
+
+-      ctx.strokeStyle = goldG(74, 72, 84, 14);
+-      ctx.lineWidth = 3.8;
+-      ctx.beginPath();
+-      ctx.moveTo(74, 72);
+-      ctx.lineTo(84, 14);
+-      ctx.stroke();
++      // Radiant Arcane Orb
++      ellipse(ctx, 86, 10, 13, 13, radGrad(ctx, 84, 8, 2, 13, [[0, "#ffffff"], [0.35, "#f090ff"], [0.75, "#b020e0"], [1, "rgba(90,10,140,0.15)"]]), OUT, 2.8);
++      ellipse(ctx, 83, 7, 3.5, 3.5, "#ffffff");
+
+-      // Dragon Prongs grasping orb
+-      poly(ctx, [[78, 17], [84, 23], [90, 17]], goldG(78, 17, 90, 23), OUT, 2.0);
++      // Arcane Aura Ring at feet
++      ctx.strokeStyle = "rgba(220,150,255,.6)"; ctx.lineWidth = 2.6;
++      ctx.beginPath(); ctx.ellipse(48, 52, 38, 13, 0, 0, Math.PI * 2); ctx.stroke();
+-      // Radiant Arcane Orb
+-      ellipse(
+-        ctx,
+-        84,
+-        12,
+-        12,
+-        12,
+-        radGrad(ctx, 82, 10, 1, 12, [[0, "#ffffff"], [0.35, "#f090ff"], [0.75, "#b020e0"], [1, "rgba(90,10,140,0.15)"]]),
+-        OUT,
+-        2.6
+-      );
+-      ellipse(ctx, 81, 9, 3, 3, "#ffffff");
+-
+-      // Arcane Aura Ring at feet
+-      ctx.strokeStyle = "rgba(220,150,255,.55)";
+-      ctx.lineWidth = 2.4;
+-      ctx.beginPath();
+-      ctx.ellipse(48, 50, 36, 12, 0, 0, Math.PI * 2);
+-      ctx.stroke();
+     };
+
+```diff:public/src/game-data.js
+--- a/public/src/game-data.js
++++ b/public/src/game-data.js
+@@ -12,7 +12,7 @@
+     brute: { name: "Brute", hp: 480, speed: 16, armor: 5, bounty: 75, leak: 4, color: 0x8b4513 },
+     flyer: { name: "Flyer", hp: 260, speed: 34, armor: 2, bounty: 50, leak: 3, color: 0x4682b4 },
+-    boss: { name: "Warden", hp: 1180, speed: 22, armor: 7, bounty: 130, leak: 8, color: 0xcd65e6, size: 30, phases: true },
++    boss: { name: "Warden", hp: 1180, speed: 22, armor: 7, bounty: 130, leak: 8, color: 0xcd65e6, size: 32, phases: true },
+     spikes: { name: "Spikes", hp: 120, speed: 0, armor: 3, bounty: 15, leak: 2, color: 0x696969 },
+   },
+ };
+```

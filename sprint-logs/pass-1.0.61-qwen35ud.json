@@ -1,0 +1,17 @@
+{
+  "worker": "qwen35ud",
+  "model": "qwen3.6-35b-a3b-ud-mlx",
+  "seconds": 532.41,
+  "reasoning_len": 19974,
+  "finish": "length",
+  "usage": {
+    "prompt_tokens": 21569,
+    "completion_tokens": 19999,
+    "total_tokens": 41568,
+    "completion_tokens_details": {
+      "reasoning_tokens": 6785
+    }
+  },
+  "success": true,
+  "content_len": 26021
+}

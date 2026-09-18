@@ -1,0 +1,16 @@
+{
+  "worker": "qwen27",
+  "model": "qwen3.6-27b-mlx",
+  "seconds": 231.27,
+  "finish": "stop",
+  "usage": {
+    "prompt_tokens": 679,
+    "completion_tokens": 4489,
+    "total_tokens": 5168,
+    "completion_tokens_details": {
+      "reasoning_tokens": 3900
+    }
+  },
+  "success": true,
+  "content_len": 948
+}

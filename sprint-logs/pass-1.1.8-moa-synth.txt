@@ -1,0 +1,11 @@
+
+
+```diff:public/src/krc-art.js
+@@ -... +... @@
+           ctx.moveTo(308, 56);
+           ctx.quadraticCurveTo(338, 50, 350, 66);
+           ctx.stroke();
++          ellipse(ctx, 318, 49, 12, 5);
++          ellipse(ctx, 328, 54, 10, 4);
++          poly(ctx, [[320, 52], [334, 47], [338, 53], [326, 59]]);
+```

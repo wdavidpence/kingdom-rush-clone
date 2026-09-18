@@ -1,0 +1,33 @@
+{
+  "name": "qwen35ud",
+  "plan": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 76.21,
+    "text": "",
+    "finish": "length",
+    "usage": {
+      "prompt_tokens": 328,
+      "completion_tokens": 3999,
+      "total_tokens": 4327,
+      "completion_tokens_details": {
+        "reasoning_tokens": 3999
+      }
+    },
+    "ok": false
+  },
+  "code": {
+    "model": "qwen3.6-35b-a3b-ud-mlx",
+    "seconds": 134.58,
+    "text": "\n\n```diff:public/src/krc-art.js\n--- a/public/src/krc-art.js\n+++ b/public/src/krc-art.js\n@@ -1,4 +1,25 @@\n-    make(\"gate_arch\", 96, 64, (ctx) => {\n-        // legacy placeholder\n+    make(\"gate_arch\", 128, 96, (ctx) => {\n+        const w = 128, h = 96;\n+        // Stone archway base\n+        shadow(ctx, 0, 4, 8, 'rgba(0,0,0,0.6)');\n+        rounded(ctx, 18, 25, w - 36, h - 30, 6);\n+        linGrad(ctx, '#2c2c2c', '#1a1a1a');\n+        // Arch top dome\n+        ellipse(ctx, w/2, 24, 38, 16);\n+        linGrad(ctx, '#3a3a3a', '#222');\n+        // Timber doors\n+        poly(ctx, [[24, 38], [24, h-16], [62, h-16], [62, 38]], '#4a3020');\n+        poly(ctx, [[66, 38], [66, h-16], [104, h-16], [104, 38]], '#3b2517');\n+        // Door panels & iron bands\n+        for(let i=0; i<3; i++) { poly(ctx, [[27+i*11, 42], [36+i*11, 42], [36+i*11, h-20], [27+i*11, h-20]], '#5c3a24'); }\n+        for(let i=0; i<3; i++) { poly(ctx, [[69+i*11, 42], [78+i*11, 42], [78+i*11, h-20], [69+i*11, h-20]], '#4e3020']; }\n+        // Lanterns\n+        ellipse(ctx, 32, 34, 7, 9, '#111');\n+        ellipse(ctx, 96, 34, 7, 9, '#111');\n+        linGrad(ctx, '#ffdd88', '#cc6600');\n+        ellipse(ctx, 32, 34, 5, 7);\n+        ellipse(ctx, 96, 34, 5, 7);\n+        // Ivy vines & leaves\n+        speckles(ctx, [[12, 30], [85, 18], [42, 75], [95, 60]], '#3a6b28', 4);\n+        speckles(ctx, [[15, 40], [82, 25], [38, 65]], '#2d4f1e', 3);\n+    })\n```\n\n```diff:public/src/game.js\n--- a/public/src/game.js\n+++ b/public/src/game.js\n@@ -45,7 +45,19 @@ export class GameScene extends Phaser.Scene {\n-        this.gateImage = this.add.image(378, 588, \"gate_arch\").setDepth(-5).setScale(1.58);\n+        this.gateImage = this.add.image(378, 588, \"gate_arch\").setDepth(-5).setScale(1.0);\n+        if (this.mapIndex === 0 && this.path) {\n+            ctx.save();\n+            for (let i = 1; i < this.path.length; i++) {\n+                const prev = this.path[i-1], curr = this.path[i];\n+                const dx = curr.x - prev.x, dy = curr.y - prev.y;\n+                const len = Math.hypot(dx, dy) || 1;\n+                const nx = -dy/len * 5, ny = dx/len * 5;\n+                ctx.beginPath(); ctx.moveTo(prev.x+nx, prev.y+ny); ctx.lineTo(curr.x+nx, curr.y+ny);\n+                ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = 2; ctx.stroke();\n+                ctx.beginPath(); ctx.moveTo(prev.x-nx, prev.y-ny); ctx.lineTo(curr.x-nx, curr.y-ny);\n+                ctx.stroke();\n+            }\n+            ctx.restore();\n+        }\n         // tile_dirt loop preserved below...\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 388,
+      "completion_tokens": 6991,
+      "total_tokens": 7379,
+      "completion_tokens_details": {
+        "reasoning_tokens": 5899
+      }
+    },
+    "ok": true
+  }
+}

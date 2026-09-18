@@ -1,0 +1,28 @@
+
+
+```diff:public/src/krc-art.js
+--- a/public/src/krc-art.js
++++ b/public/src/krc-art.js
+@@ -142,8 +142,13 @@ make("projectile_magic", 24, 24, (ctx) => {
+-  ctx.fillStyle = "#9c27b0"
+-  ctx.beginPath(); ctx.arc(12, 12, 8, 0, Math.PI * 2); ctx.fill()
++  const fill = linGrad(ctx, 6, 2, 18, 22, [[0, "#3b1c5a"], [0.5, "#784bd2"], [1, "#2a0e6b"]])
++  const stroke = linGrad(ctx, 18, 2, 6, 22, [[0, "#e0c3ff"], [1, "#8a4fff"]])
++  shadow(ctx, 0, 2, 5, "rgba(138, 79, 255, 0.6)")
++  poly(ctx, [[12, 2], [20, 8], [14, 9], [16, 22], [7, 15], [10, 10]], fill, stroke, 2.5)
++  const core = radGrad(ctx, 12, 12, 1, 4, [[0, "rgba(255,255,255,0.8)"], [1, "rgba(255,255,255,0)"]])
++  poly(ctx, [[12, 6], [15, 9], [14, 18], [9, 13]], core, stroke, 0)
++  speckles(ctx, [[8,5], [16,7], [10,17], [14,20]], "#c8a0ff", 1.5)
+ })
+
+```diff:public/src/game.js
+--- a/public/src/game.js
++++ b/public/src/game.js
+@@ -87,7 +87,7 @@ const CONFIG = {
+   projectileScale: {
+     arrow: 1.0,
+-    mage: 0.9,
++    mage: 1.2,
+     fireball: 1.5
+   },
+```

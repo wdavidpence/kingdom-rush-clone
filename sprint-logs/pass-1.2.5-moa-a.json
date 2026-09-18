@@ -1,0 +1,33 @@
+{
+  "name": "qwen27",
+  "plan": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 160.09,
+    "text": "\n\n### Implementation Plan\n\n**1. `public/src/krc-art.js`**\n*   **Define `drawScoutDead(ctx)`**: Implement using provided helpers (`poly`, `shadow`, etc.) to render a static, fallen scout sprite.\n*   **Define Hit Pose Logic**: Create drawing routine for `enemy_scout_hit` texture:\n    *   Use same green palette as `drawScout`.\n    *   Apply recoil transformation (offset/rotation) to body parts.\n    *   Utilize helpers (`poly`, `linGrad`, `rounded`, etc.) for geometry.\n*   **Register Textures**: Add `make()` calls for `enemy_scout_dead` and `enemy_scout_hit` as specified.\n\n**2. `public/src/game.js`**\n*   **Fix Hit Flash**: Change `enemy.hitFlash` assignment from `0.09` to `0.28`.\n*   **Conditional Texture Swap**: On hit, check `enemy.type === 'scout'` and `this.textures.exists('enemy_scout_hit')`. If true, set texture to `enemy_scout_hit` instead of tinting.\n*   **Restore State**: On flash expiration, restore texture to `enemy_scout_w0` and clear tint.\n*   **Apply Hard Constraints**: Set spawn position to `{ x: 100, y: 375 }`, set `bannerY = 98`, and remove any campaign/version references.\n\n```diff:public/src/krc-art.js\n@@ -... +... @@\n+function drawScoutDead(ctx) {\n+    shadow(ctx, 40, 68, 35, 8, 0.4);\n+    poly(ctx, [[20, 50], [60, 48], [70, 60], [10, 62]], '#3a5f48', null, 0);\n+    poly(ctx, [[25, 30], [55, 28], [60, 48], [20, 50]], '#4a7c5f', null, 0);\n+    ellipse(ctx, 40, 25, 12, 10, '#3a5f48', null, 0);\n+    speckles(ctx, 10, 45, 60, 20, 5, '#8b0000', 3);\n+}\n+\n make(\"enemy_scout_dead\", 80, 72, (ctx) => drawScoutDead(ctx));\n+make(\"enemy_scout_hit\", 80, 72, (ctx) => {\n+    ctx.translate(4, -2);\n+    ctx.rotate(-0.15);\n+    shadow(ctx, 40, 68, 32, 7, 0.5);\n+    poly(ctx, [[18, 48], [62, 46], [72, 58], [8, 60]], '#3a5f48', null, 0);\n+    poly(ctx, [[22, 28], [58, 26], [62, 46], [18, 48]], '#5a9c7f', null, 0);\n+    ellipse(ctx, 38, 22, 11, 9, '#3a5f48', null, 0);\n+    linGrad(ctx, 20, 30, 60, 50, [[0,'#4a7c5f'],[1,'#2e4d3b']]);\n+});\n\n```\n\n```diff:public/src/game.js\n@@ -... +... @@\n-const spawnPos = { x: 200, y: 300 };\n+const spawnPos = { x: 100, y: 375 };\n-const bannerY = 80;\n+const bannerY = 98;\n-campaign: true, version: '1.2.4'\n+// no campaign, no version\n\n@@ -... +... @@\n-          enemy.hitFlash = 0.09;\n-          enemy.sprite.setTint(0xfff3d6);\n+          enemy.hitFlash = 0.28;\n+          if (enemy.type === 'scout' && this.textures.exists('enemy_scout_hit')) {\n+              enemy.sprite.setTexture('enemy_scout_hit');\n+          } else {\n+              enemy.sprite.setTint(0xfff3d6);\n+          }\n\n@@ -... +... @@\n           if (enemy.hitFlash <= 0) {\n-              enemy.sprite.setTint(null);\n+              if (enemy.type === 'scout') {\n+                  enemy.sprite.setTexture('enemy_scout_w0');\n+              } else {\n+                  enemy.sprite.setTint(null);\n+              }\n               delete enemy.hitFlash;\n           }\n\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 428,
+      "completion_tokens": 3100,
+      "total_tokens": 3528,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1975
+      }
+    },
+    "ok": true
+  },
+  "code": {
+    "model": "qwen3.6-27b-mlx",
+    "seconds": 334.56,
+    "text": "\n\n```diff:public/src/krc-art.js\n@@ -... +... @@\n+function drawScoutDead(ctx) {\n+    shadow(ctx, 40, 68, 35, 8, 0.4);\n+    poly(ctx, [[10, 62], [70, 60], [60, 48], [20, 50]], '#3a5f48', null, 0);\n+    poly(ctx, [[25, 30], [55, 28], [60, 48], [20, 50]], '#4a7c5f', null, 0);\n+    ellipse(ctx, 35, 26, 12, 10, '#3a5f48', null, 0);\n+    speckles(ctx, 15, 45, 50, 20, 6, '#8b0000', 3);\n+}\n+\n+make(\"enemy_scout_dead\", 80, 72, (ctx) => drawScoutDead(ctx));\n+make(\"enemy_scout_hit\", 80, 72, (ctx) => {\n+    ctx.save();\n+    ctx.translate(6, -3);\n+    ctx.rotate(-0.2);\n+    shadow(ctx, 40, 68, 30, 7, 0.5);\n+    poly(ctx, [[16, 50], [64, 48], [72, 58], [8, 60]], '#3a5f48', null, 0);\n+    poly(ctx, [[24, 30], [56, 28], [64, 48], [16, 50]], '#5a9c7f', null, 0);\n+    ellipse(ctx, 36, 24, 11, 9, '#3a5f48', null, 0);\n+    linGrad(ctx, 20, 32, 60, 52, [[0, '#4a7c5f'], [1, '#2e4d3b']]);\n+    ctx.restore();\n+});\n\n```\n\n```diff:public/src/game.js\n@@ -... +... @@\n-const spawnPos = { x: 200, y: 300 };\n+const spawnPos = { x: 100, y: 375 };\n-const bannerY = 80;\n+const bannerY = 98;\n-campaign: true, version: '1.2.4'\n+// no campaign, no version\n\n@@ -... +... @@\n           if (hit) {\n-            enemy.hitFlash = 0.09;\n-            enemy.sprite.setTint(0xfff3d6);\n+            enemy.hitFlash = 0.28;\n+            if (enemy.type === 'scout' && this.textures.exists('enemy_scout_hit')) {\n+                enemy.sprite.setTexture('enemy_scout_hit');\n+            } else {\n+                enemy.sprite.setTint(0xfff3d6);\n+            }\n           }\n\n@@ -... +... @@\n               if (enemy.hitFlash > 0) {\n                   enemy.hitFlash -= dt;\n                   if (enemy.hitFlash <= 0) {\n-                    enemy.sprite.setTint(null);\n+                    if (enemy.type === 'scout') {\n+                        enemy.sprite.setTexture('enemy_scout_w0');\n+                    } else {\n+                        enemy.sprite.setTint(null);\n+                    }\n                       delete enemy.hitFlash;\n                   }\n               }\n\n```",
+    "finish": "stop",
+    "usage": {
+      "prompt_tokens": 1611,
+      "completion_tokens": 6386,
+      "total_tokens": 7997,
+      "completion_tokens_details": {
+        "reasoning_tokens": 5528
+      }
+    },
+    "ok": true
+  }
+}

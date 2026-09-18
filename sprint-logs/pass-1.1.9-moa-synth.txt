@@ -1,0 +1,24 @@
+
+
+```diff:public/src/game.js
+           if (nodeData.unlocked) {
+             // ... existing unlocked logic ...
+           } else {
++            nodeBg.setInteractive({ useHandCursor: true });
++            const biomeColors = [0x7ec86a, 0xb8c4d0, 0xff7030, 0x7ec8e8, 0xd4a878];
++            
+             nodeBg.on("pointerover", () => {
+-            this.showTooltip(nx, ny - 50, `${map.name}\\nLOCKED`);
++              const strokeColor = biomeColors[index] || 0x7ec86a;
++              nodeBg.setStrokeStyle(4, strokeColor);
++              this.showTooltip(nx, ny - 50, `${map.name}\nLOCKED — Clear previous map to unlock!`);
++              this.setCampaignIntel(index, true);
+             });
+             
+             nodeBg.on("pointerout", () => {
++              nodeBg.setStrokeStyle(4, 0x4a554a);
+               this.hideTooltip();
+             });
+           }
+         });
+```
