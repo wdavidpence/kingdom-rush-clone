@@ -99,16 +99,27 @@
 
     preload() {
       if (new URLSearchParams(window.location.search).has("shot")) return;
+      // v1.7.0 fantasy sample palette (Kenney RPG Audio + Impact Sounds, CC0).
+      const fantasyPath = "assets/fantasy/";
+      const fantasyFiles = [
+        "drawKnife1", "drawKnife2", "drawKnife3", "chop", "knifeSlice", "knifeSlice2",
+        "handleCoins", "handleCoins2", "metalClick", "metalLatch", "creak1", "creak2",
+        "bookFlip1", "bookOpen", "doorClose_1", "footstep00", "footstep02", "footstep05",
+        "impactGeneric_light_000", "impactGeneric_light_001", "impactGeneric_light_002",
+        "impactPlate_medium_000", "impactPlate_medium_001", "impactPlate_medium_002",
+        "impactMetal_medium_000", "impactMetal_medium_001",
+        "impactWood_heavy_000", "impactWood_heavy_001", "impactPlate_heavy_000", "impactPlate_heavy_001",
+        "impactPunch_medium_000", "impactPunch_medium_001", "impactSoft_medium_000", "impactSoft_medium_001",
+        "impactBell_heavy_000", "impactBell_heavy_001", "impactWood_medium_000", "impactWood_medium_001",
+      ];
+      for (const name of fantasyFiles) {
+        this.load.audio(`f_${name}`, `${fantasyPath}${name}.ogg`);
+      }
+      // Legacy clips kept only for explosion weight + wave-call fanfare.
       const audioPath = "assets/kenney/audio/";
       const audioFiles = {
-        shoot: "kenney-shoot.ogg",
-        impact: "kenney-hit.ogg",
         boom: "kenney-explosion.ogg",
         start: "kenney-start.ogg",
-        ready: "kenney-ready.ogg",
-        fail: "kenney-gameover.ogg",
-        magic: "kenney-alien-shot.ogg",
-        music: "kenney-music.ogg",
       };
       for (const [key, file] of Object.entries(audioFiles)) {
         this.load.audio(`sfx_${key}`, `${audioPath}${file}`);
@@ -390,7 +401,25 @@
       this.updateEffects(dt);
       this.audio.music(dt, (this.waveActive && !this.gameEnded) || this.lives <= 8);
       this.audio.ambience(dt);
+      this.updateDangerVignette(dt);
       this.updateHud();
+    }
+
+    // Low-lives pulsing red edge vignette (danger feedback).
+    updateDangerVignette(dt) {
+      const critical = this.lives <= 5 && !this.gameEnded && this.waveActive;
+      if (!this.dangerVignette && critical && this.textures.exists("fx_vignette")) {
+        this.dangerVignette = this.add.image(W / 2, H / 2, "fx_vignette")
+          .setAlpha(0).setDepth(224).setScale(W / 256 + 0.15, H / 256 + 0.15);
+      }
+      if (!this.dangerVignette) return;
+      if (!critical) {
+        this.dangerVignette.alpha = Math.max(0, this.dangerVignette.alpha - dt * 1.5);
+        if (this.dangerVignette.alpha <= 0) { this.dangerVignette.destroy(); this.dangerVignette = null; }
+        return;
+      }
+      const pulse = 0.22 + Math.sin(this.time.now * 0.004) * 0.1;
+      this.dangerVignette.setAlpha(this.settings?.reducedMotion ? 0.14 : pulse);
     }
 
     makeTextures() {
@@ -447,6 +476,22 @@
         make("projectile_magic", 16, 16, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("projectile_bomb", 16, 16, (ctx) => { ctx.fillStyle = "#333"; ctx.beginPath(); ctx.arc(8,8,6,0,Math.PI*2); ctx.fill(); });
         make("fx_trail_arrow", 16, 8, (ctx) => { ctx.fillStyle = "#f8e8a0"; ctx.fillRect(0,2,16,4); });
+        make("fx_shadow", 32, 16, (ctx) => {
+          const grd = ctx.createRadialGradient(16, 8, 1, 16, 8, 15);
+          grd.addColorStop(0, "rgba(0,0,0,0.4)");
+          grd.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.ellipse(16, 8, 15, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        make("fx_vignette", 256, 256, (ctx) => {
+          const grd = ctx.createRadialGradient(128, 128, 60, 128, 128, 128);
+          grd.addColorStop(0, "rgba(0,0,0,0)");
+          grd.addColorStop(1, "rgba(120,12,12,0.55)");
+          ctx.fillStyle = grd;
+          ctx.fillRect(0, 0, 256, 256);
+        });
         make("fx_trail_magic", 12, 12, (ctx) => { ctx.fillStyle = "#c8b0ff"; ctx.beginPath(); ctx.arc(6,6,4,0,Math.PI*2); ctx.fill(); });
         make("fx_trail_bomb", 14, 14, (ctx) => { ctx.fillStyle = "#555"; ctx.beginPath(); ctx.arc(7,7,5,0,Math.PI*2); ctx.fill(); });
         make("fx_trail_smoke", 12, 12, (ctx) => { ctx.fillStyle = "#666"; ctx.beginPath(); ctx.arc(6,6,4,0,Math.PI*2); ctx.fill(); });
@@ -484,6 +529,30 @@
         make("icon_heart", 16, 16, (ctx) => { ctx.fillStyle = "#e66550"; ctx.fillRect(0,0,16,16); });
       }
       this.bakeMenuIcons();
+      // v1.7.0 shared FX textures (must exist regardless of KRCArt bake).
+      const ensureFx = (key, w, h, draw) => {
+        if (this.textures.exists(key)) return;
+        const texture = this.textures.createCanvas(key, w, h);
+        const ctx = texture.getContext();
+        draw(ctx, w, h);
+        texture.refresh();
+      };
+      ensureFx("fx_shadow", 32, 16, (ctx) => {
+        const grd = ctx.createRadialGradient(16, 8, 1, 16, 8, 15);
+        grd.addColorStop(0, "rgba(0,0,0,0.4)");
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.ellipse(16, 8, 15, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ensureFx("fx_vignette", 256, 256, (ctx) => {
+        const grd = ctx.createRadialGradient(128, 128, 60, 128, 128, 128);
+        grd.addColorStop(0, "rgba(0,0,0,0)");
+        grd.addColorStop(1, "rgba(120,12,12,0.55)");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, 256, 256);
+      });
     }
 
     bakeMenuIcons() {
@@ -4530,16 +4599,52 @@ const bannerY = 98;
       // Incoming-threat name chip for first queued enemy type
       const firstEnemyType = this.queue[0];
       const threatName = ENEMIES[firstEnemyType]?.name;
-      if (threatName) {
-        const gatePos = this.path[0];
-        const chipX = Math.max(60, gatePos.x + 60);
-        const chipY = Math.max(40, gatePos.y - 20);
-        this.flashText(`THREAT: ${threatName.toUpperCase()}`, chipX, chipY, "#ffc27d");
-      }
-      // Wave label cinematic: large text that fades in then out
-      this.flashText(`WAVE ${this.waveIndex + 1}: ${wave.label}`, W / 2, H / 2 - 40, "#ff8a73");
+      const isBossWave = wave.packs.some((pack) => pack[0] === "boss");
+      // Wave label cinematic banner: engraved band + serif crest, fades in, holds, sweeps out.
+      this.showWaveBanner(this.waveIndex + 1, wave.label, threatName, isBossWave);
       this.say(`Wave ${this.waveIndex + 1}: ${wave.label}`);
       this.showWaveBriefing(wave);
+    }
+
+    showWaveBanner(num, label, threatName, isBoss) {
+      if (this._waveBanner) {
+        for (const o of this._waveBanner) o.destroy();
+        this._waveBanner = [];
+      }
+      const g = [];
+      const cy = isBoss ? H / 2 - 10 : H / 2 - 44;
+      const bandW = Math.min(W - 36, 380);
+      const bandH = isBoss ? 78 : 62;
+      const bg = this.add.rectangle(W / 2, cy, bandW, bandH, 0x1a120c, 0.88).setDepth(230).setScale(0.7, 0.35).setAlpha(0);
+      const edge = this.add.rectangle(W / 2, cy, bandW - 6, bandH - 6, 0x2d2116, 0.9).setDepth(231).setScale(0.7, 0.35).setAlpha(0);
+      const line1 = this.add.rectangle(W / 2, cy - bandH / 2 + 4, bandW - 14, 1.5, isBoss ? 0xff7043 : 0xf5c85a, 0.8).setDepth(232).setAlpha(0);
+      const line2 = this.add.rectangle(W / 2, cy + bandH / 2 - 4, bandW - 14, 1.5, isBoss ? 0xff7043 : 0xf5c85a, 0.8).setDepth(232).setAlpha(0);
+      const title = this.add.text(W / 2, cy - (isBoss ? 12 : 8), isBoss ? `⚑ BOSS WAVE ${num}` : `WAVE ${num}`, {
+        font: `900 ${isBoss ? 24 : 20}px Cinzel, serif`, color: isBoss ? "#ff8a5c" : "#f8e8b0", stroke: "#120a04", strokeThickness: 4,
+      }).setOrigin(0.5).setDepth(233).setAlpha(0).setScale(0.8);
+      const sub = this.add.text(W / 2, cy + (isBoss ? 12 : 12), label, {
+        font: "600 12px 'Source Sans 3', Arial", color: "#d8c898", stroke: "#120a04", strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(233).setAlpha(0);
+      g.push(bg, edge, line1, line2, title, sub);
+      this._waveBanner = g;
+      if (threatName && !isBoss) this.flashText(`THREAT: ${threatName.toUpperCase()}`, W / 2, cy + 34, "#ffc27d");
+      if (this.settings?.reducedMotion) {
+        for (const o of g) o.setAlpha(o === bg || o === edge ? 0.85 : 1).setScale(1);
+        this.time.delayedCall(1100, () => { for (const o of g) o.destroy(); this._waveBanner = []; });
+        return;
+      }
+      if (isBoss) {
+        this.audio.setMoodBoss();
+        this.cameras.main.flash(220, 255, 90, 40, false);
+        this.cameras.main.shake(300, 0.012);
+      }
+      this.tweens.add({ targets: [bg, edge], scaleX: 1, scaleY: 1, alpha: 1, duration: 260, ease: "Back.easeOut" });
+      this.tweens.add({ targets: [line1, line2], alpha: 1, scaleX: 1, duration: 320, delay: 120 });
+      this.tweens.add({ targets: [title, sub], alpha: 1, scaleX: 1, scaleY: 1, duration: 300, delay: 180, ease: "Quad.easeOut" });
+      this.tweens.add({
+        targets: g, alpha: 0, y: cy - 26, delay: isBoss ? 2100 : 1500, duration: 420, ease: "Quad.easeIn",
+        onComplete: () => { for (const o of g) o.destroy(); if (this._waveBanner === g) this._waveBanner = []; },
+      });
     }
 
     toggleMuted() {
@@ -4620,6 +4725,7 @@ const bannerY = 98;
             this.flashText(`+${bonus} LATE`, W / 2, 120, "#fff2ba");
           }
           this.say(`Wave cleared. Prepare for ${WAVES[this.waveIndex].label}.`);
+          this.audio.playLayered("waveClear", 0.35);
           this.trimAftermath(24);
           this.beginWaveCalm();
         }
@@ -4875,6 +4981,23 @@ const bannerY = 98;
         }
 
         this.updateEnemyVisual(enemy, dt);
+        // Blob shadow so the unit sits in the world.
+        if (enemy.sprite && !this.settings?.reducedMotion) {
+          const shScale = (enemy.base?.size || 15) / 15;
+          const flying = enemy.base?.flying;
+          const shY = enemy.y + (enemy.base?.size || 12) * (flying ? 1.3 : 0.7);
+          if (!enemy.shadow) {
+            if (this.textures.exists("fx_shadow")) {
+              enemy.shadow = this.add.image(enemy.x, shY, "fx_shadow")
+                .setScale(shScale * (flying ? 0.7 : 0.9)).setAlpha(flying ? 0.28 : 0.5).setDepth(-1);
+            }
+          } else {
+            enemy.shadow.setPosition(enemy.x, shY);
+            enemy.shadow.setScale(shScale * (flying ? 0.7 : 0.9));
+          }
+        } else if (enemy.shadow) {
+          enemy.shadow.setPosition(enemy.x, enemy.y + (enemy.base?.size || 12) * 0.7);
+        }
         if (enemy.seg >= this.path.length - 1) this.leakEnemy(enemy);
       }
       this.applySupportAuras();
@@ -5387,8 +5510,7 @@ const bannerY = 98;
 
     leakEnemy(enemy) {
       this.lives -= enemy.base.leak;
-      this.audio.play("impact", 0.45, 0.82);
-      this.audio.play("fail", 0.2, 0.88);
+      this.audio.playLayered("leakAlarm", 0.5);
       this.triggerGateLeak(enemy);
       this.removeEnemy(enemy, false);
       this.flashText("-" + enemy.base.leak, 360, 88, "#ff8069");
@@ -5529,6 +5651,8 @@ const bannerY = 98;
         this.flashText(`+${enemy.base.bounty}`, x, y - 22, COLORS.gold);
         this.createDamageNumber(x, y - enemy.base.size - 10, `+${enemy.base.bounty}`, COLORS.gold);
         this.createCoinBurst(x, y - 18);
+        if (Math.random() < 0.4) this.audio.playLayered("coinGain", 0.12, x);
+        if (enemy.type === "titan" || enemy.type === "boss") this.audio.playLayered("bossRoar", 0.35, x);
         const now = this.time.now;
         this.killStreak = now < (this.killStreakUntil || 0) ? (this.killStreak || 0) + 1 : 1;
         this.killStreakUntil = now + 1600;
@@ -5568,6 +5692,8 @@ const bannerY = 98;
       enemy.frostCrust = null;
       enemy.armorPlate = null;
       enemy.burnCrust = null;
+      enemy.shadow?.destroy();
+      enemy.shadow = null;
       if (enemy.speedLines) {
         for (const line of enemy.speedLines) line?.destroy();
         enemy.speedLines = null;
@@ -5575,7 +5701,7 @@ const bannerY = 98;
       this.enemies = this.enemies.filter((e) => e !== enemy);
       this.entityRegistry.transition(enemy, "removed");
       if (killed) {
-        this.audio.playLayered("enemyDeath");
+        this.audio.playLayered("enemyDeath", 0.25, enemy.x);
         const sprite = enemy.sprite;
         enemy.sprite = null;
         const family = enemy.type;
@@ -6185,11 +6311,11 @@ const bannerY = 98;
       projectile.family = tower.type;
       this.projectiles.push(projectile);
       if (tower.type === "archer") {
-        this.audio.playLayered("archerShoot");
+        this.audio.playLayered("archerShoot", 0.25, tower.x);
       } else if (tower.type === "mage") {
-        this.audio.playLayered("mageShoot");
+        this.audio.playLayered("mageShoot", 0.25, tower.x);
       } else if (tower.type === "artillery") {
-        this.audio.playLayered("artilleryShoot");
+        this.audio.playLayered("artilleryShoot", 0.25, tower.x);
       }
       // Muzzle flash effect
       const angle = Phaser.Math.Angle.Between(tower.x, tower.y - 10, target.x, target.y);
@@ -7778,11 +7904,15 @@ const bannerY = 98;
 
     createMuzzleFlash(x, y, angle) {
       if (this.settings?.reducedMotion) return;
-      const flash = this.add.circle(
-        x + Math.cos(angle) * 8, y - 10 + Math.sin(angle) * 6,
-        5, 0xfff8c0, 0.7
-      ).setDepth(62);
-      this.tweens.add({ targets: flash, alpha: 0, scale: 1.8, duration: 60, onComplete: () => flash.destroy() });
+      // Star flash: additive glow disc + two crossed shards.
+      const fx = this.add.circle(x + Math.cos(angle) * 8, y - 10 + Math.sin(angle) * 6, 6, 0xfff0a0, 0.95)
+        .setBlendMode(Phaser.BlendModes.ADD).setDepth(62);
+      const s1 = this.add.rectangle(x + Math.cos(angle) * 10, y - 10 + Math.sin(angle) * 8, 14, 2, 0xfff8c0, 0.9)
+        .setRotation(angle).setBlendMode(Phaser.BlendModes.ADD).setDepth(62);
+      const s2 = this.add.rectangle(x + Math.cos(angle) * 10, y - 10 + Math.sin(angle) * 8, 8, 2, 0xffd870, 0.8)
+        .setRotation(angle + Math.PI / 2).setBlendMode(Phaser.BlendModes.ADD).setDepth(62);
+      this.tweens.add({ targets: fx, alpha: 0, scale: 2.1, duration: 90, onComplete: () => fx.destroy() });
+      this.tweens.add({ targets: [s1, s2], alpha: 0, scaleX: 2.2, duration: 110, onComplete: () => { s1.destroy(); s2.destroy(); } });
     }
 
     puff(x, y, color) {
@@ -8363,15 +8493,69 @@ const bannerY = 98;
       this.musicVolume = typeof scene?.settings?.musicVolume === "number" ? scene.settings.musicVolume : 0.6;
       this.sfxVolume = typeof scene?.settings?.sfxVolume === "number" ? scene.settings.sfxVolume : 1.0;
       this.samples = {};
-      const keys = ["shoot", "impact", "boom", "start", "ready", "fail", "magic", "music"];
-      for (const key of keys) {
+      this.pools = {};
+      this.voiceBudget = 10; this.voiceWindow = 90; this._voiceStamps = [];
+      this._noiseBuf = null;
+      this._ambNodes = [];
+      this.musicMood = "calm";
+      const legacyKeys = ["boom", "start"];
+      for (const key of legacyKeys) {
         if (scene.cache.audio.exists(`sfx_${key}`)) {
-          this.samples[key] = scene.sound.add(`sfx_${key}`, {
-            volume: key === "music" ? 0.11 * this.musicVolume : 0.32 * this.sfxVolume,
-            loop: key === "music",
-          });
+          this.samples[key] = scene.sound.add(`sfx_${key}`, { volume: 0.32 * this.sfxVolume });
         }
       }
+      const poolDefs = {
+        bow: ["f_drawKnife1", "f_drawKnife2", "f_drawKnife3"],
+        slash: ["f_knifeSlice", "f_knifeSlice2", "f_chop"],
+        coins: ["f_handleCoins", "f_handleCoins2"],
+        click: ["f_metalClick", "f_metalLatch"],
+        creak: ["f_creak1", "f_creak2"],
+        page: ["f_bookFlip1", "f_bookOpen"],
+        hitLight: ["f_impactGeneric_light_000", "f_impactGeneric_light_001", "f_impactGeneric_light_002"],
+        hitPlate: ["f_impactPlate_medium_000", "f_impactPlate_medium_001", "f_impactPlate_medium_002"],
+        hitMetal: ["f_impactMetal_medium_000", "f_impactMetal_medium_001"],
+        thudHeavy: ["f_impactWood_heavy_000", "f_impactWood_heavy_001", "f_impactPlate_heavy_000", "f_impactPlate_heavy_001"],
+        punch: ["f_impactPunch_medium_000", "f_impactPunch_medium_001"],
+        soft: ["f_impactSoft_medium_000", "f_impactSoft_medium_001"],
+        bell: ["f_impactBell_heavy_000", "f_impactBell_heavy_001"],
+        wood: ["f_impactWood_medium_000", "f_impactWood_medium_001"],
+        step: ["f_footstep00", "f_footstep02", "f_footstep05"],
+      };
+      for (const [name, keys] of Object.entries(poolDefs)) {
+        const live = keys.filter((k) => scene.cache.audio.exists(k));
+        if (live.length) this.pools[name] = live.map((k) => scene.sound.add(k, { volume: 0.3 * this.sfxVolume }));
+      }
+    }
+
+    pick(poolName) {
+      const pool = this.pools[poolName];
+      if (!pool || !pool.length) return null;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    sfx(poolName, { volume = 0.3, rate = 1, detune = 0.12 } = {}) {
+      if (this.muted) return;
+      if (!this._allowVoice()) return;
+      const src = this.pick(poolName);
+      if (!src) return;
+      this.lastSfx = poolName;
+      const v = Math.max(0.01, Math.min(1, volume * this.sfxVolume));
+      const r = rate * (1 + (Math.random() - 0.5) * 2 * detune);
+      try { src.play({ volume: v, rate: Phaser.Math.Clamp(r, 0.7, 1.5) }); } catch (_e) {}
+    }
+
+    _allowVoice() {
+      const now = this.scene?.time?.now ?? performance.now();
+      this._voiceStamps = this._voiceStamps.filter((t) => now - t < this.voiceWindow);
+      if (this._voiceStamps.length >= this.voiceBudget) return false;
+      this._voiceStamps.push(now);
+      return true;
+    }
+
+    // Distance attenuation: sources far right of the lane read quieter.
+    atten(x) {
+      if (typeof x !== "number") return 1;
+      return 1 / (1 + Math.abs(x - 200) / 500);
     }
 
     setMuted(value) {
@@ -8390,9 +8574,11 @@ const bannerY = 98;
       if (typeof sfxVolume === "number" && !isNaN(sfxVolume)) {
         this.sfxVolume = Math.max(0, Math.min(1, sfxVolume));
       }
-      if (this.samples.music && this.samples.music.isPlaying) {
-        const baseVol = 0.09 * this.musicVolume;
-        this.samples.music.setVolume(baseVol);
+      // Live-update pool volumes so the slider affects new sfx immediately.
+      for (const pool of Object.values(this.pools)) {
+        for (const src of pool) {
+          try { src.setVolume(0.3 * this.sfxVolume); } catch (_e) {}
+        }
       }
     }
 
@@ -8409,182 +8595,243 @@ const bannerY = 98;
 
     play(name, volume = 0.25, rate = 1) {
       if (this.muted) return;
-      const v = volume * (this.sfxVolume !== undefined ? this.sfxVolume : 1);
-      const sample = this.samples[name];
-      // Layered sound system: combine Kenney clips with WebAudio tones for richness
+      const v = volume * this.sfxVolume;
       switch (name) {
-        case "shoot": // Archer tower — whoosh + thwip + tip
-          if (sample) sample.play({ volume: v * 0.8, rate });
-          this.tone(320, 0.08, "triangle", v * 0.15);
-          this.tone(800, 0.04, "triangle", v * 0.06);
+        case "shoot":
+          this.sfx("bow", { volume: v * 0.8, rate });
+          this.tone(900, 0.03, "triangle", v * 0.04);
           break;
-        case "magic": // Mage tower — spell + shimmer + sparkle
-          if (sample) sample.play({ volume: v * 0.7, rate });
-          this.tone(520, 0.1, "sine", v * 0.1);
-          this.tone(1200, 0.06, "sine", v * 0.05);
+        case "magic":
+          this.sfx("page", { volume: v * 0.5, rate: rate * 1.4 });
+          this.tone(520, 0.1, "sine", v * 0.08);
+          this.tone(780, 0.08, "sine", v * 0.05, 0.03);
+          this.tone(1040, 0.06, "sine", v * 0.04, 0.06);
           break;
-        case "boom": // Artillery — explosion + rumble + sub-bass
-          if (sample) sample.play({ volume: Math.min(1, v * 0.9), rate });
+        case "boom":
+          if (this.samples.boom) this.samples.boom.play({ volume: Math.min(1, v * 0.9), rate: 0.85 + Math.random() * 0.2 });
           this.tone(80, 0.15, "sawtooth", v * 0.12);
-          this.tone(120, 0.08, "triangle", v * 0.1);
+          this.noiseBurst(0.3, v * 0.1, 600);
           break;
-        case "impact": // Enemy hit/death — thud + damage layer
-          if (sample) sample.play({ volume: Math.min(1, v * 0.85), rate });
-          this.tone(200, 0.06, "triangle", v * 0.08);
+        case "impact":
+          this.sfx("hitLight", { volume: v, rate });
           break;
-        case "ready": // Build/upgrade — click + chime
-          if (sample) sample.play({ volume: Math.min(1, v * 0.85), rate });
-          this.tone(600, 0.04, "triangle", v * 0.07);
+        case "ready":
+          this.sfx("click", { volume: v, rate });
+          this.tone(600, 0.05, "triangle", v * 0.05);
           break;
-        case "start": // Wave start — fanfare + rise
-          if (sample) sample.play({ volume: Math.min(1, v * 0.85), rate });
+        case "start":
+          if (this.samples.start) this.samples.start.play({ volume: Math.min(1, v * 0.8), rate });
           this.tone(440, 0.08, "sine", v * 0.08, 0);
           this.tone(554, 0.08, "sine", v * 0.07, 0.04);
           this.tone(659, 0.12, "sine", v * 0.06, 0.08);
           break;
-        case "fail": // Game over — descending tone
-          if (sample) sample.play({ volume: Math.min(1, v * 0.9), rate });
+        case "fail":
+          this.sfx("bell", { volume: v * 0.6, rate: 0.8 });
           this.tone(260, 0.15, "sawtooth", v * 0.08, 0);
           this.tone(200, 0.18, "sawtooth", v * 0.08, 0.08);
           this.tone(150, 0.25, "sawtooth", v * 0.09, 0.16);
           break;
-        default: // Fallback for unknown sounds
-          if (sample) {
-            try { sample.play({ volume: v, rate }); } catch (_e) {}
-          } else {
-            this.tone(name === "boom" ? 120 : name === "magic" ? 520 : 320, 0.08, name === "boom" ? "sawtooth" : "triangle", v * 0.12);
-          }
+        default:
+          this.sfx("hitLight", { volume: v, rate });
       }
     }
 
-    // Layered sound for specific events (tower type aware)
-    playLayered(type, volume = 0.25) {
+    // Layered sound for specific events (tower type aware, fantasy palette)
+    playLayered(type, volume = 0.25, x = null) {
       this.lastLayered = type;
       if (type === "uiClick") this.lastUiTick = "wood";
       if (this.muted) return;
-      const v = volume * (this.sfxVolume !== undefined ? this.sfxVolume : 1);
+      const att = this.atten(x);
+      const v = volume * this.sfxVolume * att;
       switch (type) {
-        case "archerShoot": // Archer tower shoot
-          if (this.samples.shoot) this.samples.shoot.play({ volume: v * 0.7, rate: 1 });
-          this.tone(800, 0.04, "triangle", v * 0.06);
-          this.tone(1600, 0.03, "triangle", v * 0.04);
+        case "archerShoot":
+          this.sfx("bow", { volume: v * 0.85 });
           break;
-        case "mageShoot": // Mage tower shoot
-          if (this.samples.magic) this.samples.magic.play({ volume: v * 0.6, rate: 1 });
-          this.tone(1200, 0.06, "sine", v * 0.05);
-          this.tone(480, 0.08, "sine", v * 0.04);
+        case "mageShoot":
+          this.sfx("page", { volume: v * 0.4, rate: 1.5 });
+          this.tone(520, 0.09, "sine", v * 0.07);
+          this.tone(830, 0.07, "sine", v * 0.05, 0.04);
           break;
-        case "artilleryShoot": // Artillery tower shoot
-          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.5, rate: 0.9 });
+        case "artilleryShoot":
+          this.sfx("thudHeavy", { volume: v * 0.7, rate: 0.9 });
           this.tone(80, 0.12, "sawtooth", v * 0.08);
-          this.tone(40, 0.16, "sawtooth", v * 0.06);
           break;
-        case "guardStrike": // Barracks melee strike
-          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.55, rate: 0.92 });
-          this.tone(220, 0.05, "square", v * 0.05);
+        case "guardStrike":
+          this.sfx("slash", { volume: v * 0.9 });
+          if (Math.random() < 0.35) this.sfx("hitMetal", { volume: v * 0.5, rate: 1.15 });
           break;
-        case "enemyHit": // Enemy takes damage
-          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.5, rate: 1 });
+        case "enemyHit":
+          if (Math.random() < 0.4) this.sfx("hitPlate", { volume: v * 0.55 });
+          else this.sfx("hitLight", { volume: v * 0.6 });
           break;
-        case "enemyDeath": // Enemy dies — thud + fade
-          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.6, rate: 1 });
-          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.2, rate: 0.8 });
-          this.tone(400, 0.15, "sine", v * 0.06);
+        case "enemyDeath": {
+          this.sfx("punch", { volume: v * 0.6, rate: 0.9 });
+          this.sfx("soft", { volume: v * 0.4, rate: 0.85 });
+          this.tone(300, 0.12, "triangle", v * 0.05, 0.02);
           break;
-        case "towerBuild": // Tower placed
-          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.6, rate: 1 });
-          if (this.samples.start) this.samples.start.play({ volume: v * 0.15, rate: 1.2 });
+        }
+        case "towerBuild":
+          this.sfx("wood", { volume: v * 0.7 });
+          this.sfx("creak", { volume: v * 0.5 });
+          this.tone(523, 0.09, "triangle", v * 0.05, 0.08);
           break;
-        case "towerUpgrade": // Tower upgraded — chime sweep
-          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.7, rate: 1 });
-          this.tone(300, 0.08, "sine", v * 0.06);
-          this.tone(600, 0.08, "sine", v * 0.05);
+        case "towerUpgrade":
+          this.sfx("click", { volume: v * 0.6 });
+          this.tone(523, 0.07, "triangle", v * 0.05, 0);
+          this.tone(659, 0.07, "triangle", v * 0.05, 0.06);
+          this.tone(784, 0.12, "triangle", v * 0.05, 0.12);
           break;
-        case "towerSell": // Tower sold — coin jingle
-          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.5, rate: 1 });
-          this.tone(800, 0.04, "triangle", v * 0.05);
-          this.tone(1200, 0.04, "triangle", v * 0.04);
+        case "towerSell":
+          this.sfx("coins", { volume: v * 0.7 });
           break;
-        case "meteorSpell": // Meteor spell
-          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.7, rate: 1 });
+        case "meteorSpell":
+          this.noiseBurst(0.5, v * 0.14, 1200);
+          if (this.samples.boom) this.samples.boom.play({ volume: v * 0.7, rate: 0.95 });
           this.tone(150, 0.2, "sawtooth", v * 0.08);
           break;
-        case "frostSpell": // Frost spell
-          if (this.samples.magic) this.samples.magic.play({ volume: v * 0.6, rate: 1 });
+        case "frostSpell":
+          this.noiseBurst(0.35, v * 0.05, 5200);
           this.tone(1400, 0.08, "sine", v * 0.05);
+          this.tone(1760, 0.1, "sine", v * 0.04, 0.05);
           break;
-        case "rallySpell": // Rally spell
-          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.6, rate: 1 });
-          this.tone(440, 0.1, "sine", v * 0.05);
-          this.tone(554, 0.1, "sine", v * 0.04);
+        case "rallySpell":
+          this.tone(392, 0.1, "triangle", v * 0.06, 0);
+          this.tone(523, 0.1, "triangle", v * 0.06, 0.07);
+          this.tone(659, 0.16, "triangle", v * 0.06, 0.14);
           break;
-        case "chargeAbility": // Hero charge — speed sweep
-          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.6, rate: 1 });
+        case "chargeAbility":
+          this.sfx("slash", { volume: v * 0.7, rate: 1.2 });
           this.tone(200, 0.05, "sawtooth", v * 0.06);
           this.tone(800, 0.05, "sawtooth", v * 0.04);
           break;
-        case "bannerAbility": // Hero banner — warm chord
-          if (this.samples.ready) this.samples.ready.play({ volume: v * 0.6, rate: 1 });
-          this.tone(440, 0.12, "sine", v * 0.05);
-          this.tone(554, 0.12, "sine", v * 0.04);
+        case "bannerAbility":
+          this.tone(392, 0.14, "sine", v * 0.05);
+          this.tone(494, 0.14, "sine", v * 0.04, 0.02);
+          this.tone(587, 0.18, "sine", v * 0.04, 0.04);
           break;
-        case "healAbility": // Hero heal — gentle sweep
-          if (this.samples.magic) this.samples.magic.play({ volume: v * 0.5, rate: 1 });
-          this.tone(600, 0.08, "sine", v * 0.05);
-          this.tone(400, 0.08, "sine", v * 0.04);
+        case "healAbility":
+          this.tone(523, 0.09, "sine", v * 0.05, 0);
+          this.tone(659, 0.09, "sine", v * 0.05, 0.05);
+          this.tone(784, 0.14, "sine", v * 0.05, 0.1);
           break;
-        case "uiClick": // UI button click — quiet wood knock
-          this.tone(180, 0.018, "triangle", v * 0.08);
-          this.tone(110, 0.028, "sawtooth", v * 0.06, 0.008);
-          if (this.samples.impact) this.samples.impact.play({ volume: v * 0.08, rate: 2.2 });
+        case "coinGain":
+          this.sfx("coins", { volume: v * 0.5 });
           break;
-        case "uiError": // Error/no-target buzz — add a Kenney layer if available
+        case "leakAlarm":
+          this.sfx("bell", { volume: v * 0.55, rate: 0.9 });
+          this.tone(220, 0.18, "square", v * 0.05, 0);
+          this.tone(180, 0.22, "square", v * 0.05, 0.12);
+          break;
+        case "bossRoar":
+          this.tone(70, 0.5, "sawtooth", v * 0.12);
+          this.tone(52, 0.6, "sawtooth", v * 0.1, 0.15);
+          this.noiseBurst(0.6, v * 0.06, 300);
+          break;
+        case "guardSpawn":
+          this.sfx("step", { volume: v * 0.4, rate: 1.1 });
+          break;
+        case "waveClear":
+          this.tone(523, 0.09, "triangle", v * 0.05, 0);
+          this.tone(659, 0.09, "triangle", v * 0.05, 0.07);
+          this.tone(784, 0.16, "triangle", v * 0.06, 0.14);
+          break;
+        case "uiClick":
+          this.sfx("click", { volume: v * 0.5, rate: 1 + Math.random() * 0.15 });
+          break;
+        case "uiHover":
+          this.sfx("hitLight", { volume: v * 0.18, rate: 1.4 });
+          break;
+        case "uiError":
+          this.sfx("thudHeavy", { volume: v * 0.35, rate: 1.3 });
           this.tone(150, 0.1, "sawtooth", v * 0.06);
-          if (this.samples.fail) this.samples.fail.play({ volume: v * 0.15, rate: 0.8 });
           break;
-        default: // Fallback to standard play
+        default:
           this.play(type, volume);
       }
     }
 
-    startMusic() {
+    // Filtered noise burst for fire/magic/ambience texture.
+    _ensureNoise() {
+      if (this._noiseBuf || !this.ctx) return;
+      const ctx = this.ctx;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 1, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1;
+      this._noiseBuf = buf;
+    }
+
+    noiseBurst(duration = 0.3, volume = 0.05, cutoff = 1000) {
       if (this.muted) return;
-      const music = this.samples.music;
-      if (!music || this.musicStarted) return;
+      if (!this.ctx) return;
+      const ctx = this.ctx;
+      this._ensureNoise();
+      if (!this._noiseBuf) return;
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuf;
+      src.loop = true;
+      const filt = ctx.createBiquadFilter();
+      filt.type = "lowpass";
+      filt.frequency.value = cutoff;
+      const gain = ctx.createGain();
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      src.connect(filt).connect(gain).connect(ctx.destination);
+      src.start(now);
+      src.stop(now + duration + 0.05);
+    }
+
+    startMusic() {
+      // v1.7.0: procedural multi-mood score (no alien loop).
+      if (this.muted || this.musicStarted) return;
       this.musicStarted = true;
-      try {
-        music.play({ volume: 0.09 * this.musicVolume, loop: true });
-      } catch (_e) {
-        this.musicStarted = false;
-      }
+      if (!this.musicMood) this.musicMood = "calm";
+      this.musicClock = 0;
+      this.musicStep = 0;
     }
 
     stopMusic() {
-      const music = this.samples.music;
-      if (music?.isPlaying) music.stop();
       this.musicStarted = false;
     }
 
     riseOnCall() {
       this.lastMusicCue = "rise";
+      this.musicMood = "battle";
       if (this.muted) return;
-      const music = this.samples.music;
-      if (music?.isPlaying) {
-        music.setRate(1.12);
-        music.setVolume(0.14 * this.musicVolume);
-      }
-      this.tone(196, 0.12, "sawtooth", 0.02 * this.musicVolume);
-      this.tone(294, 0.1, "triangle", 0.012 * this.musicVolume, 0.04);
+      // battle stinger: low drums + rising brass-like tones
+      this.tone(98, 0.14, "sawtooth", 0.05 * this.musicVolume, 0);
+      this.tone(147, 0.14, "sawtooth", 0.045 * this.musicVolume, 0.12);
+      this.tone(196, 0.22, "sawtooth", 0.05 * this.musicVolume, 0.24);
+      this.tone(262, 0.3, "triangle", 0.045 * this.musicVolume, 0.36);
+      this._drum(0, 0.09); this._drum(0.18, 0.09); this._drum(0.36, 0.1);
     }
 
     fallOnCalm() {
       this.lastMusicCue = "fall";
-      if (this.muted) return;
-      const music = this.samples.music;
-      if (music?.isPlaying) {
-        music.setRate(0.96);
-        music.setVolume(0.09 * this.musicVolume);
-      }
+      this.musicMood = "calm";
+    }
+
+    setMoodBoss() {
+      this.lastMusicCue = "boss";
+      this.musicMood = "boss";
+      this.playLayered("bossRoar", 0.4);
+    }
+
+    // Simple percussive hit for the score grid.
+    _drum(delay = 0, strength = 0.08) {
+      if (this.muted || !this.ctx) return;
+      const ctx = this.ctx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const now = ctx.currentTime + delay;
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+      gain.gain.setValueAtTime(strength * this.musicVolume, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.16);
     }
 
     startAmbience(mapIndex) {
@@ -8592,31 +8839,87 @@ const bannerY = 98;
       this.lastAmbience = ["forest", "stone", "marsh", "gale", "ash"][this.ambienceId] || "forest";
       this.ambienceOn = !this.muted && !this.scene.settings?.reducedMotion;
       this.ambienceClock = 0;
+      // Continuous filtered-noise bed per map identity.
+      this.resume();
+      this._killAmbienceNodes();
+      if (!this.ambienceOn || !this.ctx) return;
+      this._ensureNoise();
+      this._startAmbienceBed();
+    }
+
+    _startAmbienceBed() {
+      const ctx = this.ctx;
+      if (!ctx || !this._noiseBuf) return;
+      const beds = {
+        0: { cutoff: 2400, rate: 0.72, vol: 0.012 },  // forest: airy leaves + space for birds
+        1: { cutoff: 900, rate: 0.9, vol: 0.014 },     // stone pass: hollow wind
+        2: { cutoff: 520, rate: 1.05, vol: 0.016 },     // marsh: wet low lap
+        3: { cutoff: 3200, rate: 0.6, vol: 0.02 },       // gale: howl
+        4: { cutoff: 1400, rate: 1.2, vol: 0.015 },      // ash: crackly hiss
+      };
+      const bed = beds[this.ambienceId] || beds[0];
+      const src = ctx.createBufferSource();
+      src.buffer = this._noiseBuf;
+      src.loop = true;
+      src.playbackRate.value = bed.rate;
+      const filt = ctx.createBiquadFilter();
+      filt.type = "lowpass";
+      filt.frequency.value = bed.cutoff;
+      const lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.15 + this.ambienceId * 0.05;
+      const lfoGain = ctx.createGain();
+      lfoGain.gain.value = bed.cutoff * 0.4;
+      lfo.connect(lfoGain).connect(filt.frequency);
+      const gain = ctx.createGain();
+      gain.gain.value = bed.vol * this.musicVolume;
+      src.connect(filt).connect(gain).connect(ctx.destination);
+      src.start();
+      lfo.start();
+      this._ambNodes = [src, lfo, gain, filt];
+    }
+
+    _killAmbienceNodes() {
+      for (const n of this._ambNodes) {
+        try { if (n.stop) n.stop(); } catch (_e) {}
+        try { n.disconnect(); } catch (_e) {}
+      }
+      this._ambNodes = [];
     }
 
     stopAmbience() {
       this.ambienceOn = false;
       this.lastAmbience = null;
+      this._killAmbienceNodes();
     }
 
     ambience(dt) {
       if (this.muted || this.scene.settings?.reducedMotion || !this.ambienceOn) return;
       this.ambienceClock -= dt;
       if (this.ambienceClock > 0) return;
-      this.ambienceClock = this.scene.waveActive ? 1.15 : 2.4;
-      const beds = {
-        0: [196, 247],
-        1: [110, 147],
-        2: [82, 98],
-        3: [220, 330],
-        4: [98, 73],
-      };
-      const notes = beds[this.ambienceId] || beds[0];
-      this.tone(notes[0], 0.18, "sine", 0.004 * this.musicVolume);
-      this.tone(notes[1], 0.22, "triangle", 0.003 * this.musicVolume, 0.05);
+      this.ambienceClock = this.scene.waveActive ? 3.5 : 2.2;
+      // Forest birds chirps; marsh bubbles; ash pops — sparse one-shots over the bed.
+      if (this.ambienceId === 0 && Math.random() < 0.5) {
+        const f = 1800 + Math.random() * 900;
+        this.tone(f, 0.05, "sine", 0.008 * this.musicVolume, 0);
+        this.tone(f * 1.2, 0.04, "sine", 0.006 * this.musicVolume, 0.06);
+      } else if (this.ambienceId === 2 && Math.random() < 0.5) {
+        this.noiseBurst(0.12, 0.006 * this.musicVolume, 700);
+      } else if (this.ambienceId === 4 && Math.random() < 0.4) {
+        this.noiseBurst(0.06, 0.008 * this.musicVolume, 2200);
+      } else {
+        const beds = { 0: [196, 247], 1: [110, 147], 2: [82, 98], 3: [220, 330], 4: [98, 73] };
+        const notes = beds[this.ambienceId] || beds[0];
+        this.tone(notes[0], 0.18, "sine", 0.004 * this.musicVolume);
+        this.tone(notes[1], 0.22, "triangle", 0.003 * this.musicVolume, 0.05);
+      }
     }
 
     stopAll() {
+      for (const pool of Object.values(this.pools)) {
+        for (const src of pool) {
+          try { if (src?.isPlaying) src.stop(); } catch (_e) {}
+        }
+      }
       for (const sample of Object.values(this.samples)) {
         if (sample?.isPlaying) sample.stop();
       }
@@ -8639,28 +8942,27 @@ const bannerY = 98;
       osc.stop(now + duration + 0.02);
     }
 
+    // Procedural score: 16-step grid, mood swaps progression + instrumentation.
     music(dt, urgent) {
-      if (this.muted) return;
-      if (this.musicStarted) {
-        const music = this.samples.music;
-        if (music?.isPlaying) {
-          const targetRate = urgent ? 1.12 : 0.96;
-          const targetVol = (urgent ? 0.14 : 0.09) * this.musicVolume;
-          music.setRate(Phaser.Math.Linear(music.rate || 1, targetRate, Math.min(1, dt * 2.5)));
-          music.setVolume(Phaser.Math.Linear(music.volume || (0.09 * this.musicVolume), targetVol, Math.min(1, dt * 2.2)));
-        }
-        return;
-      }
+      if (this.muted || !this.musicStarted) return;
       if (!this.ctx) return;
+      if (urgent && this.musicMood === "calm") this.musicMood = "battle";
       this.musicClock -= dt;
       if (this.musicClock > 0) return;
-      const base = urgent ? 0.72 : 1.6;
-      this.musicClock = base;
-      const notes = urgent ? [146, 174, 196, 220, 174] : [130, 164, 196, 164];
-      const note = notes[this.musicStep % notes.length];
+      const moods = {
+        calm: { step: 0.62, root: 98, notes: [0, 3, 7, 10, 7, 3], type: "triangle", vol: 0.011, drum: false },
+        battle: { step: 0.34, root: 110, notes: [0, 0, 7, 5, 3, 0, 10, 7], type: "sawtooth", vol: 0.016, drum: true },
+        boss: { step: 0.28, root: 82, notes: [0, 0, 6, 0, 6, 3, 0, -2], type: "square", vol: 0.018, drum: true },
+      };
+      const mood = moods[this.musicMood] || moods.calm;
+      this.musicClock = mood.step;
+      const semi = mood.notes[this.musicStep % mood.notes.length];
+      const note = mood.root * Math.pow(2, semi / 12);
+      this.tone(note, mood.step * 0.85, mood.type, mood.vol * this.musicVolume);
+      if (this.musicStep % 4 === 0) this.tone(note / 2, mood.step * 1.4, "sine", mood.vol * 0.8 * this.musicVolume);
+      if (mood.drum && this.musicStep % 2 === 1) this._drum(0, 0.05);
+      if (mood.drum && this.musicStep % 8 === 6) this._drum(0.17, 0.035);
       this.musicStep += 1;
-      this.tone(note, urgent ? 0.055 : 0.09, "triangle", (urgent ? 0.014 : 0.007) * this.musicVolume);
-      if (urgent) this.tone(note * 1.5, 0.03, "sine", 0.004 * this.musicVolume, 0.02);
     }
   }
 
