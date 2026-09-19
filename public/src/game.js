@@ -402,7 +402,41 @@
       this.audio.music(dt, (this.waveActive && !this.gameEnded) || this.lives <= 8);
       this.audio.ambience(dt);
       this.updateDangerVignette(dt);
+      this.updateBossBar();
       this.updateHud();
+    }
+
+    // U3: top-of-screen boss health bar while a boss is alive.
+    updateBossBar() {
+      const boss = this.enemies.find((e) => !e.dead && (e.type === "boss" || e.base?.phases));
+      if (boss && !this.bossBar) {
+        const bw = W - 80;
+        const y = TOP_H + 14;
+        const frame = this.add.rectangle(W / 2, y, bw + 8, 14, 0x1a120c, 0.9).setDepth(215).setScrollFactor(0);
+        const inner = this.add.rectangle(W / 2, y, bw, 8, 0x2a1410).setDepth(216).setScrollFactor(0);
+        const fill = this.add.rectangle(W / 2 - bw / 2, y, bw, 8, 0xd0304a).setOrigin(0, 0.5).setDepth(217).setScrollFactor(0);
+        const ghost = this.add.rectangle(W / 2 - bw / 2, y, bw, 8, 0xffe8c0, 0.85).setOrigin(0, 0.5).setDepth(216.5).setScrollFactor(0);
+        const name = this.add.text(W / 2, y - 14, (boss.base?.name || "BOSS").toUpperCase(), {
+          font: "900 11px Cinzel, serif", color: "#ff9a7a", stroke: "#120a04", strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(218).setScrollFactor(0);
+        this.bossBar = { objs: [frame, inner, ghost, fill, name], fill, ghost, bw, target: boss, ghostW: bw };
+        this.tweens.add({ targets: [frame, inner, ghost, fill, name], alpha: { from: 0, to: 1 }, duration: 300 });
+      }
+      if (!this.bossBar) return;
+      if (!boss || boss.dead || !this.enemies.includes(boss)) {
+        const b = this.bossBar;
+        this.bossBar = null;
+        this.tweens.add({ targets: b.objs, alpha: 0, duration: 350, onComplete: () => b.objs.forEach((o) => o.destroy()) });
+        return;
+      }
+      const frac = Phaser.Math.Clamp(boss.hp / boss.maxHp, 0, 1);
+      this.bossBar.fill.width = Math.max(1, this.bossBar.bw * frac);
+      // delayed white ghost bar trails the red fill
+      this.bossBar.ghostW = Math.max(this.bossBar.ghostW, this.bossBar.bw * frac);
+      this.bossBar.ghostW = Math.max(Math.max(1, this.bossBar.bw * frac), this.bossBar.ghostW - 1.2);
+      this.bossBar.ghost.width = Math.max(1, this.bossBar.ghostW);
+      const col = frac > 0.5 ? 0xd0304a : frac > 0.25 ? 0xe07a2a : 0xffd23a;
+      this.bossBar.fill.fillColor = col;
     }
 
     // Low-lives pulsing red edge vignette (danger feedback).
@@ -2909,6 +2943,7 @@
       });
       bg.on("pointerup", () => applyPressed(false));
       bg.on("pointerover", () => {
+        this.audio.playLayered?.("uiHover", 0.14);
         bg.setStrokeStyle(3, 0xfff2ba, 0.9);
         if (!this.settings?.reducedMotion) {
           bg.setScale(1.03);
@@ -3949,6 +3984,12 @@ const bannerY = 98;
       return 0.74 + lvl * 0.04;
     }
 
+    syncTowerPips(tower) {
+      if (!tower.pips) return;
+      const lvl = tower.level || 0;
+      tower.pips.forEach((p, i) => p.setAlpha(i < lvl ? 0.95 : 0));
+    }
+
     buildTower(pad, type) {
       const cfg = TOWERS[type];
       if (this.gold < cfg.cost) {
@@ -3987,6 +4028,9 @@ const bannerY = 98;
       tower.sprite = this.add.image(pad.x, pad.y - 10, initialKey).setScale(baseScale).setDepth(30);
       this.applyUnitTint(tower.sprite);
       tower.ground = this.add.ellipse(pad.x, pad.y + 10, 56, 18, 0x050804, 0.4).setDepth(29);
+      // U4: level pips — tiny gold diamonds at the tower base (L2+).
+      tower.pips = [0, 1, 2].map((i) => this.add.rectangle(pad.x - 8 + i * 8, pad.y + 13, 4, 4, 0xf5c85a, 0).setRotation(Math.PI / 4).setDepth(31));
+      this.syncTowerPips(tower);
       tower.label = this.add.text(pad.x + 16, pad.y + 15, "", { font: "bold 12px 'Source Sans 3', Arial", color: "#fff2ba" }).setOrigin(0.5).setDepth(31);
       tower.rangeRing = this.makeRangeDecal(pad.x, pad.y, cfg.range[0], cfg.color);
       if (type === "barracks") {
@@ -4302,6 +4346,7 @@ const bannerY = 98;
       this.gold -= cost;
       tower.level += 1;
       tower.path = path;
+      this.syncTowerPips(tower);
       this.clearFamilyPathPick();
       if (tower.firePoseTimer) {
         tower.firePoseTimer.remove(false);
@@ -4356,6 +4401,7 @@ const bannerY = 98;
       }
       this.gold -= cost;
       tower.level += 1;
+      this.syncTowerPips(tower);
       if (tower.firePoseTimer) {
         tower.firePoseTimer.remove(false);
         tower.firePoseTimer = null;
@@ -4465,6 +4511,8 @@ const bannerY = 98;
       }
       tower.sprite.destroy();
       tower.label.destroy();
+      (tower.pips || []).forEach((p) => p.destroy());
+      tower.pips = null;
       tower.rangeRing.destroy();
       tower.rallyRing?.destroy();
       tower.rallyFlag?.destroy();
